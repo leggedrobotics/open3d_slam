@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>m545_volumetric_mapping</name>
+  <name>open3d_catkin</name>
   <version>0.0.0</version>
-  <description>Volumetric mapping for m545</description>
+  <description>Open3D catkin</description>
 
   <maintainer email="jelavice@ethz.ch">Edo Jelavic</maintainer>
 
@@ -19,7 +19,6 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>roscpp</depend>
   <depend>roslib</depend>
-  <depend>open3d_conversions</depend>
  
 
 </package>
