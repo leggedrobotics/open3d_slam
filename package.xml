@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>m545_volumetric_mapping</name>
+  <version>0.0.0</version>
+  <description>Metapackage for terrain processing</description>
+
+  <maintainer email="jelavice@ethz.ch">Edo Jelavic</maintainer>
+
+
+  <!-- One license tag required, multiple allowed, one license per tag -->
+  <!-- Commonly used license strings: -->
+  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
+  <license>TODO</license>
+
+
+  <author email="jelavice@ethz.ch">Edo Jelavic</author>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>roscpp</depend>
+  <depend>roslib</depend>
+ 
+
+</package>
