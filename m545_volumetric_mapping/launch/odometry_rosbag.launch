@@ -5,7 +5,7 @@
 	<arg name="launch_rviz" default="true" />
 	<arg name="cloud_topic" default="/rslidar_points" />
 	<arg name="play_delay" default="0.4" />
-	<arg name="play_rate" default="1.0" />
+	<arg name="play_rate" default="0.1" />
 	<arg name="use_sim_time" default="true" />
 
 	<arg name="bag_filename" default="first_mission_wangen.bag" /> 

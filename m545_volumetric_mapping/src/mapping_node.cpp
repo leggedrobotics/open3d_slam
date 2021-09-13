@@ -23,6 +23,14 @@ bool isNewCloudReceived = false;
 ros::Time timestamp;
 std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
 
+
+void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, ros::Publisher &pub){
+	sensor_msgs::PointCloud2 msg;
+	open3d_conversions::open3dToRos(cloud, msg,frame_id);
+	msg.header.stamp = timestamp;
+	pub.publish(msg);
+}
+
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	cloud.Clear();
 	open3d_conversions::rosToOpen3d(msg, cloud, true);
@@ -63,6 +71,10 @@ int main(int argc, char **argv) {
 	const std::string cloudTopic = nh->param<std::string>("cloud_topic", "");
 	ros::Subscriber cloudSub = nh->subscribe(cloudTopic, 1, &cloudCallback);
 
+	ros::Publisher refPub = nh->advertise<sensor_msgs::PointCloud2>("reference",1,true);
+	ros::Publisher targetPub = nh->advertise<sensor_msgs::PointCloud2>("target",1,true);
+	ros::Publisher registeredPub = nh->advertise<sensor_msgs::PointCloud2>("registered",1,true);
+
 	ros::Rate r(100.0);
 	while (ros::ok()) {
 
@@ -73,7 +85,7 @@ int main(int argc, char **argv) {
 				cloudPrev = cloud;
 				continue;
 			}
-			const double maxCorrespondenceDistance = 10.0;
+			const double maxCorrespondenceDistance = 1.0;
 			const auto startTime = std::chrono::steady_clock::now();
 			const Eigen::Matrix4d init = Eigen::Matrix4d::Identity();
 			const auto metric = open3d::pipelines::registration::TransformationEstimationPointToPoint(false);
@@ -88,11 +100,19 @@ int main(int argc, char **argv) {
 			std::cout << "Scan matching finished \n";
 			std::cout << "Time elapsed: " << nMsec << " msec \n";
 			std::cout << "Fitness: " << result.fitness_ << "\n";
+			std::cout << "RMSE: " << result.inlier_rmse_ << "\n";
 			std::cout << "Transform: " << result.transformation_ << "\n";
 			std::cout << "\n \n";
 
 			geometry_msgs::TransformStamped transformStamped = toRos(result.transformation_, timestamp, "odom", "range_sensor");
 			tfBroadcaster->sendTransform(transformStamped);
+
+			auto registeredCloud = cloud;
+						registeredCloud.Transform(result.transformation_);
+
+			publishCloud(cloud, "odom", refPub);
+			publishCloud(cloudPrev, "odom", targetPub);
+			publishCloud(registeredCloud, "odom", registeredPub);
 
 			// source is cloud
 			// target is cloudPrev
