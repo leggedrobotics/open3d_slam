@@ -48,3 +48,6 @@ Thumbs.db
 *.mov
 *.wmv
 
+/m545_volumetric_mapping/data/*
+!/m545_volumetric_mapping/data/.gitkeep
+

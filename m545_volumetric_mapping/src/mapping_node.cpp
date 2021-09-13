@@ -5,6 +5,8 @@
  *      Author: jelavice
  */
 #include <open3d/Open3D.h>
+#include <open3d/pipelines/registration/Registration.h>
+
 #include "open3d_conversions/open3d_conversions.h"
 #include <ros/ros.h>
 
@@ -25,22 +27,25 @@ int main(int argc, char **argv) {
 	ros::init(argc, argv, "m545_mapping_node");
 	nh.reset(new ros::NodeHandle("~"));
 
+	const std::string cloudTopic = nh->param<std::string>("cloud_topic", "");
+	ros::Subscriber cloudSub = nh->subscribe(cloudTopic, 1, &cloudCallback);
+
 	ros::Rate r(100.0);
 	while (ros::ok()) {
 
-		if (isNewCloudReceived){
+		if (isNewCloudReceived) {
 			isNewCloudReceived = false;
 
-//			if (cloudPrev.IsEmpty()){
-//				cloudPrev = cloud;
-//				continue;
-//			}
-			// if the new cloud has been received
-			// and the old cloud is not empty
-			// then attempt to register scans
+			if (cloudPrev.IsEmpty()) {
+				cloudPrev = cloud;
+				continue;
+			}
+			const double maxCorrespondenceDistance = 10.0;
+			auto result = open3d::pipelines::registration::RegistrationICP(cloud, cloudPrev, maxCorrespondenceDistance);
+			// source is cloud
+			// target is cloudPrev
 
-
-
+			cloudPrev = cloud;
 		}
 
 		ros::spinOnce();
