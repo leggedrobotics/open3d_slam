@@ -22,7 +22,7 @@ ros::NodeHandlePtr nh;
 bool isNewCloudReceived = false;
 ros::Time timestamp;
 std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
-
+Eigen::Matrix4d curentTransformation = Eigen::Matrix4d::Identity();
 
 void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, ros::Publisher &pub){
 	sensor_msgs::PointCloud2 msg;
@@ -103,8 +103,8 @@ int main(int argc, char **argv) {
 			std::cout << "RMSE: " << result.inlier_rmse_ << "\n";
 			std::cout << "Transform: " << result.transformation_ << "\n";
 			std::cout << "\n \n";
-
-			geometry_msgs::TransformStamped transformStamped = toRos(result.transformation_, timestamp, "odom", "range_sensor");
+			curentTransformation *= result.transformation_;
+			geometry_msgs::TransformStamped transformStamped = toRos(curentTransformation, timestamp, "odom", "range_sensor");
 			tfBroadcaster->sendTransform(transformStamped);
 
 			auto registeredCloud = cloud;
