@@ -11,7 +11,13 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   roslib
   open3d_conversions
   open3d_catkin
+  eigen_conversions
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
 )
+   
+
 
 find_package(Eigen3 REQUIRED)
 

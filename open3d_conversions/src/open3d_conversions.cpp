@@ -69,6 +69,7 @@ void rosToOpen3d(const sensor_msgs::PointCloud2ConstPtr& ros_pc2, open3d::geomet
   sensor_msgs::PointCloud2ConstIterator<float> ros_pc2_x(*ros_pc2, "x");
   sensor_msgs::PointCloud2ConstIterator<float> ros_pc2_y(*ros_pc2, "y");
   sensor_msgs::PointCloud2ConstIterator<float> ros_pc2_z(*ros_pc2, "z");
+  o3d_pc.Clear();
   o3d_pc.points_.reserve(ros_pc2->height * ros_pc2->width);
   if (ros_pc2->fields.size() == 3 || skip_colors == true)
   {
