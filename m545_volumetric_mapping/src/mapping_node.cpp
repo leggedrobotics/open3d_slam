@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
 			const auto metric = open3d::pipelines::registration::TransformationEstimationPointToPoint(false);
 			auto criteria = open3d::pipelines::registration::ICPConvergenceCriteria();
 			criteria.max_iteration_ = 50;
-			auto result = open3d::pipelines::registration::RegistrationICP(cloud, cloudPrev, maxCorrespondenceDistance,
+			auto result = open3d::pipelines::registration::RegistrationICP(cloudPrev, cloud, maxCorrespondenceDistance,
 					init, metric, criteria);
 			const auto endTime = std::chrono::steady_clock::now();
 			const double nMsec = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count()
@@ -103,15 +103,17 @@ int main(int argc, char **argv) {
 			std::cout << "RMSE: " << result.inlier_rmse_ << "\n";
 			std::cout << "Transform: " << result.transformation_ << "\n";
 			std::cout << "\n \n";
-			curentTransformation *= result.transformation_;
+			if (result.fitness_ > 1e-2){
+				curentTransformation *= result.transformation_.inverse();
+			}
 			geometry_msgs::TransformStamped transformStamped = toRos(curentTransformation, timestamp, "odom", "range_sensor");
 			tfBroadcaster->sendTransform(transformStamped);
 
-			auto registeredCloud = cloud;
-						registeredCloud.Transform(result.transformation_);
+			auto registeredCloud = cloudPrev;
+			registeredCloud.Transform(result.transformation_);
 
-			publishCloud(cloud, "odom", refPub);
-			publishCloud(cloudPrev, "odom", targetPub);
+			publishCloud(cloudPrev, "odom", refPub);
+			publishCloud(cloud, "odom", targetPub);
 			publishCloud(registeredCloud, "odom", registeredPub);
 
 			// source is cloud
