@@ -40,9 +40,9 @@ include_directories(
   ${EIGEN3_INCLUDE_DIR}
 )
 
-add_executable(mapping_node
-  src/mapping_node.cpp)
-target_link_libraries(mapping_node
+add_executable(odometry_node
+  src/odometry_node.cpp)
+target_link_libraries(odometry_node
     ${catkin_LIBRARIES}
 )
 

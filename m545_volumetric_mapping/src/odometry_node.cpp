@@ -34,6 +34,9 @@ void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	cloud.Clear();
 	open3d_conversions::rosToOpen3d(msg, cloud, true);
+	const int numNearestNeighbours = 5;
+	open3d::geometry::KDTreeSearchParamKNN param(numNearestNeighbours);
+	cloud.EstimateNormals(param);
 	timestamp = msg->header.stamp;
 	isNewCloudReceived = true;
 }
@@ -85,10 +88,11 @@ int main(int argc, char **argv) {
 				cloudPrev = cloud;
 				continue;
 			}
-			const double maxCorrespondenceDistance = 1.0;
+			const double maxCorrespondenceDistance = 0.2;
 			const auto startTime = std::chrono::steady_clock::now();
 			const Eigen::Matrix4d init = Eigen::Matrix4d::Identity();
 			const auto metric = open3d::pipelines::registration::TransformationEstimationPointToPoint(false);
+//			const auto metric = open3d::pipelines::registration::TransformationEstimationPointToPlane();
 			auto criteria = open3d::pipelines::registration::ICPConvergenceCriteria();
 			criteria.max_iteration_ = 50;
 			auto result = open3d::pipelines::registration::RegistrationICP(cloudPrev, cloud, maxCorrespondenceDistance,

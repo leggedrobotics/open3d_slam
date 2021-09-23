@@ -7,7 +7,7 @@
 
 
 	<node name="odometry_node" pkg="m545_volumetric_mapping"
-		type="mapping_node" output="screen" launch-prefix="">
+		type="odometry_node" output="screen" launch-prefix="">
 
 		<param name="cloud_topic" type="string"
 			value="$(arg cloud_topic)" />
