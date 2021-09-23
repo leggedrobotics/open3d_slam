@@ -9,6 +9,7 @@
 #include <yaml-cpp/yaml.h>
 #include <map>
 #include <string>
+#include <Eigen/Dense>
 
 
 namespace m545_mapping {
@@ -28,6 +29,10 @@ struct IcpOdometryParameters {
 	int maxNumIter_ = 50;
 	double maxCorrespondenceDistance_ = 0.2;
 	IcpObjective icpObjective_ = IcpObjective::PointToPoint;
+	double downSamplingRatio_ = 1.0;
+	Eigen::Vector3d cropBoxLowBound_ = Eigen::Vector3d(-30.0,-30.0,-1e3);
+	Eigen::Vector3d cropBoxHighBound_ = Eigen::Vector3d(30.0,30.0,1e3);
+
 };
 
 

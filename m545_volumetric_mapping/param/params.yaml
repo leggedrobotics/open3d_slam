@@ -2,9 +2,16 @@
 
 
 icp_odometry:
-  icp_objective: PointToPoint
+  icp_objective: PointToPlane
   max_correspondence_dist: 0.2
   knn_normal_estimation: 4
-  max_n_iter: 50
+  max_n_iter: 25
+  downsampling_ratio: 0.4
+  crop_box_min_x: -25.0
+  crop_box_min_y: -25.0
+  crop_box_min_z: -100.0
+  crop_box_max_x: 25.0
+  crop_box_max_y: 25.0
+  crop_box_max_z: 100.0
   
    

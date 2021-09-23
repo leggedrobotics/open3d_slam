@@ -108,6 +108,8 @@ int main(int argc, char **argv) {
 	m545_mapping::loadParameters(paramFile, &params);
 	auto icoObjective = icpObjectiveFactory(params);
 
+	ros::AsyncSpinner spinner(1);
+	spinner.start();
 	ros::Rate r(100.0);
 	while (ros::ok()) {
 
@@ -116,14 +118,23 @@ int main(int argc, char **argv) {
 
 			if (cloudPrev.IsEmpty()) {
 				cloudPrev = cloud;
+				ros::spinOnce();
+				r.sleep();
 				continue;
 			}
 			const auto startTime = std::chrono::steady_clock::now();
 			const Eigen::Matrix4d init = Eigen::Matrix4d::Identity();
 			auto criteria = open3d::pipelines::registration::ICPConvergenceCriteria();
 			criteria.max_iteration_ = params.maxNumIter_;
+			open3d::geometry::AxisAlignedBoundingBox bbox;
+			bbox.min_bound_ = params.cropBoxLowBound_;
+			bbox.max_bound_ = params.cropBoxHighBound_;
+			auto croppedCloud = cloud.Crop(bbox);
+			auto downSampledCloud = croppedCloud->RandomDownSample(params.downSamplingRatio_);
+			cloud = *downSampledCloud;
 			if(params.icpObjective_ == m545_mapping::IcpObjective::PointToPlane){
 				estimateNormals(params.kNNnormalEstimation_, &cloud);
+				cloud.NormalizeNormals();
 			}
 			auto result = open3d::pipelines::registration::RegistrationICP(cloudPrev, cloud,
 					params.maxCorrespondenceDistance_, init, *icoObjective, criteria);
@@ -136,10 +147,15 @@ int main(int argc, char **argv) {
 			std::cout << "Fitness: " << result.fitness_ << "\n";
 			std::cout << "RMSE: " << result.inlier_rmse_ << "\n";
 			std::cout << "Transform: " << result.transformation_ << "\n";
+			std::cout << "target size: " << cloud.points_.size() <<std::endl;
+			std::cout << "reference size: " << cloudPrev.points_.size() <<std::endl;
 			std::cout << "\n \n";
-			if (result.fitness_ > 1e-2) {
-				curentTransformation *= result.transformation_.inverse();
+			if (result.fitness_ <= 1e-2) {
+				ros::spinOnce();
+				r.sleep();
+				continue;
 			}
+			curentTransformation *= result.transformation_.inverse();
 			geometry_msgs::TransformStamped transformStamped = toRos(curentTransformation, timestamp, "odom",
 					"range_sensor");
 			tfBroadcaster->sendTransform(transformStamped);
@@ -151,9 +167,6 @@ int main(int argc, char **argv) {
 			publishCloud(cloud, "odom", targetPub);
 			publishCloud(registeredCloud, "odom", registeredPub);
 
-			// source is cloud
-			// target is cloudPrev
-			cloudPrev.Clear();
 			cloudPrev = cloud;
 		}
 
