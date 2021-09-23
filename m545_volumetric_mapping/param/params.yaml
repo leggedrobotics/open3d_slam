@@ -1,0 +1,10 @@
+
+
+
+icp_odometry:
+  icp_objective: PointToPoint
+  max_correspondence_dist: 0.2
+  knn_normal_estimation: 4
+  max_n_iter: 50
+  
+   

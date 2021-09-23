@@ -2,9 +2,13 @@ cmake_minimum_required(VERSION 3.5)
 project(m545_volumetric_mapping)
 
 set(CMAKE_CXX_STANDARD 14)
-
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+
+
+set(SRC_FILES
+  src/Parameters.cpp
+)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   roscpp
@@ -28,7 +32,8 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS
     include  
-  LIBRARIES 
+  LIBRARIES
+    yaml-cpp 
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS 
@@ -38,11 +43,29 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
+  ${YAML_CPP_INCLUDE_DIR}
 )
+
+add_library(${PROJECT_NAME}
+  ${SRC_FILES}
+)
+
+add_dependencies(${PROJECT_NAME}
+  ${catkin_EXPORTED_TARGETS}
+)
+
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  yaml-cpp
+)
+
+
+
 
 add_executable(odometry_node
   src/odometry_node.cpp)
 target_link_libraries(odometry_node
     ${catkin_LIBRARIES}
+    ${PROJECT_NAME}
 )
 

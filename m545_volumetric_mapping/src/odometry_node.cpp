@@ -6,6 +6,7 @@
  */
 #include <open3d/Open3D.h>
 #include <open3d/pipelines/registration/Registration.h>
+#include "m545_volumetric_mapping/Parameters.hpp"
 
 #include "open3d_conversions/open3d_conversions.h"
 #include <ros/ros.h>
@@ -23,10 +24,11 @@ bool isNewCloudReceived = false;
 ros::Time timestamp;
 std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
 Eigen::Matrix4d curentTransformation = Eigen::Matrix4d::Identity();
+namespace registration = open3d::pipelines::registration;
 
-void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, ros::Publisher &pub){
+void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, ros::Publisher &pub) {
 	sensor_msgs::PointCloud2 msg;
-	open3d_conversions::open3dToRos(cloud, msg,frame_id);
+	open3d_conversions::open3dToRos(cloud, msg, frame_id);
 	msg.header.stamp = timestamp;
 	pub.publish(msg);
 }
@@ -34,11 +36,13 @@ void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	cloud.Clear();
 	open3d_conversions::rosToOpen3d(msg, cloud, true);
-	const int numNearestNeighbours = 5;
-	open3d::geometry::KDTreeSearchParamKNN param(numNearestNeighbours);
-	cloud.EstimateNormals(param);
 	timestamp = msg->header.stamp;
 	isNewCloudReceived = true;
+}
+
+void estimateNormals(int numNearestNeighbours, open3d::geometry::PointCloud *pcl) {
+	open3d::geometry::KDTreeSearchParamKNN param(numNearestNeighbours);
+	pcl->EstimateNormals(param);
 }
 
 geometry_msgs::Pose getPose(const Eigen::MatrixXd &T) {
@@ -67,6 +71,26 @@ geometry_msgs::TransformStamped toRos(const Eigen::Matrix4d &Mat, const ros::Tim
 	return transformStamped;
 }
 
+std::shared_ptr<registration::TransformationEstimation> icpObjectiveFactory(
+		const m545_mapping::IcpOdometryParameters &p) {
+
+	switch (p.icpObjective_) {
+	case m545_mapping::IcpObjective::PointToPoint: {
+		auto obj = std::make_shared<registration::TransformationEstimationPointToPoint>(false);
+		return obj;
+	}
+
+	case m545_mapping::IcpObjective::PointToPlane: {
+		auto obj = std::make_shared<registration::TransformationEstimationPointToPlane>();
+		return obj;
+	}
+
+	default:
+		throw std::runtime_error("Unknown icp objective");
+	}
+
+}
+
 int main(int argc, char **argv) {
 	ros::init(argc, argv, "m545_mapping_node");
 	nh.reset(new ros::NodeHandle("~"));
@@ -74,9 +98,15 @@ int main(int argc, char **argv) {
 	const std::string cloudTopic = nh->param<std::string>("cloud_topic", "");
 	ros::Subscriber cloudSub = nh->subscribe(cloudTopic, 1, &cloudCallback);
 
-	ros::Publisher refPub = nh->advertise<sensor_msgs::PointCloud2>("reference",1,true);
-	ros::Publisher targetPub = nh->advertise<sensor_msgs::PointCloud2>("target",1,true);
-	ros::Publisher registeredPub = nh->advertise<sensor_msgs::PointCloud2>("registered",1,true);
+	ros::Publisher refPub = nh->advertise<sensor_msgs::PointCloud2>("reference", 1, true);
+	ros::Publisher targetPub = nh->advertise<sensor_msgs::PointCloud2>("target", 1, true);
+	ros::Publisher registeredPub = nh->advertise<sensor_msgs::PointCloud2>("registered", 1, true);
+
+	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
+	std::cout << "loading params from: " << paramFile << "\n";
+	m545_mapping::IcpOdometryParameters params;
+	m545_mapping::loadParameters(paramFile, &params);
+	auto icoObjective = icpObjectiveFactory(params);
 
 	ros::Rate r(100.0);
 	while (ros::ok()) {
@@ -88,15 +118,15 @@ int main(int argc, char **argv) {
 				cloudPrev = cloud;
 				continue;
 			}
-			const double maxCorrespondenceDistance = 0.2;
 			const auto startTime = std::chrono::steady_clock::now();
 			const Eigen::Matrix4d init = Eigen::Matrix4d::Identity();
-			const auto metric = open3d::pipelines::registration::TransformationEstimationPointToPoint(false);
-//			const auto metric = open3d::pipelines::registration::TransformationEstimationPointToPlane();
 			auto criteria = open3d::pipelines::registration::ICPConvergenceCriteria();
-			criteria.max_iteration_ = 50;
-			auto result = open3d::pipelines::registration::RegistrationICP(cloudPrev, cloud, maxCorrespondenceDistance,
-					init, metric, criteria);
+			criteria.max_iteration_ = params.maxNumIter_;
+			if(params.icpObjective_ == m545_mapping::IcpObjective::PointToPlane){
+				estimateNormals(params.kNNnormalEstimation_, &cloud);
+			}
+			auto result = open3d::pipelines::registration::RegistrationICP(cloudPrev, cloud,
+					params.maxCorrespondenceDistance_, init, *icoObjective, criteria);
 			const auto endTime = std::chrono::steady_clock::now();
 			const double nMsec = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count()
 					/ 1e3;
@@ -107,10 +137,11 @@ int main(int argc, char **argv) {
 			std::cout << "RMSE: " << result.inlier_rmse_ << "\n";
 			std::cout << "Transform: " << result.transformation_ << "\n";
 			std::cout << "\n \n";
-			if (result.fitness_ > 1e-2){
+			if (result.fitness_ > 1e-2) {
 				curentTransformation *= result.transformation_.inverse();
 			}
-			geometry_msgs::TransformStamped transformStamped = toRos(curentTransformation, timestamp, "odom", "range_sensor");
+			geometry_msgs::TransformStamped transformStamped = toRos(curentTransformation, timestamp, "odom",
+					"range_sensor");
 			tfBroadcaster->sendTransform(transformStamped);
 
 			auto registeredCloud = cloudPrev;
