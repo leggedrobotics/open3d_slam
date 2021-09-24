@@ -2,12 +2,13 @@
 
 <launch>
 
+	<arg name="launch_prefix" default="" doc="gdb -ex run --args"/>
 	<arg name="launch_rviz" default="false" />
 	<arg name="cloud_topic" default="/rslidar_points" />
 	<arg name="parameter_file_path" default="$(find m545_volumetric_mapping)/param/params.yaml"/>
 
 	<node name="odometry_node" pkg="m545_volumetric_mapping"
-		type="odometry_node" output="screen" launch-prefix="">
+		type="odometry_node" output="screen" launch-prefix="$(arg launch_prefix)">
 
 		<param name="cloud_topic" type="string"
 			value="$(arg cloud_topic)" />

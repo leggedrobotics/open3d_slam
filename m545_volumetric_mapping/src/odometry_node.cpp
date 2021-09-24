@@ -25,19 +25,17 @@ ros::Time timestamp;
 std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
 Eigen::Matrix4d curentTransformation = Eigen::Matrix4d::Identity();
 namespace registration = open3d::pipelines::registration;
+ros::Publisher refPub;
+ros::Publisher targetPub;
+ros::Publisher registeredPub;
+m545_mapping::IcpOdometryParameters params;
+std::shared_ptr<registration::TransformationEstimation> icoObjective;
 
 void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, ros::Publisher &pub) {
 	sensor_msgs::PointCloud2 msg;
 	open3d_conversions::open3dToRos(cloud, msg, frame_id);
 	msg.header.stamp = timestamp;
 	pub.publish(msg);
-}
-
-void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
-	cloud.Clear();
-	open3d_conversions::rosToOpen3d(msg, cloud, true);
-	timestamp = msg->header.stamp;
-	isNewCloudReceived = true;
 }
 
 void estimateNormals(int numNearestNeighbours, open3d::geometry::PointCloud *pcl) {
@@ -91,88 +89,80 @@ std::shared_ptr<registration::TransformationEstimation> icpObjectiveFactory(
 
 }
 
+void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
+	cloud.Clear();
+	open3d_conversions::rosToOpen3d(msg, cloud, true);
+	timestamp = msg->header.stamp;
+	isNewCloudReceived = true;
+
+	if (cloudPrev.IsEmpty()) {
+		cloudPrev = cloud;
+		return;
+	}
+	const auto startTime = std::chrono::steady_clock::now();
+	const Eigen::Matrix4d init = Eigen::Matrix4d::Identity();
+	auto criteria = open3d::pipelines::registration::ICPConvergenceCriteria();
+	criteria.max_iteration_ = params.maxNumIter_;
+	open3d::geometry::AxisAlignedBoundingBox bbox;
+	bbox.min_bound_ = params.cropBoxLowBound_;
+	bbox.max_bound_ = params.cropBoxHighBound_;
+	auto croppedCloud = cloud.Crop(bbox);
+	auto downSampledCloud = croppedCloud->RandomDownSample(params.downSamplingRatio_);
+	cloud = *downSampledCloud;
+	if (params.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
+		estimateNormals(params.kNNnormalEstimation_, &cloud);
+		cloud.NormalizeNormals();
+	}
+	auto result = open3d::pipelines::registration::RegistrationICP(cloudPrev, cloud, params.maxCorrespondenceDistance_,
+			init, *icoObjective, criteria);
+	const auto endTime = std::chrono::steady_clock::now();
+	const double nMsec = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count() / 1e3;
+
+	std::cout << "Scan matching finished \n";
+	std::cout << "Time elapsed: " << nMsec << " msec \n";
+	std::cout << "Fitness: " << result.fitness_ << "\n";
+	std::cout << "RMSE: " << result.inlier_rmse_ << "\n";
+	std::cout << "Transform: " << result.transformation_ << "\n";
+	std::cout << "target size: " << cloud.points_.size() << std::endl;
+	std::cout << "reference size: " << cloudPrev.points_.size() << std::endl;
+	std::cout << "\n \n";
+	if (result.fitness_ <= 1e-2) {
+		return;
+	}
+	curentTransformation *= result.transformation_.inverse();
+	geometry_msgs::TransformStamped transformStamped = toRos(curentTransformation, timestamp, "odom", "range_sensor");
+	tfBroadcaster->sendTransform(transformStamped);
+
+	auto registeredCloud = cloudPrev;
+	registeredCloud.Transform(result.transformation_);
+
+	publishCloud(cloudPrev, "odom", refPub);
+	publishCloud(cloud, "odom", targetPub);
+	publishCloud(registeredCloud, "odom", registeredPub);
+	cloudPrev = cloud;
+
+}
+
 int main(int argc, char **argv) {
-	ros::init(argc, argv, "m545_mapping_node");
+	ros::init(argc, argv, "lidar_odometry_node");
 	nh.reset(new ros::NodeHandle("~"));
 	tfBroadcaster.reset(new tf2_ros::TransformBroadcaster());
 	const std::string cloudTopic = nh->param<std::string>("cloud_topic", "");
-	ros::Subscriber cloudSub = nh->subscribe(cloudTopic, 1, &cloudCallback);
+	ros::Subscriber cloudSub = nh->subscribe(cloudTopic, 10, &cloudCallback);
 
-	ros::Publisher refPub = nh->advertise<sensor_msgs::PointCloud2>("reference", 1, true);
-	ros::Publisher targetPub = nh->advertise<sensor_msgs::PointCloud2>("target", 1, true);
-	ros::Publisher registeredPub = nh->advertise<sensor_msgs::PointCloud2>("registered", 1, true);
+	refPub = nh->advertise<sensor_msgs::PointCloud2>("reference", 1, true);
+	targetPub = nh->advertise<sensor_msgs::PointCloud2>("target", 1, true);
+	registeredPub = nh->advertise<sensor_msgs::PointCloud2>("registered", 1, true);
 
 	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
 	std::cout << "loading params from: " << paramFile << "\n";
-	m545_mapping::IcpOdometryParameters params;
 	m545_mapping::loadParameters(paramFile, &params);
-	auto icoObjective = icpObjectiveFactory(params);
+	icoObjective = icpObjectiveFactory(params);
 
-	ros::AsyncSpinner spinner(1);
-	spinner.start();
-	ros::Rate r(100.0);
-	while (ros::ok()) {
-
-		if (isNewCloudReceived) {
-			isNewCloudReceived = false;
-
-			if (cloudPrev.IsEmpty()) {
-				cloudPrev = cloud;
-				ros::spinOnce();
-				r.sleep();
-				continue;
-			}
-			const auto startTime = std::chrono::steady_clock::now();
-			const Eigen::Matrix4d init = Eigen::Matrix4d::Identity();
-			auto criteria = open3d::pipelines::registration::ICPConvergenceCriteria();
-			criteria.max_iteration_ = params.maxNumIter_;
-			open3d::geometry::AxisAlignedBoundingBox bbox;
-			bbox.min_bound_ = params.cropBoxLowBound_;
-			bbox.max_bound_ = params.cropBoxHighBound_;
-			auto croppedCloud = cloud.Crop(bbox);
-			auto downSampledCloud = croppedCloud->RandomDownSample(params.downSamplingRatio_);
-			cloud = *downSampledCloud;
-			if(params.icpObjective_ == m545_mapping::IcpObjective::PointToPlane){
-				estimateNormals(params.kNNnormalEstimation_, &cloud);
-				cloud.NormalizeNormals();
-			}
-			auto result = open3d::pipelines::registration::RegistrationICP(cloudPrev, cloud,
-					params.maxCorrespondenceDistance_, init, *icoObjective, criteria);
-			const auto endTime = std::chrono::steady_clock::now();
-			const double nMsec = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count()
-					/ 1e3;
-
-			std::cout << "Scan matching finished \n";
-			std::cout << "Time elapsed: " << nMsec << " msec \n";
-			std::cout << "Fitness: " << result.fitness_ << "\n";
-			std::cout << "RMSE: " << result.inlier_rmse_ << "\n";
-			std::cout << "Transform: " << result.transformation_ << "\n";
-			std::cout << "target size: " << cloud.points_.size() <<std::endl;
-			std::cout << "reference size: " << cloudPrev.points_.size() <<std::endl;
-			std::cout << "\n \n";
-			if (result.fitness_ <= 1e-2) {
-				ros::spinOnce();
-				r.sleep();
-				continue;
-			}
-			curentTransformation *= result.transformation_.inverse();
-			geometry_msgs::TransformStamped transformStamped = toRos(curentTransformation, timestamp, "odom",
-					"range_sensor");
-			tfBroadcaster->sendTransform(transformStamped);
-
-			auto registeredCloud = cloudPrev;
-			registeredCloud.Transform(result.transformation_);
-
-			publishCloud(cloudPrev, "odom", refPub);
-			publishCloud(cloud, "odom", targetPub);
-			publishCloud(registeredCloud, "odom", registeredPub);
-
-			cloudPrev = cloud;
-		}
-
-		ros::spinOnce();
-		r.sleep();
-	}
+//	ros::AsyncSpinner spinner(4); // Use 4 threads
+//	spinner.start();
+//	ros::waitForShutdown();
+	ros::spin();
 
 	return 0;
 }
