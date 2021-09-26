@@ -39,6 +39,19 @@ void loadParameters(const YAML::Node &n, IcpParameters *p){
 
 }
 
+void loadParameters(const std::string &filename, MapperParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+
+	if (basenode.IsNull()) {
+		throw std::runtime_error("MapperParameters::loadParameters loading failed");
+	}
+
+	loadParameters(basenode["icp_mapping"],p);
+}
+void loadParameters(const YAML::Node &node, MapperParameters *p){
+	loadParameters(node,static_cast<IcpParameters*>(p));
+}
+
 
 } // namespace m545_mapping
 

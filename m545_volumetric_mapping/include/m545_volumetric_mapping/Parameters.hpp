@@ -35,8 +35,15 @@ struct IcpParameters {
 
 };
 
+struct MapperParameters : public IcpParameters {
+
+};
 
 void loadParameters(const std::string &filename, IcpParameters *p);
 void loadParameters(const YAML::Node &node, IcpParameters *p);
+void loadParameters(const std::string &filename, MapperParameters *p);
+void loadParameters(const YAML::Node &node, MapperParameters *p);
+
+
 
 } // namespace m545_mapping

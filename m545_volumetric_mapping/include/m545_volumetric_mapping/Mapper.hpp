@@ -27,14 +27,15 @@ public:
 
 	void addRangeMeasurement(const PointCloud &cloud, const ros::Time &timestamp);
 	const PointCloud &getMap() const;
-	void setParameters(const IcpParameters &p);
+	void setParameters(const MapperParameters &p);
+	bool isMatchingInProgress() const;
 
 private:
 
 	Eigen::Isometry3d lookupTransform(const std::string& target_frame, const std::string& source_frame,
 		    const ros::Time& time) const;
 
-
+  bool isMatchingInProgress_ = false;
   PointCloud map_;
   tf2_ros::Buffer tfBuffer_;
   tf2_ros::TransformListener tfListener_;
@@ -42,7 +43,7 @@ private:
   Eigen::Isometry3d mapToOdom_ = Eigen::Isometry3d::Identity();
   Eigen::Isometry3d odomToRangeSensorPrev_ = Eigen::Isometry3d::Identity();
   Eigen::Isometry3d mapToRangeSensor_ = Eigen::Isometry3d::Identity();
-  IcpParameters params_;
+  MapperParameters params_;
 
 
 

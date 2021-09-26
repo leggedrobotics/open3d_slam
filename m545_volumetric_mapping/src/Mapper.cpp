@@ -25,25 +25,31 @@ Mapper::Mapper() :
 	icpObjective = icpObjectiveFactory(params_.icpObjective_);
 }
 
-void Mapper::setParameters(const IcpParameters &p){
+void Mapper::setParameters(const MapperParameters &p){
 	params_ = p;
 	icpObjective = icpObjectiveFactory(params_.icpObjective_);
 }
 
+bool Mapper::isMatchingInProgress() const{
+	return isMatchingInProgress_;
+}
+
 void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloud,const ros::Time &timestamp) {
+	isMatchingInProgress_ = true;
 	lastMeasurementTimestamp_ = timestamp;
 
 	//todo figure out how to estimate nomals
 	if (map_.points_.empty()){
 		map_ += cloud;
+		isMatchingInProgress_ = false;
 		return;
 	}
 
-	const auto odomToRangeSensor = lookupTransform(frames::rangeSensorFrame, frames::odomFrame, ros::Time(0));
+	const auto odomToRangeSensor = lookupTransform(frames::rangeSensorFrame, frames::odomFrame, timestamp);
 	const auto odometryMotion = odomToRangeSensorPrev_.inverse() * odomToRangeSensor;
 	const bool isMovedTooLittle = odometryMotion.translation().norm() < 0.3;
 	if (isMovedTooLittle){
-		odomToRangeSensorPrev_ = odomToRangeSensor;
+		isMatchingInProgress_ = false;
 		return;
 	}
 
@@ -59,10 +65,16 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloud,const ros::Time
 		estimateNormals(params_.kNNnormalEstimation_, &map_);
 		map_.NormalizeNormals();
 	}
-	auto result = open3d::pipelines::registration::RegistrationICP(*downSampledCloud, map_, params_.maxCorrespondenceDistance_,
+	const auto result = open3d::pipelines::registration::RegistrationICP(*downSampledCloud, map_, params_.maxCorrespondenceDistance_,
 			mapToRangeSensor_.matrix(), *icpObjective, criteria);
 
+	// update transforms
+	mapToRangeSensor_.matrix() = result.transformation_;
 	odomToRangeSensorPrev_ = odomToRangeSensor;
+
+	// concatenate registered cloud into map
+	map_+= downSampledCloud->Transform(result.transformation_);
+	isMatchingInProgress_ = false;
 }
 const Mapper::PointCloud& Mapper::getMap() const {
 	return map_;

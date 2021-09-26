@@ -9,6 +9,7 @@
 #include "m545_volumetric_mapping/Parameters.hpp"
 #include "m545_volumetric_mapping/frames.hpp"
 #include "m545_volumetric_mapping/helpers.hpp"
+#include "m545_volumetric_mapping/Mapper.hpp"
 
 #include "open3d_conversions/open3d_conversions.h"
 #include <ros/ros.h>
@@ -30,8 +31,12 @@ namespace registration = open3d::pipelines::registration;
 ros::Publisher refPub;
 ros::Publisher targetPub;
 ros::Publisher registeredPub;
+ros::Publisher mapPub;
+
 m545_mapping::IcpParameters params;
 std::shared_ptr<registration::TransformationEstimation> icpObjective;
+std::shared_ptr<m545_mapping::Mapper> mapper;
+m545_mapping::MapperParameters mapperParams;
 
 void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, ros::Publisher &pub) {
 	sensor_msgs::PointCloud2 msg;
@@ -116,6 +121,19 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	auto registeredCloud = cloudPrev;
 	registeredCloud.Transform(result.transformation_);
 
+//	mapper->addRangeMeasurement(cloud, timestamp);
+//	const auto endTime2 = std::chrono::steady_clock::now();
+//	const double nMsec2 = std::chrono::duration_cast<std::chrono::microseconds>(endTime2 - startTime).count() / 1e3;
+//	std::cout << "Total time elapsed: " << nMsec2 << " msec \n";
+
+	std::thread t ([](){
+		if (mapper->isMatchingInProgress()){
+			return;
+		}
+		mapper->addRangeMeasurement(cloud, timestamp);
+	});
+	t.detach();
+	publishCloud(mapper->getMap(), m545_mapping::frames::odomFrame, mapPub);
 	publishCloud(cloudPrev, m545_mapping::frames::odomFrame, refPub);
 	publishCloud(cloud, m545_mapping::frames::odomFrame, targetPub);
 	publishCloud(registeredCloud, m545_mapping::frames::odomFrame, registeredPub);
@@ -133,11 +151,16 @@ int main(int argc, char **argv) {
 	refPub = nh->advertise<sensor_msgs::PointCloud2>("reference", 1, true);
 	targetPub = nh->advertise<sensor_msgs::PointCloud2>("target", 1, true);
 	registeredPub = nh->advertise<sensor_msgs::PointCloud2>("registered", 1, true);
+	mapPub = nh->advertise<sensor_msgs::PointCloud2>("map", 1, true);
 
 	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
 	std::cout << "loading params from: " << paramFile << "\n";
 	m545_mapping::loadParameters(paramFile, &params);
 	icpObjective = m545_mapping::icpObjectiveFactory(params.icpObjective_);
+
+	mapper = std::make_shared<m545_mapping::Mapper>();
+	m545_mapping::loadParameters(paramFile, &mapperParams);
+	mapper->setParameters(mapperParams);
 
 //	ros::AsyncSpinner spinner(4); // Use 4 threads
 //	spinner.start();
