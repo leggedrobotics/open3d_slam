@@ -73,6 +73,9 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloud,const ros::Time
 	odomToRangeSensorPrev_ = odomToRangeSensor;
 
 	// concatenate registered cloud into map
+//	bbox.min_bound_ = params_.mapBuilderCropBoxLowBound_;
+//	bbox.max_bound_ = params_.mapBuilderCropBoxHighBound_;
+//	croppedCloud = cloud.Crop(bbox);
 	map_+= downSampledCloud->Transform(result.transformation_);
 	isMatchingInProgress_ = false;
 }

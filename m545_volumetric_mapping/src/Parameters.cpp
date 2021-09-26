@@ -49,7 +49,14 @@ void loadParameters(const std::string &filename, MapperParameters *p){
 	loadParameters(basenode["icp_mapping"],p);
 }
 void loadParameters(const YAML::Node &node, MapperParameters *p){
-	loadParameters(node,static_cast<IcpParameters*>(p));
+	loadParameters(node["scan_to_map_refinement"],static_cast<IcpParameters*>(p));
+	const auto n = node["map_builder"];
+	p->mapBuilderCropBoxLowBound_.x() = n["crop_box_min_x"].as<double>();
+	p->mapBuilderCropBoxLowBound_.y() = n["crop_box_min_y"].as<double>();
+	p->mapBuilderCropBoxLowBound_.z() = n["crop_box_min_z"].as<double>();
+	p->mapBuilderCropBoxHighBound_.x() = n["crop_box_max_x"].as<double>();
+	p->mapBuilderCropBoxHighBound_.y() = n["crop_box_max_y"].as<double>();
+	p->mapBuilderCropBoxHighBound_.z() = n["crop_box_max_z"].as<double>();
 }
 
 

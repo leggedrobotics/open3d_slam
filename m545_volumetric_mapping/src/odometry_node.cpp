@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
 	nh.reset(new ros::NodeHandle("~"));
 	tfBroadcaster.reset(new tf2_ros::TransformBroadcaster());
 	const std::string cloudTopic = nh->param<std::string>("cloud_topic", "");
-	ros::Subscriber cloudSub = nh->subscribe(cloudTopic, 10, &cloudCallback);
+	ros::Subscriber cloudSub = nh->subscribe(cloudTopic, 100, &cloudCallback);
 
 	refPub = nh->advertise<sensor_msgs::PointCloud2>("reference", 1, true);
 	targetPub = nh->advertise<sensor_msgs::PointCloud2>("target", 1, true);

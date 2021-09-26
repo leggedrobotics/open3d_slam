@@ -36,7 +36,8 @@ struct IcpParameters {
 };
 
 struct MapperParameters : public IcpParameters {
-
+	Eigen::Vector3d mapBuilderCropBoxLowBound_ = Eigen::Vector3d(-50.0,-50.0,-1e3);
+	Eigen::Vector3d mapBuilderCropBoxHighBound_ = Eigen::Vector3d(50.0,50.0,1e3);
 };
 
 void loadParameters(const std::string &filename, IcpParameters *p);
