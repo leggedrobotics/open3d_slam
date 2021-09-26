@@ -11,19 +11,19 @@
 
 namespace m545_mapping {
 
-void loadParameters(const std::string &filename, IcpOdometryParameters *p){
+void loadParameters(const std::string &filename, IcpParameters *p){
 
 	YAML::Node basenode = YAML::LoadFile(filename);
 
 	if (basenode.IsNull()) {
-		throw std::runtime_error("IcpOdometryParameters::loadParameters loading failed");
+		throw std::runtime_error("IcpParameters::loadParameters loading failed");
 	}
 
 	loadParameters(basenode["icp_odometry"],p);
 }
 
 
-void loadParameters(const YAML::Node &n, IcpOdometryParameters *p){
+void loadParameters(const YAML::Node &n, IcpParameters *p){
 
 	p->icpObjective_ = IcpObjectiveNames.at(n["icp_objective"].as<std::string>());
 	p->kNNnormalEstimation_ = n["knn_normal_estimation"].as<int>();

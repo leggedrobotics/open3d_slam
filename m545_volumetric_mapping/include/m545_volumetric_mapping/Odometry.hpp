@@ -5,11 +5,16 @@
  *      Author: jelavice
  */
 
-#ifndef SRC_M545_VOLUMETRIC_MAPPING_INCLUDE_M545_VOLUMETRIC_MAPPING_ODOMETRY_HPP_
-#define SRC_M545_VOLUMETRIC_MAPPING_INCLUDE_M545_VOLUMETRIC_MAPPING_ODOMETRY_HPP_
+#pragma once
+
+
+class LidarOdometry {
+
+public:
+
+	LidarOdometry() = default;
 
 
 
 
-
-#endif /* SRC_M545_VOLUMETRIC_MAPPING_INCLUDE_M545_VOLUMETRIC_MAPPING_ODOMETRY_HPP_ */
+};

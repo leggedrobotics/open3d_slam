@@ -7,6 +7,8 @@
 #include <open3d/Open3D.h>
 #include <open3d/pipelines/registration/Registration.h>
 #include "m545_volumetric_mapping/Parameters.hpp"
+#include "m545_volumetric_mapping/frames.hpp"
+#include "m545_volumetric_mapping/helpers.hpp"
 
 #include "open3d_conversions/open3d_conversions.h"
 #include <ros/ros.h>
@@ -28,19 +30,14 @@ namespace registration = open3d::pipelines::registration;
 ros::Publisher refPub;
 ros::Publisher targetPub;
 ros::Publisher registeredPub;
-m545_mapping::IcpOdometryParameters params;
-std::shared_ptr<registration::TransformationEstimation> icoObjective;
+m545_mapping::IcpParameters params;
+std::shared_ptr<registration::TransformationEstimation> icpObjective;
 
 void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, ros::Publisher &pub) {
 	sensor_msgs::PointCloud2 msg;
 	open3d_conversions::open3dToRos(cloud, msg, frame_id);
 	msg.header.stamp = timestamp;
 	pub.publish(msg);
-}
-
-void estimateNormals(int numNearestNeighbours, open3d::geometry::PointCloud *pcl) {
-	open3d::geometry::KDTreeSearchParamKNN param(numNearestNeighbours);
-	pcl->EstimateNormals(param);
 }
 
 geometry_msgs::Pose getPose(const Eigen::MatrixXd &T) {
@@ -69,25 +66,7 @@ geometry_msgs::TransformStamped toRos(const Eigen::Matrix4d &Mat, const ros::Tim
 	return transformStamped;
 }
 
-std::shared_ptr<registration::TransformationEstimation> icpObjectiveFactory(
-		const m545_mapping::IcpOdometryParameters &p) {
 
-	switch (p.icpObjective_) {
-	case m545_mapping::IcpObjective::PointToPoint: {
-		auto obj = std::make_shared<registration::TransformationEstimationPointToPoint>(false);
-		return obj;
-	}
-
-	case m545_mapping::IcpObjective::PointToPlane: {
-		auto obj = std::make_shared<registration::TransformationEstimationPointToPlane>();
-		return obj;
-	}
-
-	default:
-		throw std::runtime_error("Unknown icp objective");
-	}
-
-}
 
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	cloud.Clear();
@@ -110,11 +89,11 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	auto downSampledCloud = croppedCloud->RandomDownSample(params.downSamplingRatio_);
 	cloud = *downSampledCloud;
 	if (params.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
-		estimateNormals(params.kNNnormalEstimation_, &cloud);
+		m545_mapping::estimateNormals(params.kNNnormalEstimation_, &cloud);
 		cloud.NormalizeNormals();
 	}
 	auto result = open3d::pipelines::registration::RegistrationICP(cloudPrev, cloud, params.maxCorrespondenceDistance_,
-			init, *icoObjective, criteria);
+			init, *icpObjective, criteria);
 	const auto endTime = std::chrono::steady_clock::now();
 	const double nMsec = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count() / 1e3;
 
@@ -130,15 +109,16 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 		return;
 	}
 	curentTransformation *= result.transformation_.inverse();
-	geometry_msgs::TransformStamped transformStamped = toRos(curentTransformation, timestamp, "odom", "range_sensor");
+	geometry_msgs::TransformStamped transformStamped = toRos(curentTransformation, timestamp,
+			m545_mapping::frames::odomFrame, m545_mapping::frames::rangeSensorFrame);
 	tfBroadcaster->sendTransform(transformStamped);
 
 	auto registeredCloud = cloudPrev;
 	registeredCloud.Transform(result.transformation_);
 
-	publishCloud(cloudPrev, "odom", refPub);
-	publishCloud(cloud, "odom", targetPub);
-	publishCloud(registeredCloud, "odom", registeredPub);
+	publishCloud(cloudPrev, m545_mapping::frames::odomFrame, refPub);
+	publishCloud(cloud, m545_mapping::frames::odomFrame, targetPub);
+	publishCloud(registeredCloud, m545_mapping::frames::odomFrame, registeredPub);
 	cloudPrev = cloud;
 
 }
@@ -157,7 +137,7 @@ int main(int argc, char **argv) {
 	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
 	std::cout << "loading params from: " << paramFile << "\n";
 	m545_mapping::loadParameters(paramFile, &params);
-	icoObjective = icpObjectiveFactory(params);
+	icpObjective = m545_mapping::icpObjectiveFactory(params.icpObjective_);
 
 //	ros::AsyncSpinner spinner(4); // Use 4 threads
 //	spinner.start();

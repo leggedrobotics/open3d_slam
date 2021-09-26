@@ -24,7 +24,7 @@ static const std::map<std::string, IcpObjective> IcpObjectiveNames {
 	{"PointToPlane",IcpObjective::PointToPlane}
 };
 
-struct IcpOdometryParameters {
+struct IcpParameters {
 	int kNNnormalEstimation_ = 5;
 	int maxNumIter_ = 50;
 	double maxCorrespondenceDistance_ = 0.2;
@@ -36,7 +36,7 @@ struct IcpOdometryParameters {
 };
 
 
-void loadParameters(const std::string &filename, IcpOdometryParameters *p);
-void loadParameters(const YAML::Node &node, IcpOdometryParameters *p);
+void loadParameters(const std::string &filename, IcpParameters *p);
+void loadParameters(const YAML::Node &node, IcpParameters *p);
 
 } // namespace m545_mapping
