@@ -71,8 +71,6 @@ geometry_msgs::TransformStamped toRos(const Eigen::Matrix4d &Mat, const ros::Tim
 	return transformStamped;
 }
 
-
-
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	cloud.Clear();
 	open3d_conversions::rosToOpen3d(msg, cloud, true);
@@ -83,7 +81,7 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 		cloudPrev = cloud;
 		return;
 	}
-	const auto startTime = std::chrono::steady_clock::now();
+	const m545_mapping::Timer timer;
 	const Eigen::Matrix4d init = Eigen::Matrix4d::Identity();
 	auto criteria = open3d::pipelines::registration::ICPConvergenceCriteria();
 	criteria.max_iteration_ = params.maxNumIter_;
@@ -99,24 +97,25 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	}
 	auto result = open3d::pipelines::registration::RegistrationICP(cloudPrev, cloud, params.maxCorrespondenceDistance_,
 			init, *icpObjective, criteria);
-	const auto endTime = std::chrono::steady_clock::now();
-	const double nMsec = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count() / 1e3;
 
-	std::cout << "Scan matching finished \n";
-	std::cout << "Time elapsed: " << nMsec << " msec \n";
-	std::cout << "Fitness: " << result.fitness_ << "\n";
-	std::cout << "RMSE: " << result.inlier_rmse_ << "\n";
-	std::cout << "Transform: " << result.transformation_ << "\n";
-	std::cout << "target size: " << cloud.points_.size() << std::endl;
-	std::cout << "reference size: " << cloudPrev.points_.size() << std::endl;
-	std::cout << "\n \n";
+//	std::cout << "Scan to scan matching finished \n";
+//	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
+//	std::cout << "Fitness: " << result.fitness_ << "\n";
+//	std::cout << "RMSE: " << result.inlier_rmse_ << "\n";
+//	std::cout << "Transform: " << result.transformation_ << "\n";
+//	std::cout << "target size: " << cloud.points_.size() << std::endl;
+//	std::cout << "reference size: " << cloudPrev.points_.size() << std::endl;
+//	std::cout << "\n \n";
 	if (result.fitness_ <= 1e-2) {
 		return;
 	}
 	curentTransformation *= result.transformation_.inverse();
-	geometry_msgs::TransformStamped transformStamped = toRos(curentTransformation, timestamp,
-			m545_mapping::frames::odomFrame, m545_mapping::frames::rangeSensorFrame);
-	tfBroadcaster->sendTransform(transformStamped);
+	{
+		geometry_msgs::TransformStamped transformStamped = toRos(curentTransformation, timestamp,
+				m545_mapping::frames::odomFrame, m545_mapping::frames::rangeSensorFrame);
+		tfBroadcaster->sendTransform(transformStamped);
+
+	}
 
 	auto registeredCloud = cloudPrev;
 	registeredCloud.Transform(result.transformation_);
@@ -125,18 +124,30 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 //	const auto endTime2 = std::chrono::steady_clock::now();
 //	const double nMsec2 = std::chrono::duration_cast<std::chrono::microseconds>(endTime2 - startTime).count() / 1e3;
 //	std::cout << "Total time elapsed: " << nMsec2 << " msec \n";
-
-	std::thread t ([](){
-		if (mapper->isMatchingInProgress()){
+	std::thread t([]() {
+		if (mapper->isMatchingInProgress()) {
 			return;
 		}
 		mapper->addRangeMeasurement(cloud, timestamp);
+		{
+			geometry_msgs::TransformStamped transformStamped = toRos(mapper->getMapToOdom().matrix(), timestamp,
+					m545_mapping::frames::mapFrame, m545_mapping::frames::odomFrame);
+			tfBroadcaster->sendTransform(transformStamped);
+		}
+//		{
+//			geometry_msgs::TransformStamped transformStamped = toRos(mapper->getMapToRangeSensor().matrix(), timestamp,
+//					m545_mapping::frames::mapFrame, m545_mapping::frames::rangeSensorFrame+"_check");
+//			tfBroadcaster->sendTransform(transformStamped);
+//		}
+
+
+
 	});
 	t.detach();
-	publishCloud(mapper->getMap(), m545_mapping::frames::odomFrame, mapPub);
-	publishCloud(cloudPrev, m545_mapping::frames::odomFrame, refPub);
-	publishCloud(cloud, m545_mapping::frames::odomFrame, targetPub);
-	publishCloud(registeredCloud, m545_mapping::frames::odomFrame, registeredPub);
+
+	publishCloud(mapper->getMap(), m545_mapping::frames::mapFrame, mapPub);
+//	publishCloud(cloudPrev, m545_mapping::frames::mapFrame, refPub);
+	publishCloud(cloud, m545_mapping::frames::rangeSensorFrame, refPub);
 	cloudPrev = cloud;
 
 }

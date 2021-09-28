@@ -9,6 +9,7 @@
 
 #include <Eigen/Geometry>
 #include <open3d/geometry/PointCloud.h>
+#include <open3d/pipelines/registration/Registration.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
 #include <tf2/LinearMath/Transform.h>
@@ -29,11 +30,15 @@ public:
 	const PointCloud &getMap() const;
 	void setParameters(const MapperParameters &p);
 	bool isMatchingInProgress() const;
+	Eigen::Isometry3d getMapToOdom() const;
+	Eigen::Isometry3d getMapToRangeSensor() const;
+
 
 private:
 
 	Eigen::Isometry3d lookupTransform(const std::string& target_frame, const std::string& source_frame,
 		    const ros::Time& time) const;
+	void update(const MapperParameters &p);
 
   bool isMatchingInProgress_ = false;
   PointCloud map_;
@@ -44,6 +49,7 @@ private:
   Eigen::Isometry3d odomToRangeSensorPrev_ = Eigen::Isometry3d::Identity();
   Eigen::Isometry3d mapToRangeSensor_ = Eigen::Isometry3d::Identity();
   MapperParameters params_;
+  open3d::pipelines::registration::ICPConvergenceCriteria icpCriteria_;
 
 
 

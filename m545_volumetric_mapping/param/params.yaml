@@ -3,7 +3,7 @@
 
 icp_odometry:
   icp_objective: PointToPlane
-  max_correspondence_dist: 0.2
+  max_correspondence_dist: 0.25
   knn_normal_estimation: 4
   max_n_iter: 25
   downsampling_ratio: 0.4
@@ -17,8 +17,8 @@ icp_odometry:
 icp_mapping:
   scan_to_map_refinement:
     icp_objective: PointToPlane
-    max_correspondence_dist: 0.5
-    knn_normal_estimation: 4
+    max_correspondence_dist: 3.0
+    knn_normal_estimation: 5
     max_n_iter: 50
     downsampling_ratio: 0.4
     crop_box_min_x: -25.0

@@ -16,87 +16,120 @@
 namespace m545_mapping {
 
 namespace {
-	namespace registration = open3d::pipelines::registration;
-	std::shared_ptr<registration::TransformationEstimation> icpObjective;
+namespace registration = open3d::pipelines::registration;
+std::shared_ptr<registration::TransformationEstimation> icpObjective;
 } // namespace
 
 Mapper::Mapper() :
 		tfListener_(tfBuffer_) {
-	icpObjective = icpObjectiveFactory(params_.icpObjective_);
+	update(params_);
+
 }
 
-void Mapper::setParameters(const MapperParameters &p){
+void Mapper::setParameters(const MapperParameters &p) {
 	params_ = p;
+	update(p);
+}
+
+void Mapper::update(const MapperParameters &p) {
+	icpCriteria_.max_iteration_ = params_.maxNumIter_;
 	icpObjective = icpObjectiveFactory(params_.icpObjective_);
 }
 
-bool Mapper::isMatchingInProgress() const{
+bool Mapper::isMatchingInProgress() const {
 	return isMatchingInProgress_;
 }
 
-void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloud,const ros::Time &timestamp) {
+Eigen::Isometry3d Mapper::getMapToOdom() const {
+	return mapToOdom_;
+}
+Eigen::Isometry3d Mapper::getMapToRangeSensor() const {
+	return mapToRangeSensor_;
+}
+
+void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::Time &timestamp) {
 	isMatchingInProgress_ = true;
 	lastMeasurementTimestamp_ = timestamp;
 
+	Timer timer3;
+	auto cloud = cloudIn;
+	if (params_.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
+		estimateNormals(params_.kNNnormalEstimation_, &cloud);
+		cloud.NormalizeNormals();
+	}
+	std::cout << "Copying and normal estimation finished\n";
+	std::cout << "Time elapsed: " << timer3.elapsedMsec() << " msec \n";
+
 	//todo figure out how to estimate nomals
-	if (map_.points_.empty()){
+	if (map_.points_.empty()) {
 		map_ += cloud;
 		isMatchingInProgress_ = false;
 		return;
 	}
 
-	const auto odomToRangeSensor = lookupTransform(frames::rangeSensorFrame, frames::odomFrame, timestamp);
-	const auto odometryMotion = odomToRangeSensorPrev_.inverse() * odomToRangeSensor;
-	const bool isMovedTooLittle = odometryMotion.translation().norm() < 0.3;
-	if (isMovedTooLittle){
+	const auto odomToRangeSensor = lookupTransform( frames::odomFrame,frames::rangeSensorFrame, timestamp);
+	const auto odometryMotion = odomToRangeSensorPrev_.inverse()*odomToRangeSensor;
+	const bool isMovedTooLittle = false; // && odometryMotion.translation().norm() < 0.1;
+	//todo check rotation and trans
+	if (isMovedTooLittle) {
 		isMatchingInProgress_ = false;
 		return;
 	}
-
-	// todo properly fix frames
-	auto criteria = open3d::pipelines::registration::ICPConvergenceCriteria();
-	criteria.max_iteration_ = params_.maxNumIter_;
+	Timer timer;
+//	std::cout << "odom motion: " << asString(odometryMotion) << std::endl;
 	open3d::geometry::AxisAlignedBoundingBox bbox;
 	bbox.min_bound_ = params_.cropBoxLowBound_;
 	bbox.max_bound_ = params_.cropBoxHighBound_;
 	auto croppedCloud = cloud.Crop(bbox);
 	auto downSampledCloud = croppedCloud->RandomDownSample(params_.downSamplingRatio_);
-	if (params_.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
-		estimateNormals(params_.kNNnormalEstimation_, &map_);
-		map_.NormalizeNormals();
-	}
-	const auto result = open3d::pipelines::registration::RegistrationICP(*downSampledCloud, map_, params_.maxCorrespondenceDistance_,
-			mapToRangeSensor_.matrix(), *icpObjective, criteria);
+	std::cout << "Map pre processing finished\n";
+	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
+
+
+	Timer timer2;
+	const Eigen::Matrix4d initTransform = (mapToRangeSensor_).matrix();
+//	const Eigen::Matrix4d initTransform = (mapToOdom_*odomToRangeSensor).inverse().matrix();
+	const auto result = open3d::pipelines::registration::RegistrationICP(*downSampledCloud, map_,
+			params_.maxCorrespondenceDistance_, initTransform, *icpObjective, icpCriteria_);
+
+	std::cout << "Scan to map matching finished \n";
+	std::cout << "Time elapsed: " << timer2.elapsedMsec() << " msec \n";
+	std::cout <<"\n";
 
 	// update transforms
 	mapToRangeSensor_.matrix() = result.transformation_;
 	odomToRangeSensorPrev_ = odomToRangeSensor;
+	mapToOdom_ = mapToRangeSensor_ * odomToRangeSensor.inverse();
 
 	// concatenate registered cloud into map
-//	bbox.min_bound_ = params_.mapBuilderCropBoxLowBound_;
-//	bbox.max_bound_ = params_.mapBuilderCropBoxHighBound_;
-//	croppedCloud = cloud.Crop(bbox);
-	map_+= downSampledCloud->Transform(result.transformation_);
+	{ // this is fast, less than a millisecond
+		Timer timer;
+		bbox.min_bound_ = params_.mapBuilderCropBoxLowBound_;
+		bbox.max_bound_ = params_.mapBuilderCropBoxHighBound_;
+//		auto croppedCloud = cloud.Crop(bbox);
+//		auto downSampledCloud = croppedCloud->RandomDownSample(params_.downSamplingRatio_);
+		map_ += downSampledCloud->Transform(result.transformation_);
+//		std::cout << "Map update finished \n";
+//		std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
+
+	}
 	isMatchingInProgress_ = false;
 }
 const Mapper::PointCloud& Mapper::getMap() const {
 	return map_;
 }
 
+Eigen::Isometry3d Mapper::lookupTransform(const std::string &target_frame, const std::string &source_frame,
+		const ros::Time &time) const {
+	geometry_msgs::TransformStamped transformStamped;
+	try {
+		transformStamped = tfBuffer_.lookupTransform(target_frame, source_frame, time);
+	} catch (tf2::TransformException &ex) {
+		ROS_WARN("caught exception while looking up the tf: %s", ex.what());
+		return Eigen::Isometry3d::Identity();
+	}
 
-Eigen::Isometry3d Mapper::lookupTransform(const std::string& target_frame, const std::string& source_frame,
-	    const ros::Time& time) const {
-    geometry_msgs::TransformStamped transformStamped;
-    try{
-      transformStamped = tfBuffer_.lookupTransform(target_frame, source_frame,
-                               time);
-    }
-    catch (tf2::TransformException &ex) {
-      ROS_WARN("caught exception while looking up the tf: %s",ex.what());
-      return Eigen::Isometry3d::Identity();
-    }
-
-    return tf2::transformToEigen(transformStamped);
+	return tf2::transformToEigen(transformStamped);
 }
 
 } /* namespace m545_mapping */
