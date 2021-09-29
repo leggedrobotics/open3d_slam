@@ -115,8 +115,8 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 		Timer timer;
 		bbox.min_bound_ = params_.mapBuilderCropBoxLowBound_;
 		bbox.max_bound_ = params_.mapBuilderCropBoxHighBound_;
-//		auto croppedCloud = cloud.Crop(bbox);
-//		auto downSampledCloud = croppedCloud->RandomDownSample(params_.downSamplingRatio_);
+		auto croppedCloud = cloud.Crop(bbox);
+		auto downSampledCloud = croppedCloud->RandomDownSample(params_.downSamplingRatio_);
 		auto voxelizedCloud = downSampledCloud->VoxelDownSample(params_.mapVoxelSize_);
 		map_ += voxelizedCloud->Transform(result.transformation_);
 //		std::cout << "Map update finished \n";
