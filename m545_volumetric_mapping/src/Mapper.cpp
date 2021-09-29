@@ -105,9 +105,9 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	const auto result = open3d::pipelines::registration::RegistrationICP(*downSampledCloud, *map,
 			params_.maxCorrespondenceDistance_, initTransform, *icpObjective, icpCriteria_);
 
-	std::cout << "Scan to map matching finished \n";
-	std::cout << "Time elapsed: " << timer2.elapsedMsec() << " msec \n";
-	std::cout << "fitness: " << result.fitness_ << std::endl;
+//	std::cout << "Scan to map matching finished \n";
+//	std::cout << "Time elapsed: " << timer2.elapsedMsec() << " msec \n";
+//	std::cout << "fitness: " << result.fitness_ << std::endl;
 
 	if (result.fitness_ < params_.minRefinementFitness_){
 		std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
@@ -134,10 +134,11 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 //		std::cout <<"\n";
 		odomToRangeSensorPrev_ = odomToRangeSensor;
 	}
+	mapCopy_ = map_;
 	isMatchingInProgress_ = false;
 }
 const Mapper::PointCloud& Mapper::getMap() const {
-	return map_;
+	return mapCopy_;
 }
 
 bool Mapper::lookupTransform(const std::string& target_frame, const std::string& source_frame,

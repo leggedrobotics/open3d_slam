@@ -43,6 +43,7 @@ private:
 
   bool isMatchingInProgress_ = false;
   PointCloud map_;
+  PointCloud mapCopy_;
   tf2_ros::Buffer tfBuffer_;
   tf2_ros::TransformListener tfListener_;
   ros::Time lastMeasurementTimestamp_;

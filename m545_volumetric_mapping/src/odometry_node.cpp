@@ -128,7 +128,10 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 		if (mapper->isMatchingInProgress()) {
 			return;
 		}
+		const m545_mapping::Timer timer;
 		mapper->addRangeMeasurement(cloud, timestamp);
+		std::cout << "Mapping step finished \n";
+		std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
 		{
 			geometry_msgs::TransformStamped transformStamped = toRos(mapper->getMapToOdom().matrix(), timestamp,
 					m545_mapping::frames::mapFrame, m545_mapping::frames::odomFrame);
@@ -139,14 +142,11 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 //					m545_mapping::frames::mapFrame, m545_mapping::frames::rangeSensorFrame+"_check");
 //			tfBroadcaster->sendTransform(transformStamped);
 //		}
-
-
-
+		open3d::geometry::PointCloud map = mapper->getMap();
+		publishCloud(map, m545_mapping::frames::mapFrame, mapPub);
 	});
 	t.detach();
 
-	publishCloud(mapper->getMap(), m545_mapping::frames::mapFrame, mapPub);
-//	publishCloud(cloudPrev, m545_mapping::frames::mapFrame, refPub);
 	publishCloud(cloud, m545_mapping::frames::rangeSensorFrame, refPub);
 	cloudPrev = cloud;
 

@@ -7,6 +7,7 @@ Panels:
         - /Global Options1
         - /Status1
         - /TFTrajectory1
+        - /PointCloud21
       Splitter Ratio: 0.5
     Tree Height: 719
   - Class: rviz/Selection
@@ -64,8 +65,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 7.494602203369141
-        Min Value: -1.006766676902771
+        Max Value: 8.504365921020508
+        Min Value: -0.9023455381393433
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -82,7 +83,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.009999999776482582
+      Size (m): 0.029999999329447746
       Style: Flat Squares
       Topic: /odometry_node/reference
       Unreliable: false
@@ -209,7 +210,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 43.22452926635742
+      Distance: 108.26508331298828
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -217,17 +218,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.20493024587631226
-        Y: -2.029097318649292
-        Z: -9.411622047424316
+        X: -5.800836563110352
+        Y: -5.325786113739014
+        Z: 14.609210968017578
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5697963237762451
+      Pitch: 1.0447968244552612
       Target Frame: <Fixed Frame>
-      Yaw: 0.6922369003295898
+      Yaw: 4.0772385597229
     Saved: ~
 Window Geometry:
   Displays:
