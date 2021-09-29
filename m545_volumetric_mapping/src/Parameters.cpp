@@ -57,6 +57,8 @@ void loadParameters(const YAML::Node &node, MapperParameters *p){
 	p->mapBuilderCropBoxHighBound_.x() = n["crop_box_max_x"].as<double>();
 	p->mapBuilderCropBoxHighBound_.y() = n["crop_box_max_y"].as<double>();
 	p->mapBuilderCropBoxHighBound_.z() = n["crop_box_max_z"].as<double>();
+
+	p->mapVoxelSize_ = node["map_voxel_size"].as<double>();
 }
 
 

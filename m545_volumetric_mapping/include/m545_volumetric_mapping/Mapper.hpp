@@ -36,9 +36,10 @@ public:
 
 private:
 
-	Eigen::Isometry3d lookupTransform(const std::string& target_frame, const std::string& source_frame,
-		    const ros::Time& time) const;
+	bool lookupTransform(const std::string& target_frame, const std::string& source_frame,
+		    const ros::Time& time, Eigen::Isometry3d *transform) const;
 	void update(const MapperParameters &p);
+	void estimateNormalsIfNeeded(PointCloud *pcl) const;
 
   bool isMatchingInProgress_ = false;
   PointCloud map_;

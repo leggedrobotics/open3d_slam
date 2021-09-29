@@ -15,6 +15,7 @@ icp_odometry:
   crop_box_max_z: 100.0
   
 icp_mapping:
+  map_voxel_size: 0.05
   scan_to_map_refinement:
     icp_objective: PointToPlane
     max_correspondence_dist: 3.0
