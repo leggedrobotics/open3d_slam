@@ -95,8 +95,8 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 
 
 	Timer timer2;
-	const Eigen::Matrix4d initTransform = (mapToRangeSensor_).matrix();
-//	const Eigen::Matrix4d initTransform = (mapToOdom_*odomToRangeSensor).matrix();
+//	const Eigen::Matrix4d initTransform = (mapToRangeSensor_).matrix();
+	const Eigen::Matrix4d initTransform = (mapToOdom_*odomToRangeSensor).matrix();
 	const auto result = open3d::pipelines::registration::RegistrationICP(*downSampledCloud, map_,
 			params_.maxCorrespondenceDistance_, initTransform, *icpObjective, icpCriteria_);
 
@@ -125,8 +125,8 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 		auto downSampledCloud = croppedCloud->RandomDownSample(params_.downSamplingRatio_);
 		auto voxelizedCloud = downSampledCloud->VoxelDownSample(params_.mapVoxelSize_);
 		map_ += voxelizedCloud->Transform(result.transformation_);
-//		std::cout << "Map update finished \n";
-//		std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
+		std::cout << "Map update finished \n";
+		std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
 		odomToRangeSensorPrev_ = odomToRangeSensor;
 
 	}
