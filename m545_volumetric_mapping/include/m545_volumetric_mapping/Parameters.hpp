@@ -37,6 +37,8 @@ struct IcpParameters {
 
 struct MapperParameters : public IcpParameters {
 	double mapVoxelSize_ = 0.03;
+	double minMovementBetweenMappingSteps_ = 0.0;
+	double minRefinementFitness_ = 0.7;
 	Eigen::Vector3d mapBuilderCropBoxLowBound_ = Eigen::Vector3d(-50.0,-50.0,-1e3);
 	Eigen::Vector3d mapBuilderCropBoxHighBound_ = Eigen::Vector3d(50.0,50.0,1e3);
 };

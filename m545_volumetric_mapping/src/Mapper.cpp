@@ -71,9 +71,8 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	Eigen::Isometry3d odomToRangeSensor;
 	const bool lookupStatus = lookupTransform( frames::odomFrame,frames::rangeSensorFrame, timestamp,&odomToRangeSensor);
 	const auto odometryMotion = odomToRangeSensorPrev_.inverse()*odomToRangeSensor;
-	const bool isMovedTooLittle = odometryMotion.translation().norm() < 0.1;
 	//todo check rotation and trans
-	if (isMovedTooLittle || !lookupStatus) {
+	if (!lookupStatus) {
 		isMatchingInProgress_ = false;
 		return;
 	}
@@ -103,15 +102,22 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 
 	std::cout << "Scan to map matching finished \n";
 	std::cout << "Time elapsed: " << timer2.elapsedMsec() << " msec \n";
+	std::cout << "fitness: " << result.fitness_ << std::endl;
 	std::cout <<"\n";
+
+	if (result.fitness_ < params_.minRefinementFitness_){
+		std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
+		isMatchingInProgress_ = false;
+		return;
+	}
 
 	// update transforms
 	mapToRangeSensor_.matrix() = result.transformation_;
-	odomToRangeSensorPrev_ = odomToRangeSensor;
 	mapToOdom_ = mapToRangeSensor_ * odomToRangeSensor.inverse();
 
 	// concatenate registered cloud into map
-	{ // this is fast, less than a millisecond
+	const bool isMovedTooLittle = odometryMotion.translation().norm() < params_.minMovementBetweenMappingSteps_;
+	if (!isMovedTooLittle){ // this is fast, less than a millisecond
 		Timer timer;
 		bbox.min_bound_ = params_.mapBuilderCropBoxLowBound_;
 		bbox.max_bound_ = params_.mapBuilderCropBoxHighBound_;
@@ -121,6 +127,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 		map_ += voxelizedCloud->Transform(result.transformation_);
 //		std::cout << "Map update finished \n";
 //		std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
+		odomToRangeSensorPrev_ = odomToRangeSensor;
 
 	}
 	isMatchingInProgress_ = false;

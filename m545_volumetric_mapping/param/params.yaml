@@ -16,6 +16,8 @@ icp_odometry:
   
 icp_mapping:
   map_voxel_size: 0.05
+  min_movement_between_mapping_steps: 0.2
+  min_refinement_fitness: 0.7
   scan_to_map_refinement:
     icp_objective: PointToPlane
     max_correspondence_dist: 3.0
