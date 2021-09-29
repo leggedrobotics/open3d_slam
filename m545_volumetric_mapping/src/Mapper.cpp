@@ -80,8 +80,8 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	Timer timer3;
 	auto cloud = cloudIn;
 	estimateNormalsIfNeeded(&cloud);
-	std::cout << "Copying and normal estimation finished\n";
-	std::cout << "Time elapsed: " << timer3.elapsedMsec() << " msec \n";
+//	std::cout << "Copying and normal estimation finished\n";
+//	std::cout << "Time elapsed: " << timer3.elapsedMsec() << " msec \n";
 
 	Timer timer;
 //	std::cout << "odom motion: " << asString(odometryMotion) << std::endl;
@@ -90,20 +90,24 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	bbox.max_bound_ = params_.cropBoxHighBound_;
 	auto croppedCloud = cloud.Crop(bbox);
 	auto downSampledCloud = croppedCloud->RandomDownSample(params_.downSamplingRatio_);
-	std::cout << "Map pre processing finished\n";
-	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
+
+	bbox.min_bound_ = mapToRangeSensor_.translation() + 1.5* params_.cropBoxLowBound_;
+	bbox.max_bound_ = mapToRangeSensor_.translation() + 1.5* params_.cropBoxHighBound_;
+	auto map = map_.Crop(bbox);
+
+//	std::cout << "Map and scan pre processing finished\n";
+//	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
 
 
 	Timer timer2;
 //	const Eigen::Matrix4d initTransform = (mapToRangeSensor_).matrix();
 	const Eigen::Matrix4d initTransform = (mapToOdom_*odomToRangeSensor).matrix();
-	const auto result = open3d::pipelines::registration::RegistrationICP(*downSampledCloud, map_,
+	const auto result = open3d::pipelines::registration::RegistrationICP(*downSampledCloud, *map,
 			params_.maxCorrespondenceDistance_, initTransform, *icpObjective, icpCriteria_);
 
 	std::cout << "Scan to map matching finished \n";
 	std::cout << "Time elapsed: " << timer2.elapsedMsec() << " msec \n";
 	std::cout << "fitness: " << result.fitness_ << std::endl;
-	std::cout <<"\n";
 
 	if (result.fitness_ < params_.minRefinementFitness_){
 		std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
@@ -125,10 +129,10 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 		auto downSampledCloud = croppedCloud->RandomDownSample(params_.downSamplingRatio_);
 		auto voxelizedCloud = downSampledCloud->VoxelDownSample(params_.mapVoxelSize_);
 		map_ += voxelizedCloud->Transform(result.transformation_);
-		std::cout << "Map update finished \n";
-		std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
+//		std::cout << "Map update finished \n";
+//		std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
+//		std::cout <<"\n";
 		odomToRangeSensorPrev_ = odomToRangeSensor;
-
 	}
 	isMatchingInProgress_ = false;
 }

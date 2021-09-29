@@ -24,11 +24,11 @@ icp_mapping:
     knn_normal_estimation: 5
     max_n_iter: 50
     downsampling_ratio: 0.4
-    crop_box_min_x: -25.0
-    crop_box_min_y: -25.0
+    crop_box_min_x: -30.0
+    crop_box_min_y: -30.0
     crop_box_min_z: -100.0
-    crop_box_max_x: 25.0
-    crop_box_max_y: 25.0
+    crop_box_max_x: 30.0
+    crop_box_max_y: 30.0
     crop_box_max_z: 100.0
   map_builder:
     crop_box_min_x: -100.0
