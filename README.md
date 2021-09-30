@@ -32,9 +32,12 @@ http://www.open3d.org/docs/release/compilation.html
 
 `git clone --recursive https://github.com/intel-isl/Open3D`
 
-Make sure you checkout this commit: e17648468030018155de1e
+Make sure you checkout this tag v0.13.0
 
-`git checkout e17648468030018155de1e`
+`git checkout v0.13.0`
+
+Update the submodules:
+`git submodule update --init --recursive`
 
 Make sure that you install the dependencies.
 
@@ -47,7 +50,7 @@ The script does not install the following deps which you have to install manuall
 Create a build directory:
 `mkdir build`
 `cd build`
-`cmake -DGLIBCXX_USE_CXX11_ABI=ON -DCMAKE_INSTALL_PREFIX=${HOME}/Programs/open3d_install ..`
+`cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_SYSTEM_EIGEN3=ON -DGLIBCXX_USE_CXX11_ABI=ON -DBUILD_PYTHON_MODULE=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/Programs/open3d_install ..`
 `make -j8`
 `make install`
 
