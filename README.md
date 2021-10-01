@@ -30,11 +30,10 @@ https://apt.kitware.com/
 Install the open3d from source:
 http://www.open3d.org/docs/release/compilation.html
 
-`git clone --recursive https://github.com/intel-isl/Open3D`
+Clone the following repository:  
 
-Make sure you checkout this tag v0.13.0
-
-`git checkout v0.13.0`
+`git clone --recursive git@bitbucket.org:leggedrobotics/open3d.git`
+`git checkout m545_stable`
 
 Update the submodules:
 `git submodule update --init --recursive`
@@ -43,7 +42,7 @@ Make sure that you install the dependencies.
 
 http://www.open3d.org/docs/release/compilation.html#install-dependencies
 
-The script does not install the following deps which you have to install manually:
+The script might not install the following deps which then you will have to install manually:
 `sudo apt install libfmt-dev`
 `sudo apt install libglfw3-dev`
 
@@ -54,6 +53,8 @@ Create a build directory:
 `make -j8`
 `make install`
 
+
+You can also change the install prefix to point to the desired location.
 Then build the open3d. This could take a while (30 min or so).
 Recommended is to do a local install.
 DO NOT BUILD THE PYTHON PACKAGES. Refer to installation instructions for conda.
