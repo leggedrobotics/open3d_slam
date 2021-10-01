@@ -71,6 +71,29 @@ geometry_msgs::TransformStamped toRos(const Eigen::Matrix4d &Mat, const ros::Tim
 	return transformStamped;
 }
 
+void mappingUpdate(const open3d::geometry::PointCloud &cloudIn, const ros::Time &timestamp) {
+	if (mapper->isMatchingInProgress()) {
+		return;
+	}
+	const m545_mapping::Timer timer;
+	auto cloud = cloudIn;
+	mapper->addRangeMeasurement(cloud, timestamp);
+	std::cout << "Mapping step finished \n";
+	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
+	{
+		geometry_msgs::TransformStamped transformStamped = toRos(mapper->getMapToOdom().matrix(), timestamp,
+				m545_mapping::frames::mapFrame, m545_mapping::frames::odomFrame);
+		tfBroadcaster->sendTransform(transformStamped);
+	}
+//		{
+//			geometry_msgs::TransformStamped transformStamped = toRos(mapper->getMapToRangeSensor().matrix(), timestamp,
+//					m545_mapping::frames::mapFrame, m545_mapping::frames::rangeSensorFrame+"_check");
+//			tfBroadcaster->sendTransform(transformStamped);
+//		}
+	open3d::geometry::PointCloud map = mapper->getMap();
+	publishCloud(map, m545_mapping::frames::mapFrame, mapPub);
+}
+
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	cloud.Clear();
 	open3d_conversions::rosToOpen3d(msg, cloud, true);
@@ -125,25 +148,7 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 //	const double nMsec2 = std::chrono::duration_cast<std::chrono::microseconds>(endTime2 - startTime).count() / 1e3;
 //	std::cout << "Total time elapsed: " << nMsec2 << " msec \n";
 	std::thread t([]() {
-		if (mapper->isMatchingInProgress()) {
-			return;
-		}
-		const m545_mapping::Timer timer;
-		mapper->addRangeMeasurement(cloud, timestamp);
-		std::cout << "Mapping step finished \n";
-		std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
-		{
-			geometry_msgs::TransformStamped transformStamped = toRos(mapper->getMapToOdom().matrix(), timestamp,
-					m545_mapping::frames::mapFrame, m545_mapping::frames::odomFrame);
-			tfBroadcaster->sendTransform(transformStamped);
-		}
-//		{
-//			geometry_msgs::TransformStamped transformStamped = toRos(mapper->getMapToRangeSensor().matrix(), timestamp,
-//					m545_mapping::frames::mapFrame, m545_mapping::frames::rangeSensorFrame+"_check");
-//			tfBroadcaster->sendTransform(transformStamped);
-//		}
-		open3d::geometry::PointCloud map = mapper->getMap();
-		publishCloud(map, m545_mapping::frames::mapFrame, mapPub);
+		mappingUpdate(cloud, timestamp);
 	});
 	t.detach();
 
