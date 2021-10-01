@@ -35,24 +35,23 @@ Clone the following repository:
 `git clone --recursive git@bitbucket.org:leggedrobotics/open3d.git`  
 `git checkout m545_stable`
 
-Update the submodules:
+Update the submodules:  
 `git submodule update --init --recursive`
 
-Make sure that you install the dependencies.
+Create a build directory and build from source:   
+`mkdir build`  
+`cd build`   
+`cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_SYSTEM_EIGEN3=ON -DGLIBCXX_USE_CXX11_ABI=ON -DBUILD_PYTHON_MODULE=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/Programs/open3d_install ..`   
+`make -j8`   
+`make install`   
 
-http://www.open3d.org/docs/release/compilation.html#install-dependencies
+If any of the steps fail and you are missing the dependencies, you can try to resolve them with the following instructions:  
 
-The script might not install the following deps which then you will have to install manually:
-`sudo apt install libfmt-dev`
-`sudo apt install libglfw3-dev`
+http://www.open3d.org/docs/release/compilation.html#install-dependencies  
 
-Create a build directory:
-`mkdir build`
-`cd build`
-`cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_SYSTEM_EIGEN3=ON -DGLIBCXX_USE_CXX11_ABI=ON -DBUILD_PYTHON_MODULE=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/Programs/open3d_install ..`
-`make -j8`
-`make install`
-
+The script might not install the following deps which then you will have to install manually:  
+`sudo apt install libfmt-dev`  
+`sudo apt install libglfw3-dev`  
 
 You can also change the install prefix to point to the desired location.
 Then build the open3d. This could take a while (30 min or so).
