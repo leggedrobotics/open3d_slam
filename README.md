@@ -27,12 +27,12 @@ You might need to update your cmake, since the open3d requires cmake >= 3.18
 See the instructions here:
 https://apt.kitware.com/
 
-Install the open3d from source:
+If the instructions below fail, refer to t he installation manual:
 http://www.open3d.org/docs/release/compilation.html
 
 Clone the following repository:  
 
-`git clone --recursive git@bitbucket.org:leggedrobotics/open3d.git`
+`git clone --recursive git@bitbucket.org:leggedrobotics/open3d.git`  
 `git checkout m545_stable`
 
 Update the submodules:
