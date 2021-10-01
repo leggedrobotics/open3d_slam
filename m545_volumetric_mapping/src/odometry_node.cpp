@@ -20,7 +20,6 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
 
-open3d::geometry::PointCloud cloud;
 open3d::geometry::PointCloud cloudPrev;
 ros::NodeHandlePtr nh;
 bool isNewCloudReceived = false;
@@ -95,7 +94,7 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloudIn, const ros::Time 
 }
 
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
-	cloud.Clear();
+	open3d::geometry::PointCloud cloud;
 	open3d_conversions::rosToOpen3d(msg, cloud, true);
 	timestamp = msg->header.stamp;
 	isNewCloudReceived = true;
@@ -147,7 +146,7 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 //	const auto endTime2 = std::chrono::steady_clock::now();
 //	const double nMsec2 = std::chrono::duration_cast<std::chrono::microseconds>(endTime2 - startTime).count() / 1e3;
 //	std::cout << "Total time elapsed: " << nMsec2 << " msec \n";
-	std::thread t([]() {
+	std::thread t([cloud,timestamp]() {
 		mappingUpdate(cloud, timestamp);
 	});
 	t.detach();
