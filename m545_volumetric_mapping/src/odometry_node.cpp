@@ -23,7 +23,6 @@
 open3d::geometry::PointCloud cloudPrev;
 ros::NodeHandlePtr nh;
 bool isNewCloudReceived = false;
-ros::Time timestamp;
 std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
 Eigen::Matrix4d curentTransformation = Eigen::Matrix4d::Identity();
 namespace registration = open3d::pipelines::registration;
@@ -37,7 +36,8 @@ std::shared_ptr<registration::TransformationEstimation> icpObjective;
 std::shared_ptr<m545_mapping::Mapper> mapper;
 m545_mapping::MapperParameters mapperParams;
 
-void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, ros::Publisher &pub) {
+void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, const ros::Time &timestamp,
+		ros::Publisher &pub) {
 	sensor_msgs::PointCloud2 msg;
 	open3d_conversions::open3dToRos(cloud, msg, frame_id);
 	msg.header.stamp = timestamp;
@@ -70,12 +70,10 @@ geometry_msgs::TransformStamped toRos(const Eigen::Matrix4d &Mat, const ros::Tim
 	return transformStamped;
 }
 
-void mappingUpdate(const open3d::geometry::PointCloud &cloudIn, const ros::Time &timestamp) {
-	if (mapper->isMatchingInProgress()) {
-		return;
-	}
+void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
+
 	const m545_mapping::Timer timer;
-	auto cloud = cloudIn;
+//	auto cloud = cloudIn;
 	mapper->addRangeMeasurement(cloud, timestamp);
 	std::cout << "Mapping step finished \n";
 	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
@@ -90,17 +88,28 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloudIn, const ros::Time 
 //			tfBroadcaster->sendTransform(transformStamped);
 //		}
 	open3d::geometry::PointCloud map = mapper->getMap();
-	publishCloud(map, m545_mapping::frames::mapFrame, mapPub);
+	publishCloud(map, m545_mapping::frames::mapFrame, timestamp, mapPub);
+}
+
+void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
+	if (mapper->isMatchingInProgress()) {
+		return;
+	}
+	std::thread t([cloud, timestamp]() {
+		mappingUpdate(cloud, timestamp);
+	});
+	t.detach();
 }
 
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	open3d::geometry::PointCloud cloud;
 	open3d_conversions::rosToOpen3d(msg, cloud, true);
-	timestamp = msg->header.stamp;
+	ros::Time timestamp = msg->header.stamp;
 	isNewCloudReceived = true;
 
 	if (cloudPrev.IsEmpty()) {
 		cloudPrev = cloud;
+		mappingUpdate(cloud, timestamp);
 		return;
 	}
 	const m545_mapping::Timer timer;
@@ -112,13 +121,12 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	bbox.max_bound_ = params.cropBoxHighBound_;
 	auto croppedCloud = cloud.Crop(bbox);
 	auto downSampledCloud = croppedCloud->RandomDownSample(params.downSamplingRatio_);
-	cloud = *downSampledCloud;
 	if (params.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
-		m545_mapping::estimateNormals(params.kNNnormalEstimation_, &cloud);
-		cloud.NormalizeNormals();
+		m545_mapping::estimateNormals(params.kNNnormalEstimation_, downSampledCloud.get());
+		downSampledCloud->NormalizeNormals();
 	}
-	auto result = open3d::pipelines::registration::RegistrationICP(cloudPrev, cloud, params.maxCorrespondenceDistance_,
-			init, *icpObjective, criteria);
+	auto result = open3d::pipelines::registration::RegistrationICP(cloudPrev, *downSampledCloud,
+			params.maxCorrespondenceDistance_, init, *icpObjective, criteria);
 
 //	std::cout << "Scan to scan matching finished \n";
 //	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
@@ -136,24 +144,12 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 		geometry_msgs::TransformStamped transformStamped = toRos(curentTransformation, timestamp,
 				m545_mapping::frames::odomFrame, m545_mapping::frames::rangeSensorFrame);
 		tfBroadcaster->sendTransform(transformStamped);
-
 	}
-
 	auto registeredCloud = cloudPrev;
 	registeredCloud.Transform(result.transformation_);
-
-//	mapper->addRangeMeasurement(cloud, timestamp);
-//	const auto endTime2 = std::chrono::steady_clock::now();
-//	const double nMsec2 = std::chrono::duration_cast<std::chrono::microseconds>(endTime2 - startTime).count() / 1e3;
-//	std::cout << "Total time elapsed: " << nMsec2 << " msec \n";
-	std::thread t([cloud,timestamp]() {
-		mappingUpdate(cloud, timestamp);
-	});
-	t.detach();
-
-	publishCloud(cloud, m545_mapping::frames::rangeSensorFrame, refPub);
-	cloudPrev = cloud;
-
+	mappingUpdateIfMapperNotBusy(cloud, timestamp);
+	publishCloud(cloud, m545_mapping::frames::rangeSensorFrame, timestamp, refPub);
+	cloudPrev = *downSampledCloud;
 }
 
 int main(int argc, char **argv) {

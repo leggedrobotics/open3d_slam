@@ -57,7 +57,6 @@ void Mapper::estimateNormalsIfNeeded(PointCloud *pcl) const{
 void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::Time &timestamp) {
 	isMatchingInProgress_ = true;
 	lastMeasurementTimestamp_ = timestamp;
-
 	//insert first scan
 	if (map_.points_.empty()) {
 		auto cloud = cloudIn;
@@ -79,7 +78,6 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 
 	Timer timer3;
 	auto cloud = cloudIn;
-	estimateNormalsIfNeeded(&cloud);
 //	std::cout << "Copying and normal estimation finished\n";
 //	std::cout << "Time elapsed: " << timer3.elapsedMsec() << " msec \n";
 
@@ -98,6 +96,10 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 //	std::cout << "Map and scan pre processing finished\n";
 //	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
 
+//	const auto currPos = mapToOdom_*odomToRangeSensor;
+//	std::cout << "odom: " <<asString(odomToRangeSensor) <<std::endl;
+//	std::cout << "map to odom: " <<asString(mapToOdom_) <<std::endl;
+//	std::cout << "curr pos: " <<asString(currPos) <<std::endl;
 
 	Timer timer2;
 //	const Eigen::Matrix4d initTransform = (mapToRangeSensor_).matrix();
@@ -127,6 +129,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 		bbox.max_bound_ = params_.mapBuilderCropBoxHighBound_;
 		auto croppedCloud = cloud.Crop(bbox);
 		auto downSampledCloud = croppedCloud->RandomDownSample(params_.downSamplingRatio_);
+		estimateNormalsIfNeeded(downSampledCloud.get());
 		auto voxelizedCloud = downSampledCloud->VoxelDownSample(params_.mapVoxelSize_);
 		map_ += voxelizedCloud->Transform(result.transformation_);
 //		std::cout << "Map update finished \n";
@@ -134,11 +137,11 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 //		std::cout <<"\n";
 		odomToRangeSensorPrev_ = odomToRangeSensor;
 	}
-	mapCopy_ = map_;
+
 	isMatchingInProgress_ = false;
 }
 const Mapper::PointCloud& Mapper::getMap() const {
-	return mapCopy_;
+	return map_;
 }
 
 bool Mapper::lookupTransform(const std::string& target_frame, const std::string& source_frame,
