@@ -67,9 +67,6 @@ export Open3D_DIR="${your install prefix}/lib/cmake/Open3D"
 E.g. 
 export Open3D_DIR="/home/jelavice/Programs/open3d_install/lib/cmake/Open3D"
 
-
-Clone the ros conversions and build them in your workspace
-
-`git clone git@github.com:ros-perception/perception_open3d.git`
+Build with:
 
 `catkin build m545_volumetric_mapping`
