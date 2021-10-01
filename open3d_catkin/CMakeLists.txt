@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.5)
 project(open3d_catkin)
 
 set(CMAKE_CXX_STANDARD 14)
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+add_compile_options(-O2)
+
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   roscpp

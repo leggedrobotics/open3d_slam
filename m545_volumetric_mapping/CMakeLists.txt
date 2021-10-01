@@ -3,7 +3,7 @@ project(m545_volumetric_mapping)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
+add_compile_options(-O2)
 
 
 set(SRC_FILES
