@@ -42,9 +42,7 @@ bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const 
 	const Eigen::Matrix4d init = Eigen::Matrix4d::Identity();
 	auto criteria = open3d::pipelines::registration::ICPConvergenceCriteria();
 	criteria.max_iteration_ = odometryParams.maxNumIter_;
-	open3d::geometry::AxisAlignedBoundingBox bbox;
-	bbox.min_bound_ = odometryParams.cropBoxLowBound_;
-	bbox.max_bound_ = odometryParams.cropBoxHighBound_;
+	auto bbox = m545_mapping::boundingBoxAroundPosition(odometryParams.cropBoxLowBound_, odometryParams.cropBoxHighBound_);
 	auto croppedCloud = cloud.Crop(bbox);
 	auto voxelizedCloud = croppedCloud->VoxelDownSample(odometryParams.voxelSize_);
 	auto downSampledCloud = voxelizedCloud->RandomDownSample(odometryParams.downSamplingRatio_);

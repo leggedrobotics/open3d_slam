@@ -59,6 +59,7 @@ inline T getYawFromQuat(T w, T x, T y, T z)
 
 
 
+open3d::geometry::AxisAlignedBoundingBox boundingBoxAroundPosition(const Eigen::Vector3d &low,const Eigen::Vector3d &high, const Eigen::Vector3d &origin = Eigen::Vector3d::Zero());
 
 
 

@@ -179,6 +179,14 @@ Timer::~Timer() {
 	}
 }
 
+open3d::geometry::AxisAlignedBoundingBox boundingBoxAroundPosition(const Eigen::Vector3d &low,
+		const Eigen::Vector3d &high, const Eigen::Vector3d &origin /*= Eigen::Vector3d::Zero()*/) {
+	open3d::geometry::AxisAlignedBoundingBox bbox;
+	bbox.min_bound_ = origin + low;
+	bbox.max_bound_ = origin + high;
+	return bbox;
+}
+
 double Timer::elapsedMsec() const {
 	const auto endTime = std::chrono::steady_clock::now();
 	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime_).count() / 1e3;

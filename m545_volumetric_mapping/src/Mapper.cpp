@@ -47,7 +47,7 @@ Eigen::Isometry3d Mapper::getMapToRangeSensor() const {
 	return mapToRangeSensor_;
 }
 
-void Mapper::estimateNormalsIfNeeded(PointCloud *pcl) const{
+void Mapper::estimateNormalsIfNeeded(PointCloud *pcl) const {
 	if (params_.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
 		estimateNormals(params_.kNNnormalEstimation_, pcl);
 		pcl->NormalizeNormals();
@@ -60,9 +60,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	//insert first scan
 	if (map_.points_.empty()) {
 		auto cloud = cloudIn;
-		open3d::geometry::AxisAlignedBoundingBox bbox;
-		bbox.min_bound_ = params_.mapBuilderCropBoxLowBound_;
-		bbox.max_bound_ = params_.mapBuilderCropBoxHighBound_;
+		auto bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_, params_.mapBuilderCropBoxHighBound_);
 		auto croppedCloud = cloud.Crop(bbox);
 		auto voxelizedCloud = croppedCloud->VoxelDownSample(params_.mapVoxelSize_);
 		estimateNormalsIfNeeded(voxelizedCloud.get());
@@ -73,8 +71,9 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	}
 
 	Eigen::Isometry3d odomToRangeSensor;
-	const bool lookupStatus = lookupTransform( frames::odomFrame,frames::rangeSensorFrame, timestamp,&odomToRangeSensor);
-	const auto odometryMotion = odomToRangeSensorPrev_.inverse()*odomToRangeSensor;
+	const bool lookupStatus = lookupTransform(frames::odomFrame, frames::rangeSensorFrame, timestamp,
+			&odomToRangeSensor);
+	const auto odometryMotion = odomToRangeSensorPrev_.inverse() * odomToRangeSensor;
 	//todo check rotation and trans
 	if (!lookupStatus) {
 		isMatchingInProgress_ = false;
@@ -86,17 +85,15 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 
 	Timer timer;
 //	std::cout << "odom motion: " << asString(odometryMotion) << std::endl;
-	open3d::geometry::AxisAlignedBoundingBox bbox;
-	bbox.min_bound_ = params_.cropBoxLowBound_;
-	bbox.max_bound_ = params_.cropBoxHighBound_;
+	open3d::geometry::AxisAlignedBoundingBox bbox = boundingBoxAroundPosition(params_.cropBoxLowBound_,
+			params_.cropBoxHighBound_);
+
 	auto croppedCloud = cloud.Crop(bbox);
 	auto voxelizedCloud = croppedCloud->VoxelDownSample(params_.voxelSize_);
 	auto downSampledCloud = voxelizedCloud->RandomDownSample(params_.downSamplingRatio_);
-
-	bbox.min_bound_ = mapToRangeSensor_.translation() + 1.5* params_.cropBoxLowBound_;
-	bbox.max_bound_ = mapToRangeSensor_.translation() + 1.5* params_.cropBoxHighBound_;
+	bbox = boundingBoxAroundPosition(1.5 * params_.cropBoxLowBound_, 1.5 * params_.cropBoxHighBound_,
+			mapToRangeSensor_.translation());
 	auto map = map_.Crop(bbox);
-
 
 //	std::cout << "Map and scan pre processing finished\n";
 //	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
@@ -108,7 +105,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 
 	Timer timer2;
 //	const Eigen::Matrix4d initTransform = (mapToRangeSensor_).matrix();
-	const Eigen::Matrix4d initTransform = (mapToOdom_*odomToRangeSensor).matrix();
+	const Eigen::Matrix4d initTransform = (mapToOdom_ * odomToRangeSensor).matrix();
 	const auto result = open3d::pipelines::registration::RegistrationICP(*downSampledCloud, *map,
 			params_.maxCorrespondenceDistance_, initTransform, *icpObjective, icpCriteria_);
 
@@ -116,7 +113,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 //	std::cout << "Time elapsed: " << timer2.elapsedMsec() << " msec \n";
 //	std::cout << "fitness: " << result.fitness_ << std::endl;
 
-	if (result.fitness_ < params_.minRefinementFitness_){
+	if (result.fitness_ < params_.minRefinementFitness_) {
 		std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
 		isMatchingInProgress_ = false;
 		return;
@@ -128,25 +125,24 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 
 	// concatenate registered cloud into map
 	const bool isMovedTooLittle = odometryMotion.translation().norm() < params_.minMovementBetweenMappingSteps_;
-	if (!isMovedTooLittle){
+	if (!isMovedTooLittle) {
 		Timer timer;
-		bbox.min_bound_ = params_.mapBuilderCropBoxLowBound_;
-		bbox.max_bound_ = params_.mapBuilderCropBoxHighBound_;
+		bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_, params_.mapBuilderCropBoxHighBound_);
 		auto croppedCloud = cloud.Crop(bbox);
 		croppedCloud->Transform(result.transformation_);
 		auto voxelizedCloud = croppedCloud->VoxelDownSample(params_.mapVoxelSize_);
 		estimateNormalsIfNeeded(voxelizedCloud.get());
 		map_ += *voxelizedCloud;
 //		auto voxelizedMap = map_.VoxelDownSample(params_.mapVoxelSize_);
-		bbox.min_bound_ = mapToRangeSensor_.translation() + params_.mapBuilderCropBoxLowBound_;
-		bbox.max_bound_ = mapToRangeSensor_.translation() + params_.mapBuilderCropBoxHighBound_;
-		auto voxelizedMap = voxelizeSelectively(params_.mapVoxelSize_,bbox,map_);
+		bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_, params_.mapBuilderCropBoxHighBound_,
+				mapToRangeSensor_.translation());
+		auto voxelizedMap = voxelizeSelectively(params_.mapVoxelSize_, bbox, map_);
 		map_ = *voxelizedMap;
 //		downSampledCloud = croppedCloud->RandomDownSample(params_.denseMapDownSamplingRatio_);
 //		denseMap_ += *downSampledCloud;
 		std::cout << "Map update finished \n";
 		std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
-		std::cout <<"\n";
+		std::cout << "\n";
 		odomToRangeSensorPrev_ = odomToRangeSensor;
 	}
 
@@ -156,12 +152,12 @@ const Mapper::PointCloud& Mapper::getMap() const {
 	return map_;
 }
 
-const Mapper::PointCloud &Mapper::getDenseMap() const{
+const Mapper::PointCloud& Mapper::getDenseMap() const {
 	return denseMap_;
 }
 
-bool Mapper::lookupTransform(const std::string& target_frame, const std::string& source_frame,
-	    const ros::Time& time, Eigen::Isometry3d *transform) const {
+bool Mapper::lookupTransform(const std::string &target_frame, const std::string &source_frame, const ros::Time &time,
+		Eigen::Isometry3d *transform) const {
 	geometry_msgs::TransformStamped transformStamped;
 	try {
 		transformStamped = tfBuffer_.lookupTransform(target_frame, source_frame, time);
@@ -175,11 +171,11 @@ bool Mapper::lookupTransform(const std::string& target_frame, const std::string&
 	return true;
 }
 
-bool Mapper::isManipulatingMap() const{
+bool Mapper::isManipulatingMap() const {
 	return isManipulatingMap_;
 }
 
-void Mapper::cropMap(open3d::geometry::AxisAlignedBoundingBox &bbox){
+void Mapper::cropMap(open3d::geometry::AxisAlignedBoundingBox &bbox) {
 	std::lock_guard<std::mutex> lck(mapManipulationMutex_);
 	isManipulatingMap_ = true;
 	auto map = map_.Crop(bbox);
