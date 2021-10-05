@@ -33,6 +33,8 @@ void loadParameters(const YAML::Node &n, IcpParameters *p) {
 	p->cropBoxHighBound_.x() = n["crop_box_max_x"].as<double>();
 	p->cropBoxHighBound_.y() = n["crop_box_max_y"].as<double>();
 	p->cropBoxHighBound_.z() = n["crop_box_max_z"].as<double>();
+	p->voxelSize_=n["voxel_filter_size"].as<double>();
+
 
 }
 
@@ -79,6 +81,20 @@ void loadParameters(const YAML::Node &n, LocalMapParameters *p){
 	p->cropBoxHighBound_.x() = n["crop_box_max_x"].as<double>();
 	p->cropBoxHighBound_.y() = n["crop_box_max_y"].as<double>();
 	p->cropBoxHighBound_.z() = n["crop_box_max_z"].as<double>();
+}
+
+void loadParameters(const std::string &filename, OdometryParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+
+	if (basenode.IsNull()) {
+		throw std::runtime_error("Odometry::loadParameters loading failed");
+	}
+
+	loadParameters(basenode, p);
+}
+void loadParameters(const YAML::Node &node, OdometryParameters *p){
+	loadParameters(node["icp_odometry"], static_cast<IcpParameters*>(p));
+
 }
 
 } // namespace m545_mapping

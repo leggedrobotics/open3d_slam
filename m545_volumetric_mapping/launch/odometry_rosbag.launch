@@ -3,12 +3,12 @@
 <launch>
 
 	<arg name="launch_rviz" default="true" />
-	<arg name="cloud_topic" default="/rslidar_points" />
+	<arg name="cloud_topic" default="/ouster_points_self_filtered" />
 	<arg name="play_delay" default="0.4" />
 	<arg name="play_rate" default="0.5" />
 	<arg name="use_sim_time" default="true" />
 
-	<arg name="bag_filename" default="first_mission_wangen.bag" /> 
+	<arg name="bag_filename" default="filtered_cloud_and_image.bag" /> 
 	<arg name="bag_filepath" 
 		default="$(find m545_volumetric_mapping)/data/$(arg bag_filename)" /> 
 
@@ -18,7 +18,7 @@
 	</include>
 
 	<node pkg="rosbag" type="play" name="rosbag"
-		args="'$(arg bag_filepath)' --delay '$(arg play_delay)' --rate '$(arg play_rate)' --clock -s 3" />
+		args="'$(arg bag_filepath)' --delay '$(arg play_delay)' --rate '$(arg play_rate)' --clock -s 0" />
 	<!-- append - -loop for looping -->
 
 

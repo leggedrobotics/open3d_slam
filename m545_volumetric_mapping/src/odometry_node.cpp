@@ -25,11 +25,11 @@ std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
 Eigen::Matrix4d curentTransformation = Eigen::Matrix4d::Identity();
 namespace registration = open3d::pipelines::registration;
 ros::Publisher refPub;
-ros::Publisher targetPub;
+ros::Publisher subsampledPub;
 ros::Publisher registeredPub;
 ros::Publisher mapPub;
 
-m545_mapping::IcpParameters params;
+m545_mapping::OdometryParameters odometryParams;
 std::shared_ptr<registration::TransformationEstimation> icpObjective;
 std::shared_ptr<m545_mapping::Mapper> mapper;
 m545_mapping::MapperParameters mapperParams;
@@ -41,18 +41,20 @@ bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const 
 	const m545_mapping::Timer timer;
 	const Eigen::Matrix4d init = Eigen::Matrix4d::Identity();
 	auto criteria = open3d::pipelines::registration::ICPConvergenceCriteria();
-	criteria.max_iteration_ = params.maxNumIter_;
+	criteria.max_iteration_ = odometryParams.maxNumIter_;
 	open3d::geometry::AxisAlignedBoundingBox bbox;
-	bbox.min_bound_ = params.cropBoxLowBound_;
-	bbox.max_bound_ = params.cropBoxHighBound_;
+	bbox.min_bound_ = odometryParams.cropBoxLowBound_;
+	bbox.max_bound_ = odometryParams.cropBoxHighBound_;
 	auto croppedCloud = cloud.Crop(bbox);
-	auto downSampledCloud = croppedCloud->RandomDownSample(params.downSamplingRatio_);
-	if (params.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
-		m545_mapping::estimateNormals(params.kNNnormalEstimation_, downSampledCloud.get());
+	auto voxelizedCloud = croppedCloud->VoxelDownSample(odometryParams.voxelSize_);
+	auto downSampledCloud = voxelizedCloud->RandomDownSample(odometryParams.downSamplingRatio_);
+
+	if (odometryParams.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
+		m545_mapping::estimateNormals(odometryParams.kNNnormalEstimation_, downSampledCloud.get());
 		downSampledCloud->NormalizeNormals();
 	}
 	auto result = open3d::pipelines::registration::RegistrationICP(cloudPrev, *downSampledCloud,
-			params.maxCorrespondenceDistance_, init, *icpObjective, criteria);
+			odometryParams.maxCorrespondenceDistance_, init, *icpObjective, criteria);
 
 //	std::cout << "Scan to scan matching finished \n";
 //	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
@@ -70,6 +72,8 @@ bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const 
 			m545_mapping::frames::odomFrame, m545_mapping::frames::rangeSensorFrame);
 	tfBroadcaster->sendTransform(transformStamped);
 	cloudPrev = *downSampledCloud;
+	m545_mapping::publishCloud(*downSampledCloud, m545_mapping::frames::rangeSensorFrame, timestamp, subsampledPub);
+
 	return true;
 }
 
@@ -79,7 +83,7 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
 //	auto cloud = cloudIn;
 	mapper->addRangeMeasurement(cloud, timestamp);
 //	std::cout << "Mapping step finished \n";
-//	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
+//	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n\n";
 	{
 		geometry_msgs::TransformStamped transformStamped = m545_mapping::toRos(mapper->getMapToOdom().matrix(), timestamp,
 				m545_mapping::frames::mapFrame, m545_mapping::frames::odomFrame);
@@ -90,14 +94,16 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
 //					m545_mapping::frames::mapFrame, m545_mapping::frames::rangeSensorFrame+"_check");
 //			tfBroadcaster->sendTransform(transformStamped);
 //		}
-//	open3d::geometry::PointCloud map = mapper->getMap();
-	open3d::geometry::PointCloud map = mapper->getDenseMap();
-	open3d::geometry::AxisAlignedBoundingBox bbox;
-	auto downSampledMap = map.RandomDownSample(localMapParams.downSamplingRatio_);
-	bbox.min_bound_ = mapper->getMapToRangeSensor().translation() + localMapParams.cropBoxLowBound_;
-	bbox.max_bound_ = mapper->getMapToRangeSensor().translation() + localMapParams.cropBoxHighBound_;
-	m545_mapping::cropPointcloud(bbox,downSampledMap.get());
-	m545_mapping::publishCloud(*downSampledMap, m545_mapping::frames::mapFrame, timestamp, mapPub);
+	open3d::geometry::PointCloud map = mapper->getMap();
+	m545_mapping::publishCloud(map, m545_mapping::frames::mapFrame, timestamp, mapPub);
+
+//	open3d::geometry::PointCloud map = mapper->getDenseMap();
+//	open3d::geometry::AxisAlignedBoundingBox bbox;
+//	auto downSampledMap = map.RandomDownSample(localMapParams.downSamplingRatio_);
+//	bbox.min_bound_ = mapper->getMapToRangeSensor().translation() + localMapParams.cropBoxLowBound_;
+//	bbox.max_bound_ = mapper->getMapToRangeSensor().translation() + localMapParams.cropBoxHighBound_;
+//	m545_mapping::cropPointcloud(bbox,downSampledMap.get());
+//	m545_mapping::publishCloud(*downSampledMap, m545_mapping::frames::mapFrame, timestamp, mapPub);
 }
 
 void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
@@ -117,7 +123,7 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 
 	if (cloudPrev.IsEmpty()) {
 		cloudPrev = cloud;
-		mappingUpdateIfMapperNotBusy(cloud, timestamp);
+//		mappingUpdateIfMapperNotBusy(cloud, timestamp);
 		return;
 	}
 
@@ -137,14 +143,14 @@ int main(int argc, char **argv) {
 	ros::Subscriber cloudSub = nh->subscribe(cloudTopic, 100, &cloudCallback);
 
 	refPub = nh->advertise<sensor_msgs::PointCloud2>("reference", 1, true);
-	targetPub = nh->advertise<sensor_msgs::PointCloud2>("target", 1, true);
+	subsampledPub = nh->advertise<sensor_msgs::PointCloud2>("subsampled", 1, true);
 	registeredPub = nh->advertise<sensor_msgs::PointCloud2>("registered", 1, true);
 	mapPub = nh->advertise<sensor_msgs::PointCloud2>("map", 1, true);
 
 	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
 	std::cout << "loading params from: " << paramFile << "\n";
-	m545_mapping::loadParameters(paramFile, &params);
-	icpObjective = m545_mapping::icpObjectiveFactory(params.icpObjective_);
+	m545_mapping::loadParameters(paramFile, &odometryParams);
+	icpObjective = m545_mapping::icpObjectiveFactory(odometryParams.icpObjective_);
 
 	mapper = std::make_shared<m545_mapping::Mapper>();
 	m545_mapping::loadParameters(paramFile, &mapperParams);

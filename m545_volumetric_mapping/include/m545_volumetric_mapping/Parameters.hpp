@@ -30,10 +30,16 @@ struct IcpParameters {
 	double maxCorrespondenceDistance_ = 0.2;
 	IcpObjective icpObjective_ = IcpObjective::PointToPoint;
 	double downSamplingRatio_ = 1.0;
+	double voxelSize_ = 0.03;
 	Eigen::Vector3d cropBoxLowBound_ = Eigen::Vector3d(-30.0,-30.0,-1e3);
 	Eigen::Vector3d cropBoxHighBound_ = Eigen::Vector3d(30.0,30.0,1e3);
 
 };
+
+struct OdometryParameters : public IcpParameters {
+	int everyKpoints_ = 1;
+};
+
 
 struct MapperParameters : public IcpParameters {
 	double mapVoxelSize_ = 0.03;
@@ -56,6 +62,8 @@ void loadParameters(const std::string &filename, MapperParameters *p);
 void loadParameters(const YAML::Node &node, MapperParameters *p);
 void loadParameters(const std::string &filename, LocalMapParameters *p);
 void loadParameters(const YAML::Node &node, LocalMapParameters *p);
+void loadParameters(const std::string &filename, OdometryParameters *p);
+void loadParameters(const YAML::Node &node, OdometryParameters *p);
 
 
 } // namespace m545_mapping
