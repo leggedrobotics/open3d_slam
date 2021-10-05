@@ -11,6 +11,11 @@
 #include <open3d/pipelines/registration/TransformationEstimation.h>
 #include "m545_volumetric_mapping/Parameters.hpp"
 
+#include <sensor_msgs/PointCloud2.h>
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <ros/publisher.h>
+
 namespace m545_mapping {
 
 void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::PointCloud *pcl);
@@ -20,7 +25,12 @@ std::shared_ptr<open3d::pipelines::registration::TransformationEstimation> icpOb
 
 std::string asString (const Eigen::Isometry3d &T);
 
+void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, const ros::Time &timestamp,ros::Publisher &pub);
 
+geometry_msgs::Pose getPose(const Eigen::MatrixXd &T);
+
+geometry_msgs::TransformStamped toRos(const Eigen::Matrix4d &Mat, const ros::Time &time, const std::string &frame,
+		const std::string &childFrame);
 
 // Converts (roll, pitch, yaw) to a unit length quaternion. Based on the URDF
 // specification http://wiki.ros.org/urdf/XML/joint.

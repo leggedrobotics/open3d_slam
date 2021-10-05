@@ -11,11 +11,54 @@
 #include <open3d/Open3D.h>
 #include <open3d/pipelines/registration/Registration.h>
 
+// ros stuff
+#include "open3d_conversions/open3d_conversions.h"
+#include <eigen_conversions/eigen_msg.h>
+#include <ros/ros.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <nav_msgs/Odometry.h>
+
 namespace m545_mapping {
 
 namespace {
 namespace registration = open3d::pipelines::registration;
 }//namespace
+
+
+void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, const ros::Time &timestamp,
+		ros::Publisher &pub) {
+	sensor_msgs::PointCloud2 msg;
+	open3d_conversions::open3dToRos(cloud, msg, frame_id);
+	msg.header.stamp = timestamp;
+	pub.publish(msg);
+}
+
+geometry_msgs::Pose getPose(const Eigen::MatrixXd &T) {
+	geometry_msgs::Pose pose;
+
+	// Fill pose
+	Eigen::Affine3d eigenTr;
+	eigenTr.matrix() = T;
+	tf::poseEigenToMsg(eigenTr, pose);
+
+	return pose;
+}
+
+geometry_msgs::TransformStamped toRos(const Eigen::Matrix4d &Mat, const ros::Time &time, const std::string &frame,
+		const std::string &childFrame) {
+
+	geometry_msgs::TransformStamped transformStamped;
+	transformStamped.header.stamp = time;
+	transformStamped.header.frame_id = frame;
+	transformStamped.child_frame_id = childFrame;
+	const auto pose = getPose(Mat);
+	transformStamped.transform.translation.x = pose.position.x;
+	transformStamped.transform.translation.y = pose.position.y;
+	transformStamped.transform.translation.z = pose.position.z;
+	transformStamped.transform.rotation = pose.orientation;
+	return transformStamped;
+}
+
 
 void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::PointCloud *pcl){
 	auto croppedCloud = pcl->Crop(bbox);

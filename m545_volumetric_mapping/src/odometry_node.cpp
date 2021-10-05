@@ -15,8 +15,7 @@
 #include <ros/ros.h>
 
 #include <sensor_msgs/PointCloud2.h>
-#include <eigen_conversions/eigen_msg.h>
-#include <geometry_msgs/TransformStamped.h>
+
 #include <tf2_ros/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
 
@@ -36,39 +35,7 @@ std::shared_ptr<m545_mapping::Mapper> mapper;
 m545_mapping::MapperParameters mapperParams;
 m545_mapping::LocalMapParameters localMapParams;
 
-void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, const ros::Time &timestamp,
-		ros::Publisher &pub) {
-	sensor_msgs::PointCloud2 msg;
-	open3d_conversions::open3dToRos(cloud, msg, frame_id);
-	msg.header.stamp = timestamp;
-	pub.publish(msg);
-}
 
-geometry_msgs::Pose getPose(const Eigen::MatrixXd &T) {
-	geometry_msgs::Pose pose;
-
-	// Fill pose
-	Eigen::Affine3d eigenTr;
-	eigenTr.matrix() = T;
-	tf::poseEigenToMsg(eigenTr, pose);
-
-	return pose;
-}
-
-geometry_msgs::TransformStamped toRos(const Eigen::Matrix4d &Mat, const ros::Time &time, const std::string &frame,
-		const std::string &childFrame) {
-
-	geometry_msgs::TransformStamped transformStamped;
-	transformStamped.header.stamp = time;
-	transformStamped.header.frame_id = frame;
-	transformStamped.child_frame_id = childFrame;
-	const auto pose = getPose(Mat);
-	transformStamped.transform.translation.x = pose.position.x;
-	transformStamped.transform.translation.y = pose.position.y;
-	transformStamped.transform.translation.z = pose.position.z;
-	transformStamped.transform.rotation = pose.orientation;
-	return transformStamped;
-}
 
 bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
 	const m545_mapping::Timer timer;
@@ -99,7 +66,7 @@ bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const 
 		return false;
 	}
 	curentTransformation *= result.transformation_.inverse();
-	geometry_msgs::TransformStamped transformStamped = toRos(curentTransformation, timestamp,
+	geometry_msgs::TransformStamped transformStamped = m545_mapping::toRos(curentTransformation, timestamp,
 			m545_mapping::frames::odomFrame, m545_mapping::frames::rangeSensorFrame);
 	tfBroadcaster->sendTransform(transformStamped);
 	cloudPrev = *downSampledCloud;
@@ -111,10 +78,10 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
 	const m545_mapping::Timer timer;
 //	auto cloud = cloudIn;
 	mapper->addRangeMeasurement(cloud, timestamp);
-	std::cout << "Mapping step finished \n";
-	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
+//	std::cout << "Mapping step finished \n";
+//	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
 	{
-		geometry_msgs::TransformStamped transformStamped = toRos(mapper->getMapToOdom().matrix(), timestamp,
+		geometry_msgs::TransformStamped transformStamped = m545_mapping::toRos(mapper->getMapToOdom().matrix(), timestamp,
 				m545_mapping::frames::mapFrame, m545_mapping::frames::odomFrame);
 		tfBroadcaster->sendTransform(transformStamped);
 	}
@@ -130,7 +97,7 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
 	bbox.min_bound_ = mapper->getMapToRangeSensor().translation() + localMapParams.cropBoxLowBound_;
 	bbox.max_bound_ = mapper->getMapToRangeSensor().translation() + localMapParams.cropBoxHighBound_;
 	m545_mapping::cropPointcloud(bbox,downSampledMap.get());
-	publishCloud(*downSampledMap, m545_mapping::frames::mapFrame, timestamp, mapPub);
+	m545_mapping::publishCloud(*downSampledMap, m545_mapping::frames::mapFrame, timestamp, mapPub);
 }
 
 void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
@@ -157,7 +124,7 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	if (!computeAndPublishOdometry(cloud,timestamp)){
 		return;
 	}
-	publishCloud(cloud, m545_mapping::frames::rangeSensorFrame, timestamp, refPub);
+	m545_mapping::publishCloud(cloud, m545_mapping::frames::rangeSensorFrame, timestamp, refPub);
 	mappingUpdateIfMapperNotBusy(cloud, timestamp);
 
 }
