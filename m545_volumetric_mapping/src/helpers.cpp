@@ -17,6 +17,10 @@ namespace {
 namespace registration = open3d::pipelines::registration;
 }//namespace
 
+void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::PointCloud *pcl){
+	auto croppedCloud = pcl->Crop(bbox);
+	*pcl = *croppedCloud;
+}
 
 
 std::string asString (const Eigen::Isometry3d &T){

@@ -31,9 +31,21 @@ icp_mapping:
     crop_box_max_y: 30.0
     crop_box_max_z: 100.0
   map_builder:
+    dense_map_downsampling_ratio: 1.0
     crop_box_min_x: -50.0
     crop_box_min_y: -50.0
     crop_box_min_z: -100.0
     crop_box_max_x: 50.0
     crop_box_max_y: 50.0
-    crop_box_max_z: 100.0    
+    crop_box_max_z: 100.0
+    
+local_map:
+  downsampling_ratio: 1.0
+  crop_box_min_x: -15.0
+  crop_box_min_y: -15.0
+  crop_box_min_z: -100.0
+  crop_box_max_x: 15.0
+  crop_box_max_y: 15.0
+  crop_box_max_z: 100.0
+
+    

@@ -63,6 +63,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 		estimateNormalsIfNeeded(&cloud);
 		auto voxelizedCloud = cloud.VoxelDownSample(params_.mapVoxelSize_);
 		map_ += *voxelizedCloud;
+		denseMap_ += cloud;
 		isMatchingInProgress_ = false;
 		return;
 	}
@@ -75,7 +76,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 		isMatchingInProgress_ = false;
 		return;
 	}
-
+	std::lock_guard<std::mutex> lck(mapManipulationMutex_);
 	Timer timer3;
 	auto cloud = cloudIn;
 //	std::cout << "Copying and normal estimation finished\n";
@@ -123,15 +124,18 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 
 	// concatenate registered cloud into map
 	const bool isMovedTooLittle = odometryMotion.translation().norm() < params_.minMovementBetweenMappingSteps_;
-	if (!isMovedTooLittle){ // this is fast, less than a millisecond
+	if (!isMovedTooLittle){ // this can be up to 10 msec
 		Timer timer;
 		bbox.min_bound_ = params_.mapBuilderCropBoxLowBound_;
 		bbox.max_bound_ = params_.mapBuilderCropBoxHighBound_;
 		auto croppedCloud = cloud.Crop(bbox);
+		croppedCloud->Transform(result.transformation_);
 		auto downSampledCloud = croppedCloud->RandomDownSample(params_.downSamplingRatio_);
 		estimateNormalsIfNeeded(downSampledCloud.get());
 		auto voxelizedCloud = downSampledCloud->VoxelDownSample(params_.mapVoxelSize_);
-		map_ += voxelizedCloud->Transform(result.transformation_);
+		map_ += *voxelizedCloud;
+		downSampledCloud = croppedCloud->RandomDownSample(params_.denseMapDownSamplingRatio_);
+		denseMap_ += *downSampledCloud;
 //		std::cout << "Map update finished \n";
 //		std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
 //		std::cout <<"\n";
@@ -142,6 +146,10 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 }
 const Mapper::PointCloud& Mapper::getMap() const {
 	return map_;
+}
+
+const Mapper::PointCloud &Mapper::getDenseMap() const{
+	return denseMap_;
 }
 
 bool Mapper::lookupTransform(const std::string& target_frame, const std::string& source_frame,
@@ -157,6 +165,20 @@ bool Mapper::lookupTransform(const std::string& target_frame, const std::string&
 
 	*transform = tf2::transformToEigen(transformStamped);
 	return true;
+}
+
+bool Mapper::isManipulatingMap() const{
+	return isManipulatingMap_;
+}
+
+void Mapper::cropMap(open3d::geometry::AxisAlignedBoundingBox &bbox){
+	std::lock_guard<std::mutex> lck(mapManipulationMutex_);
+	isManipulatingMap_ = true;
+	auto map = map_.Crop(bbox);
+	map_ = *map;
+	map = denseMap_.Crop(bbox);
+	denseMap_ = *map;
+	isManipulatingMap_ = false;
 }
 
 } /* namespace m545_mapping */

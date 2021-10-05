@@ -54,10 +54,31 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	p->mapBuilderCropBoxHighBound_.x() = n["crop_box_max_x"].as<double>();
 	p->mapBuilderCropBoxHighBound_.y() = n["crop_box_max_y"].as<double>();
 	p->mapBuilderCropBoxHighBound_.z() = n["crop_box_max_z"].as<double>();
+	p->denseMapDownSamplingRatio_ = n["dense_map_downsampling_ratio"].as<double>();
 
 	p->mapVoxelSize_ = node["map_voxel_size"].as<double>();
 	p->minRefinementFitness_ = node["min_refinement_fitness"].as<double>();
 	p->minMovementBetweenMappingSteps_ = node["min_movement_between_mapping_steps"].as<double>();
+
+}
+
+void loadParameters(const std::string &filename, LocalMapParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+
+	if (basenode.IsNull()) {
+		throw std::runtime_error("Local map::loadParameters loading failed");
+	}
+
+	loadParameters(basenode["local_map"], p);
+}
+void loadParameters(const YAML::Node &n, LocalMapParameters *p){
+	p->downSamplingRatio_ = n["downsampling_ratio"].as<double>();
+	p->cropBoxLowBound_.x() = n["crop_box_min_x"].as<double>();
+	p->cropBoxLowBound_.y() = n["crop_box_min_y"].as<double>();
+	p->cropBoxLowBound_.z() = n["crop_box_min_z"].as<double>();
+	p->cropBoxHighBound_.x() = n["crop_box_max_x"].as<double>();
+	p->cropBoxHighBound_.y() = n["crop_box_max_y"].as<double>();
+	p->cropBoxHighBound_.z() = n["crop_box_max_z"].as<double>();
 }
 
 } // namespace m545_mapping

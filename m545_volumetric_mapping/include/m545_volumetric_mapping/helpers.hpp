@@ -13,6 +13,7 @@
 
 namespace m545_mapping {
 
+void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::PointCloud *pcl);
 void estimateNormals(int numNearestNeighbours, open3d::geometry::PointCloud *pcl);
 std::shared_ptr<open3d::pipelines::registration::TransformationEstimation> icpObjectiveFactory(
 		const m545_mapping::IcpObjective &obj);

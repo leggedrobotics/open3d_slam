@@ -34,6 +34,7 @@ m545_mapping::IcpParameters params;
 std::shared_ptr<registration::TransformationEstimation> icpObjective;
 std::shared_ptr<m545_mapping::Mapper> mapper;
 m545_mapping::MapperParameters mapperParams;
+m545_mapping::LocalMapParameters localMapParams;
 
 void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, const ros::Time &timestamp,
 		ros::Publisher &pub) {
@@ -122,8 +123,14 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
 //					m545_mapping::frames::mapFrame, m545_mapping::frames::rangeSensorFrame+"_check");
 //			tfBroadcaster->sendTransform(transformStamped);
 //		}
-	open3d::geometry::PointCloud map = mapper->getMap();
-	publishCloud(map, m545_mapping::frames::mapFrame, timestamp, mapPub);
+//	open3d::geometry::PointCloud map = mapper->getMap();
+	open3d::geometry::PointCloud map = mapper->getDenseMap();
+	open3d::geometry::AxisAlignedBoundingBox bbox;
+	auto downSampledMap = map.RandomDownSample(localMapParams.downSamplingRatio_);
+	bbox.min_bound_ = mapper->getMapToRangeSensor().translation() + localMapParams.cropBoxLowBound_;
+	bbox.max_bound_ = mapper->getMapToRangeSensor().translation() + localMapParams.cropBoxHighBound_;
+	m545_mapping::cropPointcloud(bbox,downSampledMap.get());
+	publishCloud(*downSampledMap, m545_mapping::frames::mapFrame, timestamp, mapPub);
 }
 
 void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
@@ -175,6 +182,8 @@ int main(int argc, char **argv) {
 	mapper = std::make_shared<m545_mapping::Mapper>();
 	m545_mapping::loadParameters(paramFile, &mapperParams);
 	mapper->setParameters(mapperParams);
+
+	m545_mapping::loadParameters(paramFile, &localMapParams);
 
 //	ros::AsyncSpinner spinner(4); // Use 4 threads
 //	spinner.start();

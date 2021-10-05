@@ -28,10 +28,14 @@ public:
 
 	void addRangeMeasurement(const PointCloud &cloud, const ros::Time &timestamp);
 	const PointCloud &getMap() const;
+	const PointCloud &getDenseMap() const;
 	void setParameters(const MapperParameters &p);
 	bool isMatchingInProgress() const;
+	bool isManipulatingMap() const;
+
 	Eigen::Isometry3d getMapToOdom() const;
 	Eigen::Isometry3d getMapToRangeSensor() const;
+	void cropMap(open3d::geometry::AxisAlignedBoundingBox &bbox);
 
 
 private:
@@ -42,8 +46,10 @@ private:
 	void estimateNormalsIfNeeded(PointCloud *pcl) const;
 
   bool isMatchingInProgress_ = false;
+  bool isManipulatingMap_ = false;
+
   PointCloud map_;
-  PointCloud mapCopy_;
+  PointCloud denseMap_;
   tf2_ros::Buffer tfBuffer_;
   tf2_ros::TransformListener tfListener_;
   ros::Time lastMeasurementTimestamp_;
@@ -52,6 +58,7 @@ private:
   Eigen::Isometry3d mapToRangeSensor_ = Eigen::Isometry3d::Identity();
   MapperParameters params_;
   open3d::pipelines::registration::ICPConvergenceCriteria icpCriteria_;
+  std::mutex mapManipulationMutex_;
 
 
 
