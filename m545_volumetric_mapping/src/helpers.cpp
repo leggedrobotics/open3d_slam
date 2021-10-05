@@ -10,6 +10,7 @@
 
 #include <open3d/Open3D.h>
 #include <open3d/pipelines/registration/Registration.h>
+#include <open3d/utility/Eigen.h>
 
 // ros stuff
 #include "open3d_conversions/open3d_conversions.h"
@@ -22,8 +23,55 @@ namespace m545_mapping {
 
 namespace {
 namespace registration = open3d::pipelines::registration;
-}//namespace
 
+class AccumulatedPoint {
+public:
+	AccumulatedPoint() :
+			num_of_points_(0), point_(0.0, 0.0, 0.0), normal_(0.0, 0.0, 0.0), color_(0.0, 0.0, 0.0) {
+	}
+
+public:
+	void AddPoint(const open3d::geometry::PointCloud &cloud, int index) {
+		point_ += cloud.points_[index];
+		if (cloud.HasNormals()) {
+			if (!std::isnan(cloud.normals_[index](0)) && !std::isnan(cloud.normals_[index](1))
+					&& !std::isnan(cloud.normals_[index](2))) {
+				normal_ += cloud.normals_[index];
+			}
+		}
+		if (cloud.HasColors()) {
+			color_ += cloud.colors_[index];
+		}
+		num_of_points_++;
+	}
+
+	Eigen::Vector3d GetAveragePoint() const {
+		return point_ / double(num_of_points_);
+	}
+
+	Eigen::Vector3d GetAverageNormal() const {
+		// Call NormalizeNormals() afterwards if necessary
+		return normal_ / double(num_of_points_);
+	}
+
+	Eigen::Vector3d GetAverageColor() const {
+		return color_ / double(num_of_points_);
+	}
+
+public:
+	int num_of_points_;
+	Eigen::Vector3d point_;
+	Eigen::Vector3d normal_;
+	Eigen::Vector3d color_;
+};
+
+class point_cubic_id {
+public:
+	size_t point_id;
+	int cubic_id;
+};
+
+} //namespace
 
 void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, const ros::Time &timestamp,
 		ros::Publisher &pub) {
@@ -59,46 +107,41 @@ geometry_msgs::TransformStamped toRos(const Eigen::Matrix4d &Mat, const ros::Tim
 	return transformStamped;
 }
 
-
-void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::PointCloud *pcl){
+void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::PointCloud *pcl) {
 	auto croppedCloud = pcl->Crop(bbox);
 	*pcl = *croppedCloud;
 }
 
-
-std::string asString (const Eigen::Isometry3d &T){
-    const double kRadToDeg = 180.0 / M_PI;
-    const auto &t = T.translation();
-    const auto &q = Eigen::Quaterniond(T.rotation());
-    const std::string trans  =  string_format("t:[%f, %f, %f]", t.x(), t.y(), t.z());
-    const std::string rot = string_format("q:[%f, %f, %f, %f]",q.x(), q.y(), q.z(), q.w());
-    const auto rpy = toRPY(q) * kRadToDeg;
-    const std::string rpyString = string_format("rpy (deg):[%f, %f, %f]",rpy.x(), rpy.y(),rpy.z());
-    return trans + " ; " + rot + " ; " + rpyString;
-
+std::string asString(const Eigen::Isometry3d &T) {
+	const double kRadToDeg = 180.0 / M_PI;
+	const auto &t = T.translation();
+	const auto &q = Eigen::Quaterniond(T.rotation());
+	const std::string trans = string_format("t:[%f, %f, %f]", t.x(), t.y(), t.z());
+	const std::string rot = string_format("q:[%f, %f, %f, %f]", q.x(), q.y(), q.z(), q.w());
+	const auto rpy = toRPY(q) * kRadToDeg;
+	const std::string rpyString = string_format("rpy (deg):[%f, %f, %f]", rpy.x(), rpy.y(), rpy.z());
+	return trans + " ; " + rot + " ; " + rpyString;
 
 }
 
-Eigen::Quaterniond fromRPY(const double roll, const double pitch, const double yaw)
-{
+Eigen::Quaterniond fromRPY(const double roll, const double pitch, const double yaw) {
 
-  const Eigen::AngleAxisd roll_angle(roll, Eigen::Vector3d::UnitX());
-  const Eigen::AngleAxisd pitch_angle(pitch, Eigen::Vector3d::UnitY());
-  const Eigen::AngleAxisd yaw_angle(yaw, Eigen::Vector3d::UnitZ());
-  return yaw_angle * pitch_angle * roll_angle;
+	const Eigen::AngleAxisd roll_angle(roll, Eigen::Vector3d::UnitX());
+	const Eigen::AngleAxisd pitch_angle(pitch, Eigen::Vector3d::UnitY());
+	const Eigen::AngleAxisd yaw_angle(yaw, Eigen::Vector3d::UnitZ());
+	return yaw_angle * pitch_angle * roll_angle;
 }
 
-Eigen::Vector3d toRPY(const Eigen::Quaterniond &_q)
-{
-  Eigen::Quaterniond q(_q);
-  q.normalize();
-  const double r = getRollFromQuat(q.w(), q.x(), q.y(), q.z());
-  const double p = getPitchFromQuat(q.w(), q.x(), q.y(), q.z());
-  const double y = getYawFromQuat(q.w(), q.x(), q.y(), q.z());
-  return Eigen::Vector3d(r,p,y);
+Eigen::Vector3d toRPY(const Eigen::Quaterniond &_q) {
+	Eigen::Quaterniond q(_q);
+	q.normalize();
+	const double r = getRollFromQuat(q.w(), q.x(), q.y(), q.z());
+	const double p = getPitchFromQuat(q.w(), q.x(), q.y(), q.z());
+	const double y = getYawFromQuat(q.w(), q.x(), q.y(), q.z());
+	return Eigen::Vector3d(r, p, y);
 }
 
-Eigen::Quaterniond fromRPY(const Eigen::Vector3d &rpy){
+Eigen::Quaterniond fromRPY(const Eigen::Vector3d &rpy) {
 	return fromRPY(rpy.x(), rpy.y(), rpy.z());
 }
 
@@ -107,8 +150,7 @@ void estimateNormals(int numNearestNeighbours, open3d::geometry::PointCloud *pcl
 	pcl->EstimateNormals(param);
 }
 
-std::shared_ptr<registration::TransformationEstimation> icpObjectiveFactory(
-		const m545_mapping::IcpObjective &obj) {
+std::shared_ptr<registration::TransformationEstimation> icpObjectiveFactory(const m545_mapping::IcpObjective &obj) {
 
 	switch (obj) {
 	case m545_mapping::IcpObjective::PointToPoint: {
@@ -127,25 +169,86 @@ std::shared_ptr<registration::TransformationEstimation> icpObjectiveFactory(
 
 }
 
-Timer::Timer(bool isPrintInDestructor){
+Timer::Timer(bool isPrintInDestructor) {
 	startTime_ = std::chrono::steady_clock::now();
 	isPrintInDestructor_ = isPrintInDestructor;
 }
-Timer::~Timer(){
-	if(isPrintInDestructor_){
-		std::cout<< "Timer: Elapsed time: " << elapsedMsec() << "msec \n";
+Timer::~Timer() {
+	if (isPrintInDestructor_) {
+		std::cout << "Timer: Elapsed time: " << elapsedMsec() << "msec \n";
 	}
 }
 
-double Timer::elapsedMsec() const{
+double Timer::elapsedMsec() const {
 	const auto endTime = std::chrono::steady_clock::now();
 	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime_).count() / 1e3;
 }
-double Timer::elapsedSec() const{
+double Timer::elapsedSec() const {
 	const auto endTime = std::chrono::steady_clock::now();
 	return std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime_).count() / 1e3;
 }
 
-} /* namespace m545_mapping */
+std::shared_ptr<open3d::geometry::PointCloud> voxelizeSelectively(double voxel_size,
+		const open3d::geometry::AxisAlignedBoundingBox &bbox, const open3d::geometry::PointCloud &cloud) {
+	using namespace open3d::geometry;
+	auto output = std::make_shared<PointCloud>();
+	if (voxel_size <= 0.0) {
+		throw std::runtime_error("[VoxelDownSample] voxel_size <= 0.");
+	}
+	Eigen::Vector3d voxel_size3 = Eigen::Vector3d(voxel_size, voxel_size, voxel_size);
+	Eigen::Vector3d voxel_min_bound = cloud.GetMinBound() - voxel_size3 * 0.5;
+	Eigen::Vector3d voxel_max_bound = cloud.GetMaxBound() + voxel_size3 * 0.5;
+	if (voxel_size * std::numeric_limits<int>::max() < (voxel_max_bound - voxel_min_bound).maxCoeff()) {
+		throw std::runtime_error("[VoxelDownSample] voxel_size is too small.");
+	}
+	std::unordered_map<Eigen::Vector3i, AccumulatedPoint, open3d::utility::hash_eigen<Eigen::Vector3i>> voxelindex_to_accpoint;
 
+	const bool has_normals = cloud.HasNormals();
+	const bool has_colors = cloud.HasColors();
+	output->points_.reserve(cloud.points_.size());
+	if (has_colors) {
+		output->colors_.reserve(cloud.points_.size());
+	}
+	if (has_normals) {
+		output->normals_.reserve(cloud.points_.size());
+	}
+	voxelindex_to_accpoint.reserve(cloud.points_.size());
+
+	auto isInside = [&bbox](const Eigen::Vector3d &p) {
+		return p.x() <= bbox.max_bound_.x() && p.y() <= bbox.max_bound_.y() && p.z() <= bbox.max_bound_.z()
+				&& p.x() >= bbox.min_bound_.x() && p.y() >= bbox.min_bound_.y() && p.z() >= bbox.min_bound_.z();
+	};
+
+	Eigen::Vector3d ref_coord;
+	Eigen::Vector3i voxel_index;
+	for (int i = 0; i < (int) cloud.points_.size(); i++) {
+		if (isInside(cloud.points_[i])) {
+			ref_coord = (cloud.points_[i] - voxel_min_bound) / voxel_size;
+			voxel_index << int(floor(ref_coord(0))), int(floor(ref_coord(1))), int(floor(ref_coord(2)));
+			voxelindex_to_accpoint[voxel_index].AddPoint(cloud, i);
+		} else {
+			output->points_.push_back(cloud.points_[i]);
+			if (has_normals) {
+				output->normals_.push_back(cloud.normals_[i]);
+			}
+			if (has_colors) {
+				output->colors_.push_back(cloud.colors_[i]);
+			}
+		}
+	}
+
+	for (auto accpoint : voxelindex_to_accpoint) {
+		output->points_.push_back(accpoint.second.GetAveragePoint());
+		if (has_normals) {
+			output->normals_.push_back(accpoint.second.GetAverageNormal());
+		}
+		if (has_colors) {
+			output->colors_.push_back(accpoint.second.GetAverageColor());
+		}
+	}
+
+	return output;
+}
+
+} /* namespace m545_mapping */
 

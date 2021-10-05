@@ -137,7 +137,10 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 		auto voxelizedCloud = croppedCloud->VoxelDownSample(params_.mapVoxelSize_);
 		estimateNormalsIfNeeded(voxelizedCloud.get());
 		map_ += *voxelizedCloud;
-		auto voxelizedMap = map_.VoxelDownSample(params_.mapVoxelSize_);
+//		auto voxelizedMap = map_.VoxelDownSample(params_.mapVoxelSize_);
+		bbox.min_bound_ = mapToRangeSensor_.translation() + params_.mapBuilderCropBoxLowBound_;
+		bbox.max_bound_ = mapToRangeSensor_.translation() + params_.mapBuilderCropBoxHighBound_;
+		auto voxelizedMap = voxelizeSelectively(params_.mapVoxelSize_,bbox,map_);
 		map_ = *voxelizedMap;
 //		downSampledCloud = croppedCloud->RandomDownSample(params_.denseMapDownSamplingRatio_);
 //		denseMap_ += *downSampledCloud;
