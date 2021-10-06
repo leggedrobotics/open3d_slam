@@ -45,13 +45,12 @@ struct MapperParameters : public IcpParameters {
 	double mapVoxelSize_ = 0.03;
 	double minMovementBetweenMappingSteps_ = 0.0;
 	double minRefinementFitness_ = 0.7;
-	double denseMapDownSamplingRatio_ = 1.0;
 	Eigen::Vector3d mapBuilderCropBoxLowBound_ = Eigen::Vector3d(-50.0,-50.0,-1e3);
 	Eigen::Vector3d mapBuilderCropBoxHighBound_ = Eigen::Vector3d(50.0,50.0,1e3);
 };
 
 struct LocalMapParameters {
-	double downSamplingRatio_ = 1.0;
+	double voxelSize_ = 0.1;
 	Eigen::Vector3d cropBoxLowBound_ = Eigen::Vector3d(-50.0,-50.0,-1e3);
 	Eigen::Vector3d cropBoxHighBound_ = Eigen::Vector3d(50.0,50.0,1e3);
 };

@@ -75,10 +75,12 @@ public:
 
 void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, const ros::Time &timestamp,
 		ros::Publisher &pub) {
-	sensor_msgs::PointCloud2 msg;
-	open3d_conversions::open3dToRos(cloud, msg, frame_id);
-	msg.header.stamp = timestamp;
-	pub.publish(msg);
+	if (pub.getNumSubscribers() > 0) {
+		sensor_msgs::PointCloud2 msg;
+		open3d_conversions::open3dToRos(cloud, msg, frame_id);
+		msg.header.stamp = timestamp;
+		pub.publish(msg);
+	}
 }
 
 geometry_msgs::Pose getPose(const Eigen::MatrixXd &T) {

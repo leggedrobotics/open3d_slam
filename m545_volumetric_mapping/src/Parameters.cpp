@@ -56,7 +56,6 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	p->mapBuilderCropBoxHighBound_.x() = n["crop_box_max_x"].as<double>();
 	p->mapBuilderCropBoxHighBound_.y() = n["crop_box_max_y"].as<double>();
 	p->mapBuilderCropBoxHighBound_.z() = n["crop_box_max_z"].as<double>();
-	p->denseMapDownSamplingRatio_ = n["dense_map_downsampling_ratio"].as<double>();
 
 	p->mapVoxelSize_ = node["map_voxel_size"].as<double>();
 	p->minRefinementFitness_ = node["min_refinement_fitness"].as<double>();
@@ -74,7 +73,7 @@ void loadParameters(const std::string &filename, LocalMapParameters *p){
 	loadParameters(basenode["local_map"], p);
 }
 void loadParameters(const YAML::Node &n, LocalMapParameters *p){
-	p->downSamplingRatio_ = n["downsampling_ratio"].as<double>();
+	p->voxelSize_ = n["voxel_size"].as<double>();
 	p->cropBoxLowBound_.x() = n["crop_box_min_x"].as<double>();
 	p->cropBoxLowBound_.y() = n["crop_box_min_y"].as<double>();
 	p->cropBoxLowBound_.z() = n["crop_box_min_z"].as<double>();

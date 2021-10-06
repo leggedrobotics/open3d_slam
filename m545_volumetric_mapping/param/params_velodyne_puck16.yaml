@@ -8,11 +8,11 @@ icp_odometry:
   voxel_filter_size: 0.15
   max_n_iter: 25
   downsampling_ratio: 0.5
-  crop_box_min_x: -35.0
-  crop_box_min_y: -35.0
+  crop_box_min_x: -25.0
+  crop_box_min_y: -25.0
   crop_box_min_z: -100.0
-  crop_box_max_x: 35.0
-  crop_box_max_y: 35.0
+  crop_box_max_x: 25.0
+  crop_box_max_y: 25.0
   crop_box_max_z: 100.0
   
 icp_mapping:
@@ -26,23 +26,22 @@ icp_mapping:
     max_n_iter: 50
     voxel_filter_size: 0.2
     downsampling_ratio: 0.5
+    crop_box_min_x: -35.0
+    crop_box_min_y: -35.0
+    crop_box_min_z: -100.0
+    crop_box_max_x: 35.0
+    crop_box_max_y: 35.0
+    crop_box_max_z: 100.0
+  map_builder:
     crop_box_min_x: -40.0
     crop_box_min_y: -40.0
     crop_box_min_z: -100.0
     crop_box_max_x: 40.0
     crop_box_max_y: 40.0
     crop_box_max_z: 100.0
-  map_builder:
-    dense_map_downsampling_ratio: 1.0
-    crop_box_min_x: -50.0
-    crop_box_min_y: -50.0
-    crop_box_min_z: -100.0
-    crop_box_max_x: 50.0
-    crop_box_max_y: 50.0
-    crop_box_max_z: 100.0
     
 local_map:
-  downsampling_ratio: 0.25
+  voxel_size: 0.06
   crop_box_min_x: -20.0
   crop_box_min_y: -20.0
   crop_box_min_z: -100.0
