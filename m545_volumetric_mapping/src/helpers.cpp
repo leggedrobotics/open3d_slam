@@ -198,12 +198,29 @@ double Timer::elapsedSec() const {
 	return std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime_).count() / 1e3;
 }
 
+void randomDownSample(double downSamplingRatio, open3d::geometry::PointCloud *pcl){
+	if (downSamplingRatio >= 1.0){
+		return;
+	}
+	auto downSampled = pcl->RandomDownSample(downSamplingRatio);
+	*pcl = *downSampled;
+}
+void voxelize(double voxelSize, open3d::geometry::PointCloud *pcl){
+	if(voxelSize <= 0){
+		return;
+	}
+	auto voxelized = pcl->VoxelDownSample(voxelSize);
+	*pcl = *voxelized;
+}
+
 std::shared_ptr<open3d::geometry::PointCloud> voxelizeSelectively(double voxel_size,
 		const open3d::geometry::AxisAlignedBoundingBox &bbox, const open3d::geometry::PointCloud &cloud) {
 	using namespace open3d::geometry;
 	auto output = std::make_shared<PointCloud>();
 	if (voxel_size <= 0.0) {
-		throw std::runtime_error("[VoxelDownSample] voxel_size <= 0.");
+		*output = cloud;
+		return output;
+//		throw std::runtime_error("[VoxelDownSample] voxel_size <= 0.");
 	}
 	Eigen::Vector3d voxel_size3 = Eigen::Vector3d(voxel_size, voxel_size, voxel_size);
 	Eigen::Vector3d voxel_min_bound = cloud.GetMinBound() - voxel_size3 * 0.5;

@@ -62,9 +62,10 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 		auto cloud = cloudIn;
 		auto bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_, params_.mapBuilderCropBoxHighBound_);
 		auto croppedCloud = cloud.Crop(bbox);
-		auto voxelizedCloud = croppedCloud->VoxelDownSample(params_.mapVoxelSize_);
-		estimateNormalsIfNeeded(voxelizedCloud.get());
-		map_ += *voxelizedCloud;
+		m545_mapping::voxelize(params_.voxelSize_, croppedCloud.get());
+//		auto voxelizedCloud = croppedCloud->VoxelDownSample(params_.mapVoxelSize_);
+		estimateNormalsIfNeeded(croppedCloud.get());
+		map_ += *croppedCloud;
 		denseMap_ += cloud;
 		isMatchingInProgress_ = false;
 		return;
@@ -84,19 +85,21 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	auto cloud = cloudIn;
 
 	Timer timer;
-//	std::cout << "odom motion: " << asString(odometryMotion) << std::endl;
+
 	open3d::geometry::AxisAlignedBoundingBox bbox = boundingBoxAroundPosition(params_.cropBoxLowBound_,
 			params_.cropBoxHighBound_);
 
 	auto croppedCloud = cloud.Crop(bbox);
-	auto voxelizedCloud = croppedCloud->VoxelDownSample(params_.voxelSize_);
-	auto downSampledCloud = voxelizedCloud->RandomDownSample(params_.downSamplingRatio_);
-	bbox = boundingBoxAroundPosition(1.25 * params_.cropBoxLowBound_, 1.25 * params_.cropBoxHighBound_,
+//	auto voxelizedCloud = croppedCloud->VoxelDownSample(params_.voxelSize_);
+	m545_mapping::voxelize(params_.voxelSize_, croppedCloud.get());
+	auto downSampledCloud = croppedCloud->RandomDownSample(params_.downSamplingRatio_);
+
+	bbox = boundingBoxAroundPosition(1.4 * params_.cropBoxLowBound_, 1.4 * params_.cropBoxHighBound_,
 			mapToRangeSensor_.translation());
 	auto map = map_.Crop(bbox);
 
-//	std::cout << "Map and scan pre processing finished\n";
-//	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
+	std::cout << "Map and scan pre processing finished\n";
+	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
 
 	Timer timer2;
 //	const Eigen::Matrix4d initTransform = (mapToRangeSensor_).matrix();
@@ -104,8 +107,8 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	const auto result = open3d::pipelines::registration::RegistrationICP(*downSampledCloud, *map,
 			params_.maxCorrespondenceDistance_, initTransform, *icpObjective, icpCriteria_);
 
-//	std::cout << "Scan to map matching finished \n";
-//	std::cout << "Time elapsed: " << timer2.elapsedMsec() << " msec \n";
+	std::cout << "Scan to map matching finished \n";
+	std::cout << "Time elapsed: " << timer2.elapsedMsec() << " msec \n";
 //	std::cout << "fitness: " << result.fitness_ << std::endl;
 
 	if (result.fitness_ < params_.minRefinementFitness_) {
@@ -124,18 +127,21 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 		Timer timer;
 		bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_, params_.mapBuilderCropBoxHighBound_);
 		auto croppedCloud = cloud.Crop(bbox);
-		auto voxelizedCloud = croppedCloud->VoxelDownSample(params_.mapVoxelSize_);
-		voxelizedCloud->Transform(result.transformation_);
-		estimateNormalsIfNeeded(voxelizedCloud.get());
-		map_ += *voxelizedCloud;
+		m545_mapping::randomDownSample(params_.downSamplingRatio_, croppedCloud.get());
+		m545_mapping::voxelize(params_.voxelSize_, croppedCloud.get());
+		croppedCloud->Transform(result.transformation_);
+		estimateNormalsIfNeeded(croppedCloud.get());
+		map_ += *croppedCloud;
 		bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_, params_.mapBuilderCropBoxHighBound_,
 				mapToRangeSensor_.translation());
-		auto voxelizedMap = voxelizeSelectively(params_.mapVoxelSize_, bbox, map_);
-		map_ = *voxelizedMap;
-		denseMap_ += *voxelizedCloud;
-//		std::cout << "Map update finished \n";
-//		std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
-//		std::cout << "\n";
+		if (params_.mapVoxelSize_ > 0.0) {
+			auto voxelizedMap = voxelizeSelectively(params_.mapVoxelSize_, bbox, map_);
+			map_ = *voxelizedMap;
+		}
+		denseMap_ += *croppedCloud;
+		std::cout << "Map update finished \n";
+		std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
+		std::cout << "\n";
 		odomToRangeSensorPrev_ = odomToRangeSensor;
 	}
 

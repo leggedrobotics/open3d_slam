@@ -42,8 +42,9 @@ bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const 
 	auto bbox = m545_mapping::boundingBoxAroundPosition(odometryParams.cropBoxLowBound_,
 			odometryParams.cropBoxHighBound_);
 	auto croppedCloud = cloud.Crop(bbox);
-	auto voxelizedCloud = croppedCloud->VoxelDownSample(odometryParams.voxelSize_);
-	auto downSampledCloud = voxelizedCloud->RandomDownSample(odometryParams.downSamplingRatio_);
+//	auto voxelizedCloud = croppedCloud->VoxelDownSample(odometryParams.voxelSize_);
+	m545_mapping::voxelize(odometryParams.voxelSize_, croppedCloud.get());
+	auto downSampledCloud = croppedCloud->RandomDownSample(odometryParams.downSamplingRatio_);
 
 	if (odometryParams.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
 		m545_mapping::estimateNormals(odometryParams.kNNnormalEstimation_, downSampledCloud.get());
@@ -52,8 +53,8 @@ bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const 
 	auto result = open3d::pipelines::registration::RegistrationICP(cloudPrev, *downSampledCloud,
 			odometryParams.maxCorrespondenceDistance_, init, *icpObjective, criteria);
 
-	std::cout << "Scan to scan matching finished \n";
-	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
+//	std::cout << "Scan to scan matching finished \n";
+//	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
 //	std::cout << "Fitness: " << result.fitness_ << "\n";
 //	std::cout << "RMSE: " << result.inlier_rmse_ << "\n";
 //	std::cout << "Transform: " << result.transformation_ << "\n";
@@ -123,7 +124,7 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 
 	if (cloudPrev.IsEmpty()) {
 		cloudPrev = cloud;
-//		mappingUpdateIfMapperNotBusy(cloud, timestamp);
+		mappingUpdateIfMapperNotBusy(cloud, timestamp);
 		return;
 	}
 
