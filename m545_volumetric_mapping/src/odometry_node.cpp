@@ -77,7 +77,6 @@ bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const 
 void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
 
 	const m545_mapping::Timer timer;
-//	auto cloud = cloudIn;
 	mapper->addRangeMeasurement(cloud, timestamp);
 	std::cout << "Mapping step finished \n";
 	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n\n";
@@ -137,7 +136,7 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 }
 
 int main(int argc, char **argv) {
-	ros::init(argc, argv, "lidar_odometry_node");
+	ros::init(argc, argv, "lidar_odometry_mapping_node");
 	nh.reset(new ros::NodeHandle("~"));
 	tfBroadcaster.reset(new tf2_ros::TransformBroadcaster());
 	const std::string cloudTopic = nh->param<std::string>("cloud_topic", "");

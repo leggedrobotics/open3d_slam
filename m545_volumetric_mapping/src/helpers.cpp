@@ -171,13 +171,14 @@ std::shared_ptr<registration::TransformationEstimation> icpObjectiveFactory(cons
 
 }
 
-Timer::Timer(bool isPrintInDestructor) {
+Timer::Timer(const std::string &name/*=""*/, bool isPrintInDestructor) {
 	startTime_ = std::chrono::steady_clock::now();
 	isPrintInDestructor_ = isPrintInDestructor;
+	name_=name;
 }
 Timer::~Timer() {
 	if (isPrintInDestructor_) {
-		std::cout << "Timer: Elapsed time: " << elapsedMsec() << "msec \n";
+		std::cout << "Timer "<< name_<< ": Elapsed time: " << elapsedMsec() << " msec \n";
 	}
 }
 
@@ -213,7 +214,7 @@ void voxelize(double voxelSize, open3d::geometry::PointCloud *pcl){
 	*pcl = *voxelized;
 }
 
-std::shared_ptr<open3d::geometry::PointCloud> voxelizeSelectively(double voxel_size,
+std::shared_ptr<open3d::geometry::PointCloud> voxelizeAroundPosition(double voxel_size,
 		const open3d::geometry::AxisAlignedBoundingBox &bbox, const open3d::geometry::PointCloud &cloud) {
 	using namespace open3d::geometry;
 	auto output = std::make_shared<PointCloud>();

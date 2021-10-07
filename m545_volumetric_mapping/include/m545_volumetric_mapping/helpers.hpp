@@ -18,7 +18,7 @@
 
 namespace m545_mapping {
 
-std::shared_ptr<open3d::geometry::PointCloud> voxelizeSelectively(double voxelSize, const open3d::geometry::AxisAlignedBoundingBox &bbox, const open3d::geometry::PointCloud &cloud);
+std::shared_ptr<open3d::geometry::PointCloud> voxelizeAroundPosition(double voxelSize, const open3d::geometry::AxisAlignedBoundingBox &bbox, const open3d::geometry::PointCloud &cloud);
 void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::PointCloud *pcl);
 void randomDownSample(double downSamplingRatio, open3d::geometry::PointCloud *pcl);
 void voxelize(double voxelSize, open3d::geometry::PointCloud *pcl);
@@ -80,13 +80,14 @@ open3d::geometry::AxisAlignedBoundingBox boundingBoxAroundPosition(const Eigen::
 ///////////////////////////////////////////////////////////////////
 class Timer {
 public:
-	Timer(bool isPrintInDestructor = false);
+	Timer(const std::string &name="", bool isPrintInDestructor = false);
 	~Timer();
 	double elapsedMsec() const;
 	double elapsedSec() const;
 private:
 	std::chrono::steady_clock::time_point startTime_;
 	bool isPrintInDestructor_ = false;
+	std::string name_;
 };
 
 } /* namespace m545_mapping */
