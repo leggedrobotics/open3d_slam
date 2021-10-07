@@ -80,7 +80,9 @@ open3d::geometry::AxisAlignedBoundingBox boundingBoxAroundPosition(const Eigen::
 ///////////////////////////////////////////////////////////////////
 class Timer {
 public:
-	Timer(const std::string &name="", bool isPrintInDestructor = false);
+	Timer();
+	Timer(const std::string &name);
+	Timer(bool isPrintInDestructor, const std::string &name);
 	~Timer();
 	double elapsedMsec() const;
 	double elapsedSec() const;

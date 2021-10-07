@@ -170,15 +170,21 @@ std::shared_ptr<registration::TransformationEstimation> icpObjectiveFactory(cons
 	}
 
 }
+Timer::Timer():Timer(false,""){
 
-Timer::Timer(const std::string &name/*=""*/, bool isPrintInDestructor) {
+}
+
+Timer::Timer(const std::string &name) :
+		Timer(true,name) {
+}
+Timer::Timer(bool isPrintInDestructor,const std::string &name) {
 	startTime_ = std::chrono::steady_clock::now();
 	isPrintInDestructor_ = isPrintInDestructor;
-	name_=name;
+	name_ = name;
 }
 Timer::~Timer() {
 	if (isPrintInDestructor_) {
-		std::cout << "Timer "<< name_<< ": Elapsed time: " << elapsedMsec() << " msec \n";
+		std::cout << "Timer " << name_ << ": Elapsed time: " << elapsedMsec() << " msec \n";
 	}
 }
 
@@ -199,15 +205,15 @@ double Timer::elapsedSec() const {
 	return std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime_).count() / 1e3;
 }
 
-void randomDownSample(double downSamplingRatio, open3d::geometry::PointCloud *pcl){
-	if (downSamplingRatio >= 1.0){
+void randomDownSample(double downSamplingRatio, open3d::geometry::PointCloud *pcl) {
+	if (downSamplingRatio >= 1.0) {
 		return;
 	}
 	auto downSampled = pcl->RandomDownSample(downSamplingRatio);
 	*pcl = *downSampled;
 }
-void voxelize(double voxelSize, open3d::geometry::PointCloud *pcl){
-	if(voxelSize <= 0){
+void voxelize(double voxelSize, open3d::geometry::PointCloud *pcl) {
+	if (voxelSize <= 0) {
 		return;
 	}
 	auto voxelized = pcl->VoxelDownSample(voxelSize);
