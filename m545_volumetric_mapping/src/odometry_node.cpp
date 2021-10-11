@@ -6,20 +6,24 @@
  */
 #include <open3d/Open3D.h>
 #include <open3d/pipelines/registration/Registration.h>
+
 #include "m545_volumetric_mapping/Parameters.hpp"
 #include "m545_volumetric_mapping/frames.hpp"
 #include "m545_volumetric_mapping/helpers.hpp"
 #include "m545_volumetric_mapping/Mapper.hpp"
+#include "m545_volumetric_mapping/Projection.hpp"
 
 #include "open3d_conversions/open3d_conversions.h"
 #include <ros/ros.h>
 
 #include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/Image.h>
 
 #include <tf2_ros/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
 
 open3d::geometry::PointCloud cloudPrev;
+
 ros::NodeHandlePtr nh;
 std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
 Eigen::Matrix4d curentTransformation = Eigen::Matrix4d::Identity();
@@ -116,8 +120,18 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 	t.detach();
 }
 
+//yidan
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	open3d::geometry::PointCloud cloud;
+	open3d::geometry::Image image;
+	for (int i = 0; i < cloud.points_.size(); ++i) {
+		Eigen::Vector3d point;
+		Eigen::Vector2i pixel = Eigen::Vector2i::Zero();
+		point(0) = cloud.points_[i].x();
+		point(1) = cloud.points_[i].y();
+		point(2) = cloud.points_[i].z();
+		projectionLidarToPixel(point, quaternion, translation, pixel);
+	}
 	open3d_conversions::rosToOpen3d(msg, cloud, true);
 	ros::Time timestamp = msg->header.stamp;
 
@@ -133,6 +147,23 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	m545_mapping::publishCloud(cloud, m545_mapping::frames::rangeSensorFrame, timestamp, refPub);
 	mappingUpdateIfMapperNotBusy(cloud, timestamp);
 
+}
+
+//yidan
+void getColorProjection() {
+	//TO DO: load files
+	open3d::geometry::PointCloud pointCloud;
+	sensor_msgs::Image image;
+	for (int i = 0; i < pointCloud.points_.size(); ++i) {
+		Eigen::Vector3d point;
+		Eigen::Vector2i pixel = Eigen::Vector2i::Zero();
+		uint8_t rgb;
+		point(0) = pointCloud.points_[i].x();
+		point(1) = pointCloud.points_[i].y();
+		point(2) = pointCloud.points_[i].z();
+		projectionLidarToPixel(point, quaternion, translation, pixel);
+		rgb = image.data[pixel(0), pixel(1)];
+	}
 }
 
 int main(int argc, char **argv) {
@@ -158,6 +189,10 @@ int main(int argc, char **argv) {
 
 	m545_mapping::loadParameters(paramFile, &localMapParams);
 
+	//yidan
+	//TO DO: create class
+	getColorProjection();
+	
 //	ros::AsyncSpinner spinner(4); // Use 4 threads
 //	spinner.start();
 //	ros::waitForShutdown();
