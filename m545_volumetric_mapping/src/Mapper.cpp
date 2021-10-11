@@ -80,7 +80,6 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 		isMatchingInProgress_ = false;
 		return;
 	}
-	std::lock_guard<std::mutex> lck(mapManipulationMutex_);
 	auto cloud = cloudIn;
 	Timer timer;
 	open3d::geometry::AxisAlignedBoundingBox bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_,
@@ -102,6 +101,9 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 
 	bbox = boundingBoxAroundPosition(1.4 * params_.cropBoxLowBound_, 1.4 * params_.cropBoxHighBound_,
 			mapToRangeSensor_.translation());
+
+	std::lock_guard<std::mutex> lck(mapManipulationMutex_);
+
 	auto mapPatch = map_.Crop(bbox);
 
 //	std::cout << "Map and scan pre processing finished\n";
@@ -130,6 +132,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	// concatenate registered cloud into map
 	const bool isMovedTooLittle = odometryMotion.translation().norm() < params_.minMovementBetweenMappingSteps_;
 	if (!isMovedTooLittle) {
+		isManipulatingMap_ = true;
 //		Timer timer("Map update");
 		m545_mapping::randomDownSample(params_.downSamplingRatio_, wideCroppedCloud.get());
 		wideCroppedCloud->Transform(result.transformation_);
@@ -148,6 +151,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 		}
 
 //		std::cout << "\n";
+		isManipulatingMap_ = false;
 		odomToRangeSensorPrev_ = odomToRangeSensor;
 	}
 

@@ -10,6 +10,7 @@ set(SRC_FILES
   src/Parameters.cpp
   src/Mapper.cpp
   src/helpers.cpp
+  src/Mesher.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES

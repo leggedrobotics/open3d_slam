@@ -10,6 +10,7 @@
 #include "m545_volumetric_mapping/frames.hpp"
 #include "m545_volumetric_mapping/helpers.hpp"
 #include "m545_volumetric_mapping/Mapper.hpp"
+#include "m545_volumetric_mapping/Mesher.hpp"
 
 #include "open3d_conversions/open3d_conversions.h"
 #include <ros/ros.h>
@@ -27,12 +28,15 @@ namespace registration = open3d::pipelines::registration;
 ros::Publisher refPub;
 ros::Publisher subsampledPub;
 ros::Publisher mapPub, localMapPub;
+std::shared_ptr<m545_mapping::Mesher> mesher;
 
 m545_mapping::OdometryParameters odometryParams;
 std::shared_ptr<registration::TransformationEstimation> icpObjective;
 std::shared_ptr<m545_mapping::Mapper> mapper;
 m545_mapping::MapperParameters mapperParams;
 m545_mapping::LocalMapParameters localMapParams;
+m545_mapping::MesherParameters mesherParams;
+
 
 bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
 	const m545_mapping::Timer timer;
@@ -107,13 +111,27 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
 }
 
 void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
-	if (mapper->isMatchingInProgress()) {
-		return;
+	if (!mapper->isMatchingInProgress()) {
+		std::thread t([cloud, timestamp]() {
+			mappingUpdate(cloud, timestamp);
+		});
+		t.detach();
 	}
-	std::thread t([cloud, timestamp]() {
-		mappingUpdate(cloud, timestamp);
-	});
-	t.detach();
+
+	if (!mesher->isMeshingInProgress()) {
+		std::thread t([]() {
+			auto map = mapper->getDenseMap();
+			if (map.points_.empty()) {
+				return;
+			}
+			auto bbox = m545_mapping::boundingBoxAroundPosition(localMapParams.cropBoxLowBound_, localMapParams.cropBoxHighBound_, mapper->getMapToRangeSensor().translation());
+			m545_mapping::cropPointcloud(bbox, &map);
+			auto downSampledMap = map.VoxelDownSample(mesherParams.voxelSize_);
+			mesher->buildMeshFromCloud(*downSampledMap);
+		});
+		t.detach();
+	}
+
 }
 
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
@@ -157,6 +175,10 @@ int main(int argc, char **argv) {
 	mapper->setParameters(mapperParams);
 
 	m545_mapping::loadParameters(paramFile, &localMapParams);
+
+	mesher = std::make_shared<m545_mapping::Mesher>();
+	m545_mapping::loadParameters(paramFile, &mesherParams);
+	mesher->setParameters(mesherParams);
 
 //	ros::AsyncSpinner spinner(4); // Use 4 threads
 //	spinner.start();
