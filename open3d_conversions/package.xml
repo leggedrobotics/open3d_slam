@@ -18,6 +18,7 @@
   <depend>sensor_msgs</depend>
   <depend>eigen</depend>
   <depend>open3d_catkin</depend>
+  <depend>m545_volumetric_mapping_msgs</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

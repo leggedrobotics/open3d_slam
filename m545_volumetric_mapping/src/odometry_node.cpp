@@ -128,6 +128,8 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 			m545_mapping::cropPointcloud(bbox, &map);
 			auto downSampledMap = map.VoxelDownSample(mesherParams.voxelSize_);
 			mesher->buildMeshFromCloud(*downSampledMap);
+			m545_volumetric_mapping_msgs::PolygonMesh meshMsg;
+			open3d_conversions::open3dToRos(mesher->getMesh(),"map",meshMsg);
 		});
 		t.detach();
 	}

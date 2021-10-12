@@ -52,12 +52,12 @@ local_map:
 mesher:
   voxel_size: 0.05
   knn_normal_estimation: 4
-  strategy: Poisson # options: AlphaShape, Poisson, BallPivot
+  strategy: AlphaShape # options: AlphaShape, Poisson, BallPivot
   alpha_shape_alpha: 0.5
   poisson_depth: 8
   poisson_min_density: 8.0
   poisson_scale: 1.0
-  ball_pivot_radii: [0.3,1.0]
+  ball_pivot_radii: [0.5] 
 
 
     

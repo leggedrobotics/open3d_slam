@@ -12,6 +12,10 @@
 
 namespace m545_mapping {
 
+Mesher::Mesher(){
+	mesh_ = std::make_shared<TriangleMesh>();
+}
+
 void Mesher::buildMeshFromCloud(const PointCloud &cloudIn) {
 	std::lock_guard<std::mutex> lck(meshingMutex_);
 	isMeshingInProgress_ = true;
@@ -27,7 +31,7 @@ void Mesher::buildMeshFromCloud(const PointCloud &cloudIn) {
 		mesh = TriangleMesh::CreateFromPointCloudAlphaShape(cloud, params_.alphaShapeAlpha_);
 		break;
 	}
-	case MesherStrategy::BallPivot: {
+	case MesherStrategy::BallPivot: { // slow AF
 		mesh = TriangleMesh::CreateFromPointCloudBallPivoting(cloud, params_.ballPivotRadii_);
 		break;
 	}
@@ -53,7 +57,10 @@ void Mesher::buildMeshFromCloud(const PointCloud &cloudIn) {
 	}
 
 	mesh->ComputeTriangleNormals();
-
+	{
+		std::lock_guard<std::mutex> lck(meshingAccessMutex_);
+		mesh_ = mesh;
+	}
 	std::cout << "normals: " << mesh->HasTriangleNormals() << std::endl;
 	std::cout << "mesh size: " << mesh->vertices_.size() << std::endl;
 	const std::string filename = ros::package::getPath("m545_volumetric_mapping") + "/data/map_mesh.stl";
@@ -68,6 +75,11 @@ bool Mesher::isMeshingInProgress() const {
 
 void Mesher::setParameters(const MesherParameters &p) {
 	params_ = p;
+}
+
+const Mesher::TriangleMesh &Mesher::getMesh() const{
+	std::lock_guard<std::mutex> lck(meshingAccessMutex_);
+	return *mesh_;
 }
 
 } // namespace m545_mapping
