@@ -55,7 +55,7 @@ mesher:
   strategy: Poisson # options: AlphaShape, Poisson, BallPivot
   alpha_shape_alpha: 0.5
   poisson_depth: 8
-  poisson_min_density: -2.5
+  poisson_min_density: -2.0
   poisson_scale: 0.8
   ball_pivot_radii: [0.5] 
 

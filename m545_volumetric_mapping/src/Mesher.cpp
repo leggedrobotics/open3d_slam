@@ -16,6 +16,10 @@ Mesher::Mesher(){
 	mesh_ = std::make_shared<TriangleMesh>();
 }
 
+void Mesher::setCurrentPose(const Eigen::Isometry3d &pose){
+	currentPose_ = pose;
+}
+
 void Mesher::buildMeshFromCloud(const PointCloud &cloudIn) {
 	std::lock_guard<std::mutex> lck(meshingMutex_);
 	isMeshingInProgress_ = true;
@@ -26,7 +30,8 @@ void Mesher::buildMeshFromCloud(const PointCloud &cloudIn) {
 		cloud.EstimateNormals(open3d::geometry::KDTreeSearchParamKNN(params_.knnNormalEstimation_));
 		cloud.OrientNormalsConsistentTangentPlane(params_.knnNormalEstimation_);
 	}
-	cloud.OrientNormalsToAlignWithDirection(Eigen::Vector3d::UnitZ());
+//	cloud.OrientNormalsToAlignWithDirection(Eigen::Vector3d::UnitZ());
+	cloud.OrientNormalsTowardsCameraLocation(currentPose_.translation());
 
 	auto mesh = std::make_shared<TriangleMesh>();
 

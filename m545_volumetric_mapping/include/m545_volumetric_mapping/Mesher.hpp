@@ -29,13 +29,14 @@ public:
 	bool isMeshingInProgress() const;
 	void setParameters(const MesherParameters &p);
 	const TriangleMesh &getMesh() const;
-
+	void setCurrentPose(const Eigen::Isometry3d &pose);
 private:
 	bool isMeshingInProgress_ = false;
 	std::mutex meshingMutex_;
 	mutable std::mutex meshingAccessMutex_;
 	std::shared_ptr<TriangleMesh> mesh_;
 	MesherParameters params_;
+	Eigen::Isometry3d currentPose_ = Eigen::Isometry3d::Identity();
 
 
 };

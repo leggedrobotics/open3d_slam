@@ -119,23 +119,15 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 		t.detach();
 	}
 
-	if (!mesher->isMeshingInProgress()) {
+	if (!mesher->isMeshingInProgress() && !mapper->getMap().points_.empty()) {
 		std::thread t([]() {
 			auto map = mapper->getMap();
-			if (map.points_.empty()) {
-				return;
-			}
 			auto bbox = m545_mapping::boundingBoxAroundPosition(localMapParams.cropBoxLowBound_, localMapParams.cropBoxHighBound_, mapper->getMapToRangeSensor().translation());
 			m545_mapping::cropPointcloud(bbox, &map);
 			auto downSampledMap = map.VoxelDownSample(mesherParams.voxelSize_);
+			mesher->setCurrentPose(mapper->getMapToRangeSensor());
 			mesher->buildMeshFromCloud(*downSampledMap);
 			m545_volumetric_mapping_msgs::PolygonMesh meshMsg;
-			std::cout << "Mesher sending a mesh with: " << mesher->getMesh().vertices_.size() << " vertices. \n";
-			std::cout << "Mesher sending a mesh with: " << mesher->getMesh().vertices_.size() << " triangles. \n";
-			std::cout << "Mesher is orientable: " << mesher->getMesh().IsOrientable() << "\n";
-////			std::cout << "Mesher is selfIntersect: " << mesher->getMesh().IsSelfIntersecting() << "\n";
-////			std::cout << "Mesher is vertex manifold: " << mesher->getMesh().IsVertexManifold() << "\n";
-
 			open3d_conversions::open3dToRos(mesher->getMesh(),"map",meshMsg);
 			meshMsg.header.frame_id="map";
 			meshMsg.header.stamp = ros::Time::now();
