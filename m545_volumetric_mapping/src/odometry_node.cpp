@@ -6,6 +6,10 @@
  */
 #include <open3d/Open3D.h>
 #include <open3d/pipelines/registration/Registration.h>
+#include <open3d/geometry/Image.h>
+#include <open3d/geometry/PointCloud.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
 
 #include "m545_volumetric_mapping/Parameters.hpp"
 #include "m545_volumetric_mapping/frames.hpp"
@@ -25,6 +29,8 @@
 open3d::geometry::PointCloud cloudPrev;
 
 ros::NodeHandlePtr nh;
+ros::NodeHandle nh2;
+
 std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
 Eigen::Matrix4d curentTransformation = Eigen::Matrix4d::Identity();
 namespace registration = open3d::pipelines::registration;
@@ -120,18 +126,8 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 	t.detach();
 }
 
-//yidan
-void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
-	open3d::geometry::PointCloud cloud;
-	open3d::geometry::Image image;
-	for (int i = 0; i < cloud.points_.size(); ++i) {
-		Eigen::Vector3d point;
-		Eigen::Vector2i pixel = Eigen::Vector2i::Zero();
-		point(0) = cloud.points_[i].x();
-		point(1) = cloud.points_[i].y();
-		point(2) = cloud.points_[i].z();
-		projectionLidarToPixel(point, quaternion, translation, pixel);
-	}
+ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
+ 	open3d::geometry::PointCloud cloud;
 	open3d_conversions::rosToOpen3d(msg, cloud, true);
 	ros::Time timestamp = msg->header.stamp;
 
@@ -150,21 +146,33 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 }
 
 //yidan
-void getColorProjection() {
-	//TO DO: load files
+void synchronizeCallback(const sensor_msgs::PointCloud2Ptr& cloudmsg, const sensor_msgs::Image& imagemsg) {
 	open3d::geometry::PointCloud pointCloud;
-	sensor_msgs::Image image;
+	open3d_conversions::rosToOpen3d(cloudmsg, pointCloud, true);
+
 	for (int i = 0; i < pointCloud.points_.size(); ++i) {
 		Eigen::Vector3d point;
 		Eigen::Vector2i pixel = Eigen::Vector2i::Zero();
 		uint8_t rgb;
+		//uint8_t* rgbData;
+		//Eigen::Vector3f color = {1.0, 1.0, 1.0};
+		
 		point(0) = pointCloud.points_[i].x();
 		point(1) = pointCloud.points_[i].y();
 		point(2) = pointCloud.points_[i].z();
-		projectionLidarToPixel(point, quaternion, translation, pixel);
-		rgb = image.data[pixel(0), pixel(1)];
+		pixel = projectionLidarToPixel(point, quaternion, translation);
+		if (pixel(0) > 0 && pixel(0) < 3440 && pixel(1) > 0 && pixel(1) < 2880) {
+			rgb = imagemsg.data[pixel(0), pixel(1)];
+			pointCloud.colors_[i] = Eigen::Vector3d(rgb);
+			// for (int i = 0; i < 3; ++i) {
+			// 	rgb[1];
+			// 	//color(i) = float(rgb[i] / 255.0);
+			// }
+		}
+		//pointCloud.colors_[i] = Eigen::Vector3d(rgb);
 	}
 }
+
 
 int main(int argc, char **argv) {
 	ros::init(argc, argv, "lidar_odometry_mapping_node");
@@ -172,6 +180,12 @@ int main(int argc, char **argv) {
 	tfBroadcaster.reset(new tf2_ros::TransformBroadcaster());
 	const std::string cloudTopic = nh->param<std::string>("cloud_topic", "");
 	ros::Subscriber cloudSub = nh->subscribe(cloudTopic, 100, &cloudCallback);
+
+	//yidan
+	message_filters::Subscriber<sensor_msgs::PointCloud2Ptr> cloud_sub(nh2, "/ouster_points_self_filtered", 1);
+	message_filters::Subscriber<sensor_msgs::Image> image_sub(nh2, "/camMainView/Downsampled", 1);
+	message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::PointCloud2Ptr> synchro(image_sub, cloud_sub, 10);
+	synchro.registerCallback(boost::bind(&synchronizeCallback, _1, _2));
 
 	refPub = nh->advertise<sensor_msgs::PointCloud2>("reference", 1, true);
 	subsampledPub = nh->advertise<sensor_msgs::PointCloud2>("subsampled", 1, true);
@@ -189,10 +203,6 @@ int main(int argc, char **argv) {
 
 	m545_mapping::loadParameters(paramFile, &localMapParams);
 
-	//yidan
-	//TO DO: create class
-	getColorProjection();
-	
 //	ros::AsyncSpinner spinner(4); // Use 4 threads
 //	spinner.start();
 //	ros::waitForShutdown();
