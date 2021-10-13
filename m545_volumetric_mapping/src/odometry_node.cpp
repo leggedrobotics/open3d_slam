@@ -126,8 +126,8 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 	t.detach();
 }
 
- void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
- 	open3d::geometry::PointCloud cloud;
+void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
+	open3d::geometry::PointCloud cloud;
 	open3d_conversions::rosToOpen3d(msg, cloud, true);
 	ros::Time timestamp = msg->header.stamp;
 
@@ -144,6 +144,7 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 	mappingUpdateIfMapperNotBusy(cloud, timestamp);
 
 }
+
 
 //yidan
 void synchronizeCallback(const sensor_msgs::PointCloud2Ptr& cloudmsg, const sensor_msgs::Image& imagemsg) {
