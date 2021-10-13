@@ -73,6 +73,31 @@ public:
 
 } //namespace
 
+
+
+double calcMean(const std::vector<double> &data) {
+	if (data.empty()) {
+		return 0.0;
+	}
+	return static_cast<double>(std::accumulate(data.begin(), data.end(), 0.0)) / data.size();
+}
+
+double calcStandardDeviation(const std::vector<double> &data) {
+	const int n = data.size();
+	if (n < 2) {
+		return 0.0;
+	}
+	const double mean = calcMean(data);
+	double stdDev = 0.0;
+	for (const auto d : data) {
+		const double e = d - mean;
+		stdDev += e * e;
+	}
+
+	return std::sqrt(stdDev / (n - 1));
+}
+
+
 void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, const ros::Time &timestamp,
 		ros::Publisher &pub) {
 	if (pub.getNumSubscribers() > 0) {

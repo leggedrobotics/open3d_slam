@@ -8,6 +8,7 @@ Panels:
         - /Status1
         - /TFTrajectory1
         - /PointCloud23
+        - /Mesh1
       Splitter Ratio: 0.5
     Tree Height: 719
   - Class: rviz/Selection
@@ -121,8 +122,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 10.422174453735352
-        Min Value: -4.052974700927734
+        Max Value: 33.389400482177734
+        Min Value: -16.40587043762207
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -169,6 +170,13 @@ Visualization Manager:
             range_sensor:
               {}
       Update Interval: 0
+      Value: true
+    - Class: m545_volumetric_mapping_rviz_plugin/Mesh
+      Enabled: true
+      Name: Mesh
+      Queue Size: 10
+      Topic: /odometry_node/mesh
+      Unreliable: false
       Value: true
   Enabled: true
   Global Options:

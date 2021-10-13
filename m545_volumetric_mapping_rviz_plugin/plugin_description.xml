@@ -1,0 +1,8 @@
+<library path="lib/libm545_volumetric_mapping_rviz_plugin">
+  <class name="m545_volumetric_mapping_rviz_plugin/Mesh"
+         type="m545_volumetric_mapping_rviz_plugin::MeshDisplay"
+         base_class_type="rviz::Display">
+    <description>Displays incremental voxblox mesh messages.</description>
+    <message_type>m545_volumetric_mapping_msgs/PolygonMesh</message_type>
+  </class>
+</library>

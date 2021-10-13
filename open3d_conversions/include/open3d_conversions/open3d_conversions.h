@@ -52,6 +52,8 @@ void open3dToRos(const open3d::geometry::PointCloud& pointcloud, sensor_msgs::Po
 
 void rosToOpen3d(const sensor_msgs::PointCloud2ConstPtr& ros_pc2, open3d::geometry::PointCloud& o3d_pc,
                  bool skip_colors = false);
+void rosToOpen3d(const sensor_msgs::PointCloud2 &cloud, open3d::geometry::PointCloud &o3d_pc,
+		bool skip_colors=false);
 /**
 *@brief Copy data from a open3d::t::geometry::PointCloud to a sensor_msgs::PointCloud2
 *
@@ -78,16 +80,8 @@ void rosToOpen3d(const sensor_msgs::PointCloud2ConstPtr& ros_pc2, open3d::t::geo
 void open3dToRos(const open3d::geometry::MeshBase &mesh, const std::string &frameId,  m545_volumetric_mapping_msgs::PolygonMesh &msg);
 
 
-
-
-
-
-
-
-
-
-
-
+void rosToOpen3d(const m545_volumetric_mapping_msgs::PolygonMesh &msg, open3d::geometry::TriangleMesh &mesh);
+void rosToOpen3d(const m545_volumetric_mapping_msgs::PolygonMesh::ConstPtr &msg, open3d::geometry::TriangleMesh &mesh);
 
 
 

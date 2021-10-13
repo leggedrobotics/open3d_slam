@@ -53,8 +53,15 @@ void open3dToRos(const open3d::geometry::PointCloud &pointcloud, sensor_msgs::Po
 	}
 }
 
+
 void rosToOpen3d(const sensor_msgs::PointCloud2ConstPtr &ros_pc2, open3d::geometry::PointCloud &o3d_pc,
+		bool skip_colors){
+	rosToOpen3d(*ros_pc2, o3d_pc, skip_colors);
+}
+
+void rosToOpen3d(const sensor_msgs::PointCloud2 &cloud, open3d::geometry::PointCloud &o3d_pc,
 		bool skip_colors) {
+	const auto ros_pc2 = &cloud;
 	sensor_msgs::PointCloud2ConstIterator<float> ros_pc2_x(*ros_pc2, "x");
 	sensor_msgs::PointCloud2ConstIterator<float> ros_pc2_y(*ros_pc2, "y");
 	sensor_msgs::PointCloud2ConstIterator<float> ros_pc2_z(*ros_pc2, "z");
@@ -273,6 +280,7 @@ void open3dToRos(const open3d::geometry::MeshBase &mesh, const std::string &fram
 	PointCloud pointCloud;
 	const int nVertices = mesh.vertices_.size();
 	pointCloud.points_ = mesh.vertices_;
+	open3dToRos(pointCloud, msg.cloud, frameId);
 
 	if (mesh.GetGeometryType() != Geometry::GeometryType::TriangleMesh) {
 		throw std::runtime_error("Only triangle mesh supported for now!");
@@ -292,8 +300,32 @@ void open3dToRos(const open3d::geometry::MeshBase &mesh, const std::string &fram
 		msg.polygons.push_back(triangle);
 	}
 
-	open3dToRos(pointCloud, msg.cloud, frameId);
 
+}
+
+void rosToOpen3d(const m545_volumetric_mapping_msgs::PolygonMesh::ConstPtr &msg, open3d::geometry::TriangleMesh &mesh){
+	rosToOpen3d(*msg, mesh);
+}
+
+
+
+void rosToOpen3d(const m545_volumetric_mapping_msgs::PolygonMesh &msg, open3d::geometry::TriangleMesh &mesh){
+	using namespace open3d::geometry;
+	enum XYZ {
+		x, y, z
+	};
+		PointCloud pointCloud;
+
+		rosToOpen3d(msg.cloud,pointCloud);
+		mesh.vertices_=pointCloud.points_;
+
+		// add triangles
+			const int nTriangles = msg.polygons.size();
+			mesh.triangles_.reserve(nTriangles);
+			for (int i = 0; i < nTriangles; ++i) {
+				Eigen::Vector3i triangle(msg.polygons[i].vertices[x],msg.polygons[i].vertices[y],msg.polygons[i].vertices[z]);
+				mesh.triangles_.push_back(triangle);
+			}
 }
 
 }    // namespace open3d_conversions

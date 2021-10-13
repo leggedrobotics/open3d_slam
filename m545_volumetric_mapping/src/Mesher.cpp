@@ -22,13 +22,17 @@ void Mesher::buildMeshFromCloud(const PointCloud &cloudIn) {
 	auto cloud = cloudIn;
 	Timer timer("mesh_construction");
 	if (!cloud.HasNormals()) {
+		Timer timer("mesher_normal_est");
 		cloud.EstimateNormals(open3d::geometry::KDTreeSearchParamKNN(params_.knnNormalEstimation_));
+		cloud.OrientNormalsConsistentTangentPlane(params_.knnNormalEstimation_);
 	}
+	cloud.OrientNormalsToAlignWithDirection(Eigen::Vector3d::UnitZ());
+
 	auto mesh = std::make_shared<TriangleMesh>();
 
 	switch (params_.strategy_) {
 	case MesherStrategy::AlphaShape: {
-		mesh = TriangleMesh::CreateFromPointCloudAlphaShape(cloud, params_.alphaShapeAlpha_);
+		auto mesh = TriangleMesh::CreateFromPointCloudAlphaShape(cloud, params_.alphaShapeAlpha_);
 		break;
 	}
 	case MesherStrategy::BallPivot: { // slow AF
@@ -43,28 +47,35 @@ void Mesher::buildMeshFromCloud(const PointCloud &cloudIn) {
 		auto densities = std::get<1>(meshAndDensities);
 		std::vector<size_t> idsToRemove;
 		idsToRemove.reserve(mesh->vertices_.size());
+		const double removalThreshold = calcMean(densities) + params_.poissonMinDensity_*calcStandardDeviation(densities);
 		for (int i = 0; i < (int) mesh->vertices_.size(); ++i) {
 			const double d = densities.at(i);
-			if (d < params_.poissonMinDensity_) {
+			if (d < removalThreshold) {
 				idsToRemove.push_back(i);
 			}
 		}
 		mesh->RemoveVerticesByIndex(idsToRemove);
+//		std::cout<<"Density mean: " <<calcMean(densities) << "\n";
+//		std::cout<<"Density std: " <<calcStandardDeviation(densities) << "\n\n";
 		break;
 	}
 	default:
 		throw std::runtime_error("Unknown reconstruction strategy");
 	}
 
-	mesh->ComputeTriangleNormals();
+
+
 	{
 		std::lock_guard<std::mutex> lck(meshingAccessMutex_);
 		mesh_ = mesh;
 	}
-	std::cout << "normals: " << mesh->HasTriangleNormals() << std::endl;
-	std::cout << "mesh size: " << mesh->vertices_.size() << std::endl;
-	const std::string filename = ros::package::getPath("m545_volumetric_mapping") + "/data/map_mesh.stl";
-	open3d::io::WriteTriangleMeshToSTL(filename, *mesh, false, false, false, false, false, false);
+
+//	mesh->ComputeTriangleNormals();
+//	const std::string filename = ros::package::getPath("m545_volumetric_mapping") + "/data/map_mesh.stl";
+//	open3d::io::WriteTriangleMeshToSTL(filename, *mesh, false, false, false, false, false, false);
+
+
+
 	isMeshingInProgress_ = false;
 
 }

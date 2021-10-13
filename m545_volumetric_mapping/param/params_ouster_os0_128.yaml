@@ -42,21 +42,21 @@ icp_mapping:
     
 local_map:
   voxel_size: 0.05
-  crop_box_min_x: -20.0
-  crop_box_min_y: -20.0
+  crop_box_min_x: -12.0
+  crop_box_min_y: -12.0
   crop_box_min_z: -100.0
-  crop_box_max_x: 20.0
-  crop_box_max_y: 20.0
+  crop_box_max_x: 12.0
+  crop_box_max_y: 12.0
   crop_box_max_z: 100.0
 
 mesher:
-  voxel_size: 0.05
+  voxel_size: 0.2
   knn_normal_estimation: 4
-  strategy: AlphaShape # options: AlphaShape, Poisson, BallPivot
+  strategy: Poisson # options: AlphaShape, Poisson, BallPivot
   alpha_shape_alpha: 0.5
   poisson_depth: 8
-  poisson_min_density: 8.0
-  poisson_scale: 1.0
+  poisson_min_density: -2.5
+  poisson_scale: 0.8
   ball_pivot_radii: [0.5] 
 
 

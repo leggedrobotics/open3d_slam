@@ -66,8 +66,8 @@ open3d::geometry::AxisAlignedBoundingBox boundingBoxAroundPosition(const Eigen::
 
 
 
-
-
+double calcMean(const std::vector<double> &data);
+double calcStandardDeviation(const std::vector<double> &data);
 
 
 

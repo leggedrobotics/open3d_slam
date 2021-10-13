@@ -11,6 +11,7 @@
 #include "m545_volumetric_mapping/helpers.hpp"
 #include "m545_volumetric_mapping/Mapper.hpp"
 #include "m545_volumetric_mapping/Mesher.hpp"
+#include <m545_volumetric_mapping_msgs/PolygonMesh.h>
 
 #include "open3d_conversions/open3d_conversions.h"
 #include <ros/ros.h>
@@ -27,7 +28,7 @@ Eigen::Matrix4d curentTransformation = Eigen::Matrix4d::Identity();
 namespace registration = open3d::pipelines::registration;
 ros::Publisher refPub;
 ros::Publisher subsampledPub;
-ros::Publisher mapPub, localMapPub;
+ros::Publisher mapPub, localMapPub, meshPub;
 std::shared_ptr<m545_mapping::Mesher> mesher;
 
 m545_mapping::OdometryParameters odometryParams;
@@ -80,10 +81,10 @@ bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const 
 
 void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
 
-	const m545_mapping::Timer timer;
-	mapper->addRangeMeasurement(cloud, timestamp);
-	std::cout << "Mapping step finished \n";
-	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n\n";
+	{
+//		m545_mapping::Timer timer("Mapping step.");
+		mapper->addRangeMeasurement(cloud, timestamp);
+	}
 	{
 		geometry_msgs::TransformStamped transformStamped = m545_mapping::toRos(mapper->getMapToOdom().matrix(),
 				timestamp, m545_mapping::frames::mapFrame, m545_mapping::frames::odomFrame);
@@ -120,7 +121,7 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 
 	if (!mesher->isMeshingInProgress()) {
 		std::thread t([]() {
-			auto map = mapper->getDenseMap();
+			auto map = mapper->getMap();
 			if (map.points_.empty()) {
 				return;
 			}
@@ -129,7 +130,16 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 			auto downSampledMap = map.VoxelDownSample(mesherParams.voxelSize_);
 			mesher->buildMeshFromCloud(*downSampledMap);
 			m545_volumetric_mapping_msgs::PolygonMesh meshMsg;
+			std::cout << "Mesher sending a mesh with: " << mesher->getMesh().vertices_.size() << " vertices. \n";
+			std::cout << "Mesher sending a mesh with: " << mesher->getMesh().vertices_.size() << " triangles. \n";
+			std::cout << "Mesher is orientable: " << mesher->getMesh().IsOrientable() << "\n";
+////			std::cout << "Mesher is selfIntersect: " << mesher->getMesh().IsSelfIntersecting() << "\n";
+////			std::cout << "Mesher is vertex manifold: " << mesher->getMesh().IsVertexManifold() << "\n";
+
 			open3d_conversions::open3dToRos(mesher->getMesh(),"map",meshMsg);
+			meshMsg.header.frame_id="map";
+			meshMsg.header.stamp = ros::Time::now();
+			meshPub.publish(meshMsg);
 		});
 		t.detach();
 	}
@@ -166,6 +176,7 @@ int main(int argc, char **argv) {
 	subsampledPub = nh->advertise<sensor_msgs::PointCloud2>("subsampled", 1, true);
 	mapPub = nh->advertise<sensor_msgs::PointCloud2>("map", 1, true);
 	localMapPub = nh->advertise<sensor_msgs::PointCloud2>("local_map", 1, true);
+	meshPub = nh->advertise<m545_volumetric_mapping_msgs::PolygonMesh>("mesh", 1,true);
 
 	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
 	std::cout << "loading params from: " << paramFile << "\n";
