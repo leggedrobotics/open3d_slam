@@ -61,7 +61,6 @@ private:
   std::mutex mapManipulationMutex_;
 
 
-
 };
 
 } /* namespace m545_mapping */
