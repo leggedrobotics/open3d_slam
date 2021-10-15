@@ -50,6 +50,7 @@ local_map:
   crop_box_max_z: 100.0
 
 mesher:
+  is_compute_mesh: false
   voxel_size: 0.2
   knn_normal_estimation: 4
   strategy: Poisson # options: AlphaShape, Poisson, BallPivot

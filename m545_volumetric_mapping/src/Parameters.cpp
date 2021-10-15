@@ -107,6 +107,7 @@ void loadParameters(const YAML::Node &n, MesherParameters *p) {
 	p->poissonMinDensity_ = n["poisson_min_density"].as<double>();
 	p->poissonScale_ = n["poisson_scale"].as<double>();
 	p->ballPivotRadii_ = n["ball_pivot_radii"].as<std::vector<double>>();
+	p->isComputeMesh_ = n["is_compute_mesh"].as<bool>();
 
 }
 

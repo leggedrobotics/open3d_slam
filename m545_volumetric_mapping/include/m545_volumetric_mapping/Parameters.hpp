@@ -69,6 +69,7 @@ struct LocalMapParameters {
 };
 
 struct MesherParameters{
+	bool isComputeMesh_ = false;
 	double voxelSize_ = 0.05;
 	MesherStrategy strategy_ = MesherStrategy::AlphaShape;
 	double alphaShapeAlpha_ = 0.5;

@@ -11,6 +11,8 @@
 #include "m545_volumetric_mapping/helpers.hpp"
 #include "m545_volumetric_mapping/Mapper.hpp"
 #include "m545_volumetric_mapping/Mesher.hpp"
+
+#include "m545_volumetric_mapping/Odometry.hpp"
 #include <m545_volumetric_mapping_msgs/PolygonMesh.h>
 
 #include "open3d_conversions/open3d_conversions.h"
@@ -21,85 +23,40 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
 
+using namespace m545_mapping::frames;
 open3d::geometry::PointCloud cloudPrev;
 ros::NodeHandlePtr nh;
 std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
-Eigen::Matrix4d curentTransformation = Eigen::Matrix4d::Identity();
-namespace registration = open3d::pipelines::registration;
-ros::Publisher refPub;
-ros::Publisher subsampledPub;
-ros::Publisher mapPub, localMapPub, meshPub;
+ros::Publisher refPub, subsampledPub, mapPub, localMapPub, meshPub;
 std::shared_ptr<m545_mapping::Mesher> mesher;
-
-m545_mapping::OdometryParameters odometryParams;
-std::shared_ptr<registration::TransformationEstimation> icpObjective;
+std::shared_ptr<m545_mapping::LidarOdometry> odometry;
 std::shared_ptr<m545_mapping::Mapper> mapper;
 m545_mapping::MapperParameters mapperParams;
 m545_mapping::LocalMapParameters localMapParams;
 m545_mapping::MesherParameters mesherParams;
 
-
 bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
-	const m545_mapping::Timer timer;
-	const Eigen::Matrix4d init = Eigen::Matrix4d::Identity();
-	auto criteria = open3d::pipelines::registration::ICPConvergenceCriteria();
-	criteria.max_iteration_ = odometryParams.maxNumIter_;
-	auto bbox = m545_mapping::boundingBoxAroundPosition(odometryParams.cropBoxLowBound_,
-			odometryParams.cropBoxHighBound_);
-	auto croppedCloud = cloud.Crop(bbox);
-//	auto voxelizedCloud = croppedCloud->VoxelDownSample(odometryParams.voxelSize_);
-	m545_mapping::voxelize(odometryParams.voxelSize_, croppedCloud.get());
-	auto downSampledCloud = croppedCloud->RandomDownSample(odometryParams.downSamplingRatio_);
+	odometry->addRangeScan(cloud, timestamp);
 
-	if (odometryParams.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
-		m545_mapping::estimateNormals(odometryParams.kNNnormalEstimation_, downSampledCloud.get());
-		downSampledCloud->NormalizeNormals();
-	}
-	auto result = open3d::pipelines::registration::RegistrationICP(cloudPrev, *downSampledCloud,
-			odometryParams.maxCorrespondenceDistance_, init, *icpObjective, criteria);
+	m545_mapping::publishTfTransform(odometry->getOdomToRangeSensor().matrix(), timestamp, odomFrame, rangeSensorFrame,
+			tfBroadcaster.get());
 
-//	std::cout << "Scan to scan matching finished \n";
-//	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
-//	std::cout << "Fitness: " << result.fitness_ << "\n";
-//	std::cout << "RMSE: " << result.inlier_rmse_ << "\n";
-//	std::cout << "Transform: " << result.transformation_ << "\n";
-//	std::cout << "target size: " << cloud.points_.size() << std::endl;
-//	std::cout << "reference size: " << cloudPrev.points_.size() << std::endl;
-//	std::cout << "\n \n";
-	if (result.fitness_ <= 1e-2) {
-		return false;
-	}
-	curentTransformation *= result.transformation_.inverse();
-	geometry_msgs::TransformStamped transformStamped = m545_mapping::toRos(curentTransformation, timestamp,
-			m545_mapping::frames::odomFrame, m545_mapping::frames::rangeSensorFrame);
-	tfBroadcaster->sendTransform(transformStamped);
-	cloudPrev = *downSampledCloud;
-	m545_mapping::publishCloud(*downSampledCloud, m545_mapping::frames::rangeSensorFrame, timestamp, subsampledPub);
+	m545_mapping::publishCloud(odometry->getPreProcessedCloud(), m545_mapping::frames::rangeSensorFrame, timestamp,
+			subsampledPub);
 
 	return true;
 }
 
 void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
-
 	{
 //		m545_mapping::Timer timer("Mapping step.");
 		mapper->addRangeMeasurement(cloud, timestamp);
 	}
-	{
-		geometry_msgs::TransformStamped transformStamped = m545_mapping::toRos(mapper->getMapToOdom().matrix(),
-				timestamp, m545_mapping::frames::mapFrame, m545_mapping::frames::odomFrame);
-		tfBroadcaster->sendTransform(transformStamped);
-	}
-//		{
-//			geometry_msgs::TransformStamped transformStamped = toRos(mapper->getMapToRangeSensor().matrix(), timestamp,
-//					m545_mapping::frames::mapFrame, m545_mapping::frames::rangeSensorFrame+"_check");
-//			tfBroadcaster->sendTransform(transformStamped);
-//		}
+	m545_mapping::publishTfTransform(mapper->getMapToOdom().matrix(), timestamp, mapFrame, odomFrame,
+			tfBroadcaster.get());
 
-	if (mapPub.getNumSubscribers() > 0) {
-		open3d::geometry::PointCloud map = mapper->getMap();
-		m545_mapping::publishCloud(map, m545_mapping::frames::mapFrame, timestamp, mapPub);
-	}
+	open3d::geometry::PointCloud map = mapper->getMap();
+	m545_mapping::publishCloud(mapper->getMap(), m545_mapping::frames::mapFrame, timestamp, mapPub);
 
 	if (localMapPub.getNumSubscribers() > 0) {
 		open3d::geometry::PointCloud map = mapper->getDenseMap();
@@ -119,19 +76,15 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 		t.detach();
 	}
 
-	if (!mesher->isMeshingInProgress() && !mapper->getMap().points_.empty()) {
-		std::thread t([]() {
+	if (mesherParams.isComputeMesh_ && !mesher->isMeshingInProgress() && !mapper->getMap().points_.empty()) {
+		std::thread t([timestamp]() {
 			auto map = mapper->getMap();
 			auto bbox = m545_mapping::boundingBoxAroundPosition(localMapParams.cropBoxLowBound_, localMapParams.cropBoxHighBound_, mapper->getMapToRangeSensor().translation());
 			m545_mapping::cropPointcloud(bbox, &map);
 			auto downSampledMap = map.VoxelDownSample(mesherParams.voxelSize_);
 			mesher->setCurrentPose(mapper->getMapToRangeSensor());
 			mesher->buildMeshFromCloud(*downSampledMap);
-			m545_volumetric_mapping_msgs::PolygonMesh meshMsg;
-			open3d_conversions::open3dToRos(mesher->getMesh(),"map",meshMsg);
-			meshMsg.header.frame_id="map";
-			meshMsg.header.stamp = ros::Time::now();
-			meshPub.publish(meshMsg);
+			m545_mapping::publishMesh(mesher->getMesh(), mapFrame,timestamp,meshPub);
 		});
 		t.detach();
 	}
@@ -152,6 +105,9 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	if (!computeAndPublishOdometry(cloud, timestamp)) {
 		return;
 	}
+
+	m545_mapping::publishTfTransform(Eigen::Matrix4d::Identity(), timestamp, rangeSensorFrame, msg->header.frame_id,
+				tfBroadcaster.get());
 	m545_mapping::publishCloud(cloud, m545_mapping::frames::rangeSensorFrame, timestamp, refPub);
 	mappingUpdateIfMapperNotBusy(cloud, timestamp);
 
@@ -168,12 +124,15 @@ int main(int argc, char **argv) {
 	subsampledPub = nh->advertise<sensor_msgs::PointCloud2>("subsampled", 1, true);
 	mapPub = nh->advertise<sensor_msgs::PointCloud2>("map", 1, true);
 	localMapPub = nh->advertise<sensor_msgs::PointCloud2>("local_map", 1, true);
-	meshPub = nh->advertise<m545_volumetric_mapping_msgs::PolygonMesh>("mesh", 1,true);
+	meshPub = nh->advertise<m545_volumetric_mapping_msgs::PolygonMesh>("mesh", 1, true);
 
 	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
 	std::cout << "loading params from: " << paramFile << "\n";
+
+	m545_mapping::OdometryParameters odometryParams;
 	m545_mapping::loadParameters(paramFile, &odometryParams);
-	icpObjective = m545_mapping::icpObjectiveFactory(odometryParams.icpObjective_);
+	odometry = std::make_shared<m545_mapping::LidarOdometry>();
+	odometry->setParameters(odometryParams);
 
 	mapper = std::make_shared<m545_mapping::Mapper>();
 	m545_mapping::loadParameters(paramFile, &mapperParams);

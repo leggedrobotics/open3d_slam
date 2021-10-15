@@ -11,6 +11,7 @@ set(SRC_FILES
   src/Mapper.cpp
   src/helpers.cpp
   src/Mesher.cpp
+  src/Odometry.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES

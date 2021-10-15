@@ -18,6 +18,7 @@
 #include <ros/ros.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
+#include <m545_volumetric_mapping_msgs/PolygonMesh.h>
 
 namespace m545_mapping {
 
@@ -73,8 +74,6 @@ public:
 
 } //namespace
 
-
-
 double calcMean(const std::vector<double> &data) {
 	if (data.empty()) {
 		return 0.0;
@@ -97,6 +96,16 @@ double calcStandardDeviation(const std::vector<double> &data) {
 	return std::sqrt(stdDev / (n - 1));
 }
 
+void publishMesh(const open3d::geometry::MeshBase &mesh, const std::string &frame_id, const ros::Time &timestamp,
+		ros::Publisher &pub) {
+	if (pub.getNumSubscribers() > 0) {
+		m545_volumetric_mapping_msgs::PolygonMesh meshMsg;
+		open3d_conversions::open3dToRos(mesh, frame_id, meshMsg);
+		meshMsg.header.frame_id = frame_id;
+		meshMsg.header.stamp = timestamp;
+		pub.publish(meshMsg);
+	}
+}
 
 void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, const ros::Time &timestamp,
 		ros::Publisher &pub) {
@@ -195,14 +204,15 @@ std::shared_ptr<registration::TransformationEstimation> icpObjectiveFactory(cons
 	}
 
 }
-Timer::Timer():Timer(false,""){
+Timer::Timer() :
+		Timer(false, "") {
 
 }
 
 Timer::Timer(const std::string &name) :
-		Timer(true,name) {
+		Timer(true, name) {
 }
-Timer::Timer(bool isPrintInDestructor,const std::string &name) {
+Timer::Timer(bool isPrintInDestructor, const std::string &name) {
 	startTime_ = std::chrono::steady_clock::now();
 	isPrintInDestructor_ = isPrintInDestructor;
 	name_ = name;
@@ -243,6 +253,12 @@ void voxelize(double voxelSize, open3d::geometry::PointCloud *pcl) {
 	}
 	auto voxelized = pcl->VoxelDownSample(voxelSize);
 	*pcl = *voxelized;
+}
+
+void publishTfTransform(const Eigen::Matrix4d &Mat, const ros::Time &time, const std::string &frame,
+		const std::string &childFrame, tf2_ros::TransformBroadcaster *broadcaster) {
+	geometry_msgs::TransformStamped transformStamped = m545_mapping::toRos(Mat, time, frame, childFrame);
+	broadcaster->sendTransform(transformStamped);
 }
 
 std::shared_ptr<open3d::geometry::PointCloud> voxelizeAroundPosition(double voxel_size,
