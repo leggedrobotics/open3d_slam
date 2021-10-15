@@ -94,15 +94,12 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 		m545_mapping::voxelize(params_.voxelSize_, wideCroppedCloud.get());
 	}
 
-	bbox = boundingBoxAroundPosition(params_.cropBoxLowBound_,
-			params_.cropBoxHighBound_);
+	bbox = boundingBoxAroundPosition(params_.cropBoxLowBound_, params_.cropBoxHighBound_);
 	auto narrowCropped = wideCroppedCloud->Crop(bbox);
 	m545_mapping::randomDownSample(params_.downSamplingRatio_, narrowCropped.get());
 
 	bbox = boundingBoxAroundPosition(1.4 * params_.cropBoxLowBound_, 1.4 * params_.cropBoxHighBound_,
 			mapToRangeSensor_.translation());
-
-	std::lock_guard<std::mutex> lck(mapManipulationMutex_);
 
 	auto mapPatch = map_.Crop(bbox);
 
@@ -132,16 +129,18 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	// concatenate registered cloud into map
 	const bool isMovedTooLittle = odometryMotion.translation().norm() < params_.minMovementBetweenMappingSteps_;
 	if (!isMovedTooLittle) {
+		std::lock_guard<std::mutex> lck(mapManipulationMutex_);
 		isManipulatingMap_ = true;
 //		Timer timer("Map update");
 		m545_mapping::randomDownSample(params_.downSamplingRatio_, wideCroppedCloud.get());
 		wideCroppedCloud->Transform(result.transformation_);
 		estimateNormalsIfNeeded(wideCroppedCloud.get());
 		map_ += *wideCroppedCloud;
-		bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_, params_.mapBuilderCropBoxHighBound_,
-				mapToRangeSensor_.translation());
+
 		if (params_.mapVoxelSize_ > 0.0) {
 //			Timer timer("voxelize_map",true);
+			bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_, params_.mapBuilderCropBoxHighBound_,
+					mapToRangeSensor_.translation());
 			auto voxelizedMap = voxelizeAroundPosition(params_.mapVoxelSize_, bbox, map_);
 			map_ = *voxelizedMap;
 		}
@@ -184,14 +183,11 @@ bool Mapper::isManipulatingMap() const {
 	return isManipulatingMap_;
 }
 
-void Mapper::cropMap(open3d::geometry::AxisAlignedBoundingBox &bbox) {
-	std::lock_guard<std::mutex> lck(mapManipulationMutex_);
-	isManipulatingMap_ = true;
-	auto map = map_.Crop(bbox);
-	map_ = *map;
-	map = denseMap_.Crop(bbox);
-	denseMap_ = *map;
-	isManipulatingMap_ = false;
+Mapper::PointCloud* Mapper::getMapPtr() {
+	return &map_;
+}
+Mapper::PointCloud* Mapper::getDenseMapPtr() {
+	return &denseMap_;
 }
 
 } /* namespace m545_mapping */
