@@ -13,7 +13,7 @@
 	<arg name="bag_filepath" 
 		default="$(find m545_volumetric_mapping)/data/$(arg bag_filename)" /> 
 
-	<include file="$(find m545_volumetric_mapping)/launch/odometry.launch">
+	<include file="$(find m545_volumetric_mapping)/launch/mapping.launch">
 		<arg name="cloud_topic" value="$(arg cloud_topic)"/>
 		<arg name="launch_rviz" value="$(arg launch_rviz)"/>
 		<arg name="parameter_file_path" value="$(arg parameter_file_path)"/>

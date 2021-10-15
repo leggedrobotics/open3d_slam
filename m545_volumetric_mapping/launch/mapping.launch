@@ -7,8 +7,8 @@
 	<arg name="cloud_topic" default="/rslidar_points" />
 	<arg name="parameter_file_path" default="$(find m545_volumetric_mapping)/param/params_velodyne_puck16.yaml"/>
 
-	<node name="odometry_node" pkg="m545_volumetric_mapping"
-		type="odometry_node" output="screen" launch-prefix="$(arg launch_prefix)">
+	<node name="mapping_node" pkg="m545_volumetric_mapping"
+		type="mapping_node" output="screen" launch-prefix="$(arg launch_prefix)">
 
 		<param name="cloud_topic" type="string"
 			value="$(arg cloud_topic)" />

@@ -66,9 +66,9 @@ target_link_libraries(${PROJECT_NAME}
 
 
 
-add_executable(odometry_node
-  src/odometry_node.cpp)
-target_link_libraries(odometry_node
+add_executable(mapping_node
+  src/mapping_node.cpp)
+target_link_libraries(mapping_node
     ${catkin_LIBRARIES}
     ${PROJECT_NAME}
 )
