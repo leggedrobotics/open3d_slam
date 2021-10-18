@@ -10,6 +10,7 @@ set(SRC_FILES
   src/Parameters.cpp
   src/Mapper.cpp
   src/helpers.cpp
+  src/image_conversion.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES
@@ -21,6 +22,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   tf2
   tf2_ros
   tf2_geometry_msgs
+  cv_bridge
 )
    
 

@@ -23,7 +23,6 @@ std::shared_ptr<registration::TransformationEstimation> icpObjective;
 Mapper::Mapper() :
 		tfListener_(tfBuffer_) {
 	update(params_);
-
 }
 
 void Mapper::setParameters(const MapperParameters &p) {

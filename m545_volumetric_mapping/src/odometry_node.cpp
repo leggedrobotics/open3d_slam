@@ -16,15 +16,20 @@
 #include "m545_volumetric_mapping/helpers.hpp"
 #include "m545_volumetric_mapping/Mapper.hpp"
 #include "m545_volumetric_mapping/Projection.hpp"
+#include "m545_volumetric_mapping/CvImage.hpp"
 
 #include "open3d_conversions/open3d_conversions.h"
 #include <ros/ros.h>
 
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/Image.h>
+#include <sensor_msgs/image_encodings.h>
 
 #include <tf2_ros/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
+
+#include <cv_bridge/cv_bridge.h>
+#include <cv_bridge/rgb_colors.h>
 
 open3d::geometry::PointCloud cloudPrev;
 
@@ -37,12 +42,14 @@ namespace registration = open3d::pipelines::registration;
 ros::Publisher refPub;
 ros::Publisher subsampledPub;
 ros::Publisher mapPub, localMapPub;
+ros::Publisher colorCloudPub;
 
 m545_mapping::OdometryParameters odometryParams;
 std::shared_ptr<registration::TransformationEstimation> icpObjective;
 std::shared_ptr<m545_mapping::Mapper> mapper;
 m545_mapping::MapperParameters mapperParams;
 m545_mapping::LocalMapParameters localMapParams;
+
 
 bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
 	const m545_mapping::Timer timer;
@@ -147,31 +154,32 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 
 
 //yidan
-void synchronizeCallback(const sensor_msgs::PointCloud2Ptr& cloudmsg, const sensor_msgs::Image& imagemsg) {
+void synchronizeCallback(const sensor_msgs::ImageConstPtr& imagemsg,const sensor_msgs::PointCloud2ConstPtr& cloudmsg) {
 	open3d::geometry::PointCloud pointCloud;
+    sensor_msgs::PointCloud2 colorCloud;
+    sensor_msgs::PointCloud2ConstPtr colorcloudmsg;
 	open3d_conversions::rosToOpen3d(cloudmsg, pointCloud, true);
-
 	for (int i = 0; i < pointCloud.points_.size(); ++i) {
 		Eigen::Vector3d point;
 		Eigen::Vector2i pixel = Eigen::Vector2i::Zero();
-		uint8_t rgb;
+        //uint8_t rgb;
 		//uint8_t* rgbData;
-		//Eigen::Vector3f color = {1.0, 1.0, 1.0};
-		
+        //Eigen::Vector3d color = {1.0, 1.0, 1.0};
+		Eigen::MatrixX3d colors = Eigen::MatrixX3d::Zero(pointCloud.points_.size(), 3);
+
 		point(0) = pointCloud.points_[i].x();
 		point(1) = pointCloud.points_[i].y();
 		point(2) = pointCloud.points_[i].z();
 		pixel = projectionLidarToPixel(point, quaternion, translation);
-		if (pixel(0) > 0 && pixel(0) < 3440 && pixel(1) > 0 && pixel(1) < 2880) {
-			rgb = imagemsg.data[pixel(0), pixel(1)];
-			pointCloud.colors_[i] = Eigen::Vector3d(rgb);
-			// for (int i = 0; i < 3; ++i) {
-			// 	rgb[1];
-			// 	//color(i) = float(rgb[i] / 255.0);
-			// }
-		}
-		//pointCloud.colors_[i] = Eigen::Vector3d(rgb);
+
+		 if (pixel(0) > 0 && pixel(0) < imagemsg->width && pixel(1) > 0 && pixel(1) < imagemsg->height) {
+		 	colors.row(i) = imageConversion(imagemsg, pixel(0), pixel(1), sensor_msgs::image_encodings::RGB8) / 255.0;
+		 	pointCloud.colors_[i] = colors.row(i);
+		 }
 	}
+    open3d_conversions::open3dToRos(pointCloud, colorCloud, "open3d_pointcloud");
+//    colorcloudmsg->header.frame_id = "os_sensor";
+    colorCloudPub.publish(colorcloudmsg);
 }
 
 
@@ -183,15 +191,16 @@ int main(int argc, char **argv) {
 	ros::Subscriber cloudSub = nh->subscribe(cloudTopic, 100, &cloudCallback);
 
 	//yidan
-	message_filters::Subscriber<sensor_msgs::PointCloud2Ptr> cloud_sub(nh2, "/ouster_points_self_filtered", 1);
+	message_filters::Subscriber<sensor_msgs::PointCloud2> cloud_sub(nh2, "/ouster_points_self_filtered", 1);
 	message_filters::Subscriber<sensor_msgs::Image> image_sub(nh2, "/camMainView/Downsampled", 1);
-	message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::PointCloud2Ptr> synchro(image_sub, cloud_sub, 10);
+	message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::PointCloud2> synchro(image_sub, cloud_sub, 10);
 	synchro.registerCallback(boost::bind(&synchronizeCallback, _1, _2));
 
 	refPub = nh->advertise<sensor_msgs::PointCloud2>("reference", 1, true);
 	subsampledPub = nh->advertise<sensor_msgs::PointCloud2>("subsampled", 1, true);
 	mapPub = nh->advertise<sensor_msgs::PointCloud2>("map", 1, true);
 	localMapPub = nh->advertise<sensor_msgs::PointCloud2>("local_map", 1, true);
+    colorCloudPub = nh->advertise<sensor_msgs::PointCloud2>("color_cloud", 1, true);
 
 	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
 	std::cout << "loading params from: " << paramFile << "\n";
