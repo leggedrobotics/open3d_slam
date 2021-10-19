@@ -10,6 +10,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   roscpp
   sensor_msgs
   open3d_catkin
+  m545_volumetric_mapping_msgs
 )
 
 find_package(catkin REQUIRED COMPONENTS

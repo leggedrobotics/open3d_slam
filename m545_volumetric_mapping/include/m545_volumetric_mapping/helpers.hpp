@@ -8,6 +8,8 @@
 #pragma once
 #include <chrono>
 #include <open3d/geometry/PointCloud.h>
+#include <open3d/geometry/MeshBase.h>
+
 #include <open3d/pipelines/registration/TransformationEstimation.h>
 #include "m545_volumetric_mapping/Parameters.hpp"
 
@@ -15,6 +17,8 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <ros/publisher.h>
+#include <tf2_ros/transform_broadcaster.h>
+
 
 namespace m545_mapping {
 
@@ -30,6 +34,8 @@ std::shared_ptr<open3d::pipelines::registration::TransformationEstimation> icpOb
 std::string asString (const Eigen::Isometry3d &T);
 
 void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, const ros::Time &timestamp,ros::Publisher &pub);
+void publishMesh(const open3d::geometry::MeshBase &mesh, const std::string &frame_id, const ros::Time &timestamp,ros::Publisher &pub);
+
 
 geometry_msgs::Pose getPose(const Eigen::MatrixXd &T);
 
@@ -66,10 +72,11 @@ open3d::geometry::AxisAlignedBoundingBox boundingBoxAroundPosition(const Eigen::
 
 
 
+double calcMean(const std::vector<double> &data);
+double calcStandardDeviation(const std::vector<double> &data);
 
-
-
-
+void publishTfTransform(const Eigen::Matrix4d &Mat, const ros::Time &time, const std::string &frame,
+		const std::string &childFrame, tf2_ros::TransformBroadcaster *broadcaster);
 
 
 

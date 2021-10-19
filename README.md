@@ -1,5 +1,5 @@
 
-## Installation instructions
+## Open3D Installation instructions
 
 
 ### For the python API:
@@ -58,14 +58,21 @@ Then build the open3d. This could take a while (30 min or so).
 Recommended is to do a local install.
 DO NOT BUILD THE PYTHON PACKAGES. Refer to installation instructions for conda.
 
- 
+## Bulding the Package
+
+### Paths
 To build the catkin package, you need to add this to your bashrc
 
 export Open3D_DIR="${your install prefix}/lib/cmake/Open3D"
 
 E.g. 
-export Open3D_DIR="/home/jelavice/Programs/open3d_install/lib/cmake/Open3D"
+export Open3D_DIR="$HOME/Programs/open3d_install/lib/cmake/Open3D"
+
+### Dependencies
+catkin_simple is required in the workspace.
+Clone it with:
+
+`git clone git@github.com:catkin/catkin_simple.git`
 
 Build with:
-
 `catkin build m545_volumetric_mapping`

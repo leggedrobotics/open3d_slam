@@ -6,8 +6,8 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /TFTrajectory1
-        - /PointCloud23
+        - /PointCloud21
+        - /Mesh1
       Splitter Ratio: 0.5
     Tree Height: 719
   - Class: rviz/Selection
@@ -65,64 +65,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 13.443052291870117
-        Min Value: -5.452987194061279
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: AxisColor
-      Decay Time: 0
-      Enabled: false
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Min Color: 0; 0; 0
-      Name: PointCloud2
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.029999999329447746
-      Style: Flat Squares
-      Topic: /odometry_node/reference
-      Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: false
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 13.698351860046387
-        Min Value: -4.411580562591553
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: AxisColor
-      Decay Time: 0
-      Enabled: false
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Min Color: 0; 0; 0
-      Name: PointCloud2
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 2
-      Size (m): 0.009999999776482582
-      Style: Points
-      Topic: /odometry_node/subsampled
-      Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: false
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10.422174453735352
-        Min Value: -4.052974700927734
+        Max Value: 14.199247360229492
+        Min Value: -40.057334899902344
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -141,7 +85,7 @@ Visualization Manager:
       Size (Pixels): 1
       Size (m): 0.009999999776482582
       Style: Points
-      Topic: /odometry_node/map
+      Topic: /mapping_node/map
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -155,6 +99,8 @@ Visualization Manager:
           Value: true
         odom:
           Value: true
+        os_sensor:
+          Value: true
         range_sensor:
           Value: true
       Marker Alpha: 1
@@ -167,8 +113,16 @@ Visualization Manager:
         map:
           odom:
             range_sensor:
-              {}
+              os_sensor:
+                {}
       Update Interval: 0
+      Value: true
+    - Class: m545_volumetric_mapping_rviz_plugin/Mesh
+      Enabled: true
+      Name: Mesh
+      Queue Size: 10
+      Topic: /mapping_node/mesh
+      Unreliable: false
       Value: true
   Enabled: true
   Global Options:
@@ -198,7 +152,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 79.762939453125
+      Distance: 112.0611801147461
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
