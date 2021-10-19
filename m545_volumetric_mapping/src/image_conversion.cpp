@@ -1,11 +1,11 @@
-#include "m545_volumetric_mapping/CvImage.hpp"
-#include <ros/ros.h>
-#include <cv_bridge/cv_bridge.h>
-#include <cv_bridge/rgb_colors.h>
-#include <sensor_msgs/image_encodings.h>
-#include <Eigen/Dense>
-#include <Eigen/Geometry>
-
+//#include "m545_volumetric_mapping/CvImage.hpp"
+//#include <ros/ros.h>
+//#include <cv_bridge/cv_bridge.h>
+//#include <cv_bridge/rgb_colors.h>
+//#include <sensor_msgs/image_encodings.h>
+//#include <Eigen/Dense>
+//#include <Eigen/Geometry>
+//
 //namespace m545_mapping {
 //
 //    CvImage::CvImage() {}

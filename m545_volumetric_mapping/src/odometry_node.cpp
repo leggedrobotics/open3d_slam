@@ -9,7 +9,8 @@
 #include <open3d/geometry/Image.h>
 #include <open3d/geometry/PointCloud.h>
 #include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
 
 #include "m545_volumetric_mapping/Parameters.hpp"
 #include "m545_volumetric_mapping/frames.hpp"
@@ -17,7 +18,6 @@
 #include "m545_volumetric_mapping/Mapper.hpp"
 #include "m545_volumetric_mapping/Projection.hpp"
 #include "m545_volumetric_mapping/CvImage.hpp"
-
 #include "open3d_conversions/open3d_conversions.h"
 #include <ros/ros.h>
 
@@ -34,7 +34,6 @@
 open3d::geometry::PointCloud cloudPrev;
 
 ros::NodeHandlePtr nh;
-ros::NodeHandle nh2;
 
 std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
 Eigen::Matrix4d curentTransformation = Eigen::Matrix4d::Identity();
@@ -134,7 +133,8 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 }
 
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
-	open3d::geometry::PointCloud cloud;
+
+    open3d::geometry::PointCloud cloud;
 	open3d_conversions::rosToOpen3d(msg, cloud, true);
 	ros::Time timestamp = msg->header.stamp;
 
@@ -153,8 +153,10 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 }
 
 
+
 //yidan
-void synchronizeCallback(const sensor_msgs::ImageConstPtr& imagemsg,const sensor_msgs::PointCloud2ConstPtr& cloudmsg) {
+void synchronizeCallback(const sensor_msgs::PointCloud2ConstPtr& cloudmsg, const sensor_msgs::ImageConstPtr& imagemsg) {
+    ROS_INFO("it works");
 	open3d::geometry::PointCloud pointCloud;
     sensor_msgs::PointCloud2 colorCloud;
     sensor_msgs::PointCloud2ConstPtr colorcloudmsg;
@@ -177,9 +179,10 @@ void synchronizeCallback(const sensor_msgs::ImageConstPtr& imagemsg,const sensor
 		 	pointCloud.colors_[i] = colors.row(i);
 		 }
 	}
-    open3d_conversions::open3dToRos(pointCloud, colorCloud, "open3d_pointcloud");
-//    colorcloudmsg->header.frame_id = "os_sensor";
+    open3d_conversions::open3dToRos(pointCloud, colorCloud, "os_sensor");
+    //colorcloudmsg->header.frame_id = "os_sensor";
     colorCloudPub.publish(colorcloudmsg);
+
 }
 
 
@@ -191,10 +194,13 @@ int main(int argc, char **argv) {
 	ros::Subscriber cloudSub = nh->subscribe(cloudTopic, 100, &cloudCallback);
 
 	//yidan
-	message_filters::Subscriber<sensor_msgs::PointCloud2> cloud_sub(nh2, "/ouster_points_self_filtered", 1);
-	message_filters::Subscriber<sensor_msgs::Image> image_sub(nh2, "/camMainView/Downsampled", 1);
-	message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::PointCloud2> synchro(image_sub, cloud_sub, 10);
-	synchro.registerCallback(boost::bind(&synchronizeCallback, _1, _2));
+	message_filters::Subscriber<sensor_msgs::PointCloud2> cloud_sub(*nh, "/ouster_points_self_filtered", 1);
+	message_filters::Subscriber<sensor_msgs::Image> image_sub(*nh, "/camMainView/Downsampled", 1);
+//	message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::PointCloud2> synchro(image_sub, cloud_sub, 10);
+//	synchro.registerCallback(boost::bind(&synchronizeCallback, _1, _2));
+    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::PointCloud2, sensor_msgs::Image> MySyncPolicy;
+    message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), cloud_sub, image_sub);
+    sync.registerCallback(boost::bind(&synchronizeCallback, _1, _2));
 
 	refPub = nh->advertise<sensor_msgs::PointCloud2>("reference", 1, true);
 	subsampledPub = nh->advertise<sensor_msgs::PointCloud2>("subsampled", 1, true);
