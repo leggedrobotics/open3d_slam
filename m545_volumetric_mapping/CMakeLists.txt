@@ -10,6 +10,9 @@ set(SRC_FILES
   src/Parameters.cpp
   src/Mapper.cpp
   src/helpers.cpp
+  src/helpers_ros.cpp
+  src/time.cpp
+  src/math.cpp
   src/Mesher.cpp
   src/Odometry.cpp
   src/Voxel.cpp

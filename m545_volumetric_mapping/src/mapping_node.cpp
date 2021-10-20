@@ -9,6 +9,9 @@
 #include "m545_volumetric_mapping/Parameters.hpp"
 #include "m545_volumetric_mapping/frames.hpp"
 #include "m545_volumetric_mapping/helpers.hpp"
+#include "m545_volumetric_mapping/helpers_ros.hpp"
+#include "m545_volumetric_mapping/time.hpp"
+#include "m545_volumetric_mapping/math.hpp"
 #include "m545_volumetric_mapping/Mapper.hpp"
 #include "m545_volumetric_mapping/Mesher.hpp"
 

@@ -7,6 +7,9 @@
 
 #include "m545_volumetric_mapping/Mesher.hpp"
 #include "m545_volumetric_mapping/helpers.hpp"
+#include "m545_volumetric_mapping/time.hpp"
+#include "m545_volumetric_mapping/math.hpp"
+
 #include <open3d/io/TriangleMeshIO.h>
 #include <ros/package.h>
 

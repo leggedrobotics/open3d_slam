@@ -7,19 +7,16 @@
 
 #include "m545_volumetric_mapping/helpers.hpp"
 #include "m545_volumetric_mapping/output.hpp"
+#include "m545_volumetric_mapping/math.hpp"
+#include "m545_volumetric_mapping/time.hpp"
+
 
 #include <open3d/Open3D.h>
 #include <open3d/pipelines/registration/Registration.h>
 #include <open3d/utility/Eigen.h>
 #include "open3d/geometry/KDTreeFlann.h"
 
-// ros stuff
-#include "open3d_conversions/open3d_conversions.h"
-#include <eigen_conversions/eigen_msg.h>
-#include <ros/ros.h>
-#include <tf2_ros/transform_broadcaster.h>
-#include <nav_msgs/Odometry.h>
-#include <m545_volumetric_mapping_msgs/PolygonMesh.h>
+
 
 #ifdef M545_VOLUMETRIC_MAPPING_OPENMP_FOUND
 #include <omp.h>
@@ -79,74 +76,6 @@ public:
 
 } //namespace
 
-double calcMean(const std::vector<double> &data) {
-	if (data.empty()) {
-		return 0.0;
-	}
-	return static_cast<double>(std::accumulate(data.begin(), data.end(), 0.0)) / data.size();
-}
-
-double calcStandardDeviation(const std::vector<double> &data) {
-	const int n = data.size();
-	if (n < 2) {
-		return 0.0;
-	}
-	const double mean = calcMean(data);
-	double stdDev = 0.0;
-	for (const auto d : data) {
-		const double e = d - mean;
-		stdDev += e * e;
-	}
-
-	return std::sqrt(stdDev / (n - 1));
-}
-
-void publishMesh(const open3d::geometry::MeshBase &mesh, const std::string &frame_id, const ros::Time &timestamp,
-		ros::Publisher &pub) {
-	if (pub.getNumSubscribers() > 0) {
-		m545_volumetric_mapping_msgs::PolygonMesh meshMsg;
-		open3d_conversions::open3dToRos(mesh, frame_id, meshMsg);
-		meshMsg.header.frame_id = frame_id;
-		meshMsg.header.stamp = timestamp;
-		pub.publish(meshMsg);
-	}
-}
-
-void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, const ros::Time &timestamp,
-		ros::Publisher &pub) {
-	if (pub.getNumSubscribers() > 0) {
-		sensor_msgs::PointCloud2 msg;
-		open3d_conversions::open3dToRos(cloud, msg, frame_id);
-		msg.header.stamp = timestamp;
-		pub.publish(msg);
-	}
-}
-
-geometry_msgs::Pose getPose(const Eigen::MatrixXd &T) {
-	geometry_msgs::Pose pose;
-
-	// Fill pose
-	Eigen::Affine3d eigenTr;
-	eigenTr.matrix() = T;
-	tf::poseEigenToMsg(eigenTr, pose);
-
-	return pose;
-}
-
-geometry_msgs::TransformStamped toRos(const Eigen::Matrix4d &Mat, const ros::Time &time, const std::string &frame,
-		const std::string &childFrame) {
-
-	geometry_msgs::TransformStamped transformStamped;
-	transformStamped.header.stamp = time;
-	transformStamped.header.frame_id = frame;
-	transformStamped.child_frame_id = childFrame;
-	const auto pose = getPose(Mat);
-	transformStamped.transform.translation.x = pose.position.x;
-	transformStamped.transform.translation.y = pose.position.y;
-	transformStamped.transform.translation.z = pose.position.z;
-	transformStamped.transform.rotation = pose.orientation;
-	return transformStamped;
-}
 
 void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::PointCloud *pcl) {
 	auto croppedCloud = pcl->Crop(bbox);
@@ -165,26 +94,7 @@ std::string asString(const Eigen::Isometry3d &T) {
 
 }
 
-Eigen::Quaterniond fromRPY(const double roll, const double pitch, const double yaw) {
 
-	const Eigen::AngleAxisd roll_angle(roll, Eigen::Vector3d::UnitX());
-	const Eigen::AngleAxisd pitch_angle(pitch, Eigen::Vector3d::UnitY());
-	const Eigen::AngleAxisd yaw_angle(yaw, Eigen::Vector3d::UnitZ());
-	return yaw_angle * pitch_angle * roll_angle;
-}
-
-Eigen::Vector3d toRPY(const Eigen::Quaterniond &_q) {
-	Eigen::Quaterniond q(_q);
-	q.normalize();
-	const double r = getRollFromQuat(q.w(), q.x(), q.y(), q.z());
-	const double p = getPitchFromQuat(q.w(), q.x(), q.y(), q.z());
-	const double y = getYawFromQuat(q.w(), q.x(), q.y(), q.z());
-	return Eigen::Vector3d(r, p, y);
-}
-
-Eigen::Quaterniond fromRPY(const Eigen::Vector3d &rpy) {
-	return fromRPY(rpy.x(), rpy.y(), rpy.z());
-}
 
 void estimateNormals(int numNearestNeighbours, open3d::geometry::PointCloud *pcl) {
 	open3d::geometry::KDTreeSearchParamKNN param(numNearestNeighbours);
@@ -209,24 +119,7 @@ std::shared_ptr<registration::TransformationEstimation> icpObjectiveFactory(cons
 	}
 
 }
-Timer::Timer() :
-		Timer(false, "") {
 
-}
-
-Timer::Timer(const std::string &name) :
-		Timer(true, name) {
-}
-Timer::Timer(bool isPrintInDestructor, const std::string &name) {
-	startTime_ = std::chrono::steady_clock::now();
-	isPrintInDestructor_ = isPrintInDestructor;
-	name_ = name;
-}
-Timer::~Timer() {
-	if (isPrintInDestructor_) {
-		std::cout << "Timer " << name_ << ": Elapsed time: " << elapsedMsec() << " msec \n";
-	}
-}
 
 open3d::geometry::AxisAlignedBoundingBox boundingBoxAroundPosition(const Eigen::Vector3d &low,
 		const Eigen::Vector3d &high, const Eigen::Vector3d &origin /*= Eigen::Vector3d::Zero()*/) {
@@ -236,14 +129,7 @@ open3d::geometry::AxisAlignedBoundingBox boundingBoxAroundPosition(const Eigen::
 	return bbox;
 }
 
-double Timer::elapsedMsec() const {
-	const auto endTime = std::chrono::steady_clock::now();
-	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime_).count() / 1e3;
-}
-double Timer::elapsedSec() const {
-	const auto endTime = std::chrono::steady_clock::now();
-	return std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime_).count() / 1e3;
-}
+
 
 void randomDownSample(double downSamplingRatio, open3d::geometry::PointCloud *pcl) {
 	if (downSamplingRatio >= 1.0) {
@@ -258,12 +144,6 @@ void voxelize(double voxelSize, open3d::geometry::PointCloud *pcl) {
 	}
 	auto voxelized = pcl->VoxelDownSample(voxelSize);
 	*pcl = *voxelized;
-}
-
-void publishTfTransform(const Eigen::Matrix4d &Mat, const ros::Time &time, const std::string &frame,
-		const std::string &childFrame, tf2_ros::TransformBroadcaster *broadcaster) {
-	geometry_msgs::TransformStamped transformStamped = m545_mapping::toRos(Mat, time, frame, childFrame);
-	broadcaster->sendTransform(transformStamped);
 }
 
 bool isInside(const open3d::geometry::AxisAlignedBoundingBox &bbox, const Eigen::Vector3d &p) {

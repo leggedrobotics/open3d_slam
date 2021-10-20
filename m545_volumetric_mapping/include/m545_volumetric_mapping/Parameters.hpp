@@ -53,7 +53,7 @@ struct OdometryParameters : public IcpParameters {
 	int everyKpoints_ = 1;
 };
 
-struct MapConsistencyChecker{
+struct MapInconsistencyRemoval {
 	Eigen::Vector3d voxelSize_{0.5,0.5,0.5};
 	int minPointsPerVoxel_ = 2;
 	int numPointsWithHighestErrorToRemove_ = 50;

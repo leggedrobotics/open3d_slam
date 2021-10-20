@@ -10,6 +10,8 @@
 #include <open3d/pipelines/registration/Registration.h>
 #include "m545_volumetric_mapping/frames.hpp"
 #include "m545_volumetric_mapping/helpers.hpp"
+#include "m545_volumetric_mapping/time.hpp"
+#include "m545_volumetric_mapping/math.hpp"
 #include "m545_volumetric_mapping/Voxel.hpp"
 #include <tf2/convert.h>
 #include <tf2_eigen/tf2_eigen.h>
