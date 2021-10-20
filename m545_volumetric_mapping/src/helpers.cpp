@@ -9,14 +9,12 @@
 #include "m545_volumetric_mapping/output.hpp"
 #include "m545_volumetric_mapping/math.hpp"
 #include "m545_volumetric_mapping/time.hpp"
-
+#include "m545_volumetric_mapping/Voxel.hpp"
 
 #include <open3d/Open3D.h>
 #include <open3d/pipelines/registration/Registration.h>
 #include <open3d/utility/Eigen.h>
 #include "open3d/geometry/KDTreeFlann.h"
-
-
 
 #ifdef M545_VOLUMETRIC_MAPPING_OPENMP_FOUND
 #include <omp.h>
@@ -76,7 +74,6 @@ public:
 
 } //namespace
 
-
 void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::PointCloud *pcl) {
 	auto croppedCloud = pcl->Crop(bbox);
 	*pcl = *croppedCloud;
@@ -93,8 +90,6 @@ std::string asString(const Eigen::Isometry3d &T) {
 	return trans + " ; " + rot + " ; " + rpyString;
 
 }
-
-
 
 void estimateNormals(int numNearestNeighbours, open3d::geometry::PointCloud *pcl) {
 	open3d::geometry::KDTreeSearchParamKNN param(numNearestNeighbours);
@@ -120,7 +115,6 @@ std::shared_ptr<registration::TransformationEstimation> icpObjectiveFactory(cons
 
 }
 
-
 open3d::geometry::AxisAlignedBoundingBox boundingBoxAroundPosition(const Eigen::Vector3d &low,
 		const Eigen::Vector3d &high, const Eigen::Vector3d &origin /*= Eigen::Vector3d::Zero()*/) {
 	open3d::geometry::AxisAlignedBoundingBox bbox;
@@ -128,8 +122,6 @@ open3d::geometry::AxisAlignedBoundingBox boundingBoxAroundPosition(const Eigen::
 	bbox.max_bound_ = origin + high;
 	return bbox;
 }
-
-
 
 void randomDownSample(double downSamplingRatio, open3d::geometry::PointCloud *pcl) {
 	if (downSamplingRatio >= 1.0) {
@@ -160,10 +152,12 @@ std::shared_ptr<open3d::geometry::PointCloud> voxelizeAroundPosition(double voxe
 		return output;
 //		throw std::runtime_error("[VoxelDownSample] voxel_size <= 0.");
 	}
-	Eigen::Vector3d voxel_size3 = Eigen::Vector3d(voxel_size, voxel_size, voxel_size);
-	Eigen::Vector3d voxel_min_bound = cloud.GetMinBound() - voxel_size3 * 0.5;
-	Eigen::Vector3d voxel_max_bound = cloud.GetMaxBound() + voxel_size3 * 0.5;
-	if (voxel_size * std::numeric_limits<int>::max() < (voxel_max_bound - voxel_min_bound).maxCoeff()) {
+
+	const Eigen::Vector3d voxelSize = Eigen::Vector3d(voxel_size, voxel_size, voxel_size);
+	const auto voxelBounds = computeVoxelBounds(cloud, voxelSize);
+	const Eigen::Vector3d voxelMinBound = voxelBounds.first;
+	const Eigen::Vector3d voxelMaxBound = voxelBounds.second;
+	if (voxel_size * std::numeric_limits<int>::max() < (voxelMaxBound - voxelMinBound).maxCoeff()) {
 		throw std::runtime_error("[VoxelDownSample] voxel_size is too small.");
 	}
 	std::unordered_map<Eigen::Vector3i, AccumulatedPoint, open3d::utility::hash_eigen<Eigen::Vector3i>> voxelindex_to_accpoint;
@@ -183,9 +177,8 @@ std::shared_ptr<open3d::geometry::PointCloud> voxelizeAroundPosition(double voxe
 	Eigen::Vector3i voxel_index;
 	for (int i = 0; i < (int) cloud.points_.size(); i++) {
 		if (isInside(bbox, cloud.points_[i])) {
-			ref_coord = (cloud.points_[i] - voxel_min_bound) / voxel_size;
-			voxel_index << int(floor(ref_coord(0))), int(floor(ref_coord(1))), int(floor(ref_coord(2)));
-			voxelindex_to_accpoint[voxel_index].AddPoint(cloud, i);
+			const Eigen::Vector3i voxelIdx = getVoxelIdx(cloud.points_[i], voxelSize, voxelMinBound, voxelMaxBound);
+			voxelindex_to_accpoint[voxelIdx].AddPoint(cloud, i);
 		} else {
 			output->points_.push_back(cloud.points_[i]);
 			if (has_normals) {
