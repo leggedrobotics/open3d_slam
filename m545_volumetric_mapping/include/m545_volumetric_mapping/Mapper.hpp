@@ -38,6 +38,10 @@ public:
 	Eigen::Isometry3d getMapToOdom() const;
 	Eigen::Isometry3d getMapToRangeSensor() const;
 
+	void shaveOffArtifacts(const PointCloud &scan, double icpRMSE, PointCloud *map) const;
+	mutable PointCloud toRemove_;
+	mutable PointCloud scanRef_;
+	mutable PointCloud mapRef_;
 private:
 
 	bool lookupTransform(const std::string& target_frame, const std::string& source_frame,

@@ -12,6 +12,7 @@ set(SRC_FILES
   src/helpers.cpp
   src/Mesher.cpp
   src/Odometry.cpp
+  src/Voxel.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES
@@ -28,7 +29,11 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 
 
 find_package(Eigen3 REQUIRED)
-
+find_package(OpenMP QUIET)
+if (OpenMP_FOUND)
+  add_compile_options("${OpenMP_CXX_FLAGS}")
+  add_definitions(-DM545_VOLUMETRIC_MAPPING_OPENMP_FOUND=${OpenMP_FOUND})
+endif()
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
 )
@@ -48,6 +53,8 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
   ${YAML_CPP_INCLUDE_DIR}
+  ${OpenMP_CXX_INCLUDE_DIRS}
+  
 )
 
 add_library(${PROJECT_NAME}
@@ -61,6 +68,7 @@ add_dependencies(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   yaml-cpp
+  ${OpenMP_CXX_LIBRARIES}
 )
 
 

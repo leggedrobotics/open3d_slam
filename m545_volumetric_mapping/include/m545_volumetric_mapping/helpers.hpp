@@ -36,7 +36,7 @@ std::string asString (const Eigen::Isometry3d &T);
 void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, const ros::Time &timestamp,ros::Publisher &pub);
 void publishMesh(const open3d::geometry::MeshBase &mesh, const std::string &frame_id, const ros::Time &timestamp,ros::Publisher &pub);
 
-
+bool isInside(const open3d::geometry::AxisAlignedBoundingBox &bbox, const Eigen::Vector3d &p);
 geometry_msgs::Pose getPose(const Eigen::MatrixXd &T);
 
 geometry_msgs::TransformStamped toRos(const Eigen::Matrix4d &Mat, const ros::Time &time, const std::string &frame,
@@ -70,7 +70,8 @@ inline T getYawFromQuat(T w, T x, T y, T z)
 
 open3d::geometry::AxisAlignedBoundingBox boundingBoxAroundPosition(const Eigen::Vector3d &low,const Eigen::Vector3d &high, const Eigen::Vector3d &origin = Eigen::Vector3d::Zero());
 
-
+std::pair<std::vector<double>, std::vector<size_t>> computePointCloudDistance(const open3d::geometry::PointCloud &reference,
+		const open3d::geometry::PointCloud &cloud, const std::vector<size_t> &idsInReference);
 
 double calcMean(const std::vector<double> &data);
 double calcStandardDeviation(const std::vector<double> &data);
@@ -79,7 +80,7 @@ void publishTfTransform(const Eigen::Matrix4d &Mat, const ros::Time &time, const
 		const std::string &childFrame, tf2_ros::TransformBroadcaster *broadcaster);
 
 
-
+void removeByIds(const std::vector<size_t> &ids, open3d::geometry::PointCloud *cloud);
 
 
 

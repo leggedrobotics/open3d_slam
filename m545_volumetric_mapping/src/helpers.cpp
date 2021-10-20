@@ -11,6 +11,7 @@
 #include <open3d/Open3D.h>
 #include <open3d/pipelines/registration/Registration.h>
 #include <open3d/utility/Eigen.h>
+#include "open3d/geometry/KDTreeFlann.h"
 
 // ros stuff
 #include "open3d_conversions/open3d_conversions.h"
@@ -19,6 +20,10 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
 #include <m545_volumetric_mapping_msgs/PolygonMesh.h>
+
+#ifdef M545_VOLUMETRIC_MAPPING_OPENMP_FOUND
+#include <omp.h>
+#endif
 
 namespace m545_mapping {
 
@@ -261,6 +266,11 @@ void publishTfTransform(const Eigen::Matrix4d &Mat, const ros::Time &time, const
 	broadcaster->sendTransform(transformStamped);
 }
 
+bool isInside(const open3d::geometry::AxisAlignedBoundingBox &bbox, const Eigen::Vector3d &p) {
+	return p.x() <= bbox.max_bound_.x() && p.y() <= bbox.max_bound_.y() && p.z() <= bbox.max_bound_.z()
+			&& p.x() >= bbox.min_bound_.x() && p.y() >= bbox.min_bound_.y() && p.z() >= bbox.min_bound_.z();
+}
+
 std::shared_ptr<open3d::geometry::PointCloud> voxelizeAroundPosition(double voxel_size,
 		const open3d::geometry::AxisAlignedBoundingBox &bbox, const open3d::geometry::PointCloud &cloud) {
 	using namespace open3d::geometry;
@@ -289,15 +299,10 @@ std::shared_ptr<open3d::geometry::PointCloud> voxelizeAroundPosition(double voxe
 	}
 	voxelindex_to_accpoint.reserve(cloud.points_.size());
 
-	auto isInside = [&bbox](const Eigen::Vector3d &p) {
-		return p.x() <= bbox.max_bound_.x() && p.y() <= bbox.max_bound_.y() && p.z() <= bbox.max_bound_.z()
-				&& p.x() >= bbox.min_bound_.x() && p.y() >= bbox.min_bound_.y() && p.z() >= bbox.min_bound_.z();
-	};
-
 	Eigen::Vector3d ref_coord;
 	Eigen::Vector3i voxel_index;
 	for (int i = 0; i < (int) cloud.points_.size(); i++) {
-		if (isInside(cloud.points_[i])) {
+		if (isInside(bbox, cloud.points_[i])) {
 			ref_coord = (cloud.points_[i] - voxel_min_bound) / voxel_size;
 			voxel_index << int(floor(ref_coord(0))), int(floor(ref_coord(1))), int(floor(ref_coord(2)));
 			voxelindex_to_accpoint[voxel_index].AddPoint(cloud, i);
@@ -323,6 +328,55 @@ std::shared_ptr<open3d::geometry::PointCloud> voxelizeAroundPosition(double voxe
 	}
 
 	return output;
+}
+
+std::pair<std::vector<double>, std::vector<size_t>> computePointCloudDistance(
+		const open3d::geometry::PointCloud &reference, const open3d::geometry::PointCloud &cloud,
+		const std::vector<size_t> &idsInReference) {
+	std::vector<double> distances(idsInReference.size());
+	std::vector<int> indices(idsInReference.size());
+	open3d::geometry::KDTreeFlann kdtree;
+	kdtree.SetGeometry(cloud); // fast cca 1 ms
+
+#pragma omp parallel for schedule(static)
+	for (int i = 0; i < (int) idsInReference.size(); i++) {
+		const size_t idx = idsInReference[i];
+		const int knn = 1;
+		std::vector<int> ids(knn);
+		std::vector<double> dists(knn);
+//			if (kdtree.SearchHybrid(reference.points_[idx], 2.0, knn, ids, dists) != 0) {
+		if (kdtree.SearchKNN(reference.points_[idx], knn, ids, dists) != 0) {
+			distances[i] = std::sqrt(dists[0]);
+			indices[i] = idx;
+		} else {
+			distances[i] = -1.0;
+			indices[i] = -1;
+//				std::cout << "could not find a nearest neighbour \n";
+		}
+	} // end for
+
+	// remove distances/ids for which no neighbor was found
+	std::vector<double> distsRet;
+	distsRet.reserve(distances.size());
+	std::copy_if(distances.begin(), distances.end(), std::back_inserter(distsRet), [](double x) {
+		return x >= 0;
+	});
+	std::vector<size_t> idsRet;
+	idsRet.reserve(indices.size());
+	std::copy_if(indices.begin(), indices.end(), std::back_inserter(idsRet), [](int x) {
+		return x >= 0;
+	});
+	return {distsRet,idsRet};
+}
+
+void removeByIds(const std::vector<size_t> &ids, open3d::geometry::PointCloud *cloud) {
+
+	if (ids.empty()) {
+		return;
+	}
+	auto trimmedCloud = cloud->SelectByIndex(ids, true);
+	*cloud = *trimmedCloud;
+
 }
 
 } /* namespace m545_mapping */

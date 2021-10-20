@@ -27,7 +27,7 @@ using namespace m545_mapping::frames;
 open3d::geometry::PointCloud cloudPrev;
 ros::NodeHandlePtr nh;
 std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
-ros::Publisher refPub, subsampledPub, mapPub, localMapPub, meshPub;
+ros::Publisher refPub, subsampledPub, mapPub, localMapPub, meshPub, debugPub,debugPub2,debugPub3;
 std::shared_ptr<m545_mapping::Mesher> mesher;
 std::shared_ptr<m545_mapping::LidarOdometry> odometry;
 std::shared_ptr<m545_mapping::Mapper> mapper;
@@ -49,14 +49,20 @@ bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const 
 
 void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
 	{
-//		m545_mapping::Timer timer("Mapping step.");
+		m545_mapping::Timer timer("Mapping step.");
 		mapper->addRangeMeasurement(cloud, timestamp);
+		std::cout << "\n";
 	}
 	m545_mapping::publishTfTransform(mapper->getMapToOdom().matrix(), timestamp, mapFrame, odomFrame,
 			tfBroadcaster.get());
 
 	open3d::geometry::PointCloud map = mapper->getMap();
 	m545_mapping::publishCloud(mapper->getMap(), m545_mapping::frames::mapFrame, timestamp, mapPub);
+
+//	m545_mapping::publishCloud(mapper->toRemove_, m545_mapping::frames::mapFrame, timestamp, debugPub);
+//	m545_mapping::publishCloud(mapper->scanRef_, m545_mapping::frames::mapFrame, timestamp, debugPub2);
+//	m545_mapping::publishCloud(mapper->mapRef_, m545_mapping::frames::mapFrame, timestamp, debugPub3);
+
 
 	if (localMapPub.getNumSubscribers() > 0) {
 		open3d::geometry::PointCloud map = mapper->getDenseMap();
@@ -125,6 +131,9 @@ int main(int argc, char **argv) {
 	mapPub = nh->advertise<sensor_msgs::PointCloud2>("map", 1, true);
 	localMapPub = nh->advertise<sensor_msgs::PointCloud2>("local_map", 1, true);
 	meshPub = nh->advertise<m545_volumetric_mapping_msgs::PolygonMesh>("mesh", 1, true);
+	debugPub = nh->advertise<sensor_msgs::PointCloud2>("debug", 1, true);
+	debugPub2 = nh->advertise<sensor_msgs::PointCloud2>("debug2", 1, true);
+	debugPub3 = nh->advertise<sensor_msgs::PointCloud2>("debug3", 1, true);
 
 	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
 	std::cout << "loading params from: " << paramFile << "\n";
