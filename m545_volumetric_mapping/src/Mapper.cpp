@@ -141,11 +141,20 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 		m545_mapping::randomDownSample(params_.downSamplingRatio_, wideCroppedCloud.get());
 		wideCroppedCloud->Transform(result.transformation_);
 		estimateNormalsIfNeeded(wideCroppedCloud.get());
-		map_ += *wideCroppedCloud;
 		{
-			Timer timer("shave_off_artifacts");
-			shaveOffArtifacts(*wideCroppedCloud, result.inlier_rmse_, &map_);
+			Timer timer("ray_cast");
+			raycastAndRemove(*wideCroppedCloud, &map_);
 		}
+		std::cout << "\n";
+		map_ += *wideCroppedCloud;
+//		{
+//			Timer timer("shave_off_artifacts");
+//			bbox = boundingBoxAroundPosition(0.5*params_.mapBuilderCropBoxLowBound_,
+//					0.5*params_.mapBuilderCropBoxHighBound_, mapToRangeSensor_.translation());
+//			auto temp = wideCroppedCloud->Crop(bbox);
+//			removeInconsistencies(*temp, result.inlier_rmse_, &map_);
+//		}
+
 		if (params_.mapVoxelSize_ > 0.0) {
 //			Timer timer("voxelize_map",true);
 			bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_, params_.mapBuilderCropBoxHighBound_,
@@ -168,7 +177,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	isMatchingInProgress_ = false;
 }
 
-void Mapper::shaveOffArtifacts(const PointCloud &scanIn, double icpRMSE, PointCloud *map) const {
+void Mapper::removeInconsistencies(const PointCloud &scan, double icpRMSE, PointCloud *map) const {
 
 	if (map->IsEmpty()) {
 		return;
@@ -181,22 +190,17 @@ void Mapper::shaveOffArtifacts(const PointCloud &scanIn, double icpRMSE, PointCl
 //	bbox.center_ = mapToRangeSensor_.translation() + bbox.R_.inverse() * Eigen::Vector3d(10.0, -15.0, 0.0);
 //	bbox.extent_ = extent;
 	Timer timer;
-	open3d::geometry::AxisAlignedBoundingBox bbox = boundingBoxAroundPosition(0.5*params_.mapBuilderCropBoxLowBound_,
-			0.5*params_.mapBuilderCropBoxHighBound_, mapToRangeSensor_.translation());
-	auto scan = *(scanIn.Crop(bbox));
-
 	const Eigen::Vector3d voxelSize = Eigen::Vector3d(0.5, 0.5, 0.5);
 	const auto voxelBounds = computeVoxelBounds(scan, voxelSize);
 	const Eigen::Vector3d voxelMinBound = voxelBounds.first;
-	const Eigen::Vector3d voxelMaxBound = voxelBounds.second;
 
 	std::unordered_map<Eigen::Vector3i, Voxel, open3d::utility::hash_eigen<Eigen::Vector3i>> scanToVoxel;
 
 	scanToVoxel.reserve(scan.points_.size());
 
 	for (int i = 0; i < (int) scan.points_.size(); i++) {
-		const Eigen::Vector3i voxelIdx = getVoxelIdx(scan.points_[i], voxelSize, voxelMinBound, voxelMaxBound);
-		scanToVoxel[voxelIdx].ids_.push_back(i);
+		const Eigen::Vector3i voxelIdx = getVoxelIdx(scan.points_[i], voxelSize, voxelMinBound);
+		scanToVoxel[voxelIdx].idxs_.push_back(i);
 	}
 
 	const int minNumPointsPerVoxel = 4;
@@ -204,10 +208,10 @@ void Mapper::shaveOffArtifacts(const PointCloud &scanIn, double icpRMSE, PointCl
 	idsCoveredByScan.reserve(map->points_.size());
 #pragma omp parallel for schedule(static)
 	for (int i = 0; i < (int) map->points_.size(); i++) {
-		const Eigen::Vector3i voxelIdx = getVoxelIdx(map->points_[i], voxelSize, voxelMinBound, voxelMaxBound);
+		const Eigen::Vector3i voxelIdx = getVoxelIdx(map->points_[i], voxelSize, voxelMinBound);
 		const auto search = scanToVoxel.find(voxelIdx);
 		if (search != scanToVoxel.end()) {
-			if (search->second.ids_.size() >= minNumPointsPerVoxel) {
+			if (search->second.idxs_.size() >= minNumPointsPerVoxel) {
 #pragma omp critical
 				{
 					idsCoveredByScan.push_back(i);
@@ -224,7 +228,7 @@ void Mapper::shaveOffArtifacts(const PointCloud &scanIn, double icpRMSE, PointCl
 	std::vector<std::pair<double, size_t>> distsAndIds;
 	{
 //		Timer timer("bulk_computation");
-		mapRef_ = *(map->Crop(bbox));
+		mapRef_ = *map;
 		auto ret = computePointCloudDistance(*map, scan, idsCoveredByScan);
 		distsAndIds.reserve(ret.first.size());
 		for (int i = 0; i < (int) ret.first.size(); ++i) {
@@ -233,10 +237,10 @@ void Mapper::shaveOffArtifacts(const PointCloud &scanIn, double icpRMSE, PointCl
 	}
 	{
 //		Timer timer("sort");
-	std::sort(distsAndIds.begin(), distsAndIds.end(),
-			[](const std::pair<double, size_t> &a, const std::pair<double, size_t> &b) {
-				return a.first > b.first;
-			});
+		std::sort(distsAndIds.begin(), distsAndIds.end(),
+				[](const std::pair<double, size_t> &a, const std::pair<double, size_t> &b) {
+					return a.first > b.first;
+				});
 	}
 //	std::cout << "max element: " << distsAndIds.front().first << std::endl;
 //	std::cout << "min element: " << distsAndIds.back().first << std::endl;
@@ -275,6 +279,54 @@ bool Mapper::lookupTransform(const std::string &target_frame, const std::string 
 
 	*transform = tf2::transformToEigen(transformStamped);
 	return true;
+}
+
+void Mapper::raycastAndRemove(const PointCloud &scan, PointCloud *map) const {
+
+	if (map->points_.empty()) {
+		return;
+	}
+	const double voxelSize = 0.2;
+	const double maxLength = 10.0;
+	const double truncationDistance = 2.82 * voxelSize;
+	const double stepSize = voxelSize;
+	VoxelMap voxelMap(Eigen::Vector3d::Constant(voxelSize));
+	{
+		Timer t("hash_map_build");
+		voxelMap.buildFromCloud(*map);
+	}
+	std::unordered_set<size_t> setOfIdsToRemove;
+	setOfIdsToRemove.reserve(scan.points_.size());
+#pragma omp parallel for schedule(static)
+	for (int i = 0; i < scan.points_.size(); ++i) {
+		const Eigen::Vector3d &p = scan.points_[i];
+		const double length = (p - mapToRangeSensor_.translation()).norm();
+		const Eigen::Vector3d direction = (p - mapToRangeSensor_.translation()) / length;
+		double distance = 0.0;
+		const double maximalPathTraveled = std::max<double>(1.43 * voxelSize,
+				std::min<double>(length - truncationDistance, maxLength));
+		while (distance < maximalPathTraveled) {
+			const Eigen::Vector3d currentPosition = distance * direction + mapToRangeSensor_.translation();
+			auto ids = voxelMap.getIndicesInVoxel(currentPosition);
+			if (!ids.empty()) {
+#pragma omp critical
+				{
+					setOfIdsToRemove.insert(ids.begin(), ids.end());
+				}
+			}
+			distance += stepSize;
+		}
+	}
+	std::vector<size_t> vecOfIdsToRemove;
+	vecOfIdsToRemove.insert(vecOfIdsToRemove.end(),setOfIdsToRemove.begin(),setOfIdsToRemove.end());
+//	toRemove_ = *(map->SelectByIndex(vecOfIdsToRemove));
+//	scanRef_ = scan;
+//	for (int i = 0; i < vecOfIdsToRemove.size(); ++i) {
+//		std::cout<<vecOfIdsToRemove.at(i) << ", ";
+//	}
+	std::cout << "Would remove: " << vecOfIdsToRemove.size() << std::endl;
+	removeByIds(vecOfIdsToRemove, map);
+
 }
 
 bool Mapper::isManipulatingMap() const {

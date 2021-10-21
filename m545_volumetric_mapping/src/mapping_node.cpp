@@ -52,9 +52,9 @@ bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const 
 
 void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
 	{
-		m545_mapping::Timer timer("Mapping step.");
+//		m545_mapping::Timer timer("Mapping step.");
 		mapper->addRangeMeasurement(cloud, timestamp);
-		std::cout << "\n";
+//		std::cout << "\n";
 	}
 	m545_mapping::publishTfTransform(mapper->getMapToOdom().matrix(), timestamp, mapFrame, odomFrame,
 			tfBroadcaster.get());
@@ -62,9 +62,9 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
 	open3d::geometry::PointCloud map = mapper->getMap();
 	m545_mapping::publishCloud(mapper->getMap(), m545_mapping::frames::mapFrame, timestamp, mapPub);
 
-//	m545_mapping::publishCloud(mapper->toRemove_, m545_mapping::frames::mapFrame, timestamp, debugPub);
-//	m545_mapping::publishCloud(mapper->scanRef_, m545_mapping::frames::mapFrame, timestamp, debugPub2);
-//	m545_mapping::publishCloud(mapper->mapRef_, m545_mapping::frames::mapFrame, timestamp, debugPub3);
+	m545_mapping::publishCloud(mapper->toRemove_, m545_mapping::frames::mapFrame, timestamp, debugPub);
+	m545_mapping::publishCloud(mapper->scanRef_, m545_mapping::frames::mapFrame, timestamp, debugPub2);
+	m545_mapping::publishCloud(mapper->mapRef_, m545_mapping::frames::mapFrame, timestamp, debugPub3);
 
 
 	if (localMapPub.getNumSubscribers() > 0) {

@@ -37,8 +37,8 @@ public:
 
 	Eigen::Isometry3d getMapToOdom() const;
 	Eigen::Isometry3d getMapToRangeSensor() const;
-
-	void shaveOffArtifacts(const PointCloud &scan, double icpRMSE, PointCloud *map) const;
+	void raycastAndRemove(const PointCloud &scan, PointCloud *map) const;
+	void removeInconsistencies(const PointCloud &scan, double icpRMSE, PointCloud *map) const;
 	mutable PointCloud toRemove_;
 	mutable PointCloud scanRef_;
 	mutable PointCloud mapRef_;

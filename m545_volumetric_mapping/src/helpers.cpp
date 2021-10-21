@@ -177,7 +177,7 @@ std::shared_ptr<open3d::geometry::PointCloud> voxelizeAroundPosition(double voxe
 	Eigen::Vector3i voxel_index;
 	for (int i = 0; i < (int) cloud.points_.size(); i++) {
 		if (isInside(bbox, cloud.points_[i])) {
-			const Eigen::Vector3i voxelIdx = getVoxelIdx(cloud.points_[i], voxelSize, voxelMinBound, voxelMaxBound);
+			const Eigen::Vector3i voxelIdx = getVoxelIdx(cloud.points_[i], voxelSize, voxelMinBound);
 			voxelindex_to_accpoint[voxelIdx].AddPoint(cloud, i);
 		} else {
 			output->points_.push_back(cloud.points_[i]);
