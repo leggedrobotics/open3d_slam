@@ -60,6 +60,13 @@ struct MapInconsistencyRemoval {
 	double minErrorThresholdForRemoval_ = 1.0;
 };
 
+struct SpaceCarvingParameters{
+	double voxelSize_=0.1;
+	double maxRaytracingLength_ = 20.0;
+	double truncationDistance_ = 0.1;
+	double carveSpaceEveryNsec_ = 1.0;
+};
+
 struct MapperParameters : public IcpParameters {
 	double mapVoxelSize_ = 0.03;
 	double minMovementBetweenMappingSteps_ = 0.0;
@@ -98,5 +105,8 @@ void loadParameters(const std::string &filename, OdometryParameters *p);
 void loadParameters(const YAML::Node &node, OdometryParameters *p);
 void loadParameters(const YAML::Node &n, MesherParameters *p);
 void loadParameters(const std::string &filename, MesherParameters *p);
+void loadParameters(const YAML::Node &n, SpaceCarvingParameters *p);
+void loadParameters(const std::string &filename, SpaceCarvingParameters *p);
+
 
 } // namespace m545_mapping

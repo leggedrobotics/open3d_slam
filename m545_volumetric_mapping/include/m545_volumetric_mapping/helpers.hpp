@@ -37,5 +37,9 @@ std::pair<std::vector<double>, std::vector<size_t>> computePointCloudDistance(
 		const std::vector<size_t> &idsInReference);
 
 void removeByIds(const std::vector<size_t> &ids, open3d::geometry::PointCloud *cloud);
+std::vector<size_t> getIdxsOfCarvedPoints(const open3d::geometry::PointCloud &scan,
+		const open3d::geometry::PointCloud &cloud, const Eigen::Vector3d &sensorPosition, const SpaceCarvingParameters &param);
+std::vector<size_t> getIdxsOfCarvedPoints(const open3d::geometry::PointCloud &scan,
+		const open3d::geometry::PointCloud &cloud, const Eigen::Vector3d &sensorPosition,const std::vector<size_t> &cloudIdxsSubset, const SpaceCarvingParameters &param);
 
 } /* namespace m545_mapping */

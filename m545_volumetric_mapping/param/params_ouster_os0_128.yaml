@@ -17,7 +17,7 @@ icp_odometry:
   
 icp_mapping:
   map_voxel_size: 0.2
-  min_movement_between_mapping_steps: 0.2
+  min_movement_between_mapping_steps: -0.2
   min_refinement_fitness: 0.7
   scan_to_map_refinement:
     icp_objective: PointToPlane
@@ -60,5 +60,11 @@ mesher:
   poisson_scale: 0.8
   ball_pivot_radii: [0.5] 
 
+space_carving:
+  voxel_size: 0.2
+  max_raytracing_length: 20.0
+  truncation_distance: 0.2
+  carve_space_every_n_sec: 0.8
+  
 
     

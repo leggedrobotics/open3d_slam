@@ -13,6 +13,8 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <ros/publisher.h>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/buffer.h>
+
 
 
 namespace m545_mapping {
@@ -27,6 +29,7 @@ geometry_msgs::TransformStamped toRos(const Eigen::Matrix4d &Mat, const ros::Tim
 
 void publishTfTransform(const Eigen::Matrix4d &Mat, const ros::Time &time, const std::string &frame,
 		const std::string &childFrame, tf2_ros::TransformBroadcaster *broadcaster);
-
+bool lookupTransform(const std::string &target_frame, const std::string &source_frame, const ros::Time &time,const tf2_ros::Buffer &tfBuffer,
+		Eigen::Isometry3d *transform);
 
 } /* namespace m545_mapping */

@@ -58,5 +58,12 @@ mesher:
   poisson_depth: 8
   poisson_min_density: -0.5
   poisson_scale: 0.8
-  ball_pivot_radii: [0.5] 
+  ball_pivot_radii: [0.5]
+  
+space_carving:
+  voxel_size: 0.1
+  max_raytracing_length: 10.0
+  truncation_distance: 0.1
+  carve_space_every_n_sec: 0.8  
+ 
     

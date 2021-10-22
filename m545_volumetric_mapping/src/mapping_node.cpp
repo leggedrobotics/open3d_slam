@@ -148,7 +148,9 @@ int main(int argc, char **argv) {
 
 	mapper = std::make_shared<m545_mapping::Mapper>();
 	m545_mapping::loadParameters(paramFile, &mapperParams);
-	mapper->setParameters(mapperParams);
+	m545_mapping::SpaceCarvingParameters carvingParams;
+	m545_mapping::loadParameters(paramFile, &carvingParams);
+	mapper->setParameters(mapperParams,carvingParams);
 
 	m545_mapping::loadParameters(paramFile, &localMapParams);
 

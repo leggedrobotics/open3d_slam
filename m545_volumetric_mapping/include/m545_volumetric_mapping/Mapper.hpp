@@ -14,6 +14,8 @@
 #include <tf2_ros/buffer.h>
 #include <tf2/LinearMath/Transform.h>
 #include "m545_volumetric_mapping/Parameters.hpp"
+#include "m545_volumetric_mapping/time.hpp"
+
 namespace m545_mapping{
 
 
@@ -31,21 +33,19 @@ public:
 	const PointCloud &getDenseMap() const;
 	PointCloud *getMapPtr();
 	PointCloud *getDenseMapPtr();
-	void setParameters(const MapperParameters &p);
+	void setParameters(const MapperParameters &p, const SpaceCarvingParameters &carvingParams);
 	bool isMatchingInProgress() const;
 	bool isManipulatingMap() const;
 
 	Eigen::Isometry3d getMapToOdom() const;
 	Eigen::Isometry3d getMapToRangeSensor() const;
-	void raycastAndRemove(const PointCloud &scan, PointCloud *map) const;
-	void removeInconsistencies(const PointCloud &scan, double icpRMSE, PointCloud *map) const;
+	void carve(const PointCloud &scan, PointCloud *map);
+
 	mutable PointCloud toRemove_;
 	mutable PointCloud scanRef_;
 	mutable PointCloud mapRef_;
 private:
 
-	bool lookupTransform(const std::string& target_frame, const std::string& source_frame,
-		    const ros::Time& time, Eigen::Isometry3d *transform) const;
 	void update(const MapperParameters &p);
 	void estimateNormalsIfNeeded(PointCloud *pcl) const;
 
@@ -61,9 +61,10 @@ private:
   Eigen::Isometry3d odomToRangeSensorPrev_ = Eigen::Isometry3d::Identity();
   Eigen::Isometry3d mapToRangeSensor_ = Eigen::Isometry3d::Identity();
   MapperParameters params_;
+  SpaceCarvingParameters carvingParameters_;
   open3d::pipelines::registration::ICPConvergenceCriteria icpCriteria_;
   std::mutex mapManipulationMutex_;
-
+  Timer carvingTimer_;
 
 
 };

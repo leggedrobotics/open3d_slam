@@ -31,7 +31,9 @@ Timer::~Timer() {
 		std::cout << "Timer " << name_ << ": Elapsed time: " << elapsedMsec() << " msec \n";
 	}
 }
-
+void Timer::reset(){
+	startTime_ = std::chrono::steady_clock::now();
+}
 double Timer::elapsedMsec() const {
 	const auto endTime = std::chrono::steady_clock::now();
 	return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime_).count() / 1e3;

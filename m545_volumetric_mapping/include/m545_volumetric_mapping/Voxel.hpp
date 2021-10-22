@@ -40,7 +40,10 @@ public:
 	VoxelMap() = default;
 	VoxelMap(const Eigen::Vector3d &voxelSize);
 	void buildFromCloud(const open3d::geometry::PointCloud &cloud);
+	void buildFromCloud(const open3d::geometry::PointCloud &cloud, const std::vector<size_t> &idxs);
 	std::vector<size_t> getIndicesInVoxel(const Eigen::Vector3d &p) const;
+	void clearIndicesOnly();
+
 
 Eigen::Vector3d voxelSize_;
 //std::unordered_map<Eigen::Vector3i, Voxel, open3d::utility::hash_eigen<Eigen::Vector3i>> voxels_;

@@ -20,6 +20,7 @@ public:
 	~Timer();
 	double elapsedMsec() const;
 	double elapsedSec() const;
+	void reset();
 private:
 	std::chrono::steady_clock::time_point startTime_;
 	bool isPrintInDestructor_ = false;

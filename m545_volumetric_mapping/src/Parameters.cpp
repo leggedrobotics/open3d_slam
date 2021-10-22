@@ -93,7 +93,6 @@ void loadParameters(const std::string &filename, OdometryParameters *p){
 }
 void loadParameters(const YAML::Node &node, OdometryParameters *p){
 	loadParameters(node["icp_odometry"], static_cast<IcpParameters*>(p));
-
 }
 
 
@@ -113,12 +112,24 @@ void loadParameters(const YAML::Node &n, MesherParameters *p) {
 
 void loadParameters(const std::string &filename, MesherParameters *p) {
 	YAML::Node basenode = YAML::LoadFile(filename);
-
 	if (basenode.IsNull()) {
 		throw std::runtime_error("MesherParameters::loadParameters loading failed");
 	}
-
 	loadParameters(basenode["mesher"], p);
+}
+
+void loadParameters(const YAML::Node &n, SpaceCarvingParameters *p){
+	p->voxelSize_ = n["voxel_size"].as<double>();
+	p->maxRaytracingLength_ = n["max_raytracing_length"].as<double>();
+	p->truncationDistance_ = n["truncation_distance"].as<double>();
+	p->carveSpaceEveryNsec_ = n["carve_space_every_n_sec"].as<double>();
+}
+void loadParameters(const std::string &filename, SpaceCarvingParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+	if (basenode.IsNull()) {
+		throw std::runtime_error("SpaceCarving::loadParameters loading failed");
+	}
+	loadParameters(basenode["space_carving"], p);
 }
 
 } // namespace m545_mapping

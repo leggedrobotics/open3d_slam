@@ -11,11 +11,12 @@
 #include <eigen_conversions/eigen_msg.h>
 #include <ros/ros.h>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2/convert.h>
+#include <tf2_eigen/tf2_eigen.h>
 #include <nav_msgs/Odometry.h>
 #include <m545_volumetric_mapping_msgs/PolygonMesh.h>
 
 namespace m545_mapping {
-
 
 void publishMesh(const open3d::geometry::MeshBase &mesh, const std::string &frame_id, const ros::Time &timestamp,
 		ros::Publisher &pub) {
@@ -42,6 +43,20 @@ void publishTfTransform(const Eigen::Matrix4d &Mat, const ros::Time &time, const
 		const std::string &childFrame, tf2_ros::TransformBroadcaster *broadcaster) {
 	geometry_msgs::TransformStamped transformStamped = m545_mapping::toRos(Mat, time, frame, childFrame);
 	broadcaster->sendTransform(transformStamped);
+}
+
+bool lookupTransform(const std::string &target_frame, const std::string &source_frame, const ros::Time &time,const tf2_ros::Buffer &tfBuffer,
+		Eigen::Isometry3d *transform)  {
+	geometry_msgs::TransformStamped transformStamped;
+	try {
+		transformStamped = tfBuffer.lookupTransform(target_frame, source_frame, time);
+	} catch (tf2::TransformException &ex) {
+		ROS_WARN("caught exception while looking up the tf: %s", ex.what());
+		*transform = Eigen::Isometry3d::Identity();
+		return false;
+	}
+	*transform = tf2::transformToEigen(transformStamped);
+	return true;
 }
 
 geometry_msgs::Pose getPose(const Eigen::MatrixXd &T) {

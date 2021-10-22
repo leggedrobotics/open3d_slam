@@ -49,7 +49,7 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 		return false;
 	}
 	odomToRangeSensor_.matrix() *= result.transformation_.inverse();
-	cloudPrev_ = *downSampledCloud;
+	cloudPrev_ = std::move(*downSampledCloud);
 	return true;
 }
 const Eigen::Isometry3d& LidarOdometry::getOdomToRangeSensor() const {
