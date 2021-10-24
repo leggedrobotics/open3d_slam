@@ -34,10 +34,10 @@ protected:
 
 };
 
-class RadiusCropper : public Cropper{
+class BallCropper : public Cropper{
 public:
-	RadiusCropper(double radius);
-	virtual ~RadiusCropper() = default;
+	BallCropper(double radius);
+	virtual ~BallCropper() = default;
 
 	bool isWithinVolume(const Eigen::Vector3d &p) const final;
 

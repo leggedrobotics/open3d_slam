@@ -8,12 +8,14 @@
 #include "m545_volumetric_mapping/Odometry.hpp"
 #include "m545_volumetric_mapping/frames.hpp"
 #include "m545_volumetric_mapping/helpers.hpp"
+#include "m545_volumetric_mapping/time.hpp"
 #include <open3d/geometry/BoundingVolume.h>
 
 namespace m545_mapping {
 
 LidarOdometry::LidarOdometry() {
 	icpObjective_ = icpObjectiveFactory(IcpObjective::PointToPlane);
+	cropper_ = std::make_shared<Cropper>();
 }
 
 bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
@@ -21,12 +23,8 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 		cloudPrev_ = cloud;
 		return true;
 	}
-
 //	const m545_mapping::Timer timer("scan_to_scan_odometry");
-	const Eigen::Matrix4d init = Eigen::Matrix4d::Identity();
-
-	auto bbox = m545_mapping::boundingBoxAroundPosition(params_.cropBoxLowBound_, params_.cropBoxHighBound_);
-	auto croppedCloud = cloud.Crop(bbox);
+	auto croppedCloud = cropper_->crop(cloud);
 	m545_mapping::voxelize(params_.voxelSize_, croppedCloud.get());
 	auto downSampledCloud = croppedCloud->RandomDownSample(params_.downSamplingRatio_);
 
@@ -35,7 +33,7 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 		downSampledCloud->NormalizeNormals();
 	}
 	auto result = open3d::pipelines::registration::RegistrationICP(cloudPrev_, *downSampledCloud,
-			params_.maxCorrespondenceDistance_, init, *icpObjective_, icpConvergenceCriteria_);
+			params_.maxCorrespondenceDistance_, Eigen::Matrix4d::Identity(), *icpObjective_, icpConvergenceCriteria_);
 
 	//	std::cout << "Scan to scan matching finished \n";
 	//	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
@@ -56,7 +54,7 @@ const Eigen::Isometry3d& LidarOdometry::getOdomToRangeSensor() const {
 	return odomToRangeSensor_;
 }
 
-const open3d::geometry::PointCloud &LidarOdometry::getPreProcessedCloud() const{
+const open3d::geometry::PointCloud& LidarOdometry::getPreProcessedCloud() const {
 	return cloudPrev_;
 }
 
@@ -64,6 +62,7 @@ void LidarOdometry::setParameters(const OdometryParameters &p) {
 	params_ = p;
 	icpConvergenceCriteria_.max_iteration_ = p.maxNumIter_;
 	icpObjective_ = icpObjectiveFactory(params_.icpObjective_);
+	cropper_ = std::make_shared<BallCropper>(params_.croppingRadius_);
 }
 
 } // namespace m545_mapping

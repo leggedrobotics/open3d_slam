@@ -51,6 +51,7 @@ struct IcpParameters {
 
 struct OdometryParameters : public IcpParameters {
 	int everyKpoints_ = 1;
+	double croppingRadius_=20.0;
 };
 
 struct MapInconsistencyRemoval {

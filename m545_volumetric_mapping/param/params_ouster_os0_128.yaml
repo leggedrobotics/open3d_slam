@@ -8,6 +8,7 @@ icp_odometry:
   voxel_filter_size: 0.15
   max_n_iter: 25
   downsampling_ratio: 0.5
+  cropping_radius: 35.0
   crop_box_min_x: -35.0
   crop_box_min_y: -35.0
   crop_box_min_z: -100.0

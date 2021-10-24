@@ -89,10 +89,11 @@ void loadParameters(const std::string &filename, OdometryParameters *p){
 		throw std::runtime_error("Odometry::loadParameters loading failed");
 	}
 
-	loadParameters(basenode, p);
+	loadParameters(basenode["icp_odometry"], p);
 }
 void loadParameters(const YAML::Node &node, OdometryParameters *p){
-	loadParameters(node["icp_odometry"], static_cast<IcpParameters*>(p));
+	loadParameters(node, static_cast<IcpParameters*>(p));
+	p->croppingRadius_ = node["cropping_radius"].as<double>();
 }
 
 

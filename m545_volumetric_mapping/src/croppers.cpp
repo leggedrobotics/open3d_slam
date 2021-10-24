@@ -42,10 +42,10 @@ std::shared_ptr<Cropper::PointCloud> Cropper::crop(const PointCloud &cloud) cons
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
 
-RadiusCropper::RadiusCropper(double radius):radius_(radius){
+BallCropper::BallCropper(double radius):radius_(radius){
 }
 
-bool RadiusCropper::isWithinVolume(const Eigen::Vector3d &p) const{
+bool BallCropper::isWithinVolume(const Eigen::Vector3d &p) const{
 	return (p-pose_.translation()).norm() <= radius_;
 }
 

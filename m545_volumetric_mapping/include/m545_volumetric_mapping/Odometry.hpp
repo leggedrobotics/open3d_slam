@@ -12,6 +12,7 @@
 #include <ros/time.h>
 #include <Eigen/Dense>
 #include "m545_volumetric_mapping/Parameters.hpp"
+#include "m545_volumetric_mapping/croppers.hpp"
 
 
 namespace m545_mapping {
@@ -37,7 +38,7 @@ private:
 	OdometryParameters params_;
 	std::shared_ptr<open3d::pipelines::registration::TransformationEstimation> icpObjective_;
 	open3d::pipelines::registration::ICPConvergenceCriteria icpConvergenceCriteria_;
-
+	std::shared_ptr<Cropper> cropper_;
 };
 
 } // namespace m545_mapping
