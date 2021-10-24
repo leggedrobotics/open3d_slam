@@ -8,6 +8,7 @@
 #include <Eigen/Core>
 #include <vector>
 #include "m545_volumetric_mapping/croppers.hpp"
+#include <utility>
 
 namespace m545_mapping {
 
@@ -36,6 +37,12 @@ Cropper::Indices Cropper::getIndicesWithinVolume(const PointCloud &cloud) const{
 std::shared_ptr<Cropper::PointCloud> Cropper::crop(const PointCloud &cloud) const{
 	const auto idxsInside = getIndicesWithinVolume(cloud);
 	return cloud.SelectByIndex(idxsInside);
+}
+
+void Cropper::crop(PointCloud *cloud) const{
+	//todo improve and speed up
+	auto cropped = crop(*cloud);
+	*cloud = std::move(*cropped);
 }
 
 ///////////////////////////////////////////////

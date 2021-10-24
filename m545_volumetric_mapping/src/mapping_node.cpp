@@ -12,6 +12,7 @@
 #include "m545_volumetric_mapping/helpers_ros.hpp"
 #include "m545_volumetric_mapping/time.hpp"
 #include "m545_volumetric_mapping/math.hpp"
+#include "m545_volumetric_mapping/croppers.hpp"
 #include "m545_volumetric_mapping/Mapper.hpp"
 #include "m545_volumetric_mapping/Mesher.hpp"
 
@@ -69,9 +70,9 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
 
 	if (localMapPub.getNumSubscribers() > 0) {
 		open3d::geometry::PointCloud map = mapper->getDenseMap();
-		auto bbox = m545_mapping::boundingBoxAroundPosition(localMapParams.cropBoxLowBound_,
-				localMapParams.cropBoxHighBound_, mapper->getMapToRangeSensor().translation());
-		m545_mapping::cropPointcloud(bbox, &map);
+		m545_mapping::BallCropper cropper(localMapParams.croppingRadius_);
+		cropper.setPose(mapper->getMapToRangeSensor());
+		cropper.crop(&map);
 		auto downSampledMap = map.VoxelDownSample(localMapParams.voxelSize_);
 		m545_mapping::publishCloud(*downSampledMap, m545_mapping::frames::mapFrame, timestamp, localMapPub);
 	}
@@ -88,8 +89,8 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 	if (mesherParams.isComputeMesh_ && !mesher->isMeshingInProgress() && !mapper->getMap().points_.empty()) {
 		std::thread t([timestamp]() {
 			auto map = mapper->getMap();
-			auto bbox = m545_mapping::boundingBoxAroundPosition(localMapParams.cropBoxLowBound_, localMapParams.cropBoxHighBound_, mapper->getMapToRangeSensor().translation());
-			m545_mapping::cropPointcloud(bbox, &map);
+			m545_mapping::BallCropper cropper(localMapParams.croppingRadius_);
+			cropper.crop(&map);
 			auto downSampledMap = map.VoxelDownSample(mesherParams.voxelSize_);
 			mesher->setCurrentPose(mapper->getMapToRangeSensor());
 			mesher->buildMeshFromCloud(*downSampledMap);

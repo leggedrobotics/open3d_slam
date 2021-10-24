@@ -78,8 +78,7 @@ struct MapperParameters : public IcpParameters {
 
 struct LocalMapParameters {
 	double voxelSize_ = 0.1;
-	Eigen::Vector3d cropBoxLowBound_ = Eigen::Vector3d(-50.0,-50.0,-1e3);
-	Eigen::Vector3d cropBoxHighBound_ = Eigen::Vector3d(50.0,50.0,1e3);
+	double croppingRadius_ = 10.0;
 };
 
 struct MesherParameters{

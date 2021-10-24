@@ -27,6 +27,8 @@ public:
 	virtual bool isWithinVolume(const Eigen::Vector3d &p) const;
 	Indices getIndicesWithinVolume(const PointCloud &cloud) const;
 	std::shared_ptr<PointCloud> crop(const PointCloud &cloud) const;
+	void crop(PointCloud *cloud) const;
+
 
 protected:
 
