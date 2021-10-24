@@ -16,6 +16,7 @@ set(SRC_FILES
   src/Mesher.cpp
   src/Odometry.cpp
   src/Voxel.cpp
+  src/croppers.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES
