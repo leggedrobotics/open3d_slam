@@ -18,6 +18,7 @@
 #include "m545_volumetric_mapping/Mapper.hpp"
 #include "m545_volumetric_mapping/Projection.hpp"
 #include "m545_volumetric_mapping/CvImage.hpp"
+#include "m545_volumetric_mapping/CvProjection.hpp"
 #include "open3d_conversions/open3d_conversions.h"
 #include <ros/ros.h>
 
@@ -156,32 +157,60 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 
 //yidan
 void synchronizeCallback(const sensor_msgs::PointCloud2ConstPtr& cloudmsg, const sensor_msgs::ImageConstPtr& imagemsg) {
-    ROS_INFO("it works");
+
 	open3d::geometry::PointCloud pointCloud;
     sensor_msgs::PointCloud2 colorCloud;
-    sensor_msgs::PointCloud2ConstPtr colorcloudmsg;
+//    sensor_msgs::PointCloud2ConstPtr colorcloudmsg;
 	open3d_conversions::rosToOpen3d(cloudmsg, pointCloud, true);
-	for (int i = 0; i < pointCloud.points_.size(); ++i) {
-		Eigen::Vector3d point;
-		Eigen::Vector2i pixel = Eigen::Vector2i::Zero();
+    ros::Time timestamp = cloudmsg->header.stamp;
+    std::vector<Eigen::Vector2i> pixels(pointCloud.points_.size());
+    pixels = projectionLidarToPixel(pointCloud.points_);
+//    pointCloud.colors_.clear();
+//    pointCloud.colors_ = imageConversion(imagemsg, pixels, sensor_msgs::image_encodings::RGB8);
+//	for (int i = 0; i < pointCloud.points_.size(); i++)
+//    {
+//		Eigen::Vector3d point;
+//      Eigen::Vector2i pixel = Eigen::Vector2i::Zero();
+//      std::vector<cv::Point3d> point;
+//      std::vector<cv::Point2i> pixel;
+
         //uint8_t rgb;
 		//uint8_t* rgbData;
         //Eigen::Vector3d color = {1.0, 1.0, 1.0};
-		Eigen::MatrixX3d colors = Eigen::MatrixX3d::Zero(pointCloud.points_.size(), 3);
+//        std::vector<Eigen::Matrix<double, 3, 1>> colors;
+//		Eigen::MatrixX3d colors = Eigen::MatrixX3d::Zero(pointCloud.points_.size(), 3);
+//        point(0) = pointCloud.points_[i].x();
+//        point(1) = pointCloud.points_[i].y();
+//        point(2) = pointCloud.points_[i].z();
+//		point.data()->x = pointCloud.points_[i].x();
+//		point.data()->y = pointCloud.points_[i].y();
+//		point.data()->z = pointCloud.points_[i].z();
+//		pixel = projectionLidarToPixel(point);
+//      pixel = cvProjection(point);
+//
+//        if (pixel(0) > 0 && pixel(0) < imagemsg->width && pixel(1) > 0 && pixel(1) < imagemsg->height) {
+//		 	colors[i] = imageConversion(imagemsg, pixel(0), pixel(1), sensor_msgs::image_encodings::RGB8) / 255.0;
+//            ROS_INFO("on image");
+//            pointCloud.colors_[i] = colors[i];
+//    	 }
+//        else {
+//            pointCloud.colors_[i] = Eigen::Matrix<double, 3, 1>::Zero();
+//        }
 
-		point(0) = pointCloud.points_[i].x();
-		point(1) = pointCloud.points_[i].y();
-		point(2) = pointCloud.points_[i].z();
-		pixel = projectionLidarToPixel(point, quaternion, translation);
+//	}
+//    std::vector<cv::Point2i> pixels;
+//    pixels = cvProjection(*cloudmsg);
 
-		 if (pixel(0) > 0 && pixel(0) < imagemsg->width && pixel(1) > 0 && pixel(1) < imagemsg->height) {
-		 	colors.row(i) = imageConversion(imagemsg, pixel(0), pixel(1), sensor_msgs::image_encodings::RGB8) / 255.0;
-		 	pointCloud.colors_[i] = colors.row(i);
-		 }
-	}
-    open3d_conversions::open3dToRos(pointCloud, colorCloud, "os_sensor");
-    //colorcloudmsg->header.frame_id = "os_sensor";
-    colorCloudPub.publish(colorcloudmsg);
+//    if (cloudPrev.IsEmpty()) {
+//        cloudPrev = pointCloud;
+//        mappingUpdateIfMapperNotBusy(pointCloud, timestamp);
+//        return;
+//    }
+//    if (!computeAndPublishOdometry(pointCloud, timestamp)) {
+//        return;
+//    }
+    m545_mapping::publishCloud(pointCloud, m545_mapping::frames::rangeSensorFrame, timestamp, colorCloudPub);
+    mappingUpdateIfMapperNotBusy(pointCloud, timestamp);
 
 }
 

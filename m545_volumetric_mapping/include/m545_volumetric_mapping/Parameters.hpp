@@ -10,7 +10,7 @@
 #include <map>
 #include <string>
 #include <Eigen/Dense>
-
+#include <Eigen/Geometry>
 
 namespace m545_mapping {
 
@@ -54,6 +54,15 @@ struct LocalMapParameters {
 	Eigen::Vector3d cropBoxLowBound_ = Eigen::Vector3d(-50.0,-50.0,-1e3);
 	Eigen::Vector3d cropBoxHighBound_ = Eigen::Vector3d(50.0,50.0,1e3);
 };
+
+//struct ProjectionParameters : public IcpParameters {
+//    Eigen::Matrix3d K = ;
+//    Eigen::VectorXd D;
+//    Eigen::Quaterniond quaternion;
+//    Eigen::Vector3d translation;
+//    Eigen::Matrix3d rotation;
+//    Eigen::MatrixXd RT;
+//};
 
 void loadParameters(const std::string &filename, IcpParameters *p);
 void loadParameters(const YAML::Node &node, IcpParameters *p);
