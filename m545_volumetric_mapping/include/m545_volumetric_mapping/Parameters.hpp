@@ -63,6 +63,7 @@ struct SpaceCarvingParameters{
 	double maxRaytracingLength_ = 20.0;
 	double truncationDistance_ = 0.1;
 	double carveSpaceEveryNsec_ = 1.0;
+	double minDotProductWithNormal_ = 0.5;
 };
 
 struct MapperParameters : public IcpParameters {

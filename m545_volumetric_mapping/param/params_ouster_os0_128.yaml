@@ -44,8 +44,9 @@ mesher:
 space_carving:
   voxel_size: 0.1
   max_raytracing_length: 15.0
-  truncation_distance: 0.15
+  truncation_distance: 0.1
   carve_space_every_n_sec: 1.0
+  min_dot_product_with_normal: 0.3
   
 
     

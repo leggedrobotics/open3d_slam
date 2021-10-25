@@ -66,13 +66,9 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	lastMeasurementTimestamp_ = timestamp;
 	//insert first scan
 	if (map_.points_.empty()) {
-//		auto cloud = cloudIn;
-//		auto bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_, params_.mapBuilderCropBoxHighBound_);
-//		auto croppedCloud = cloud.Crop(bbox);
 		mapBuilderCropper_->setPose(Eigen::Isometry3d::Identity());
 		auto croppedCloud = mapBuilderCropper_->crop(cloudIn);
 		m545_mapping::voxelize(params_.voxelSize_, croppedCloud.get());
-//		auto voxelizedCloud = croppedCloud->VoxelDownSample(params_.mapVoxelSize_);
 		estimateNormalsIfNeeded(croppedCloud.get());
 		map_ += *croppedCloud;
 		denseMap_ += *(mapBuilderCropper_->crop(cloudIn));
@@ -91,47 +87,22 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	}
 //	auto cloud = cloudIn;
 	Timer timer;
-//	open3d::geometry::AxisAlignedBoundingBox bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_,
-//			params_.mapBuilderCropBoxHighBound_);
-//	auto wideCroppedCloud = cloud.Crop(bbox);
+
 	mapBuilderCropper_->setPose(Eigen::Isometry3d::Identity());
 	scanMatcherCropper_->setPose(Eigen::Isometry3d::Identity());
 	auto wideCroppedCloud = mapBuilderCropper_->crop(cloudIn);
-
-
-//	std::cout << "Cropping input cloud finished\n";
-//	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
-//	auto voxelizedCloud = croppedCloud->VoxelDownSample(params_.voxelSize_);
 	{
 //		Timer timer("voxelize_input_cloud");
 		m545_mapping::voxelize(params_.voxelSize_, wideCroppedCloud.get());
 	}
 
-//	bbox = boundingBoxAroundPosition(params_.cropBoxLowBound_, params_.cropBoxHighBound_);
-//	auto narrowCropped = wideCroppedCloud->Crop(bbox);
-
 	auto narrowCropped = scanMatcherCropper_->crop(*wideCroppedCloud);
 	m545_mapping::randomDownSample(params_.downSamplingRatio_, narrowCropped.get());
-
-//	bbox = boundingBoxAroundPosition(params_.cropBoxLowBound_, params_.cropBoxHighBound_,
-//			mapToRangeSensor_.translation());
-//	auto mapPatch = map_.Crop(bbox);
 	scanMatcherCropper_->setPose(mapToRangeSensor_);
 	auto mapPatch = scanMatcherCropper_->crop(map_);
-
-//	std::cout << "Map and scan pre processing finished\n";
-//	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
-
-	Timer timer2;
-//	const Eigen::Matrix4d initTransform = (mapToRangeSensor_).matrix();
 	const Eigen::Matrix4d initTransform = (mapToOdom_ * odomToRangeSensor).matrix();
 	const auto result = open3d::pipelines::registration::RegistrationICP(*narrowCropped, *mapPatch,
 			params_.maxCorrespondenceDistance_, initTransform, *icpObjective, icpCriteria_);
-
-//	std::cout << "Scan to map matching finished \n";
-//	std::cout << "Time elapsed: " << timer2.elapsedMsec() << " msec \n";
-//	std::cout << "fitness: " << result.fitness_ << std::endl;
-//	std::cout << "RMSE: " << result.inlier_rmse_ << std::endl;
 
 	if (result.fitness_ < params_.minRefinementFitness_) {
 		std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
