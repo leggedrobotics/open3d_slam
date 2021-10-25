@@ -152,7 +152,8 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 		m545_mapping::randomDownSample(params_.downSamplingRatio_, wideCroppedCloud.get());
 		wideCroppedCloud->Transform(result.transformation_);
 		estimateNormalsIfNeeded(wideCroppedCloud.get());
-		carve(*wideCroppedCloud, &map_);
+		auto transformedCloud = std::move(*(transform(result.transformation_,cloudIn)));
+		carve(transformedCloud, &map_);
 		map_ += *wideCroppedCloud;
 
 		if (params_.mapVoxelSize_ > 0.0) {
@@ -167,8 +168,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 
 		{
 //			Timer timer("merge_dense_map");
-//			auto cloud = cloudIn;
-//			denseMap_ += cloud.Transform(result.transformation_);
+//			denseMap_ += transformedCloud;
 //			shaveOffArtifacts(cloud, &denseMap_);
 		}
 
@@ -189,8 +189,9 @@ void Mapper::carve(const PointCloud &scan, PointCloud *map) {
 
 	mapBuilderCropper_->setPose(mapToRangeSensor_);
 	 const auto wideCroppedIdxs = mapBuilderCropper_->getIndicesWithinVolume(map_);
-
 	auto idxsToRemove = std::move(getIdxsOfCarvedPoints(scan,*map,mapToRangeSensor_.translation(),wideCroppedIdxs,carvingParameters_));
+//
+//	auto idxsToRemove = std::move(getIdxsOfCarvedPoints(scan,*map,mapToRangeSensor_.translation(),carvingParameters_));
 	toRemove_ = std::move(*(map->SelectByIndex(idxsToRemove)));
 	scanRef_ = scan;
 //	std::cout << "Would remove: " << idxsToRemove.size() << std::endl;

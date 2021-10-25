@@ -17,6 +17,9 @@ namespace m545_mapping {
 
 class Cropper;
 
+
+std::shared_ptr<open3d::geometry::PointCloud> transform(const Eigen::Matrix4d &T, const open3d::geometry::PointCloud &cloud);
+
 std::shared_ptr<open3d::geometry::PointCloud> voxelizeWithinCroppingVolume(double voxel_size,
 		const Cropper &croppingVolume, const open3d::geometry::PointCloud &cloud);
 void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::PointCloud *pcl);

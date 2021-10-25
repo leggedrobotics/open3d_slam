@@ -252,7 +252,7 @@ void removeByIds(const std::vector<size_t> &ids, open3d::geometry::PointCloud *c
 std::vector<size_t> getIdxsOfCarvedPoints(const open3d::geometry::PointCloud &scan,
 		const open3d::geometry::PointCloud &cloud, const Eigen::Vector3d &sensorPosition,
 		const SpaceCarvingParameters &param) {
-	std::vector<size_t> subsetIdxs;
+	std::vector<size_t> subsetIdxs(cloud.points_.size(), 0);
 	std::iota(subsetIdxs.begin(), subsetIdxs.end(), 0);
 	return getIdxsOfCarvedPoints(scan, cloud, sensorPosition, subsetIdxs, param);
 }
@@ -272,7 +272,7 @@ std::vector<size_t> getIdxsOfCarvedPoints(const open3d::geometry::PointCloud &sc
 		const Eigen::Vector3d direction = (p - sensorPosition) / length;
 		double distance = 0.0;
 		const double maximalPathTraveled = std::max(param.voxelSize_,
-				std::min<double>(length - param.truncationDistance_, param.maxRaytracingLength_));
+				std::min(length - param.truncationDistance_, param.maxRaytracingLength_));
 		while (distance < maximalPathTraveled) {
 			const Eigen::Vector3d currentPosition = distance * direction + sensorPosition;
 			auto ids = voxelMap.getIndicesInVoxel(currentPosition);
@@ -288,6 +288,29 @@ std::vector<size_t> getIdxsOfCarvedPoints(const open3d::geometry::PointCloud &sc
 	std::vector<size_t> vecOfIdsToRemove;
 	vecOfIdsToRemove.insert(vecOfIdsToRemove.end(), setOfIdsToRemove.begin(), setOfIdsToRemove.end());
 	return vecOfIdsToRemove;
+}
+
+std::shared_ptr<open3d::geometry::PointCloud> transform(const Eigen::Matrix4d &T,
+		const open3d::geometry::PointCloud &cloud) {
+
+	auto out = std::make_shared<open3d::geometry::PointCloud>();
+	out->points_.reserve(cloud.points_.size());
+	if (cloud.HasNormals()) {
+		out->normals_.reserve(cloud.points_.size());
+	}
+	for (size_t i = 0; i < cloud.points_.size(); ++i) {
+		const auto &p = cloud.points_[i];
+		Eigen::Vector4d new_point = T * Eigen::Vector4d(p(0), p(1), p(2), 1.0);
+		Eigen::Vector3d xyz = new_point.head<3>() / new_point(3);
+		out->points_.emplace_back(std::move(xyz));
+		if (cloud.HasNormals()) {
+			const auto &n = cloud.normals_[i];
+			Eigen::Vector4d new_normal = T * Eigen::Vector4d(n(0), n(1), n(2), 0.0);
+			out->normals_.emplace_back(std::move(new_normal.head<3>()));
+		}
+	}
+	return out;
+
 }
 
 //void removeInconsistencies(const PointCloud &scan, double icpRMSE, PointCloud *map) const {
