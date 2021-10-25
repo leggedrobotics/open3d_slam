@@ -13,14 +13,14 @@
 
 namespace m545_mapping {
 
-class Cropper {
+class CroppingVolume {
 
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	using PointCloud = open3d::geometry::PointCloud;
 	using Indices =std::vector<size_t>;
-	Cropper() = default;
-	virtual ~Cropper() = default;
+	CroppingVolume() = default;
+	virtual ~CroppingVolume() = default;
 
 
 	void setPose(const Eigen::Isometry3d &pose);
@@ -36,10 +36,10 @@ protected:
 
 };
 
-class BallCropper : public Cropper{
+class MaxRadiusCroppingVolume : public CroppingVolume{
 public:
-	BallCropper(double radius);
-	virtual ~BallCropper() = default;
+	MaxRadiusCroppingVolume(double radius);
+	virtual ~MaxRadiusCroppingVolume() = default;
 
 	bool isWithinVolume(const Eigen::Vector3d &p) const final;
 

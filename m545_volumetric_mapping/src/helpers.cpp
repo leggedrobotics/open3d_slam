@@ -145,7 +145,7 @@ bool isInside(const open3d::geometry::AxisAlignedBoundingBox &bbox, const Eigen:
 }
 
 std::shared_ptr<open3d::geometry::PointCloud> voxelizeWithinCroppingVolume(double voxel_size,
-		const Cropper &croppingVolume, const open3d::geometry::PointCloud &cloud) {
+		const CroppingVolume &croppingVolume, const open3d::geometry::PointCloud &cloud) {
 	using namespace open3d::geometry;
 	auto output = std::make_shared<PointCloud>();
 	if (voxel_size <= 0.0) {

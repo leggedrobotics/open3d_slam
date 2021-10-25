@@ -50,7 +50,8 @@ private:
 
 	void update(const MapperParameters &p);
 	void estimateNormalsIfNeeded(PointCloud *pcl) const;
-
+	void insertScanInMap(std::shared_ptr<PointCloud> wideCroppedCloud,
+			const open3d::pipelines::registration::RegistrationResult &result, const PointCloud &rawScan);
   bool isMatchingInProgress_ = false;
   bool isManipulatingMap_ = false;
 
@@ -67,8 +68,8 @@ private:
   open3d::pipelines::registration::ICPConvergenceCriteria icpCriteria_;
   std::mutex mapManipulationMutex_;
   Timer carvingTimer_;
-  std::shared_ptr<Cropper> scanMatcherCropper_;
-  std::shared_ptr<Cropper> mapBuilderCropper_;
+  std::shared_ptr<CroppingVolume> scanMatcherCropper_;
+  std::shared_ptr<CroppingVolume> mapBuilderCropper_;
 
 
 };

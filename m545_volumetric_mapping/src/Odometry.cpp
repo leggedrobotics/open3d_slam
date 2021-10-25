@@ -15,7 +15,7 @@ namespace m545_mapping {
 
 LidarOdometry::LidarOdometry() {
 	icpObjective_ = icpObjectiveFactory(IcpObjective::PointToPlane);
-	cropper_ = std::make_shared<Cropper>();
+	cropper_ = std::make_shared<CroppingVolume>();
 }
 
 bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
@@ -62,7 +62,7 @@ void LidarOdometry::setParameters(const OdometryParameters &p) {
 	params_ = p;
 	icpConvergenceCriteria_.max_iteration_ = p.maxNumIter_;
 	icpObjective_ = icpObjectiveFactory(params_.icpObjective_);
-	cropper_ = std::make_shared<BallCropper>(params_.croppingRadius_);
+	cropper_ = std::make_shared<MaxRadiusCroppingVolume>(params_.croppingRadius_);
 }
 
 } // namespace m545_mapping

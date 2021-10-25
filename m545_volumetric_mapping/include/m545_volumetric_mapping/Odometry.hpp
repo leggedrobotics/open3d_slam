@@ -38,7 +38,7 @@ private:
 	OdometryParameters params_;
 	std::shared_ptr<open3d::pipelines::registration::TransformationEstimation> icpObjective_;
 	open3d::pipelines::registration::ICPConvergenceCriteria icpConvergenceCriteria_;
-	std::shared_ptr<Cropper> cropper_;
+	std::shared_ptr<CroppingVolume> cropper_;
 };
 
 } // namespace m545_mapping

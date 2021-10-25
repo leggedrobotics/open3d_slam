@@ -70,7 +70,7 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
 
 	if (localMapPub.getNumSubscribers() > 0) {
 		open3d::geometry::PointCloud map = mapper->getDenseMap();
-		m545_mapping::BallCropper cropper(localMapParams.croppingRadius_);
+		m545_mapping::MaxRadiusCroppingVolume cropper(localMapParams.croppingRadius_);
 		cropper.setPose(mapper->getMapToRangeSensor());
 		cropper.crop(&map);
 		auto downSampledMap = map.VoxelDownSample(localMapParams.voxelSize_);
@@ -89,7 +89,7 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 	if (mesherParams.isComputeMesh_ && !mesher->isMeshingInProgress() && !mapper->getMap().points_.empty()) {
 		std::thread t([timestamp]() {
 			auto map = mapper->getMap();
-			m545_mapping::BallCropper cropper(localMapParams.croppingRadius_);
+			m545_mapping::MaxRadiusCroppingVolume cropper(localMapParams.croppingRadius_);
 			cropper.setPose(mapper->getMapToRangeSensor());
 			cropper.crop(&map);
 			auto downSampledMap = map.VoxelDownSample(mesherParams.voxelSize_);

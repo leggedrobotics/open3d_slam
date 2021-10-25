@@ -12,15 +12,15 @@
 
 namespace m545_mapping {
 
-bool Cropper::isWithinVolume(const Eigen::Vector3d &p) const {
+bool CroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const {
 	return true;
 }
 
-void Cropper::setPose(const Eigen::Isometry3d &pose){
+void CroppingVolume::setPose(const Eigen::Isometry3d &pose){
 	pose_ = pose;
 }
 
-Cropper::Indices Cropper::getIndicesWithinVolume(const PointCloud &cloud) const{
+CroppingVolume::Indices CroppingVolume::getIndicesWithinVolume(const PointCloud &cloud) const{
 
 	Indices idxs;
 	idxs.reserve(cloud.points_.size());
@@ -34,12 +34,12 @@ Cropper::Indices Cropper::getIndicesWithinVolume(const PointCloud &cloud) const{
 	return idxs;
 }
 
-std::shared_ptr<Cropper::PointCloud> Cropper::crop(const PointCloud &cloud) const{
+std::shared_ptr<CroppingVolume::PointCloud> CroppingVolume::crop(const PointCloud &cloud) const{
 	const auto idxsInside = getIndicesWithinVolume(cloud);
 	return cloud.SelectByIndex(idxsInside);
 }
 
-void Cropper::crop(PointCloud *cloud) const{
+void CroppingVolume::crop(PointCloud *cloud) const{
 	//todo improve and speed up
 	auto cropped = crop(*cloud);
 	*cloud = std::move(*cropped);
@@ -49,10 +49,10 @@ void Cropper::crop(PointCloud *cloud) const{
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
 
-BallCropper::BallCropper(double radius):radius_(radius){
+MaxRadiusCroppingVolume::MaxRadiusCroppingVolume(double radius):radius_(radius){
 }
 
-bool BallCropper::isWithinVolume(const Eigen::Vector3d &p) const{
+bool MaxRadiusCroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const{
 	return (p-pose_.translation()).norm() <= radius_;
 }
 
