@@ -9,16 +9,11 @@ icp_odometry:
   max_n_iter: 25
   downsampling_ratio: 0.4
   cropping_radius: 25.0
-  crop_box_min_x: -25.0
-  crop_box_min_y: -25.0
-  crop_box_min_z: -100.0
-  crop_box_max_x: 25.0
-  crop_box_max_y: 25.0
-  crop_box_max_z: 100.0
+
   
 icp_mapping:
   map_voxel_size: 0.0
-  min_movement_between_mapping_steps: 0.2
+  min_movement_between_mapping_steps: 0.0
   min_refinement_fitness: 0.7
   scan_to_map_refinement:
     icp_objective: PointToPlane
@@ -27,19 +22,10 @@ icp_mapping:
     max_n_iter: 50
     voxel_filter_size: 0.0
     downsampling_ratio: 0.1
-    crop_box_min_x: -30.0
-    crop_box_min_y: -30.0
-    crop_box_min_z: -100.0
-    crop_box_max_x: 30.0
-    crop_box_max_y: 30.0
-    crop_box_max_z: 100.0
+    cropping_radius: 30.0
+
   map_builder:
-    crop_box_min_x: -50.0
-    crop_box_min_y: -50.0
-    crop_box_min_z: -100.0
-    crop_box_max_x: 50.0
-    crop_box_max_y: 50.0
-    crop_box_max_z: 100.0
+    cropping_radius: 50.0
     
 local_map:
   voxel_size: 0.04
@@ -58,9 +44,9 @@ mesher:
   ball_pivot_radii: [0.5]
   
 space_carving:
-  voxel_size: 0.1
+  voxel_size: 0.15
   max_raytracing_length: 10.0
-  truncation_distance: 0.1
-  carve_space_every_n_sec: 0.8  
+  truncation_distance: 0.15
+  carve_space_every_n_sec: 1.0 
  
     

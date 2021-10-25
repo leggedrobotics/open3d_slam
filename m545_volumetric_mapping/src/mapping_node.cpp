@@ -90,6 +90,7 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 		std::thread t([timestamp]() {
 			auto map = mapper->getMap();
 			m545_mapping::BallCropper cropper(localMapParams.croppingRadius_);
+			cropper.setPose(mapper->getMapToRangeSensor());
 			cropper.crop(&map);
 			auto downSampledMap = map.VoxelDownSample(mesherParams.voxelSize_);
 			mesher->setCurrentPose(mapper->getMapToRangeSensor());

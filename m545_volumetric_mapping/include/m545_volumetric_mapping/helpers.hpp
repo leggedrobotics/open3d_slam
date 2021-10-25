@@ -15,8 +15,10 @@
 
 namespace m545_mapping {
 
-std::shared_ptr<open3d::geometry::PointCloud> voxelizeAroundPosition(double voxel_size,
-		const open3d::geometry::AxisAlignedBoundingBox &bbox, const open3d::geometry::PointCloud &cloud);
+class Cropper;
+
+std::shared_ptr<open3d::geometry::PointCloud> voxelizeWithinCroppingVolume(double voxel_size,
+		const Cropper &croppingVolume, const open3d::geometry::PointCloud &cloud);
 void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::PointCloud *pcl);
 void randomDownSample(double downSamplingRatio, open3d::geometry::PointCloud *pcl);
 void voxelize(double voxelSize, open3d::geometry::PointCloud *pcl);

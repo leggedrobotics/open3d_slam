@@ -15,6 +15,8 @@
 #include <tf2/LinearMath/Transform.h>
 #include "m545_volumetric_mapping/Parameters.hpp"
 #include "m545_volumetric_mapping/time.hpp"
+#include "m545_volumetric_mapping/croppers.hpp"
+
 
 namespace m545_mapping{
 
@@ -65,6 +67,8 @@ private:
   open3d::pipelines::registration::ICPConvergenceCriteria icpCriteria_;
   std::mutex mapManipulationMutex_;
   Timer carvingTimer_;
+  std::shared_ptr<Cropper> scanMatcherCropper_;
+  std::shared_ptr<Cropper> mapBuilderCropper_;
 
 
 };

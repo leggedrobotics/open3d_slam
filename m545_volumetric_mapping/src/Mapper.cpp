@@ -39,6 +39,8 @@ void Mapper::setParameters(const MapperParameters &p, const SpaceCarvingParamete
 void Mapper::update(const MapperParameters &p) {
 	icpCriteria_.max_iteration_ = params_.maxNumIter_;
 	icpObjective = icpObjectiveFactory(params_.icpObjective_);
+	scanMatcherCropper_ = std::make_shared<BallCropper>(p.scanMatcherCroppingRadius_);
+	mapBuilderCropper_ = std::make_shared<BallCropper>(p.mapBuilderCroppingRadius_);
 }
 
 bool Mapper::isMatchingInProgress() const {
@@ -64,14 +66,16 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	lastMeasurementTimestamp_ = timestamp;
 	//insert first scan
 	if (map_.points_.empty()) {
-		auto cloud = cloudIn;
-		auto bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_, params_.mapBuilderCropBoxHighBound_);
-		auto croppedCloud = cloud.Crop(bbox);
+//		auto cloud = cloudIn;
+//		auto bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_, params_.mapBuilderCropBoxHighBound_);
+//		auto croppedCloud = cloud.Crop(bbox);
+		mapBuilderCropper_->setPose(Eigen::Isometry3d::Identity());
+		auto croppedCloud = mapBuilderCropper_->crop(cloudIn);
 		m545_mapping::voxelize(params_.voxelSize_, croppedCloud.get());
 //		auto voxelizedCloud = croppedCloud->VoxelDownSample(params_.mapVoxelSize_);
 		estimateNormalsIfNeeded(croppedCloud.get());
 		map_ += *croppedCloud;
-		denseMap_ += cloud;
+		denseMap_ += *(mapBuilderCropper_->crop(cloudIn));
 		isMatchingInProgress_ = false;
 		return;
 	}
@@ -85,12 +89,16 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 		isMatchingInProgress_ = false;
 		return;
 	}
-	auto cloud = cloudIn;
+//	auto cloud = cloudIn;
 	Timer timer;
-	open3d::geometry::AxisAlignedBoundingBox bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_,
-			params_.mapBuilderCropBoxHighBound_);
+//	open3d::geometry::AxisAlignedBoundingBox bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_,
+//			params_.mapBuilderCropBoxHighBound_);
+//	auto wideCroppedCloud = cloud.Crop(bbox);
+	mapBuilderCropper_->setPose(Eigen::Isometry3d::Identity());
+	scanMatcherCropper_->setPose(Eigen::Isometry3d::Identity());
+	auto wideCroppedCloud = mapBuilderCropper_->crop(cloudIn);
 
-	auto wideCroppedCloud = cloud.Crop(bbox);
+
 //	std::cout << "Cropping input cloud finished\n";
 //	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
 //	auto voxelizedCloud = croppedCloud->VoxelDownSample(params_.voxelSize_);
@@ -99,14 +107,17 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 		m545_mapping::voxelize(params_.voxelSize_, wideCroppedCloud.get());
 	}
 
-	bbox = boundingBoxAroundPosition(params_.cropBoxLowBound_, params_.cropBoxHighBound_);
-	auto narrowCropped = wideCroppedCloud->Crop(bbox);
+//	bbox = boundingBoxAroundPosition(params_.cropBoxLowBound_, params_.cropBoxHighBound_);
+//	auto narrowCropped = wideCroppedCloud->Crop(bbox);
+
+	auto narrowCropped = scanMatcherCropper_->crop(*wideCroppedCloud);
 	m545_mapping::randomDownSample(params_.downSamplingRatio_, narrowCropped.get());
 
-	bbox = boundingBoxAroundPosition(params_.cropBoxLowBound_, params_.cropBoxHighBound_,
-			mapToRangeSensor_.translation());
-
-	auto mapPatch = map_.Crop(bbox);
+//	bbox = boundingBoxAroundPosition(params_.cropBoxLowBound_, params_.cropBoxHighBound_,
+//			mapToRangeSensor_.translation());
+//	auto mapPatch = map_.Crop(bbox);
+	scanMatcherCropper_->setPose(mapToRangeSensor_);
+	auto mapPatch = scanMatcherCropper_->crop(map_);
 
 //	std::cout << "Map and scan pre processing finished\n";
 //	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
@@ -146,15 +157,18 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 
 		if (params_.mapVoxelSize_ > 0.0) {
 //			Timer timer("voxelize_map",true);
-			bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_, params_.mapBuilderCropBoxHighBound_,
-					mapToRangeSensor_.translation());
-			auto voxelizedMap = voxelizeAroundPosition(params_.mapVoxelSize_, bbox, map_);
+//			auto bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_, params_.mapBuilderCropBoxHighBound_,
+//					mapToRangeSensor_.translation());
+//			auto voxelizedMap = voxelizeAroundPosition(params_.mapVoxelSize_, bbox, map_);
+			mapBuilderCropper_->setPose(mapToRangeSensor_);
+			auto voxelizedMap = voxelizeWithinCroppingVolume(params_.mapVoxelSize_, *mapBuilderCropper_, map_);
 			map_ = *voxelizedMap;
 		}
 
 		{
 //			Timer timer("merge_dense_map");
-			denseMap_ += cloud.Transform(result.transformation_);
+//			auto cloud = cloudIn;
+//			denseMap_ += cloud.Transform(result.transformation_);
 //			shaveOffArtifacts(cloud, &denseMap_);
 		}
 
@@ -172,9 +186,9 @@ void Mapper::carve(const PointCloud &scan, PointCloud *map) {
 		return;
 	}
 //	Timer timer("carving");
-	open3d::geometry::AxisAlignedBoundingBox bbox = std::move(boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_,
-			params_.mapBuilderCropBoxHighBound_,mapToRangeSensor_.translation()));
-	const auto wideCroppedIdxs = std::move(bbox.GetPointIndicesWithinBoundingBox(map_.points_));
+
+	mapBuilderCropper_->setPose(mapToRangeSensor_);
+	 const auto wideCroppedIdxs = mapBuilderCropper_->getIndicesWithinVolume(map_);
 
 	auto idxsToRemove = std::move(getIdxsOfCarvedPoints(scan,*map,mapToRangeSensor_.translation(),wideCroppedIdxs,carvingParameters_));
 	toRemove_ = std::move(*(map->SelectByIndex(idxsToRemove)));

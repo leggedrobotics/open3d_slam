@@ -9,6 +9,7 @@
 #include "m545_volumetric_mapping/output.hpp"
 #include "m545_volumetric_mapping/math.hpp"
 #include "m545_volumetric_mapping/time.hpp"
+#include "m545_volumetric_mapping/croppers.hpp"
 #include "m545_volumetric_mapping/Voxel.hpp"
 
 #include <open3d/Open3D.h>
@@ -143,8 +144,8 @@ bool isInside(const open3d::geometry::AxisAlignedBoundingBox &bbox, const Eigen:
 			&& p.x() >= bbox.min_bound_.x() && p.y() >= bbox.min_bound_.y() && p.z() >= bbox.min_bound_.z();
 }
 
-std::shared_ptr<open3d::geometry::PointCloud> voxelizeAroundPosition(double voxel_size,
-		const open3d::geometry::AxisAlignedBoundingBox &bbox, const open3d::geometry::PointCloud &cloud) {
+std::shared_ptr<open3d::geometry::PointCloud> voxelizeWithinCroppingVolume(double voxel_size,
+		const Cropper &croppingVolume, const open3d::geometry::PointCloud &cloud) {
 	using namespace open3d::geometry;
 	auto output = std::make_shared<PointCloud>();
 	if (voxel_size <= 0.0) {
@@ -174,7 +175,7 @@ std::shared_ptr<open3d::geometry::PointCloud> voxelizeAroundPosition(double voxe
 
 	voxelindex_to_accpoint.reserve(cloud.points_.size());
 	for (size_t i = 0; i < cloud.points_.size(); i++) {
-		if (isInside(bbox, cloud.points_[i])) {
+		if (croppingVolume.isWithinVolume(cloud.points_[i])) {
 			const Eigen::Vector3i voxelIdx = getVoxelIdx(cloud.points_[i], voxelSize);
 			voxelindex_to_accpoint[voxelIdx].AddPoint(cloud, i);
 		} else {
