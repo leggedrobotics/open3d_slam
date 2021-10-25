@@ -44,7 +44,7 @@ void VoxelMap::clearIndicesOnly(){
 }
 
 void VoxelMap::buildFromCloud(const open3d::geometry::PointCloud &cloud, const std::vector<size_t> &idxs){
-	Timer t("hash_map_build");
+//	Timer t("hash_map_build");
 	voxels_.reserve(idxs.size());
 //		double inserting = 0;
 //		double computing = 0;

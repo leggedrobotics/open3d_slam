@@ -103,7 +103,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	auto narrowCropped = wideCroppedCloud->Crop(bbox);
 	m545_mapping::randomDownSample(params_.downSamplingRatio_, narrowCropped.get());
 
-	bbox = boundingBoxAroundPosition(1.4 * params_.cropBoxLowBound_, 1.4 * params_.cropBoxHighBound_,
+	bbox = boundingBoxAroundPosition(params_.cropBoxLowBound_, params_.cropBoxHighBound_,
 			mapToRangeSensor_.translation());
 
 	auto mapPatch = map_.Crop(bbox);
@@ -173,7 +173,7 @@ void Mapper::carve(const PointCloud &scan, PointCloud *map) {
 	}
 //	Timer timer("carving");
 	open3d::geometry::AxisAlignedBoundingBox bbox = std::move(boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_,
-			params_.mapBuilderCropBoxHighBound_));
+			params_.mapBuilderCropBoxHighBound_,mapToRangeSensor_.translation()));
 	const auto wideCroppedIdxs = std::move(bbox.GetPointIndicesWithinBoundingBox(map_.points_));
 
 	auto idxsToRemove = std::move(getIdxsOfCarvedPoints(scan,*map,mapToRangeSensor_.translation(),wideCroppedIdxs,carvingParameters_));
