@@ -40,12 +40,22 @@ class MaxRadiusCroppingVolume : public CroppingVolume{
 public:
 	MaxRadiusCroppingVolume(double radius);
 	virtual ~MaxRadiusCroppingVolume() = default;
+	bool isWithinVolume(const Eigen::Vector3d &p) const final;
+private:
+	double radius_=1e6;
+
+};
+
+class MinRadiusCroppingVolume : public CroppingVolume{
+public:
+	MinRadiusCroppingVolume(double radius);
+	virtual ~MinRadiusCroppingVolume() = default;
 
 	bool isWithinVolume(const Eigen::Vector3d &p) const final;
 
 
 private:
-	double radius_=1e6;
+	double radius_=0.0;
 
 };
 

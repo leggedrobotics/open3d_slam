@@ -277,10 +277,14 @@ std::vector<size_t> getIdxsOfCarvedPoints(const open3d::geometry::PointCloud &sc
 			const Eigen::Vector3d currentPosition = distance * direction + sensorPosition;
 			auto ids = voxelMap.getIndicesInVoxel(currentPosition);
 			for (const auto id : ids) {
-				const auto n = cloud.normals_[id].normalized();
-				if (std::abs(direction.dot(n)) > param.minDotProductWithNormal_) {
+				bool isRemoveId = true;
+				if (cloud.HasNormals()) {
+					const auto n = cloud.normals_[id].normalized();
+					isRemoveId = std::abs(direction.dot(n)) > param.minDotProductWithNormal_;
+				}
+				if (isRemoveId) {
 #pragma omp critical
-						setOfIdsToRemove.insert(id);
+					setOfIdsToRemove.insert(id);
 				}
 			}
 

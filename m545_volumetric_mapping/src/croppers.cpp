@@ -21,16 +21,13 @@ void CroppingVolume::setPose(const Eigen::Isometry3d &pose){
 }
 
 CroppingVolume::Indices CroppingVolume::getIndicesWithinVolume(const PointCloud &cloud) const{
-
 	Indices idxs;
 	idxs.reserve(cloud.points_.size());
-
 	for(size_t i =0; i < cloud.points_.size(); ++i){
 		if(isWithinVolume(cloud.points_[i])){
 			idxs.push_back(i);
 		}
 	}
-
 	return idxs;
 }
 
@@ -54,6 +51,18 @@ MaxRadiusCroppingVolume::MaxRadiusCroppingVolume(double radius):radius_(radius){
 
 bool MaxRadiusCroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const{
 	return (p-pose_.translation()).norm() <= radius_;
+}
+
+
+///////////////////////////////////////////////
+///////////////////////////////////////////////
+///////////////////////////////////////////////
+
+MinRadiusCroppingVolume::MinRadiusCroppingVolume(double radius):radius_(radius){
+}
+
+bool MinRadiusCroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const{
+	return (p-pose_.translation()).norm() >= radius_;
 }
 
 } // namespace m545_mapping

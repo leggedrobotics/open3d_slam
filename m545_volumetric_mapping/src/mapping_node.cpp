@@ -31,7 +31,7 @@ using namespace m545_mapping::frames;
 open3d::geometry::PointCloud cloudPrev;
 ros::NodeHandlePtr nh;
 std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
-ros::Publisher refPub, subsampledPub, mapPub, localMapPub, meshPub, debugPub,debugPub2,debugPub3;
+ros::Publisher refPub, subsampledPub, mapPub, localMapPub, meshPub, debugPub, debugPub2, debugPub3;
 std::shared_ptr<m545_mapping::Mesher> mesher;
 std::shared_ptr<m545_mapping::LidarOdometry> odometry;
 std::shared_ptr<m545_mapping::Mapper> mapper;
@@ -60,22 +60,13 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
 	m545_mapping::publishTfTransform(mapper->getMapToOdom().matrix(), timestamp, mapFrame, odomFrame,
 			tfBroadcaster.get());
 
-	open3d::geometry::PointCloud map = mapper->getMap();
 	m545_mapping::publishCloud(mapper->getMap(), m545_mapping::frames::mapFrame, timestamp, mapPub);
 
 	m545_mapping::publishCloud(mapper->toRemove_, m545_mapping::frames::mapFrame, timestamp, debugPub);
 	m545_mapping::publishCloud(mapper->scanRef_, m545_mapping::frames::mapFrame, timestamp, debugPub2);
 	m545_mapping::publishCloud(mapper->mapRef_, m545_mapping::frames::mapFrame, timestamp, debugPub3);
 
-
-	if (localMapPub.getNumSubscribers() > 0) {
-		open3d::geometry::PointCloud map = mapper->getDenseMap();
-		m545_mapping::MaxRadiusCroppingVolume cropper(localMapParams.croppingRadius_);
-		cropper.setPose(mapper->getMapToRangeSensor());
-		cropper.crop(&map);
-		auto downSampledMap = map.VoxelDownSample(localMapParams.voxelSize_);
-		m545_mapping::publishCloud(*downSampledMap, m545_mapping::frames::mapFrame, timestamp, localMapPub);
-	}
+	m545_mapping::publishCloud(mapper->getDenseMap(), m545_mapping::frames::mapFrame, timestamp, localMapPub);
 }
 
 void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
@@ -95,7 +86,7 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 			auto downSampledMap = map.VoxelDownSample(mesherParams.voxelSize_);
 			mesher->setCurrentPose(mapper->getMapToRangeSensor());
 			mesher->buildMeshFromCloud(*downSampledMap);
-			m545_mapping::publishMesh(mesher->getMesh(), mapFrame,timestamp,meshPub);
+			m545_mapping::publishMesh(mesher->getMesh(), mapFrame, timestamp, meshPub);
 		});
 		t.detach();
 	}
@@ -118,7 +109,7 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	}
 
 	m545_mapping::publishTfTransform(Eigen::Matrix4d::Identity(), timestamp, rangeSensorFrame, msg->header.frame_id,
-				tfBroadcaster.get());
+			tfBroadcaster.get());
 	m545_mapping::publishCloud(cloud, m545_mapping::frames::rangeSensorFrame, timestamp, refPub);
 	mappingUpdateIfMapperNotBusy(cloud, timestamp);
 
@@ -152,9 +143,9 @@ int main(int argc, char **argv) {
 	m545_mapping::loadParameters(paramFile, &mapperParams);
 	m545_mapping::SpaceCarvingParameters carvingParams;
 	m545_mapping::loadParameters(paramFile, &carvingParams);
-	mapper->setParameters(mapperParams,carvingParams);
-
 	m545_mapping::loadParameters(paramFile, &localMapParams);
+
+	mapper->setParameters(mapperParams, carvingParams, localMapParams);
 
 	mesher = std::make_shared<m545_mapping::Mesher>();
 	m545_mapping::loadParameters(paramFile, &mesherParams);

@@ -35,13 +35,13 @@ public:
 	const PointCloud &getDenseMap() const;
 	PointCloud *getMapPtr();
 	PointCloud *getDenseMapPtr();
-	void setParameters(const MapperParameters &p, const SpaceCarvingParameters &carvingParams);
+	void setParameters(const MapperParameters &p, const SpaceCarvingParameters &carvingParams, const m545_mapping::LocalMapParameters &localMapParams);
 	bool isMatchingInProgress() const;
 	bool isManipulatingMap() const;
 
 	Eigen::Isometry3d getMapToOdom() const;
 	Eigen::Isometry3d getMapToRangeSensor() const;
-	void carve(const PointCloud &scan, PointCloud *map);
+	void carve(const PointCloud &scan, const CroppingVolume &cropper,const SpaceCarvingParameters &params, PointCloud *map,Timer *timer) const;
 
 	mutable PointCloud toRemove_;
 	mutable PointCloud scanRef_;
@@ -64,12 +64,16 @@ private:
   Eigen::Isometry3d odomToRangeSensorPrev_ = Eigen::Isometry3d::Identity();
   Eigen::Isometry3d mapToRangeSensor_ = Eigen::Isometry3d::Identity();
   MapperParameters params_;
+  m545_mapping::LocalMapParameters localMapParams_;
   SpaceCarvingParameters carvingParameters_;
   open3d::pipelines::registration::ICPConvergenceCriteria icpCriteria_;
   std::mutex mapManipulationMutex_;
   Timer carvingTimer_;
+  Timer carveDenseMapTimer_;
+
   std::shared_ptr<CroppingVolume> scanMatcherCropper_;
   std::shared_ptr<CroppingVolume> mapBuilderCropper_;
+  std::shared_ptr<CroppingVolume> denseMapCropper_;
 
 
 };

@@ -30,10 +30,11 @@ Mapper::Mapper() :
 
 }
 
-void Mapper::setParameters(const MapperParameters &p, const SpaceCarvingParameters &carvingParams) {
+void Mapper::setParameters(const MapperParameters &p, const SpaceCarvingParameters &carvingParams, const m545_mapping::LocalMapParameters &localMapParams) {
 	params_ = p;
-	update(p);
 	carvingParameters_ = carvingParams;
+	localMapParams_ = localMapParams;
+	update(p);
 }
 
 void Mapper::update(const MapperParameters &p) {
@@ -41,6 +42,7 @@ void Mapper::update(const MapperParameters &p) {
 	icpObjective = icpObjectiveFactory(params_.icpObjective_);
 	scanMatcherCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.scanMatcherCroppingRadius_);
 	mapBuilderCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.mapBuilderCroppingRadius_);
+	denseMapCropper_ = std::make_shared<MaxRadiusCroppingVolume>(localMapParams_.croppingRadius_);
 }
 
 bool Mapper::isMatchingInProgress() const {
@@ -74,7 +76,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 		m545_mapping::voxelize(params_.voxelSize_, croppedCloud.get());
 		estimateNormalsIfNeeded(croppedCloud.get());
 		map_ += *croppedCloud;
-		denseMap_ += *(mapBuilderCropper_->crop(cloudIn));
+		denseMap_ += *(denseMapCropper_->crop(cloudIn));
 		isMatchingInProgress_ = isManipulatingMap_ = false;
 		return;
 	}
@@ -133,40 +135,43 @@ void Mapper::insertScanInMap(std::shared_ptr<PointCloud> wideCroppedCloud,
 	wideCroppedCloud->Transform(result.transformation_);
 	estimateNormalsIfNeeded(wideCroppedCloud.get());
 	auto transformedCloud = std::move(*(transform(result.transformation_, rawScan)));
-	carve(transformedCloud, &map_);
+	mapBuilderCropper_->setPose(mapToRangeSensor_);
+	carve(transformedCloud, *mapBuilderCropper_,carvingParameters_,&map_,&carvingTimer_);
 	map_ += *wideCroppedCloud;
 
 	if (params_.mapVoxelSize_ > 0.0) {
 		//			Timer timer("voxelize_map",true);
-		mapBuilderCropper_->setPose(mapToRangeSensor_);
 		auto voxelizedMap = voxelizeWithinCroppingVolume(params_.mapVoxelSize_, *mapBuilderCropper_, map_);
 		map_ = *voxelizedMap;
 	}
 
 	{
-		//			Timer timer("merge_dense_map");
-		//			denseMap_ += transformedCloud;
-		//			shaveOffArtifacts(cloud, &denseMap_);
+					Timer timer("merge_dense_map");
+		denseMapCropper_->setPose(mapToRangeSensor_);
+		auto denseCropped = denseMapCropper_->crop(transformedCloud);
+		carve(transformedCloud, *denseMapCropper_, carvingParameters_, &denseMap_,&carveDenseMapTimer_);
+		denseMap_ += *denseCropped;
+		auto voxelizedDense = voxelizeWithinCroppingVolume(localMapParams_.voxelSize_, *denseMapCropper_,  denseMap_);
+		denseMap_= *voxelizedDense;
 	}
 	isManipulatingMap_ = false;
 
 }
 
-void Mapper::carve(const PointCloud &scan, PointCloud *map) {
+void Mapper::carve(const PointCloud &scan,const CroppingVolume &cropper,const SpaceCarvingParameters &params, PointCloud *map,Timer *timer) const {
 
-	if (map->points_.empty() || carvingTimer_.elapsedSec() < carvingParameters_.carveSpaceEveryNsec_) {
+	if (map->points_.empty() || timer->elapsedSec() < params.carveSpaceEveryNsec_) {
 		return;
 	}
 //	Timer timer("carving");
-	mapBuilderCropper_->setPose(mapToRangeSensor_);
-	const auto wideCroppedIdxs = mapBuilderCropper_->getIndicesWithinVolume(map_);
+	const auto wideCroppedIdxs = cropper.getIndicesWithinVolume(*map);
 	auto idxsToRemove = std::move(
-			getIdxsOfCarvedPoints(scan, *map, mapToRangeSensor_.translation(), wideCroppedIdxs, carvingParameters_));
+			getIdxsOfCarvedPoints(scan, *map, mapToRangeSensor_.translation(), wideCroppedIdxs, params));
 	toRemove_ = std::move(*(map->SelectByIndex(idxsToRemove)));
 	scanRef_ = scan;
 //	std::cout << "Would remove: " << idxsToRemove.size() << std::endl;
 	removeByIds(idxsToRemove, map);
-	carvingTimer_.reset();
+	timer->reset();
 
 }
 
