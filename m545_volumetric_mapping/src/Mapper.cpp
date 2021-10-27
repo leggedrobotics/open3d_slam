@@ -57,7 +57,7 @@ Eigen::Isometry3d Mapper::getMapToRangeSensor() const {
 void Mapper::estimateNormalsIfNeeded(PointCloud *pcl) const {
 	if (params_.scanMatcher_.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
 		estimateNormals(params_.scanMatcher_.kNNnormalEstimation_, pcl);
-		pcl->NormalizeNormals();
+		pcl->NormalizeNormals(); //todo, dunno if I need this
 	}
 }
 

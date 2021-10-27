@@ -25,17 +25,27 @@ public:
 	Submap();
 	~Submap() = default;
 
+	void setParameters(const MapBuilderParameters &mabBuilderParam, const IcpParameters &scanMatcherParameters,const ScanProcessingParameters &scanProcessingParameters);
 	bool insertScan(const PointCloud &rawScan, const Eigen::Matrix4d &transform);
 	void voxelizeAroundPosition(const Eigen::Vector3d &p);
 	const Eigen::Isometry3d &getMapToSubmap() const;
 	const PointCloud &getMap() const;
 	void setMapToSubmap(const Eigen::Isometry3d &T);
 
+
 private:
+	void insertFirstScan(const PointCloud &scan,const Eigen::Matrix4d &transform);
+	void update(const MapBuilderParameters &p);
+	void estimateNormalsIfNeeded(PointCloud *pcl) const;
+
 	PointCloud map_;
 	Eigen::Isometry3d mapToSubmap_ = Eigen::Isometry3d::Identity();
 	Eigen::Isometry3d mapToRangeSensor_ = Eigen::Isometry3d::Identity();
-	std::shared_ptr<CroppingVolume> scanCropper_;
+	std::shared_ptr<CroppingVolume> mapBuilderCropper_;
+	std::shared_ptr<CroppingVolume> denseMapCropper_;
+	MapBuilderParameters mapBuilderParams_;
+	IcpParameters scanMatcherParams_;
+	ScanProcessingParameters scanProcessingParams_;
 };
 
 
@@ -50,6 +60,7 @@ class SubmapCollection{
 	void updateSubmapCollection();
 	const Submap &getActiveSubmap() const;
 	bool insertScan(const PointCloud &rawScan, const Eigen::Matrix4d &transform);
+	void setParameters(const MapperParameters &p);
 
 private:
 
@@ -60,6 +71,7 @@ private:
 	Eigen::Isometry3d mapToRangeSensor_ = Eigen::Isometry3d::Identity();
 	std::vector<Submap> submaps_;
 	size_t activeSubmapIdx_ = 0;
+	MapperParameters params_;
 
 };
 
