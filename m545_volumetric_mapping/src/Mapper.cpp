@@ -93,6 +93,8 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	auto narrowCropped = scanMatcherCropper_->crop(*wideCroppedCloud);
 	m545_mapping::randomDownSample(params_.scanProcessing_.downSamplingRatio_, narrowCropped.get());
 	scanMatcherCropper_->setPose(mapToRangeSensor_);
+
+	// wee need to get an active map here
 	auto mapPatch = scanMatcherCropper_->crop(map_);
 	const Eigen::Matrix4d initTransform = (mapToOdom_ * odomToRangeSensor).matrix();
 	const auto result = open3d::pipelines::registration::RegistrationICP(*narrowCropped, *mapPatch,

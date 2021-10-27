@@ -17,6 +17,7 @@ set(SRC_FILES
   src/Odometry.cpp
   src/Voxel.cpp
   src/croppers.cpp
+  src/Submap.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES
