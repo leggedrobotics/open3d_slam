@@ -70,14 +70,8 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	scanMatcherCropper_->setPose(Eigen::Isometry3d::Identity());
 	//insert first scan
 	if (map_.points_.empty()) {
-		std::lock_guard<std::mutex> lck(mapManipulationMutex_);
-		isManipulatingMap_ = true;
-		auto croppedCloud = mapBuilderCropper_->crop(cloudIn);
-		m545_mapping::voxelize(params_.voxelSize_, croppedCloud.get());
-		estimateNormalsIfNeeded(croppedCloud.get());
-		map_ += *croppedCloud;
-		denseMap_ += *(denseMapCropper_->crop(cloudIn));
-		isMatchingInProgress_ = isManipulatingMap_ = false;
+		insertFirstScan(cloudIn);
+		isMatchingInProgress_ = false;
 		return;
 	}
 
@@ -126,10 +120,26 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	isMatchingInProgress_ = false;
 }
 
-void Mapper::insertScanInMap(std::shared_ptr<PointCloud> wideCroppedCloud,
+void Mapper::insertFirstScan(const PointCloud &scan) {
+	mapBuilderCropper_->setPose(Eigen::Isometry3d::Identity());
+	scanMatcherCropper_->setPose(Eigen::Isometry3d::Identity());
+
+	std::lock_guard<std::mutex> lck(mapManipulationMutex_);
+	isManipulatingMap_ = true;
+	auto croppedCloud = mapBuilderCropper_->crop(scan);
+	m545_mapping::voxelize(params_.voxelSize_, croppedCloud.get());
+	estimateNormalsIfNeeded(croppedCloud.get());
+	map_ += *croppedCloud;
+	denseMap_ += *(denseMapCropper_->crop(scan));
+	isManipulatingMap_ = false;
+}
+
+void Mapper::insertScanInMap(const std::shared_ptr<PointCloud> &wideCroppedCloud,
 		const open3d::pipelines::registration::RegistrationResult &result, const PointCloud &rawScan) {
 	std::lock_guard<std::mutex> lck(mapManipulationMutex_);
 	isManipulatingMap_ = true;
+
+
 	//		Timer timer("Map update");
 	m545_mapping::randomDownSample(params_.downSamplingRatio_, wideCroppedCloud.get());
 	wideCroppedCloud->Transform(result.transformation_);
