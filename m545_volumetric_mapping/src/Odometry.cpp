@@ -25,15 +25,15 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 	}
 //	const m545_mapping::Timer timer("scan_to_scan_odometry");
 	auto croppedCloud = cropper_->crop(cloud);
-	m545_mapping::voxelize(params_.voxelSize_, croppedCloud.get());
-	auto downSampledCloud = croppedCloud->RandomDownSample(params_.downSamplingRatio_);
+	m545_mapping::voxelize(params_.scanProcessing_.voxelSize_, croppedCloud.get());
+	auto downSampledCloud = croppedCloud->RandomDownSample(params_.scanProcessing_.downSamplingRatio_);
 
-	if (params_.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
-		m545_mapping::estimateNormals(params_.kNNnormalEstimation_, downSampledCloud.get());
+	if (params_.scanMatcher_.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
+		m545_mapping::estimateNormals(params_.scanMatcher_.kNNnormalEstimation_, downSampledCloud.get());
 		downSampledCloud->NormalizeNormals();
 	}
 	auto result = open3d::pipelines::registration::RegistrationICP(cloudPrev_, *downSampledCloud,
-			params_.maxCorrespondenceDistance_, Eigen::Matrix4d::Identity(), *icpObjective_, icpConvergenceCriteria_);
+			params_.scanMatcher_.maxCorrespondenceDistance_, Eigen::Matrix4d::Identity(), *icpObjective_, icpConvergenceCriteria_);
 
 	//	std::cout << "Scan to scan matching finished \n";
 	//	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
@@ -60,9 +60,9 @@ const open3d::geometry::PointCloud& LidarOdometry::getPreProcessedCloud() const 
 
 void LidarOdometry::setParameters(const OdometryParameters &p) {
 	params_ = p;
-	icpConvergenceCriteria_.max_iteration_ = p.maxNumIter_;
-	icpObjective_ = icpObjectiveFactory(params_.icpObjective_);
-	cropper_ = std::make_shared<MaxRadiusCroppingVolume>(params_.croppingRadius_);
+	icpConvergenceCriteria_.max_iteration_ = p.scanMatcher_.maxNumIter_;
+	icpObjective_ = icpObjectiveFactory(params_.scanMatcher_.icpObjective_);
+	cropper_ = std::make_shared<MaxRadiusCroppingVolume>(params_.scanProcessing_.croppingRadius_);
 }
 
 } // namespace m545_mapping

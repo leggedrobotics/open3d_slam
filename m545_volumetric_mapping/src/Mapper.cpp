@@ -30,19 +30,17 @@ Mapper::Mapper() :
 
 }
 
-void Mapper::setParameters(const MapperParameters &p, const SpaceCarvingParameters &carvingParams, const m545_mapping::LocalMapParameters &localMapParams) {
+void Mapper::setParameters(const MapperParameters &p) {
 	params_ = p;
-	carvingParameters_ = carvingParams;
-	localMapParams_ = localMapParams;
 	update(p);
 }
 
 void Mapper::update(const MapperParameters &p) {
-	icpCriteria_.max_iteration_ = params_.maxNumIter_;
-	icpObjective = icpObjectiveFactory(params_.icpObjective_);
-	scanMatcherCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.scanMatcherCroppingRadius_);
-	mapBuilderCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.mapBuilderCroppingRadius_);
-	denseMapCropper_ = std::make_shared<MaxRadiusCroppingVolume>(localMapParams_.croppingRadius_);
+	icpCriteria_.max_iteration_ = p.scanMatcher_.maxNumIter_;
+	icpObjective = icpObjectiveFactory(p.scanMatcher_.icpObjective_);
+	scanMatcherCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.scanProcessing_.croppingRadius_);
+	mapBuilderCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.mapBuilder_.scanCroppingRadius_);
+	denseMapCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.denseMapBuilder_.scanCroppingRadius_);
 }
 
 bool Mapper::isMatchingInProgress() const {
@@ -57,8 +55,8 @@ Eigen::Isometry3d Mapper::getMapToRangeSensor() const {
 }
 
 void Mapper::estimateNormalsIfNeeded(PointCloud *pcl) const {
-	if (params_.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
-		estimateNormals(params_.kNNnormalEstimation_, pcl);
+	if (params_.scanMatcher_.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
+		estimateNormals(params_.scanMatcher_.kNNnormalEstimation_, pcl);
 		pcl->NormalizeNormals();
 	}
 }
@@ -89,16 +87,16 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	auto wideCroppedCloud = mapBuilderCropper_->crop(cloudIn);
 	{
 //		Timer timer("voxelize_input_cloud");
-		m545_mapping::voxelize(params_.voxelSize_, wideCroppedCloud.get());
+		m545_mapping::voxelize(params_.scanProcessing_.voxelSize_, wideCroppedCloud.get());
 	}
 
 	auto narrowCropped = scanMatcherCropper_->crop(*wideCroppedCloud);
-	m545_mapping::randomDownSample(params_.downSamplingRatio_, narrowCropped.get());
+	m545_mapping::randomDownSample(params_.scanProcessing_.downSamplingRatio_, narrowCropped.get());
 	scanMatcherCropper_->setPose(mapToRangeSensor_);
 	auto mapPatch = scanMatcherCropper_->crop(map_);
 	const Eigen::Matrix4d initTransform = (mapToOdom_ * odomToRangeSensor).matrix();
 	const auto result = open3d::pipelines::registration::RegistrationICP(*narrowCropped, *mapPatch,
-			params_.maxCorrespondenceDistance_, initTransform, *icpObjective, icpCriteria_);
+			params_.scanMatcher_.maxCorrespondenceDistance_, initTransform, *icpObjective, icpCriteria_);
 
 	if (result.fitness_ < params_.minRefinementFitness_) {
 		std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
@@ -127,7 +125,7 @@ void Mapper::insertFirstScan(const PointCloud &scan) {
 	std::lock_guard<std::mutex> lck(mapManipulationMutex_);
 	isManipulatingMap_ = true;
 	auto croppedCloud = mapBuilderCropper_->crop(scan);
-	m545_mapping::voxelize(params_.voxelSize_, croppedCloud.get());
+	m545_mapping::voxelize(params_.scanProcessing_.voxelSize_, croppedCloud.get());
 	estimateNormalsIfNeeded(croppedCloud.get());
 	map_ += *croppedCloud;
 	denseMap_ += *(denseMapCropper_->crop(scan));
@@ -141,27 +139,27 @@ void Mapper::insertScanInMap(const std::shared_ptr<PointCloud> &wideCroppedCloud
 
 
 	//		Timer timer("Map update");
-	m545_mapping::randomDownSample(params_.downSamplingRatio_, wideCroppedCloud.get());
+	m545_mapping::randomDownSample(params_.scanProcessing_.downSamplingRatio_, wideCroppedCloud.get());
 	wideCroppedCloud->Transform(result.transformation_);
 	estimateNormalsIfNeeded(wideCroppedCloud.get());
 	auto transformedCloud = std::move(*(transform(result.transformation_, rawScan)));
 	mapBuilderCropper_->setPose(mapToRangeSensor_);
-	carve(transformedCloud, *mapBuilderCropper_,carvingParameters_,&map_,&carvingTimer_);
+	carve(transformedCloud, *mapBuilderCropper_,params_.mapBuilder_.carving_,&map_,&carvingTimer_);
 	map_ += *wideCroppedCloud;
 
-	if (params_.mapVoxelSize_ > 0.0) {
+	if (params_.mapBuilder_.mapVoxelSize_ > 0.0) {
 		//			Timer timer("voxelize_map",true);
-		auto voxelizedMap = voxelizeWithinCroppingVolume(params_.mapVoxelSize_, *mapBuilderCropper_, map_);
+		auto voxelizedMap = voxelizeWithinCroppingVolume(params_.mapBuilder_.mapVoxelSize_, *mapBuilderCropper_, map_);
 		map_ = *voxelizedMap;
 	}
 
-	{
-					Timer timer("merge_dense_map");
+	if(params_.isBuildDenseMap_){
+//		Timer timer("merge_dense_map");
 		denseMapCropper_->setPose(mapToRangeSensor_);
 		auto denseCropped = denseMapCropper_->crop(transformedCloud);
-		carve(transformedCloud, *denseMapCropper_, carvingParameters_, &denseMap_,&carveDenseMapTimer_);
+		carve(transformedCloud, *denseMapCropper_, params_.denseMapBuilder_.carving_, &denseMap_,&carveDenseMapTimer_);
 		denseMap_ += *denseCropped;
-		auto voxelizedDense = voxelizeWithinCroppingVolume(localMapParams_.voxelSize_, *denseMapCropper_,  denseMap_);
+		auto voxelizedDense = voxelizeWithinCroppingVolume(params_.denseMapBuilder_.mapVoxelSize_, *denseMapCropper_,  denseMap_);
 		denseMap_= *voxelizedDense;
 	}
 	isManipulatingMap_ = false;
@@ -169,7 +167,6 @@ void Mapper::insertScanInMap(const std::shared_ptr<PointCloud> &wideCroppedCloud
 }
 
 void Mapper::carve(const PointCloud &scan,const CroppingVolume &cropper,const SpaceCarvingParameters &params, PointCloud *map,Timer *timer) const {
-
 	if (map->points_.empty() || timer->elapsedSec() < params.carveSpaceEveryNsec_) {
 		return;
 	}
@@ -182,7 +179,6 @@ void Mapper::carve(const PointCloud &scan,const CroppingVolume &cropper,const Sp
 //	std::cout << "Would remove: " << idxsToRemove.size() << std::endl;
 	removeByIds(idxsToRemove, map);
 	timer->reset();
-
 }
 
 const Mapper::PointCloud& Mapper::getMap() const {

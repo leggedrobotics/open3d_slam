@@ -37,18 +37,22 @@ static const std::map<std::string, IcpObjective> IcpObjectiveNames {
 	{"PointToPlane",IcpObjective::PointToPlane}
 };
 
+struct ScanProcessingParameters{
+	double croppingRadius_=20.0;
+	double downSamplingRatio_ = 1.0;
+	double voxelSize_ = 0.03;
+};
+
 struct IcpParameters {
 	int kNNnormalEstimation_ = 5;
 	int maxNumIter_ = 50;
 	double maxCorrespondenceDistance_ = 0.2;
 	IcpObjective icpObjective_ = IcpObjective::PointToPoint;
-	double downSamplingRatio_ = 1.0;
-	double voxelSize_ = 0.03;
 };
 
-struct OdometryParameters : public IcpParameters {
-	int everyKpoints_ = 1;
-	double croppingRadius_=20.0;
+struct OdometryParameters {
+	IcpParameters scanMatcher_;
+	ScanProcessingParameters scanProcessing_;
 };
 
 struct MapInconsistencyRemoval {
@@ -66,12 +70,20 @@ struct SpaceCarvingParameters{
 	double minDotProductWithNormal_ = 0.5;
 };
 
-struct MapperParameters : public IcpParameters {
+struct MapBuilderParameters{
 	double mapVoxelSize_ = 0.03;
+	double scanCroppingRadius_=40.0;
+	SpaceCarvingParameters carving_;
+};
+
+struct MapperParameters {
+	IcpParameters scanMatcher_;
+	ScanProcessingParameters scanProcessing_;
 	double minMovementBetweenMappingSteps_ = 0.0;
 	double minRefinementFitness_ = 0.7;
-	double mapBuilderCroppingRadius_=40.0;
-	double scanMatcherCroppingRadius_=30.0;
+	MapBuilderParameters mapBuilder_;
+	MapBuilderParameters denseMapBuilder_;
+	bool isBuildDenseMap_ = true;
 
 };
 
@@ -93,11 +105,14 @@ struct MesherParameters{
 };
 
 
-
+void loadParameters(const std::string &filename, ScanProcessingParameters *p);
+void loadParameters(const YAML::Node &node, ScanProcessingParameters *p);
 void loadParameters(const std::string &filename, IcpParameters *p);
 void loadParameters(const YAML::Node &node, IcpParameters *p);
 void loadParameters(const std::string &filename, MapperParameters *p);
 void loadParameters(const YAML::Node &node, MapperParameters *p);
+void loadParameters(const std::string &filename, MapBuilderParameters *p);
+void loadParameters(const YAML::Node &node, MapBuilderParameters *p);
 void loadParameters(const std::string &filename, LocalMapParameters *p);
 void loadParameters(const YAML::Node &node, LocalMapParameters *p);
 void loadParameters(const std::string &filename, OdometryParameters *p);

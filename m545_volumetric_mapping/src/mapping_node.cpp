@@ -134,6 +134,8 @@ int main(int argc, char **argv) {
 	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
 	std::cout << "loading params from: " << paramFile << "\n";
 
+	m545_mapping::loadParameters(paramFile, &localMapParams);
+
 	m545_mapping::OdometryParameters odometryParams;
 	m545_mapping::loadParameters(paramFile, &odometryParams);
 	odometry = std::make_shared<m545_mapping::LidarOdometry>();
@@ -141,11 +143,7 @@ int main(int argc, char **argv) {
 
 	mapper = std::make_shared<m545_mapping::Mapper>();
 	m545_mapping::loadParameters(paramFile, &mapperParams);
-	m545_mapping::SpaceCarvingParameters carvingParams;
-	m545_mapping::loadParameters(paramFile, &carvingParams);
-	m545_mapping::loadParameters(paramFile, &localMapParams);
-
-	mapper->setParameters(mapperParams, carvingParams, localMapParams);
+	mapper->setParameters(mapperParams);
 
 	mesher = std::make_shared<m545_mapping::Mesher>();
 	m545_mapping::loadParameters(paramFile, &mesherParams);

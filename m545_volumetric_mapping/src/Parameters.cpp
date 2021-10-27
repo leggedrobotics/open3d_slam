@@ -10,27 +10,58 @@
 namespace m545_mapping {
 
 void loadParameters(const std::string &filename, IcpParameters *p) {
-
 	YAML::Node basenode = YAML::LoadFile(filename);
-
 	if (basenode.IsNull()) {
 		throw std::runtime_error("IcpParameters::loadParameters loading failed");
 	}
-
-	loadParameters(basenode["icp_odometry"], p);
+	loadParameters(basenode["odometry"], p);
 }
 
 void loadParameters(const YAML::Node &n, IcpParameters *p) {
-
 	p->icpObjective_ = IcpObjectiveNames.at(n["icp_objective"].as<std::string>());
 	p->kNNnormalEstimation_ = n["knn_normal_estimation"].as<int>();
 	p->maxCorrespondenceDistance_ = n["max_correspondence_dist"].as<double>();
 	p->maxNumIter_ = n["max_n_iter"].as<int>();
-	p->downSamplingRatio_ = n["downsampling_ratio"].as<double>();
-	p->voxelSize_=n["voxel_filter_size"].as<double>();
-
-
 }
+
+void loadParameters(const std::string &filename, OdometryParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+	if (basenode.IsNull()) {
+		throw std::runtime_error("Odometry::loadParameters loading failed");
+	}
+	loadParameters(basenode["odometry"], p);
+}
+void loadParameters(const YAML::Node &node, OdometryParameters *p){
+	loadParameters(node["scan_matching"], &(p->scanMatcher_) );
+	loadParameters(node["scan_processing"], &(p->scanProcessing_) );
+}
+
+void loadParameters(const std::string &filename, ScanProcessingParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+	if (basenode.IsNull()) {
+		throw std::runtime_error("ScanProcessingParameters::loadParameters loading failed");
+	}
+	loadParameters(basenode["scan_processing"], p);
+}
+void loadParameters(const YAML::Node &node, ScanProcessingParameters *p){
+	p->croppingRadius_ = node["cropping_radius"].as<double>();
+	p->voxelSize_ = node["voxel_size"].as<double>();
+	p->downSamplingRatio_ = node["downsampling_ratio"].as<double>();
+}
+
+void loadParameters(const std::string &filename, MapBuilderParameters *p) {
+	YAML::Node basenode = YAML::LoadFile(filename);
+	if (basenode.IsNull()) {
+		throw std::runtime_error("MapBuilderParameters::loadParameters loading failed");
+	}
+	loadParameters(basenode["map_builder"], p);
+}
+void loadParameters(const YAML::Node &node, MapBuilderParameters *p) {
+	p->mapVoxelSize_ = node["map_voxel_size"].as<double>();
+	p->scanCroppingRadius_ = node["scan_cropping_radius"].as<double>();
+	loadParameters(node["space_carving"], &(p->carving_));
+}
+
 
 void loadParameters(const std::string &filename, MapperParameters *p) {
 	YAML::Node basenode = YAML::LoadFile(filename);
@@ -39,48 +70,31 @@ void loadParameters(const std::string &filename, MapperParameters *p) {
 		throw std::runtime_error("MapperParameters::loadParameters loading failed");
 	}
 
-	loadParameters(basenode["icp_mapping"], p);
+	loadParameters(basenode["mapping"], p);
 }
 void loadParameters(const YAML::Node &node, MapperParameters *p) {
-	loadParameters(node["scan_to_map_refinement"], static_cast<IcpParameters*>(p));
-	const auto n = node["map_builder"];
-	p->mapBuilderCroppingRadius_ = n["cropping_radius"].as<double>();
-	p->scanMatcherCroppingRadius_ = node["scan_to_map_refinement"]["cropping_radius"].as<double>();
-	p->mapVoxelSize_ = node["map_voxel_size"].as<double>();
-	p->minRefinementFitness_ = node["min_refinement_fitness"].as<double>();
+	p->isBuildDenseMap_ = node["is_build_dense_map"].as<bool>();
 	p->minMovementBetweenMappingSteps_ = node["min_movement_between_mapping_steps"].as<double>();
-
+	p->minRefinementFitness_ = node["scan_to_map_refinement"]["min_refinement_fitness"].as<double>();
+	loadParameters(node["scan_to_map_refinement"]["scan_matching"],&(p->scanMatcher_));
+	loadParameters(node["scan_to_map_refinement"]["scan_processing"],&(p->scanProcessing_));
+	if(p->isBuildDenseMap_){
+		loadParameters(node["dense_map_builder"], &(p->denseMapBuilder_));
+	}
+	loadParameters(node["map_builder"], &(p->mapBuilder_));
 }
 
 void loadParameters(const std::string &filename, LocalMapParameters *p){
 	YAML::Node basenode = YAML::LoadFile(filename);
-
 	if (basenode.IsNull()) {
 		throw std::runtime_error("Local map::loadParameters loading failed");
 	}
-
 	loadParameters(basenode["local_map"], p);
 }
 void loadParameters(const YAML::Node &n, LocalMapParameters *p){
 	p->voxelSize_ = n["voxel_size"].as<double>();
 	p->croppingRadius_ = n["cropping_radius"].as<double>();
-
 }
-
-void loadParameters(const std::string &filename, OdometryParameters *p){
-	YAML::Node basenode = YAML::LoadFile(filename);
-
-	if (basenode.IsNull()) {
-		throw std::runtime_error("Odometry::loadParameters loading failed");
-	}
-
-	loadParameters(basenode["icp_odometry"], p);
-}
-void loadParameters(const YAML::Node &node, OdometryParameters *p){
-	loadParameters(node, static_cast<IcpParameters*>(p));
-	p->croppingRadius_ = node["cropping_radius"].as<double>();
-}
-
 
 void loadParameters(const YAML::Node &n, MesherParameters *p) {
 

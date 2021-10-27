@@ -33,8 +33,7 @@ public:
 	const PointCloud& getDenseMap() const;
 	PointCloud* getMapPtr();
 	PointCloud* getDenseMapPtr();
-	void setParameters(const MapperParameters &p, const SpaceCarvingParameters &carvingParams,
-			const m545_mapping::LocalMapParameters &localMapParams);
+	void setParameters(const MapperParameters &p);
 	bool isMatchingInProgress() const;
 	bool isManipulatingMap() const;
 
@@ -65,8 +64,6 @@ private:
 	Eigen::Isometry3d odomToRangeSensorPrev_ = Eigen::Isometry3d::Identity();
 	Eigen::Isometry3d mapToRangeSensor_ = Eigen::Isometry3d::Identity();
 	MapperParameters params_;
-	m545_mapping::LocalMapParameters localMapParams_;
-	SpaceCarvingParameters carvingParameters_;
 	open3d::pipelines::registration::ICPConvergenceCriteria icpCriteria_;
 	std::mutex mapManipulationMutex_;
 	Timer carvingTimer_;
