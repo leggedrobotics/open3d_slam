@@ -55,14 +55,14 @@ struct LocalMapParameters {
 	Eigen::Vector3d cropBoxHighBound_ = Eigen::Vector3d(50.0,50.0,1e3);
 };
 
-//struct ProjectionParameters : public IcpParameters {
-//    Eigen::Matrix3d K = ;
-//    Eigen::VectorXd D;
-//    Eigen::Quaterniond quaternion;
-//    Eigen::Vector3d translation;
+struct ProjectionParameters {
+    Eigen::Matrix<double, 3, 3, Eigen::RowMajor> K;
+    Eigen::Matrix<double, 5, 1> D;
+    Eigen::Quaternion<double> quaternion;
+    Eigen::Vector3d translation;
 //    Eigen::Matrix3d rotation;
 //    Eigen::MatrixXd RT;
-//};
+};
 
 void loadParameters(const std::string &filename, IcpParameters *p);
 void loadParameters(const YAML::Node &node, IcpParameters *p);
@@ -72,6 +72,7 @@ void loadParameters(const std::string &filename, LocalMapParameters *p);
 void loadParameters(const YAML::Node &node, LocalMapParameters *p);
 void loadParameters(const std::string &filename, OdometryParameters *p);
 void loadParameters(const YAML::Node &node, OdometryParameters *p);
-
+void loadParameters(const std::string &filename, ProjectionParameters *p);
+void loadParameters(const YAML::Node &node, ProjectionParameters *p);
 
 } // namespace m545_mapping

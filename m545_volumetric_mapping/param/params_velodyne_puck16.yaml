@@ -48,5 +48,6 @@ local_map:
   crop_box_max_x: 20.0
   crop_box_max_y: 20.0
   crop_box_max_z: 100.0
+  
 
     

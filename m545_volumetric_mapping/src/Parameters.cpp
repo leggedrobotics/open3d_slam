@@ -83,7 +83,7 @@ void loadParameters(const YAML::Node &n, LocalMapParameters *p){
 }
 
 void loadParameters(const std::string &filename, OdometryParameters *p){
-	YAML::Node basenode = YAML::LoadFile(filename);
+    YAML::Node basenode = YAML::LoadFile(filename);
 
 	if (basenode.IsNull()) {
 		throw std::runtime_error("Odometry::loadParameters loading failed");
@@ -92,9 +92,54 @@ void loadParameters(const std::string &filename, OdometryParameters *p){
 	loadParameters(basenode, p);
 }
 void loadParameters(const YAML::Node &node, OdometryParameters *p){
-	loadParameters(node["icp_odometry"], static_cast<IcpParameters*>(p));
+    loadParameters(node["icp_odometry"], static_cast<IcpParameters*>(p));
 
 }
+
+
+void loadParameters(const std::string &filename, ProjectionParameters *p){
+
+    YAML::Node basenode = YAML::LoadFile(filename);
+
+        if (basenode.IsNull()) {
+            throw std::runtime_error("Projection::loadParameters loading failed");
+        }
+
+        loadParameters(basenode["Projection"], p);
+}
+void loadParameters(const YAML::Node &nProj, ProjectionParameters *p){
+    const std::vector<double> vK = nProj["K"].as<std::vector<double> >();
+//    Eigen::Matrix<double, 3, 3, Eigen::RowMajor> K(vK.data());
+//    p->K(vK.data());
+    p->K(0, 0) = vK[0];
+    p->K(0, 1) = vK[1];
+    p->K(0, 2) = vK[2];
+    p->K(1, 0) = vK[3];
+    p->K(1, 1) = vK[4];
+    p->K(1, 2) = vK[5];
+    p->K(2, 0) = vK[6];
+    p->K(2, 1) = vK[7];
+    p->K(2, 2) = vK[8];
+    const std::vector<double> vD = nProj["D"].as<std::vector<double> >();
+//      Eigen::Matrix<double, 5, 1> D(vD.data());
+    p->D(0, 0) = vD[0];
+    p->D(1, 0) = vD[1];
+    p->D(2, 0) = vD[2];
+    p->D(3, 0) = vD[3];
+    p->D(4, 0) = vD[4];
+    const std::vector<double> vqua = nProj["quaternion"].as<std::vector<double> >();
+//    Eigen::Quaternion<double> quaternion(vqua.data());
+    p->quaternion.w() = vqua[0];
+    p->quaternion.x() = vqua[1];
+    p->quaternion.y() = vqua[2];
+    p->quaternion.z() = vqua[3];
+    const std::vector<double> vtran = nProj["translation"].as<std::vector<double> >();
+//    Eigen::Vector3d translation(vtran.data());
+    p->translation.x() = vtran[0];
+    p->translation.y() = vtran[1];
+    p->translation.z() = vtran[2];
+}
+
 
 } // namespace m545_mapping
 

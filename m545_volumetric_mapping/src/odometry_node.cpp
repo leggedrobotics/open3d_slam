@@ -21,6 +21,9 @@
 #include "m545_volumetric_mapping/CvProjection.hpp"
 #include "open3d_conversions/open3d_conversions.h"
 #include <ros/ros.h>
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
+#include <Eigen/Core>
 
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/Image.h>
@@ -49,6 +52,7 @@ std::shared_ptr<registration::TransformationEstimation> icpObjective;
 std::shared_ptr<m545_mapping::Mapper> mapper;
 m545_mapping::MapperParameters mapperParams;
 m545_mapping::LocalMapParameters localMapParams;
+m545_mapping::ProjectionParameters projectionParams;
 
 
 bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
@@ -97,7 +101,11 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
 	mapper->addRangeMeasurement(cloud, timestamp);
 	std::cout << "Mapping step finished \n";
 	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n\n";
-	{
+//    for (int i=0;i<cloud.points_.size();i++) {
+//        std::cout << "points:" << cloud.points_[i].x() <<std::endl;
+//    }
+
+    {
 		geometry_msgs::TransformStamped transformStamped = m545_mapping::toRos(mapper->getMapToOdom().matrix(),
 				timestamp, m545_mapping::frames::mapFrame, m545_mapping::frames::odomFrame);
 		tfBroadcaster->sendTransform(transformStamped);
@@ -136,6 +144,7 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 
     open3d::geometry::PointCloud cloud;
+
 	open3d_conversions::rosToOpen3d(msg, cloud, true);
 	ros::Time timestamp = msg->header.stamp;
 
@@ -164,51 +173,27 @@ void synchronizeCallback(const sensor_msgs::PointCloud2ConstPtr& cloudmsg, const
 	open3d_conversions::rosToOpen3d(cloudmsg, pointCloud, true);
     ros::Time timestamp = cloudmsg->header.stamp;
     std::vector<Eigen::Vector2i> pixels(pointCloud.points_.size());
-    pixels = projectionLidarToPixel(pointCloud.points_);
-//    pointCloud.colors_.clear();
-//    pointCloud.colors_ = imageConversion(imagemsg, pixels, sensor_msgs::image_encodings::RGB8);
-//	for (int i = 0; i < pointCloud.points_.size(); i++)
-//    {
-//		Eigen::Vector3d point;
-//      Eigen::Vector2i pixel = Eigen::Vector2i::Zero();
-//      std::vector<cv::Point3d> point;
-//      std::vector<cv::Point2i> pixel;
+    Eigen::Matrix<double, 3, 1> zeroPoint = Eigen::Vector3d::Zero();
 
-        //uint8_t rgb;
-		//uint8_t* rgbData;
-        //Eigen::Vector3d color = {1.0, 1.0, 1.0};
-//        std::vector<Eigen::Matrix<double, 3, 1>> colors;
-//		Eigen::MatrixX3d colors = Eigen::MatrixX3d::Zero(pointCloud.points_.size(), 3);
-//        point(0) = pointCloud.points_[i].x();
-//        point(1) = pointCloud.points_[i].y();
-//        point(2) = pointCloud.points_[i].z();
-//		point.data()->x = pointCloud.points_[i].x();
-//		point.data()->y = pointCloud.points_[i].y();
-//		point.data()->z = pointCloud.points_[i].z();
-//		pixel = projectionLidarToPixel(point);
-//      pixel = cvProjection(point);
+//    std::vector<Eigen::Matrix<double, 3, 1>> pointCloud_points_crop;
 //
-//        if (pixel(0) > 0 && pixel(0) < imagemsg->width && pixel(1) > 0 && pixel(1) < imagemsg->height) {
-//		 	colors[i] = imageConversion(imagemsg, pixel(0), pixel(1), sensor_msgs::image_encodings::RGB8) / 255.0;
-//            ROS_INFO("on image");
-//            pointCloud.colors_[i] = colors[i];
-//    	 }
-//        else {
-//            pointCloud.colors_[i] = Eigen::Matrix<double, 3, 1>::Zero();
+//    for (int i = 0; i < pointCloud.points_.size(); i++) {
+//        if(pointCloud.points_[i] != zeroPoint) {
+//            pointCloud_points_crop.push_back(pointCloud.points_[i]);
 //        }
+//    }
+    pixels = projectionLidarToPixel(pointCloud.points_,  projectionParams.K, projectionParams.D, projectionParams.quaternion, projectionParams.translation);
+//    cv::projectPoints(pointCloud.points_, projectionParams.quaternion.toRotationMatrix(), projectionParams.translation, projectionParams.K, projectionParams.D, pixels);
+    pointCloud.colors_ = imageConversion(imagemsg, pixels, sensor_msgs::image_encodings::RGB8);
+//    std::cout << "cloudsize" << pointCloud.colors_.size() <<std::endl;
+    for (int i = 0; i < pointCloud.points_.size(); i++) {
+//        std::cout << "color:" << pointCloud.colors_[i] << std::endl;
+    }
+//    std::cout << "colors" << pointCloud.colors_[10] <<std::endl;
 
-//	}
 //    std::vector<cv::Point2i> pixels;
 //    pixels = cvProjection(*cloudmsg);
 
-//    if (cloudPrev.IsEmpty()) {
-//        cloudPrev = pointCloud;
-//        mappingUpdateIfMapperNotBusy(pointCloud, timestamp);
-//        return;
-//    }
-//    if (!computeAndPublishOdometry(pointCloud, timestamp)) {
-//        return;
-//    }
     m545_mapping::publishCloud(pointCloud, m545_mapping::frames::rangeSensorFrame, timestamp, colorCloudPub);
     mappingUpdateIfMapperNotBusy(pointCloud, timestamp);
 
@@ -223,6 +208,9 @@ int main(int argc, char **argv) {
 	ros::Subscriber cloudSub = nh->subscribe(cloudTopic, 100, &cloudCallback);
 
 	//yidan
+    const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
+	std::cout << "loading params from: " << paramFile << "\n";
+    m545_mapping::loadParameters(paramFile, &projectionParams);
 	message_filters::Subscriber<sensor_msgs::PointCloud2> cloud_sub(*nh, "/ouster_points_self_filtered", 1);
 	message_filters::Subscriber<sensor_msgs::Image> image_sub(*nh, "/camMainView/Downsampled", 1);
 //	message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::PointCloud2> synchro(image_sub, cloud_sub, 10);
@@ -237,8 +225,8 @@ int main(int argc, char **argv) {
 	localMapPub = nh->advertise<sensor_msgs::PointCloud2>("local_map", 1, true);
     colorCloudPub = nh->advertise<sensor_msgs::PointCloud2>("color_cloud", 1, true);
 
-	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
-	std::cout << "loading params from: " << paramFile << "\n";
+//	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
+//    std::cout << "loading params from: " << paramFile << "\n";
 	m545_mapping::loadParameters(paramFile, &odometryParams);
 	icpObjective = m545_mapping::icpObjectiveFactory(odometryParams.icpObjective_);
 
@@ -248,6 +236,7 @@ int main(int argc, char **argv) {
 
 	m545_mapping::loadParameters(paramFile, &localMapParams);
 
+//    m545_mapping::loadParameters(paramProjFile, &projectionParams);
 //	ros::AsyncSpinner spinner(4); // Use 4 threads
 //	spinner.start();
 //	ros::waitForShutdown();
