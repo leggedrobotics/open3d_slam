@@ -106,6 +106,7 @@ bool Submap::isEmpty() const{
 /////////////////////////////////////////////////////////////////
 SubmapCollection::SubmapCollection() {
 	submaps_.reserve(100);
+	createNewSubmap(mapToRangeSensor_);
 }
 
 void SubmapCollection::setMapToRangeSensor(const Eigen::Isometry3d &T) {
@@ -176,6 +177,9 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const Eigen::Isomet
 
 void SubmapCollection::setParameters(const MapperParameters &p) {
 	params_ = p;
+	for(auto &submap : submaps_){
+		submap.setParameters(params_.mapBuilder_, params_.scanMatcher_,params_.scanProcessing_);
+	}
 }
 
 

@@ -62,6 +62,7 @@ public:
 	bool insertScan(const PointCloud &rawScan, const Eigen::Isometry3d &transform);
 	void setParameters(const MapperParameters &p);
 	bool isEmpty() const;
+
 private:
 
 	void updateActiveSubmap();

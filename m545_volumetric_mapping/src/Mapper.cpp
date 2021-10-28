@@ -69,13 +69,8 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	scanMatcherCropper_->setPose(Eigen::Isometry3d::Identity());
 	submaps_.setMapToRangeSensor(mapToRangeSensor_);
 	//insert first scan
-//	if (map_.points_.empty()) {
-//		insertFirstScan(cloudIn);
-//		isMatchingInProgress_ = false;
-//		return;
-//	}
 
-	if (submaps_.isEmpty()){
+	if (submaps_.getActiveSubmap().isEmpty()){
 		submaps_.insertScan(cloudIn,Eigen::Isometry3d::Identity());
 		isMatchingInProgress_=false;
 		return;
@@ -99,17 +94,24 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	const auto &activeSubmap = submaps_.getActiveSubmap().getMap();
 	std::shared_ptr<PointCloud> narrowCropped, wideCroppedCloud,mapPatch;
 	{
-		Timer timer("scan_preprocessing");
+
+		static double avgTime=0;
+		static int count=0;
+		Timer timer;
 		wideCroppedCloud = mapBuilderCropper_->crop(cloudIn);
 		m545_mapping::voxelize(params_.scanProcessing_.voxelSize_, wideCroppedCloud.get());
-		estimateNormalsIfNeeded(wideCroppedCloud.get());
 		m545_mapping::randomDownSample(params_.scanProcessing_.downSamplingRatio_, wideCroppedCloud.get());
+		estimateNormalsIfNeeded(wideCroppedCloud.get());
 		narrowCropped = scanMatcherCropper_->crop(*wideCroppedCloud);
 		scanMatcherCropper_->setPose(mapToRangeSensor_);
 		mapPatch = scanMatcherCropper_->crop(activeSubmap);
+//		avgTime+= timer.elapsedMsec();
+//		++count;
+//		std::cout << "avg preprocess: " << avgTime / count <<"\n";
+
 	}
 
-
+//	mapRef_=*wideCroppedCloud;
 	// wee need to get an active map here
 
 

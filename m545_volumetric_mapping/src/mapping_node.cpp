@@ -54,11 +54,11 @@ bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const 
 
 void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
 	{
-		m545_mapping::Timer timer("Mapping step.");
+		m545_mapping::Timer timer;
 		mapper->addRangeMeasurement(cloud, timestamp);
 		avgTime+= timer.elapsedMsec();
 		++count;
-		std::cout << "avg: " << avgTime / count <<"\n";
+		std::cout << "Mapping step avg: " << avgTime / count <<"\n";
 	}
 	m545_mapping::publishTfTransform(mapper->getMapToOdom().matrix(), timestamp, mapFrame, odomFrame,
 			tfBroadcaster.get());
