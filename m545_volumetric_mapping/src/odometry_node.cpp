@@ -186,9 +186,9 @@ void synchronizeCallback(const sensor_msgs::PointCloud2ConstPtr& cloudmsg, const
 //    cv::projectPoints(pointCloud.points_, projectionParams.quaternion.toRotationMatrix(), projectionParams.translation, projectionParams.K, projectionParams.D, pixels);
     pointCloud.colors_ = imageConversion(imagemsg, pixels, sensor_msgs::image_encodings::RGB8);
 //    std::cout << "cloudsize" << pointCloud.colors_.size() <<std::endl;
-    for (int i = 0; i < pointCloud.points_.size(); i++) {
+//    for (int i = 0; i < pointCloud.points_.size(); i++) {
 //        std::cout << "color:" << pointCloud.colors_[i] << std::endl;
-    }
+//    }
 //    std::cout << "colors" << pointCloud.colors_[10] <<std::endl;
 
 //    std::vector<cv::Point2i> pixels;

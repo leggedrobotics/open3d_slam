@@ -18,21 +18,21 @@
 
 
 std::vector<Eigen::Vector2i> projectionLidarToPixel(const std::vector<Eigen::Matrix<double, 3, 1>> &pos_lidar, const Eigen::Matrix<double, 3, 3, Eigen::RowMajor> &K, const Eigen::Matrix<double, 5, 1> &D, const Eigen::Quaternion<double> &quaternion, const Eigen::Vector3d &translation) {
-    std::vector<Eigen::Vector4d> pos_lidar_aux(pos_lidar.size());
-    std::vector<Eigen::Vector3d> pos_udimage_aux(pos_lidar.size());
-    std::vector<Eigen::Vector2i> pos_udimage(pos_lidar.size());
-    std::vector<Eigen::Vector2i> pos_dimage(pos_lidar.size());
+    std::vector<Eigen::Vector4d> pos_lidar_aux(pos_lidar.size());       //[x_l,y_l,z_l,1]
+    std::vector<Eigen::Vector3d> pos_udimage_aux(pos_lidar.size());     //[u,v,1]
+    std::vector<Eigen::Vector2i> pos_udimage(pos_lidar.size());         //[u,v]
+    std::vector<Eigen::Vector2i> pos_dimage(pos_lidar.size());          //with distortion
     Eigen::Matrix3d rotation;
-    Eigen::MatrixXd RT(3, 4);
+    Eigen::MatrixXd RT(3, 4);           //[R|T]
     rotation = quaternion.toRotationMatrix();
     RT.leftCols(3) = rotation;
     RT.col(3) = translation;
     for (int i = 0; i < pos_lidar.size(); i++) {
         pos_lidar_aux[i].topRows(3) = pos_lidar[i];
         pos_lidar_aux[i](3) = 1.0;
-        pos_udimage_aux[i] = K * RT * pos_lidar_aux[i];
+        pos_udimage_aux[i] = K * RT * pos_lidar_aux[i];         //[K*[R|T]*[x_l,y_l,z_l,1] = lamda*[u.v.1]
         pos_udimage_aux[i] = pos_udimage_aux[i] / pos_udimage_aux[i](2);
-        pos_udimage[i].x() = ceil(pos_udimage_aux[i].x() / 2.5);
+        pos_udimage[i].x() = ceil(pos_udimage_aux[i].x() / 2.5);            //consider pixel size
         pos_udimage[i].y() = ceil(pos_udimage_aux[i].y() / 2.5);
 
 //        double u0 = K(0, 2);
@@ -48,9 +48,10 @@ std::vector<Eigen::Vector2i> projectionLidarToPixel(const std::vector<Eigen::Mat
 //                              2 * D(3) * u_differ * v_differ + D(2) * (r_square + 2 * pow(v_differ, 2)) + v0);
 //        std::cout << pos_udimage_aux[i].transpose() << std::endl;
     }
-    for(int i=0;i<pos_lidar.size();i++)
-    {
-        std::cout << "before:" << pos_lidar[i].transpose() << "after:" << pos_udimage[i].transpose() << std::endl;
-    }
+//    for(int i=0;i<pos_lidar.size();i++)
+//    {
+//        std::cout << "before:" << pos_lidar[i].transpose() << "after:" << pos_udimage[i].transpose() << std::endl;
+//    }
+    std::cout << "K:" << K << "rotation:" << rotation;
     return pos_udimage;
 }

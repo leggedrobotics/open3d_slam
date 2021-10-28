@@ -46,14 +46,14 @@ std::vector<Eigen::Matrix<int, 2, 1>> cvProjection(const std::vector<Eigen::Matr
     for (int i = 0; i < imagePointsDouble.size(); i++) {
         std::cout << "x:" << imagePointsDouble[i].x << "y:" << imagePointsDouble[i].y << std::endl;
     }
-    std::vector<cv::Point2i> imagePointscv(imagePointsDouble.size());
-    for (int i = 0; i < imagePointsDouble.size(); i++) {
-        imagePointscv.push_back(cv::Point2i(round(imagePointsDouble[i].x / 2.5), round(imagePointsDouble[i].y / 2.5)));
-    }
-    std::vector<Eigen::Vector2i> imagePoints(imagePointscv.size());
+//    std::vector<cv::Point2i> imagePointscv(imagePointsDouble.size());
+//    for (int i = 0; i < imagePointsDouble.size(); i++) {
+//        imagePointscv.push_back(cv::Point2i(round(imagePointsDouble[i].x / 2.5), round(imagePointsDouble[i].y / 2.5)));
+//    }
+    std::vector<Eigen::Vector2i> imagePoints(imagePointsDouble.size());
 //    cv::cv2eigen(imagePointscv, imagePoints);
-    for (int i = 0; i < imagePointscv.size(); i++) {
-        imagePoints.push_back(Eigen::Vector2i(imagePointscv[i].x, imagePointscv[i].y));
+    for (int i = 0; i < imagePointsDouble.size(); i++) {
+        imagePoints.push_back(Eigen::Vector2i(ceil(imagePointsDouble[i].x / 2.5), ceil(imagePointsDouble[i].y / 2.5)));
 //        std::cout << "x:" << imagePoints[i].x() << "y:" << imagePoints[i].y() << std::endl;
     }
     return imagePoints;
