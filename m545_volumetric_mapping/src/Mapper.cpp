@@ -41,6 +41,7 @@ void Mapper::update(const MapperParameters &p) {
 	scanMatcherCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.scanProcessing_.croppingRadius_);
 	mapBuilderCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.mapBuilder_.scanCroppingRadius_);
 	denseMapCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.denseMapBuilder_.scanCroppingRadius_);
+	submaps_.setParameters(p);
 }
 
 bool Mapper::isMatchingInProgress() const {
@@ -64,14 +65,23 @@ void Mapper::estimateNormalsIfNeeded(PointCloud *pcl) const {
 void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::Time &timestamp) {
 	isMatchingInProgress_ = true;
 	lastMeasurementTimestamp_ = timestamp;
-	mapBuilderCropper_->setPose(Eigen::Isometry3d::Identity());
+//	mapBuilderCropper_->setPose(Eigen::Isometry3d::Identity());
 	scanMatcherCropper_->setPose(Eigen::Isometry3d::Identity());
+	submaps_.setMapToRangeSensor(mapToRangeSensor_);
 	//insert first scan
-	if (map_.points_.empty()) {
-		insertFirstScan(cloudIn);
-		isMatchingInProgress_ = false;
+//	if (map_.points_.empty()) {
+//		insertFirstScan(cloudIn);
+//		isMatchingInProgress_ = false;
+//		return;
+//	}
+
+	if (submaps_.isEmpty()){
+		submaps_.insertScan(cloudIn,Eigen::Isometry3d::Identity());
+		isMatchingInProgress_=false;
 		return;
 	}
+
+
 
 	Eigen::Isometry3d odomToRangeSensor;
 	const bool lookupStatus = lookupTransform(frames::odomFrame, frames::rangeSensorFrame, timestamp, tfBuffer_,
@@ -84,21 +94,28 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	}
 //	auto cloud = cloudIn;
 	Timer timer;
-	auto wideCroppedCloud = mapBuilderCropper_->crop(cloudIn);
-	{
-//		Timer timer("voxelize_input_cloud");
-		m545_mapping::voxelize(params_.scanProcessing_.voxelSize_, wideCroppedCloud.get());
-	}
+//	auto wideCroppedCloud = mapBuilderCropper_->crop(cloudIn);
+//	{
+////		Timer timer("voxelize_input_cloud");
+//		m545_mapping::voxelize(params_.scanProcessing_.voxelSize_, wideCroppedCloud.get());
+//	}
+//
+//	auto narrowCropped = scanMatcherCropper_->crop(*wideCroppedCloud);
+//	m545_mapping::randomDownSample(params_.scanProcessing_.downSamplingRatio_, narrowCropped.get());
+//	scanMatcherCropper_->setPose(mapToRangeSensor_);
 
-	auto narrowCropped = scanMatcherCropper_->crop(*wideCroppedCloud);
+
+	auto narrowCropped = scanMatcherCropper_->crop(cloudIn);
+	m545_mapping::voxelize(params_.scanProcessing_.voxelSize_, narrowCropped.get());
 	m545_mapping::randomDownSample(params_.scanProcessing_.downSamplingRatio_, narrowCropped.get());
 	scanMatcherCropper_->setPose(mapToRangeSensor_);
 
 	// wee need to get an active map here
-	auto mapPatch = scanMatcherCropper_->crop(map_);
-	const Eigen::Matrix4d initTransform = (mapToOdom_ * odomToRangeSensor).matrix();
+	const auto mapToRangeSensorEstimate = mapToOdom_ * odomToRangeSensor;
+	const auto &activeSubmap = submaps_.getActiveSubmap().getMap();
+	auto mapPatch = scanMatcherCropper_->crop(activeSubmap);
 	const auto result = open3d::pipelines::registration::RegistrationICP(*narrowCropped, *mapPatch,
-			params_.scanMatcher_.maxCorrespondenceDistance_, initTransform, *icpObjective, icpCriteria_);
+			params_.scanMatcher_.maxCorrespondenceDistance_, mapToRangeSensorEstimate.matrix(), *icpObjective, icpCriteria_);
 
 	if (result.fitness_ < params_.minRefinementFitness_) {
 		std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
@@ -109,11 +126,12 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	// update transforms
 	mapToRangeSensor_.matrix() = result.transformation_;
 	mapToOdom_ = mapToRangeSensor_ * odomToRangeSensor.inverse();
+	submaps_.setMapToRangeSensor(mapToRangeSensor_);
 
 	// concatenate registered cloud into map
 	const bool isMovedTooLittle = odometryMotion.translation().norm() < params_.minMovementBetweenMappingSteps_;
 	if (!isMovedTooLittle) {
-		insertScanInMap(wideCroppedCloud, result, cloudIn);
+		submaps_.insertScan(cloudIn,mapToRangeSensor_);
 		odomToRangeSensorPrev_ = odomToRangeSensor;
 	}
 
@@ -184,7 +202,7 @@ void Mapper::carve(const PointCloud &scan,const CroppingVolume &cropper,const Sp
 }
 
 const Mapper::PointCloud& Mapper::getMap() const {
-	return map_;
+	return submaps_.getActiveSubmap().getMap();
 }
 
 const Mapper::PointCloud& Mapper::getDenseMap() const {

@@ -18,7 +18,7 @@ Submap::Submap() {
 	update(mapBuilderParams_);
 }
 
-bool Submap::insertScan(const PointCloud &rawScan, const Eigen::Matrix4d &transformation) {
+bool Submap::insertScan(const PointCloud &rawScan, const Eigen::Isometry3d &transformation) {
 
 	if(map_.points_.empty()){
 		insertFirstScan(rawScan,transformation);
@@ -26,7 +26,7 @@ bool Submap::insertScan(const PointCloud &rawScan, const Eigen::Matrix4d &transf
 	}
 	mapBuilderCropper_->setPose(mapToRangeSensor_);
 
-	auto transformedCloud = transform(transformation, rawScan);
+	auto transformedCloud = transform(transformation.matrix(), rawScan);
 	auto wideCroppedCloud = mapBuilderCropper_->crop(*transformedCloud);
 	m545_mapping::voxelize(mapBuilderParams_.mapVoxelSize_, wideCroppedCloud.get());
 
@@ -55,11 +55,11 @@ bool Submap::insertScan(const PointCloud &rawScan, const Eigen::Matrix4d &transf
 	return true;
 }
 
-void Submap::insertFirstScan(const PointCloud &scan,const Eigen::Matrix4d &transform) {
+void Submap::insertFirstScan(const PointCloud &scan,const Eigen::Isometry3d &transform) {
 	mapBuilderCropper_->setPose(mapToRangeSensor_);
 	auto croppedCloud = mapBuilderCropper_->crop(scan);
 	m545_mapping::voxelize(mapBuilderParams_.mapVoxelSize_, croppedCloud.get());
-	croppedCloud->Transform(transform);
+	croppedCloud->Transform(transform.matrix());
 	estimateNormalsIfNeeded(croppedCloud.get());
 	map_ += *croppedCloud;
 }
@@ -97,6 +97,10 @@ void Submap::update(const MapBuilderParameters &p) {
 	mapBuilderCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.scanCroppingRadius_);
 }
 
+bool Submap::isEmpty() const{
+	return map_.points_.empty();
+}
+
 /////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////
@@ -107,13 +111,13 @@ SubmapCollection::SubmapCollection() {
 void SubmapCollection::setMapToRangeSensor(const Eigen::Isometry3d &T) {
 	mapToRangeSensor_ = T;
 }
-void SubmapCollection::updateSubmapCollection() {
 
-	if (submaps_.empty()) {
-		createNewSubmap(mapToRangeSensor_);
-		return;
-	}
 
+bool SubmapCollection::isEmpty() const{
+	return submaps_.empty();
+}
+
+void SubmapCollection::updateActiveSubmap() {
 	const size_t closestMapIdx = findClosestSubmap(mapToRangeSensor_);
 	Eigen::Vector3d submapPosition = submaps_.at(closestMapIdx).getMapToSubmap().translation();
 	const bool isWithinRange = (mapToRangeSensor_.translation() - submapPosition).norm() < 1e6;
@@ -124,7 +128,6 @@ void SubmapCollection::updateSubmapCollection() {
 	} else {
 		createNewSubmap(mapToRangeSensor_);
 	}
-
 }
 
 void SubmapCollection::createNewSubmap(const Eigen::Isometry3d &mapToSubmap) {
@@ -152,8 +155,23 @@ const Submap& SubmapCollection::getActiveSubmap() const {
 	return submaps_.at(activeSubmapIdx_);
 }
 
-bool SubmapCollection::insertScan(const PointCloud &rawScan, const Eigen::Matrix4d &transform){
+bool SubmapCollection::insertScan(const PointCloud &rawScan, const Eigen::Isometry3d &transform){
 
+	if (submaps_.empty()) {
+		createNewSubmap(mapToRangeSensor_);
+		submaps_.at(activeSubmapIdx_).insertScan(rawScan, transform);
+		return true;
+	}
+
+	const size_t prevActiveSubmapIdx = activeSubmapIdx_;
+	updateActiveSubmap();
+	// either different one is active or new one is created
+	const bool isActiveSubmapChanged = prevActiveSubmapIdx != activeSubmapIdx_;
+	if(isActiveSubmapChanged){
+		submaps_.at(prevActiveSubmapIdx).insertScan(rawScan, transform);
+	}
+	submaps_.at(activeSubmapIdx_).insertScan(rawScan, transform);
+	return true;
 }
 
 void SubmapCollection::setParameters(const MapperParameters &p) {

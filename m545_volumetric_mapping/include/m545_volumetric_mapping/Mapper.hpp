@@ -16,6 +16,8 @@
 #include "m545_volumetric_mapping/Parameters.hpp"
 #include "m545_volumetric_mapping/time.hpp"
 #include "m545_volumetric_mapping/croppers.hpp"
+#include "m545_volumetric_mapping/Submap.hpp"
+
 
 namespace m545_mapping {
 
@@ -72,6 +74,7 @@ private:
 	std::shared_ptr<CroppingVolume> scanMatcherCropper_;
 	std::shared_ptr<CroppingVolume> mapBuilderCropper_;
 	std::shared_ptr<CroppingVolume> denseMapCropper_;
+	SubmapCollection submaps_;
 
 };
 

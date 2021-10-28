@@ -53,7 +53,7 @@ bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const 
 
 void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
 	{
-//		m545_mapping::Timer timer("Mapping step.");
+		m545_mapping::Timer timer("Mapping step.");
 		mapper->addRangeMeasurement(cloud, timestamp);
 //		std::cout << "\n";
 	}

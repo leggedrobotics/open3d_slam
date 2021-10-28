@@ -26,15 +26,15 @@ public:
 	~Submap() = default;
 
 	void setParameters(const MapBuilderParameters &mabBuilderParam, const IcpParameters &scanMatcherParameters,const ScanProcessingParameters &scanProcessingParameters);
-	bool insertScan(const PointCloud &rawScan, const Eigen::Matrix4d &transform);
+	bool insertScan(const PointCloud &rawScan, const Eigen::Isometry3d &transform);
 	void voxelizeAroundPosition(const Eigen::Vector3d &p);
 	const Eigen::Isometry3d &getMapToSubmap() const;
 	const PointCloud &getMap() const;
 	void setMapToSubmap(const Eigen::Isometry3d &T);
-
+	bool isEmpty() const;
 
 private:
-	void insertFirstScan(const PointCloud &scan,const Eigen::Matrix4d &transform);
+	void insertFirstScan(const PointCloud &scan,const Eigen::Isometry3d &transform);
 	void update(const MapBuilderParameters &p);
 	void estimateNormalsIfNeeded(PointCloud *pcl) const;
 
@@ -51,19 +51,20 @@ private:
 
 
 class SubmapCollection{
-
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	SubmapCollection();
 	~SubmapCollection() = default;
 
 	using PointCloud = open3d::geometry::PointCloud;
 	void setMapToRangeSensor(const Eigen::Isometry3d &T);
-	void updateSubmapCollection();
 	const Submap &getActiveSubmap() const;
-	bool insertScan(const PointCloud &rawScan, const Eigen::Matrix4d &transform);
+	bool insertScan(const PointCloud &rawScan, const Eigen::Isometry3d &transform);
 	void setParameters(const MapperParameters &p);
-
+	bool isEmpty() const;
 private:
 
+	void updateActiveSubmap();
 	void createNewSubmap(const Eigen::Isometry3d &mapToSubmap);
 	size_t findClosestSubmap(const Eigen::Isometry3d &mapToRangesensor) const;
 
