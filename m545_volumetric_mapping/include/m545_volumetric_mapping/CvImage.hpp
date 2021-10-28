@@ -57,7 +57,7 @@
             }
 //            std::cout << "pixelcolor:" << pixelColors[i].transpose() << std::endl;
         }
-        cv::Mat imgenerate = cv::Mat(cv_ptr->image.rows, cv_ptr->image.cols, CV_8UC3, pixelColorscv.data());
+//        cv::Mat imgenerate = cv::Mat(cv_ptr->image.rows, cv_ptr->image.cols, CV_8UC3, pixelColorscv.data());
 //        cv::imshow("imwindow", imgenerate);
 //        cv::waitKey(5);
 //        Eigen::RowVector3d pixelColor = cv_ptr->image.at<Eigen::RowVector3d>(i, j);

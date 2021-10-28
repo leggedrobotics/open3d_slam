@@ -129,10 +129,10 @@ void loadParameters(const YAML::Node &nProj, ProjectionParameters *p){
     p->D(4, 0) = vD[4];
     const std::vector<double> vqua = nProj["quaternion"].as<std::vector<double> >();
 //    Eigen::Quaternion<double> quaternion(vqua.data());
-    p->quaternion.w() = vqua[0];
-    p->quaternion.x() = vqua[1];
-    p->quaternion.y() = vqua[2];
-    p->quaternion.z() = vqua[3];
+    p->quaternion.w() = vqua[3];
+    p->quaternion.x() = vqua[0];
+    p->quaternion.y() = vqua[1];
+    p->quaternion.z() = vqua[2];
     const std::vector<double> vtran = nProj["translation"].as<std::vector<double> >();
 //    Eigen::Vector3d translation(vtran.data());
     p->translation.x() = vtran[0];
