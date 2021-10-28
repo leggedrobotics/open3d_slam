@@ -18,23 +18,23 @@ Submap::Submap() {
 	update(mapBuilderParams_);
 }
 
-bool Submap::insertScan(const PointCloud &rawScan, const Eigen::Isometry3d &transformation) {
+bool Submap::insertScan(const PointCloud &rawScan, const Eigen::Isometry3d &mapToRangeSensor) {
 
 	if(map_.points_.empty()){
-		insertFirstScan(rawScan,transformation);
+		insertFirstScan(rawScan,mapToRangeSensor);
 		return true;
 	}
-	mapBuilderCropper_->setPose(mapToRangeSensor_);
-
-	auto transformedCloud = transform(transformation.matrix(), rawScan);
-	auto wideCroppedCloud = mapBuilderCropper_->crop(*transformedCloud);
-	m545_mapping::voxelize(mapBuilderParams_.mapVoxelSize_, wideCroppedCloud.get());
+	mapBuilderCropper_->setPose(mapToRangeSensor);
+//
+	auto transformedCloud = transform(mapToRangeSensor.matrix(), rawScan);
+//	auto wideCroppedCloud = mapBuilderCropper_->crop(*transformedCloud);
+//	m545_mapping::voxelize(mapBuilderParams_.mapVoxelSize_, wideCroppedCloud.get());
 
 	//		Timer timer("Map update");
-	m545_mapping::randomDownSample(scanProcessingParams_.downSamplingRatio_, wideCroppedCloud.get());
-	estimateNormalsIfNeeded(wideCroppedCloud.get());
+//	m545_mapping::randomDownSample(scanProcessingParams_.downSamplingRatio_, wideCroppedCloud.get());
+//	estimateNormalsIfNeeded(wideCroppedCloud.get());
 //	carve(transformedCloud, *mapBuilderCropper_,params_.mapBuilder_.carving_,&map_,&carvingTimer_);
-	map_ += *wideCroppedCloud;
+	map_ += *transformedCloud;
 
 	if (mapBuilderParams_.mapVoxelSize_ > 0.0) {
 		//			Timer timer("voxelize_map",true);
@@ -55,11 +55,11 @@ bool Submap::insertScan(const PointCloud &rawScan, const Eigen::Isometry3d &tran
 	return true;
 }
 
-void Submap::insertFirstScan(const PointCloud &scan,const Eigen::Isometry3d &transform) {
+void Submap::insertFirstScan(const PointCloud &scan,const Eigen::Isometry3d &mapToRangeSensor) {
 	mapBuilderCropper_->setPose(mapToRangeSensor_);
 	auto croppedCloud = mapBuilderCropper_->crop(scan);
 	m545_mapping::voxelize(mapBuilderParams_.mapVoxelSize_, croppedCloud.get());
-	croppedCloud->Transform(transform.matrix());
+	croppedCloud->Transform(mapToRangeSensor.matrix());
 	estimateNormalsIfNeeded(croppedCloud.get());
 	map_ += *croppedCloud;
 }

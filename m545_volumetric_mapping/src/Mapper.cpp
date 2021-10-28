@@ -65,7 +65,7 @@ void Mapper::estimateNormalsIfNeeded(PointCloud *pcl) const {
 void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::Time &timestamp) {
 	isMatchingInProgress_ = true;
 	lastMeasurementTimestamp_ = timestamp;
-//	mapBuilderCropper_->setPose(Eigen::Isometry3d::Identity());
+	mapBuilderCropper_->setPose(Eigen::Isometry3d::Identity());
 	scanMatcherCropper_->setPose(Eigen::Isometry3d::Identity());
 	submaps_.setMapToRangeSensor(mapToRangeSensor_);
 	//insert first scan
@@ -94,26 +94,25 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	}
 //	auto cloud = cloudIn;
 	Timer timer;
-//	auto wideCroppedCloud = mapBuilderCropper_->crop(cloudIn);
-//	{
-////		Timer timer("voxelize_input_cloud");
-//		m545_mapping::voxelize(params_.scanProcessing_.voxelSize_, wideCroppedCloud.get());
-//	}
-//
-//	auto narrowCropped = scanMatcherCropper_->crop(*wideCroppedCloud);
-//	m545_mapping::randomDownSample(params_.scanProcessing_.downSamplingRatio_, narrowCropped.get());
-//	scanMatcherCropper_->setPose(mapToRangeSensor_);
 
-
-	auto narrowCropped = scanMatcherCropper_->crop(cloudIn);
-	m545_mapping::voxelize(params_.scanProcessing_.voxelSize_, narrowCropped.get());
-	m545_mapping::randomDownSample(params_.scanProcessing_.downSamplingRatio_, narrowCropped.get());
-	scanMatcherCropper_->setPose(mapToRangeSensor_);
-
-	// wee need to get an active map here
 	const auto mapToRangeSensorEstimate = mapToOdom_ * odomToRangeSensor;
 	const auto &activeSubmap = submaps_.getActiveSubmap().getMap();
-	auto mapPatch = scanMatcherCropper_->crop(activeSubmap);
+	std::shared_ptr<PointCloud> narrowCropped, wideCroppedCloud,mapPatch;
+	{
+		Timer timer("scan_preprocessing");
+		wideCroppedCloud = mapBuilderCropper_->crop(cloudIn);
+		m545_mapping::voxelize(params_.scanProcessing_.voxelSize_, wideCroppedCloud.get());
+		estimateNormalsIfNeeded(wideCroppedCloud.get());
+		m545_mapping::randomDownSample(params_.scanProcessing_.downSamplingRatio_, wideCroppedCloud.get());
+		narrowCropped = scanMatcherCropper_->crop(*wideCroppedCloud);
+		scanMatcherCropper_->setPose(mapToRangeSensor_);
+		mapPatch = scanMatcherCropper_->crop(activeSubmap);
+	}
+
+
+	// wee need to get an active map here
+
+
 	const auto result = open3d::pipelines::registration::RegistrationICP(*narrowCropped, *mapPatch,
 			params_.scanMatcher_.maxCorrespondenceDistance_, mapToRangeSensorEstimate.matrix(), *icpObjective, icpCriteria_);
 
@@ -131,7 +130,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::T
 	// concatenate registered cloud into map
 	const bool isMovedTooLittle = odometryMotion.translation().norm() < params_.minMovementBetweenMappingSteps_;
 	if (!isMovedTooLittle) {
-		submaps_.insertScan(cloudIn,mapToRangeSensor_);
+		submaps_.insertScan(*wideCroppedCloud,mapToRangeSensor_);
 		odomToRangeSensorPrev_ = odomToRangeSensor;
 	}
 

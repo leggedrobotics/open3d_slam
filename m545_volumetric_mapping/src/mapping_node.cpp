@@ -38,7 +38,8 @@ std::shared_ptr<m545_mapping::Mapper> mapper;
 m545_mapping::MapperParameters mapperParams;
 m545_mapping::LocalMapParameters localMapParams;
 m545_mapping::MesherParameters mesherParams;
-
+double avgTime=0.0;
+int count = 0;
 bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
 	odometry->addRangeScan(cloud, timestamp);
 
@@ -55,7 +56,9 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
 	{
 		m545_mapping::Timer timer("Mapping step.");
 		mapper->addRangeMeasurement(cloud, timestamp);
-//		std::cout << "\n";
+		avgTime+= timer.elapsedMsec();
+		++count;
+		std::cout << "avg: " << avgTime / count <<"\n";
 	}
 	m545_mapping::publishTfTransform(mapper->getMapToOdom().matrix(), timestamp, mapFrame, odomFrame,
 			tfBroadcaster.get());
