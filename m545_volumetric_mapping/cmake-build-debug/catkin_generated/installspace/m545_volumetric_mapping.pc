@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: m545_volumetric_mapping
+Description: Description of m545_volumetric_mapping
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib -lyaml-cpp
+Requires: roscpp roslib open3d_conversions open3d_catkin eigen_conversions tf2 tf2_ros tf2_geometry_msgs cv_bridge

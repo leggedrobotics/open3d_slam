@@ -97,6 +97,7 @@ void loadParameters(const YAML::Node &node, OdometryParameters *p){
 }
 
 
+<<<<<<< HEAD
 void loadParameters(const std::string &filename, ProjectionParameters *p){
 
     YAML::Node basenode = YAML::LoadFile(filename);
@@ -140,6 +141,31 @@ void loadParameters(const YAML::Node &nProj, ProjectionParameters *p){
     p->translation.z() = vtran[2];
 }
 
+=======
+void loadParameters(const YAML::Node &n, MesherParameters *p) {
+
+	p->strategy_ = mesherStrategyNames.at(n["strategy"].as<std::string>());
+	p->knnNormalEstimation_ = n["knn_normal_estimation"].as<int>();
+	p->voxelSize_=n["voxel_size"].as<double>();
+	p->alphaShapeAlpha_ = n["alpha_shape_alpha"].as<double>();
+	p->poissonDepth_ = n["poisson_depth"].as<int>();
+	p->poissonMinDensity_ = n["poisson_min_density"].as<double>();
+	p->poissonScale_ = n["poisson_scale"].as<double>();
+	p->ballPivotRadii_ = n["ball_pivot_radii"].as<std::vector<double>>();
+	p->isComputeMesh_ = n["is_compute_mesh"].as<bool>();
+
+}
+
+void loadParameters(const std::string &filename, MesherParameters *p) {
+	YAML::Node basenode = YAML::LoadFile(filename);
+
+	if (basenode.IsNull()) {
+		throw std::runtime_error("MesherParameters::loadParameters loading failed");
+	}
+
+	loadParameters(basenode["mesher"], p);
+}
+>>>>>>> master
 
 } // namespace m545_mapping
 

@@ -7,11 +7,20 @@ add_compile_options(-O2)
 
 
 set(SRC_FILES
+<<<<<<< HEAD
         src/Parameters.cpp
         src/Mapper.cpp
         src/helpers.cpp
         src/image_conversion.cpp
         )
+=======
+  src/Parameters.cpp
+  src/Mapper.cpp
+  src/helpers.cpp
+  src/Mesher.cpp
+  src/Odometry.cpp
+)
+>>>>>>> master
 
 set(CATKIN_PACKAGE_DEPENDENCIES
         roscpp
@@ -66,10 +75,19 @@ target_link_libraries(${PROJECT_NAME}
 
 
 
+<<<<<<< HEAD
 add_executable(odometry_node
         src/odometry_node.cpp)
 target_link_libraries(odometry_node
         ${catkin_LIBRARIES}
         ${PROJECT_NAME}
         )
+=======
+add_executable(mapping_node
+  src/mapping_node.cpp)
+target_link_libraries(mapping_node
+    ${catkin_LIBRARIES}
+    ${PROJECT_NAME}
+)
+>>>>>>> master
 

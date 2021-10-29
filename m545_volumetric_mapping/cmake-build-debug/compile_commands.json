@@ -1,0 +1,47 @@
+[
+{
+  "directory": "/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/cmake-build-debug",
+  "command": "/usr/bin/c++ -DROSCONSOLE_BACKEND_LOG4CXX -DROS_BUILD_SHARED_LIBS=1 -DROS_PACKAGE_NAME=\\\"m545_volumetric_mapping\\\" -Dm545_volumetric_mapping_EXPORTS -I/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/include -I/home/helecomika/sp_ws/src/m545_volumetric_mapping/open3d_conversions/include -I/opt/ros/noetic/include -I/opt/ros/noetic/share/xmlrpcpp/cmake/../../../include/xmlrpcpp -I/usr/include/eigen3 -I/home/helecomika/Programs/open3d_install/include -I/usr/include/opencv4 -g -fPIC -O2 -std=gnu++14 -o CMakeFiles/m545_volumetric_mapping.dir/src/Parameters.cpp.o -c /home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/src/Parameters.cpp",
+  "file": "/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/src/Parameters.cpp"
+},
+{
+  "directory": "/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/cmake-build-debug",
+  "command": "/usr/bin/c++ -DROSCONSOLE_BACKEND_LOG4CXX -DROS_BUILD_SHARED_LIBS=1 -DROS_PACKAGE_NAME=\\\"m545_volumetric_mapping\\\" -Dm545_volumetric_mapping_EXPORTS -I/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/include -I/home/helecomika/sp_ws/src/m545_volumetric_mapping/open3d_conversions/include -I/opt/ros/noetic/include -I/opt/ros/noetic/share/xmlrpcpp/cmake/../../../include/xmlrpcpp -I/usr/include/eigen3 -I/home/helecomika/Programs/open3d_install/include -I/usr/include/opencv4 -g -fPIC -O2 -std=gnu++14 -o CMakeFiles/m545_volumetric_mapping.dir/src/Mapper.cpp.o -c /home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/src/Mapper.cpp",
+  "file": "/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/src/Mapper.cpp"
+},
+{
+  "directory": "/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/cmake-build-debug",
+  "command": "/usr/bin/c++ -DROSCONSOLE_BACKEND_LOG4CXX -DROS_BUILD_SHARED_LIBS=1 -DROS_PACKAGE_NAME=\\\"m545_volumetric_mapping\\\" -Dm545_volumetric_mapping_EXPORTS -I/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/include -I/home/helecomika/sp_ws/src/m545_volumetric_mapping/open3d_conversions/include -I/opt/ros/noetic/include -I/opt/ros/noetic/share/xmlrpcpp/cmake/../../../include/xmlrpcpp -I/usr/include/eigen3 -I/home/helecomika/Programs/open3d_install/include -I/usr/include/opencv4 -g -fPIC -O2 -std=gnu++14 -o CMakeFiles/m545_volumetric_mapping.dir/src/helpers.cpp.o -c /home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/src/helpers.cpp",
+  "file": "/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/src/helpers.cpp"
+},
+{
+  "directory": "/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/cmake-build-debug",
+  "command": "/usr/bin/c++ -DROSCONSOLE_BACKEND_LOG4CXX -DROS_BUILD_SHARED_LIBS=1 -DROS_PACKAGE_NAME=\\\"m545_volumetric_mapping\\\" -Dm545_volumetric_mapping_EXPORTS -I/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/include -I/home/helecomika/sp_ws/src/m545_volumetric_mapping/open3d_conversions/include -I/opt/ros/noetic/include -I/opt/ros/noetic/share/xmlrpcpp/cmake/../../../include/xmlrpcpp -I/usr/include/eigen3 -I/home/helecomika/Programs/open3d_install/include -I/usr/include/opencv4 -g -fPIC -O2 -std=gnu++14 -o CMakeFiles/m545_volumetric_mapping.dir/src/image_conversion.cpp.o -c /home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/src/image_conversion.cpp",
+  "file": "/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/src/image_conversion.cpp"
+},
+{
+  "directory": "/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/cmake-build-debug",
+  "command": "/usr/bin/c++ -DROSCONSOLE_BACKEND_LOG4CXX -DROS_BUILD_SHARED_LIBS=1 -DROS_PACKAGE_NAME=\\\"m545_volumetric_mapping\\\" -I/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/include -I/home/helecomika/sp_ws/src/m545_volumetric_mapping/open3d_conversions/include -I/opt/ros/noetic/include -I/opt/ros/noetic/share/xmlrpcpp/cmake/../../../include/xmlrpcpp -I/usr/include/eigen3 -I/home/helecomika/Programs/open3d_install/include -I/usr/include/opencv4 -g -O2 -std=gnu++14 -o CMakeFiles/odometry_node.dir/src/odometry_node.cpp.o -c /home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/src/odometry_node.cpp",
+  "file": "/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/src/odometry_node.cpp"
+},
+{
+  "directory": "/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/cmake-build-debug/gtest/googlemock",
+  "command": "/usr/bin/c++ -DGTEST_CREATE_SHARED_LIBRARY=1 -Dgmock_EXPORTS -I/usr/src/googletest/googlemock/include -I/usr/src/googletest/googlemock -isystem /usr/src/googletest/googletest/include -isystem /usr/src/googletest/googletest -g -fPIC -Wall -Wshadow -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -O2 -DGTEST_HAS_PTHREAD=1 -std=c++11 -o CMakeFiles/gmock.dir/src/gmock-all.cc.o -c /usr/src/googletest/googlemock/src/gmock-all.cc",
+  "file": "/usr/src/googletest/googlemock/src/gmock-all.cc"
+},
+{
+  "directory": "/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/cmake-build-debug/gtest/googlemock",
+  "command": "/usr/bin/c++ -DGTEST_CREATE_SHARED_LIBRARY=1 -Dgmock_main_EXPORTS -isystem /usr/src/googletest/googlemock/include -isystem /usr/src/googletest/googlemock -isystem /usr/src/googletest/googletest/include -isystem /usr/src/googletest/googletest -g -fPIC -Wall -Wshadow -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -O2 -DGTEST_HAS_PTHREAD=1 -std=c++11 -o CMakeFiles/gmock_main.dir/src/gmock_main.cc.o -c /usr/src/googletest/googlemock/src/gmock_main.cc",
+  "file": "/usr/src/googletest/googlemock/src/gmock_main.cc"
+},
+{
+  "directory": "/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/cmake-build-debug/gtest/googletest",
+  "command": "/usr/bin/c++ -DGTEST_CREATE_SHARED_LIBRARY=1 -Dgtest_EXPORTS -I/usr/src/googletest/googletest/include -I/usr/src/googletest/googletest -g -fPIC -Wall -Wshadow -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -O2 -std=c++11 -o CMakeFiles/gtest.dir/src/gtest-all.cc.o -c /usr/src/googletest/googletest/src/gtest-all.cc",
+  "file": "/usr/src/googletest/googletest/src/gtest-all.cc"
+},
+{
+  "directory": "/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/cmake-build-debug/gtest/googletest",
+  "command": "/usr/bin/c++ -DGTEST_CREATE_SHARED_LIBRARY=1 -Dgtest_main_EXPORTS -isystem /usr/src/googletest/googletest/include -isystem /usr/src/googletest/googletest -g -fPIC -Wall -Wshadow -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -O2 -DGTEST_HAS_PTHREAD=1 -std=c++11 -o CMakeFiles/gtest_main.dir/src/gtest_main.cc.o -c /usr/src/googletest/googletest/src/gtest_main.cc",
+  "file": "/usr/src/googletest/googletest/src/gtest_main.cc"
+}
+]

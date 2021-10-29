@@ -29,14 +29,14 @@ public:
 	void addRangeMeasurement(const PointCloud &cloud, const ros::Time &timestamp);
 	const PointCloud &getMap() const;
 	const PointCloud &getDenseMap() const;
+	PointCloud *getMapPtr();
+	PointCloud *getDenseMapPtr();
 	void setParameters(const MapperParameters &p);
 	bool isMatchingInProgress() const;
 	bool isManipulatingMap() const;
 
 	Eigen::Isometry3d getMapToOdom() const;
 	Eigen::Isometry3d getMapToRangeSensor() const;
-	void cropMap(open3d::geometry::AxisAlignedBoundingBox &bbox);
-
 
 private:
 
