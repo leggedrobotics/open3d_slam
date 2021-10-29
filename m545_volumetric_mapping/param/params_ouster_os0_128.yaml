@@ -10,8 +10,8 @@ odometry:
     cropping_radius: 35.0
   
 mapping:
-  min_movement_between_mapping_steps: -0.2
-  is_build_dense_map: true
+  min_movement_between_mapping_steps: 0.0
+  is_build_dense_map: false
   scan_to_map_refinement:
     min_refinement_fitness: 0.7
     scan_matching:
@@ -35,7 +35,7 @@ mapping:
       min_dot_product_with_normal: 0.3
       
   dense_map_builder:
-    scan_cropping_radius: 15.0
+    scan_cropping_radius: 12.0
     map_voxel_size: 0.08
     space_carving:
       voxel_size: 0.1

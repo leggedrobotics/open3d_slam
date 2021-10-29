@@ -304,6 +304,11 @@ std::shared_ptr<open3d::geometry::PointCloud> transform(const Eigen::Matrix4d &T
 		const open3d::geometry::PointCloud &cloud) {
 
 	auto out = std::make_shared<open3d::geometry::PointCloud>();
+	const auto isIdentity = (T - Eigen::Matrix4d::Identity()).array().abs().maxCoeff() < 1e-4;
+	if (isIdentity) {
+		*out = cloud;
+	}
+
 	out->points_.reserve(cloud.points_.size());
 	if (cloud.HasNormals()) {
 		out->normals_.reserve(cloud.points_.size());

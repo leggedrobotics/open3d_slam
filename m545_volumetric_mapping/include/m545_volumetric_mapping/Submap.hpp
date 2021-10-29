@@ -13,6 +13,8 @@
 #include <Eigen/Dense>
 #include "m545_volumetric_mapping/Parameters.hpp"
 #include "m545_volumetric_mapping/croppers.hpp"
+#include "m545_volumetric_mapping/time.hpp"
+
 
 namespace m545_mapping {
 
@@ -25,27 +27,35 @@ public:
 	Submap();
 	~Submap() = default;
 
-	void setParameters(const MapBuilderParameters &mabBuilderParam, const IcpParameters &scanMatcherParameters,const ScanProcessingParameters &scanProcessingParameters);
-	bool insertScan(const PointCloud &rawScan, const Eigen::Isometry3d &transform);
-	void voxelizeAroundPosition(const Eigen::Vector3d &p);
+	void setParameters(const MapperParameters &mapperParams);
+	bool insertScan(const PointCloud &rawScan,const PointCloud &preProcessedScan, const Eigen::Isometry3d &transform);
+	void voxelizeInsideCroppingVolume(const CroppingVolume &cropper, const MapBuilderParameters &param, PointCloud *map) const;
 	const Eigen::Isometry3d &getMapToSubmap() const;
 	const PointCloud &getMap() const;
+	const PointCloud& getDenseMap() const;
 	void setMapToSubmap(const Eigen::Isometry3d &T);
 	bool isEmpty() const;
 
+
+	mutable PointCloud toRemove_;
+	mutable PointCloud scanRef_;
+	mutable PointCloud mapRef_;
+
 private:
-	void insertFirstScan(const PointCloud &scan,const Eigen::Isometry3d &transform);
-	void update(const MapBuilderParameters &p);
+	void update(const MapperParameters &mapperParams);
 	void estimateNormalsIfNeeded(PointCloud *pcl) const;
+	void carve(const PointCloud &rawScan, const Eigen::Isometry3d &mapToRangeSensor, const CroppingVolume &cropper, const SpaceCarvingParameters &params,
+			PointCloud *map, Timer *timer) const;
 
 	PointCloud map_;
+	PointCloud denseMap_;
 	Eigen::Isometry3d mapToSubmap_ = Eigen::Isometry3d::Identity();
 	Eigen::Isometry3d mapToRangeSensor_ = Eigen::Isometry3d::Identity();
 	std::shared_ptr<CroppingVolume> mapBuilderCropper_;
 	std::shared_ptr<CroppingVolume> denseMapCropper_;
-	MapBuilderParameters mapBuilderParams_;
-	IcpParameters scanMatcherParams_;
-	ScanProcessingParameters scanProcessingParams_;
+	MapperParameters params_;
+	Timer carvingTimer_;
+	Timer carveDenseMapTimer_;
 };
 
 
@@ -59,7 +69,7 @@ public:
 	using PointCloud = open3d::geometry::PointCloud;
 	void setMapToRangeSensor(const Eigen::Isometry3d &T);
 	const Submap &getActiveSubmap() const;
-	bool insertScan(const PointCloud &rawScan, const Eigen::Isometry3d &transform);
+	bool insertScan(const PointCloud &rawScan,const PointCloud &preProcessedScan, const Eigen::Isometry3d &transform);
 	void setParameters(const MapperParameters &p);
 	bool isEmpty() const;
 

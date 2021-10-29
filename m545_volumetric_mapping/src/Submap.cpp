@@ -15,72 +15,68 @@
 namespace m545_mapping {
 
 Submap::Submap() {
-	update(mapBuilderParams_);
+	update(params_);
 }
 
-bool Submap::insertScan(const PointCloud &rawScan, const Eigen::Isometry3d &mapToRangeSensor) {
+bool Submap::insertScan(const PointCloud &rawScan,const PointCloud &preProcessedScan, const Eigen::Isometry3d &mapToRangeSensor) {
 
-	if(map_.points_.empty()){
-		insertFirstScan(rawScan,mapToRangeSensor);
-		return true;
-	}
-	mapBuilderCropper_->setPose(mapToRangeSensor);
-//
-	auto transformedCloud = transform(mapToRangeSensor.matrix(), rawScan);
-//	auto wideCroppedCloud = mapBuilderCropper_->crop(*transformedCloud);
-//	m545_mapping::voxelize(mapBuilderParams_.mapVoxelSize_, wideCroppedCloud.get());
-
-	//		Timer timer("Map update");
-//	m545_mapping::randomDownSample(scanProcessingParams_.downSamplingRatio_, wideCroppedCloud.get());
-//	estimateNormalsIfNeeded(wideCroppedCloud.get());
-//	carve(transformedCloud, *mapBuilderCropper_,params_.mapBuilder_.carving_,&map_,&carvingTimer_);
+	mapToRangeSensor_ = mapToRangeSensor;
+	auto transformedCloud = transform(mapToRangeSensor.matrix(), preProcessedScan);
+	estimateNormalsIfNeeded(transformedCloud.get());
+	carve(rawScan,mapToRangeSensor, *mapBuilderCropper_, params_.mapBuilder_.carving_, &map_, &carvingTimer_);
 	map_ += *transformedCloud;
+	mapBuilderCropper_->setPose(mapToRangeSensor);
+	voxelizeInsideCroppingVolume(*mapBuilderCropper_,params_.mapBuilder_, &map_);
 
-	if (mapBuilderParams_.mapVoxelSize_ > 0.0) {
-		//			Timer timer("voxelize_map",true);
-		auto voxelizedMap = voxelizeWithinCroppingVolume(mapBuilderParams_.mapVoxelSize_, *mapBuilderCropper_, map_);
-		map_ = *voxelizedMap;
+	if(params_.isBuildDenseMap_){
+//		Timer timer("merge_dense_map");
+		denseMapCropper_->setPose(mapToRangeSensor);
+		auto denseCropped = denseMapCropper_->crop(*transformedCloud);
+		carve(rawScan,mapToRangeSensor, *denseMapCropper_, params_.denseMapBuilder_.carving_, &denseMap_,&carveDenseMapTimer_);
+		denseMap_ += *denseCropped;
+		auto voxelizedDense = voxelizeWithinCroppingVolume(params_.denseMapBuilder_.mapVoxelSize_, *denseMapCropper_,  denseMap_);
+		denseMap_= *voxelizedDense;
 	}
-
-//	if(params_.isBuildDenseMap_){
-////		Timer timer("merge_dense_map");
-//		denseMapCropper_->setPose(mapToRangeSensor_);
-//		auto denseCropped = denseMapCropper_->crop(transformedCloud);
-//		carve(transformedCloud, *denseMapCropper_, params_.denseMapBuilder_.carving_, &denseMap_,&carveDenseMapTimer_);
-//		denseMap_ += *denseCropped;
-//		auto voxelizedDense = voxelizeWithinCroppingVolume(params_.denseMapBuilder_.mapVoxelSize_, *denseMapCropper_,  denseMap_);
-//		denseMap_= *voxelizedDense;
-//	}
 
 	return true;
 }
 
-void Submap::insertFirstScan(const PointCloud &scan,const Eigen::Isometry3d &mapToRangeSensor) {
-	mapBuilderCropper_->setPose(mapToRangeSensor_);
-	auto croppedCloud = mapBuilderCropper_->crop(scan);
-	m545_mapping::voxelize(mapBuilderParams_.mapVoxelSize_, croppedCloud.get());
-	croppedCloud->Transform(mapToRangeSensor.matrix());
-	estimateNormalsIfNeeded(croppedCloud.get());
-	map_ += *croppedCloud;
+void Submap::carve(const PointCloud &rawScan, const Eigen::Isometry3d &mapToRangeSensor, const CroppingVolume &cropper, const SpaceCarvingParameters &params,
+		PointCloud *map, Timer *timer) const {
+	if (map->points_.empty() || timer->elapsedSec() < params.carveSpaceEveryNsec_) {
+		return;
+	}
+//	Timer timer("carving");
+	auto scan = transform(mapToRangeSensor.matrix(), rawScan);
+	const auto wideCroppedIdxs = cropper.getIndicesWithinVolume(*map);
+	auto idxsToRemove = std::move(
+			getIdxsOfCarvedPoints(*scan, *map, mapToRangeSensor.translation(), wideCroppedIdxs, params));
+	toRemove_ = std::move(*(map->SelectByIndex(idxsToRemove)));
+	scanRef_ = std::move(*scan);
+//	std::cout << "Would remove: " << idxsToRemove.size() << std::endl;
+	removeByIds(idxsToRemove, map);
+	timer->reset();
 }
 
 void Submap::estimateNormalsIfNeeded(PointCloud *pcl) const {
-	if (scanMatcherParams_.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
-		estimateNormals(scanMatcherParams_.kNNnormalEstimation_, pcl);
+	if (!pcl->HasNormals() && params_.scanMatcher_.icpObjective_ == IcpObjective::PointToPlane) {
+		estimateNormals(params_.scanMatcher_.kNNnormalEstimation_, pcl);
 		pcl->NormalizeNormals(); //todo, dunno if I need this
 	}
 }
 
-
-void Submap::setParameters(const MapBuilderParameters &mapBuilderParam, const IcpParameters &scanMatcherParameters,const ScanProcessingParameters &scanProcessingParameters){
-	mapBuilderParams_ = mapBuilderParam;
-	scanMatcherParams_ = scanMatcherParameters;
-	scanProcessingParams_ = scanProcessingParameters;
-	update(mapBuilderParam);
+void Submap::voxelizeInsideCroppingVolume(const CroppingVolume &cropper, const MapBuilderParameters &param, PointCloud *map) const
+{
+	if (param.mapVoxelSize_ > 0.0) {
+		//			Timer timer("voxelize_map",true);
+		auto voxelizedMap = voxelizeWithinCroppingVolume(param.mapVoxelSize_, cropper, *map);
+		*map = *voxelizedMap;
+	}
 }
 
-void Submap::voxelizeAroundPosition(const Eigen::Vector3d &p) {
-
+void Submap::setParameters(const MapperParameters &mapperParams){
+	params_=mapperParams;
+	update(mapperParams);
 }
 
 const Eigen::Isometry3d& Submap::getMapToSubmap() const {
@@ -89,12 +85,17 @@ const Eigen::Isometry3d& Submap::getMapToSubmap() const {
 const Submap::PointCloud& Submap::getMap() const {
 	return map_;
 }
+const Submap::PointCloud& Submap::getDenseMap() const {
+	return denseMap_;
+}
+
 void Submap::setMapToSubmap(const Eigen::Isometry3d &T) {
 	mapToSubmap_ = T;
 }
 
-void Submap::update(const MapBuilderParameters &p) {
-	mapBuilderCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.scanCroppingRadius_);
+void Submap::update(const MapperParameters &p) {
+	mapBuilderCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.mapBuilder_.scanCroppingRadius_);
+	denseMapCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.denseMapBuilder_.scanCroppingRadius_);
 }
 
 bool Submap::isEmpty() const{
@@ -134,7 +135,7 @@ void SubmapCollection::updateActiveSubmap() {
 void SubmapCollection::createNewSubmap(const Eigen::Isometry3d &mapToSubmap) {
 	Submap newSubmap;
 	newSubmap.setMapToSubmap(mapToSubmap);
-	newSubmap.setParameters(params_.mapBuilder_, params_.scanMatcher_,params_.scanProcessing_);
+	newSubmap.setParameters(params_);
 	submaps_.emplace_back(std::move(newSubmap));
 	activeSubmapIdx_ = submaps_.size() - 1;
 }
@@ -156,29 +157,29 @@ const Submap& SubmapCollection::getActiveSubmap() const {
 	return submaps_.at(activeSubmapIdx_);
 }
 
-bool SubmapCollection::insertScan(const PointCloud &rawScan, const Eigen::Isometry3d &transform){
+bool SubmapCollection::insertScan(const PointCloud &rawScan,const PointCloud &preProcessedScan, const Eigen::Isometry3d &transform){
 
 	if (submaps_.empty()) {
 		createNewSubmap(mapToRangeSensor_);
-		submaps_.at(activeSubmapIdx_).insertScan(rawScan, transform);
+		submaps_.at(activeSubmapIdx_).insertScan(rawScan,preProcessedScan, transform);
 		return true;
 	}
-
 	const size_t prevActiveSubmapIdx = activeSubmapIdx_;
 	updateActiveSubmap();
 	// either different one is active or new one is created
 	const bool isActiveSubmapChanged = prevActiveSubmapIdx != activeSubmapIdx_;
 	if(isActiveSubmapChanged){
-		submaps_.at(prevActiveSubmapIdx).insertScan(rawScan, transform);
+		submaps_.at(prevActiveSubmapIdx).insertScan(rawScan,preProcessedScan, transform);
 	}
-	submaps_.at(activeSubmapIdx_).insertScan(rawScan, transform);
+	submaps_.at(activeSubmapIdx_).insertScan(rawScan,preProcessedScan, transform);
+
 	return true;
 }
 
 void SubmapCollection::setParameters(const MapperParameters &p) {
 	params_ = p;
 	for(auto &submap : submaps_){
-		submap.setParameters(params_.mapBuilder_, params_.scanMatcher_,params_.scanProcessing_);
+		submap.setParameters(p);
 	}
 }
 

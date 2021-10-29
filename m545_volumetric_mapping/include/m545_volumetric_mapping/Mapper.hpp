@@ -30,11 +30,13 @@ public:
 	Mapper();
 	~Mapper() = default;
 
-	void addRangeMeasurement(const PointCloud &cloud, const ros::Time &timestamp);
 	const PointCloud& getMap() const;
 	const PointCloud& getDenseMap() const;
 	PointCloud* getMapPtr();
 	PointCloud* getDenseMapPtr();
+	const Submap& getActiveSubmap() const;
+
+	void addRangeMeasurement(const PointCloud &cloud, const ros::Time &timestamp);
 	void setParameters(const MapperParameters &p);
 	bool isMatchingInProgress() const;
 	bool isManipulatingMap() const;
@@ -44,11 +46,8 @@ public:
 	void carve(const PointCloud &scan, const CroppingVolume &cropper, const SpaceCarvingParameters &params,
 			PointCloud *map, Timer *timer) const;
 
-	mutable PointCloud toRemove_;
-	mutable PointCloud scanRef_;
-	mutable PointCloud mapRef_;
 private:
-
+	std::shared_ptr<PointCloud> preProcessScan(const PointCloud &scan) const;
 	void update(const MapperParameters &p);
 	void estimateNormalsIfNeeded(PointCloud *pcl) const;
 	void insertScanInMap(const std::shared_ptr<PointCloud> &wideCroppedCloud,

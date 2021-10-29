@@ -65,9 +65,9 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
 
 	m545_mapping::publishCloud(mapper->getMap(), m545_mapping::frames::mapFrame, timestamp, mapPub);
 
-	m545_mapping::publishCloud(mapper->toRemove_, m545_mapping::frames::mapFrame, timestamp, debugPub);
-	m545_mapping::publishCloud(mapper->scanRef_, m545_mapping::frames::mapFrame, timestamp, debugPub2);
-	m545_mapping::publishCloud(mapper->mapRef_, m545_mapping::frames::mapFrame, timestamp, debugPub3);
+	m545_mapping::publishCloud(mapper->getActiveSubmap().toRemove_, m545_mapping::frames::mapFrame, timestamp, debugPub);
+	m545_mapping::publishCloud(mapper->getActiveSubmap().scanRef_, m545_mapping::frames::mapFrame, timestamp, debugPub2);
+	m545_mapping::publishCloud(mapper->getActiveSubmap().mapRef_, m545_mapping::frames::mapFrame, timestamp, debugPub3);
 
 	m545_mapping::publishCloud(mapper->getDenseMap(), m545_mapping::frames::mapFrame, timestamp, localMapPub);
 }
