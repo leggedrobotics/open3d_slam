@@ -55,6 +55,10 @@ Eigen::Isometry3d Mapper::getMapToRangeSensor() const {
 	return mapToRangeSensor_;
 }
 
+const SubmapCollection& Mapper::getSubmaps() const {
+	return submaps_;
+}
+
 void Mapper::estimateNormalsIfNeeded(PointCloud *pcl) const {
 	if (params_.scanMatcher_.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
 		estimateNormals(params_.scanMatcher_.kNNnormalEstimation_, pcl);
@@ -158,8 +162,36 @@ const Mapper::PointCloud& Mapper::getMap() const {
 	return submaps_.getActiveSubmap().getMap();
 }
 
+Mapper::PointCloud Mapper::getAssembledMap() const {
+	PointCloud cloud;
+	const int nSubmaps = submaps_.getSubmaps().size();
+	const int nPoints = submaps_.getTotalNumPoints();
+	cloud.points_.reserve(nPoints);
+	if (getMap().HasColors()) {
+		cloud.colors_.reserve(nPoints);
+	}
+	if (getMap().HasNormals()) {
+		cloud.normals_.reserve(nPoints);
+	}
+
+	for (size_t j = 0; j < submaps_.getSubmaps().size(); ++j) {
+		const auto &submap = submaps_.getSubmaps().at(j);
+		const auto color = Color::getColor(j % (Color::numColors_ - 2) + 2);
+		for (size_t i = 0; i < submap.getMap().points_.size(); ++i) {
+			cloud.points_.push_back(submap.getMap().points_.at(i));
+			if (getMap().HasColors()) {
+				cloud.colors_.push_back(submap.getMap().colors_.at(i));
+			}
+			if (getMap().HasNormals()) {
+				cloud.normals_.push_back(submap.getMap().normals_.at(i));
+			}
+		}
+	}
+	return cloud;
+}
+
 const Submap& Mapper::getActiveSubmap() const {
-  return submaps_.getActiveSubmap();
+	return submaps_.getActiveSubmap();
 }
 
 const Mapper::PointCloud& Mapper::getDenseMap() const {

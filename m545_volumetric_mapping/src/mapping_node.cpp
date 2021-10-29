@@ -31,7 +31,7 @@ using namespace m545_mapping::frames;
 open3d::geometry::PointCloud cloudPrev;
 ros::NodeHandlePtr nh;
 std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
-ros::Publisher refPub, subsampledPub, mapPub, localMapPub, meshPub, debugPub, debugPub2, debugPub3;
+ros::Publisher refPub, subsampledPub, mapPub, localMapPub, meshPub, debugPub, debugPub2, submapPub;
 std::shared_ptr<m545_mapping::Mesher> mesher;
 std::shared_ptr<m545_mapping::LidarOdometry> odometry;
 std::shared_ptr<m545_mapping::Mapper> mapper;
@@ -63,13 +63,17 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
 	m545_mapping::publishTfTransform(mapper->getMapToOdom().matrix(), timestamp, mapFrame, odomFrame,
 			tfBroadcaster.get());
 
-	m545_mapping::publishCloud(mapper->getMap(), m545_mapping::frames::mapFrame, timestamp, mapPub);
+	m545_mapping::publishCloud(mapper->getAssembledMap(), m545_mapping::frames::mapFrame, timestamp, mapPub);
 
 	m545_mapping::publishCloud(mapper->getActiveSubmap().toRemove_, m545_mapping::frames::mapFrame, timestamp, debugPub);
 	m545_mapping::publishCloud(mapper->getActiveSubmap().scanRef_, m545_mapping::frames::mapFrame, timestamp, debugPub2);
-	m545_mapping::publishCloud(mapper->getActiveSubmap().mapRef_, m545_mapping::frames::mapFrame, timestamp, debugPub3);
-
 	m545_mapping::publishCloud(mapper->getDenseMap(), m545_mapping::frames::mapFrame, timestamp, localMapPub);
+
+	if(submapPub.getNumSubscribers()>0){
+		open3d::geometry::PointCloud cloud;
+		m545_mapping::assembleColoredPointCloud(mapper->getSubmaps(), &cloud);
+		m545_mapping::publishCloud(cloud, m545_mapping::frames::mapFrame, timestamp, submapPub);
+	}
 }
 
 void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
@@ -132,7 +136,7 @@ int main(int argc, char **argv) {
 	meshPub = nh->advertise<m545_volumetric_mapping_msgs::PolygonMesh>("mesh", 1, true);
 	debugPub = nh->advertise<sensor_msgs::PointCloud2>("debug", 1, true);
 	debugPub2 = nh->advertise<sensor_msgs::PointCloud2>("debug2", 1, true);
-	debugPub3 = nh->advertise<sensor_msgs::PointCloud2>("debug3", 1, true);
+	submapPub = nh->advertise<sensor_msgs::PointCloud2>("submaps", 1, true);
 
 	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
 	std::cout << "loading params from: " << paramFile << "\n";

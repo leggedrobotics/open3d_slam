@@ -62,6 +62,7 @@ private:
 
 class SubmapCollection{
 public:
+	using Submaps = std::vector<Submap>;
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	SubmapCollection();
 	~SubmapCollection() = default;
@@ -72,7 +73,8 @@ public:
 	bool insertScan(const PointCloud &rawScan,const PointCloud &preProcessedScan, const Eigen::Isometry3d &transform);
 	void setParameters(const MapperParameters &p);
 	bool isEmpty() const;
-
+	const Submaps &getSubmaps() const;
+	size_t getTotalNumPoints() const;
 private:
 
 	void updateActiveSubmap();
@@ -84,6 +86,7 @@ private:
 	std::vector<Submap> submaps_;
 	size_t activeSubmapIdx_ = 0;
 	MapperParameters params_;
+	size_t numScansMergedInActiveSubmap_=0;
 
 };
 

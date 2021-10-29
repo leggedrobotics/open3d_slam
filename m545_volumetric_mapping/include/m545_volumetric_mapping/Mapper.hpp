@@ -35,7 +35,8 @@ public:
 	PointCloud* getMapPtr();
 	PointCloud* getDenseMapPtr();
 	const Submap& getActiveSubmap() const;
-
+	const SubmapCollection &getSubmaps() const;
+	PointCloud getAssembledMap() const;
 	void addRangeMeasurement(const PointCloud &cloud, const ros::Time &timestamp);
 	void setParameters(const MapperParameters &p);
 	bool isMatchingInProgress() const;
