@@ -39,7 +39,7 @@
 //            std::cout << "pixel coordinates " << pixels[i].transpose() << std::endl;
 //            std::cout << msg->height << msg->width << std::endl;
             if (pixels[i].x() >= 0 && pixels[i].x() < cv_ptr->image.rows && pixels[i].y() >= 0 && pixels[i].y() < cv_ptr->image.cols) {
-                pixelColorscv[i] = cv_ptr->image.at<cv::Vec3b>(pixels[i].x(), pixels[i].y());
+                pixelColorscv[i] = cv_ptr->image.at<cv::Vec3b>(pixels[i].x(), cv_ptr->image.cols-pixels[i].y());
 //                pixelColors[i] = {0, 0, 0};
 //                std::cout << "coordinates" << x << "  " << y << std::endl;
 
@@ -59,7 +59,7 @@
         }
 //        cv::Mat imgenerate = cv::Mat(cv_ptr->image.rows, cv_ptr->image.cols, CV_8UC3, pixelColorscv.data());
 //        cv::imshow("imwindow", imgenerate);
-//        cv::waitKey(5);
+//        cv::waitKey(1);
 //        Eigen::RowVector3d pixelColor = cv_ptr->image.at<Eigen::RowVector3d>(i, j);
 //        std::swap(pixelColor(0), pixelColor(2));    //RGB
         for (int i = 0; i < pixelColors.size(); i++) {

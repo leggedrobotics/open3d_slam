@@ -28,25 +28,34 @@ std::vector<Eigen::Vector2i> projectionLidarToPixel(const std::vector<Eigen::Mat
     RT.leftCols(3) = rotation;
     RT.col(3) = translation;
     for (int i = 0; i < pos_lidar.size(); i++) {
-        pos_lidar_aux[i].topRows(3) = pos_lidar[i];
+//        pos_lidar_aux[i].topRows(3) = pos_lidar[i];
+        pos_lidar_aux[i].x() = -pos_lidar[i].y();
+        pos_lidar_aux[i].y() = pos_lidar[i].x();
+        pos_lidar_aux[i].z() = pos_lidar[i].z();
         pos_lidar_aux[i](3) = 1.0;
-        pos_udimage_aux[i] = K * RT * pos_lidar_aux[i];         //[K*[R|T]*[x_l,y_l,z_l,1] = lamda*[u.v.1]
-        pos_udimage_aux[i] = pos_udimage_aux[i] / pos_udimage_aux[i](2);
-        pos_udimage[i].x() = ceil(pos_udimage_aux[i].x());            //consider pixel size
-        pos_udimage[i].y() = ceil(pos_udimage_aux[i].y());
-
-//        double u0 = K(0, 2);
-//        double v0 = K(1, 2);
-//        double u_differ = pos_udimage_aux[i].x() - u0;
-//        double v_differ = pos_udimage_aux[i].y() - v0;
-//        double r_square = pow(u_differ, 2) + pow(v_differ, 2);
-//        pos_dimage[i].x() = round(pos_udimage_aux[i].x());
-//        pos_dimage[i].y() = round(pos_udimage_aux[i].y());
-//        pos_dimage[i].x() = round((1 + D(0) * r_square + D(1) * pow(r_square, 2) + D(4) * pow(r_square, 3)) * u_differ +
-//                              2 * D(2) * u_differ * v_differ + D(3) * (r_square + 2 * pow(u_differ, 2)) + u0);
-//        pos_dimage[i].y() = round((1 + D(0) * r_square + D(1) * pow(r_square, 2) + D(4) * pow(r_square, 3)) * v_differ +
-//                              2 * D(3) * u_differ * v_differ + D(2) * (r_square + 2 * pow(v_differ, 2)) + v0);
-        std::cout << K << std::endl;
+        pos_udimage_aux[i] = RT * pos_lidar_aux[i];         //[K*[R|T]*[x_l,y_l,z_l,1] = lamda*[u.v.1]
+        if(pos_udimage_aux[i].z() < 0) {
+            pos_udimage[i].x() = -1.0;
+            pos_udimage[i].y() = -1.0;          //get rid of the points with z<0 and color them later with white
+        }
+        else {
+            pos_udimage_aux[i] = K * pos_udimage_aux[i];
+            pos_udimage_aux[i] = pos_udimage_aux[i] / pos_udimage_aux[i](2);
+            pos_udimage[i].x() = ceil(pos_udimage_aux[i].x());            //consider pixel size
+            pos_udimage[i].y() = ceil(pos_udimage_aux[i].y());
+            //the distortion part
+            double u0 = K(0, 2);
+            double v0 = K(1, 2);
+            double u_differ = pos_udimage_aux[i].x() - u0;
+            double v_differ = pos_udimage_aux[i].y() - v0;
+            double r_square = pow(u_differ, 2) + pow(v_differ, 2);
+            pos_dimage[i].x() = round(pos_udimage_aux[i].x());
+            pos_dimage[i].y() = round(pos_udimage_aux[i].y());
+            pos_dimage[i].x() = round((1 + D(0) * r_square + D(1) * pow(r_square, 2) + D(4) * pow(r_square, 3)) * u_differ +
+                                2 * D(2) * u_differ * v_differ + D(3) * (r_square + 2 * pow(u_differ, 2)) + u0);
+            pos_dimage[i].y() = round((1 + D(0) * r_square + D(1) * pow(r_square, 2) + D(4) * pow(r_square, 3)) * v_differ +
+                              2 * D(3) * u_differ * v_differ + D(2) * (r_square + 2 * pow(v_differ, 2)) + v0);
+        }
     }
     for(int i=0;i<pos_lidar.size();i++)
     {
