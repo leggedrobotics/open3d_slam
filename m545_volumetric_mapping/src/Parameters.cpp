@@ -49,6 +49,18 @@ void loadParameters(const YAML::Node &node, ScanProcessingParameters *p){
 	p->downSamplingRatio_ = node["downsampling_ratio"].as<double>();
 }
 
+void loadParameters(const std::string &filename, SubmapParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+	if (basenode.IsNull()) {
+		throw std::runtime_error("SubmapParameters::loadParameters loading failed");
+	}
+	loadParameters(basenode["submaps"], p);
+}
+void loadParameters(const YAML::Node &node, SubmapParameters *p){
+	p->radius_ = node["size"].as<double>();
+	p->minNumRangeData_ = node["min_num_range_data"].as<int>();
+}
+
 void loadParameters(const std::string &filename, MapBuilderParameters *p) {
 	YAML::Node basenode = YAML::LoadFile(filename);
 	if (basenode.IsNull()) {
@@ -82,6 +94,7 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 		loadParameters(node["dense_map_builder"], &(p->denseMapBuilder_));
 	}
 	loadParameters(node["map_builder"], &(p->mapBuilder_));
+	loadParameters(node["submaps"], &(p->submaps_));
 }
 
 void loadParameters(const std::string &filename, LocalMapParameters *p){

@@ -40,7 +40,6 @@ void Mapper::update(const MapperParameters &p) {
 	icpObjective = icpObjectiveFactory(p.scanMatcher_.icpObjective_);
 	scanMatcherCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.scanProcessing_.croppingRadius_);
 	mapBuilderCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.mapBuilder_.scanCroppingRadius_);
-	denseMapCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.denseMapBuilder_.scanCroppingRadius_);
 	submaps_.setParameters(p);
 }
 
@@ -60,7 +59,7 @@ const SubmapCollection& Mapper::getSubmaps() const {
 }
 
 void Mapper::estimateNormalsIfNeeded(PointCloud *pcl) const {
-	if (params_.scanMatcher_.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
+	if (!pcl->HasNormals() && params_.scanMatcher_.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
 		estimateNormals(params_.scanMatcher_.kNNnormalEstimation_, pcl);
 		pcl->NormalizeNormals(); //todo, dunno if I need this
 	}
@@ -84,7 +83,6 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const ros::T
 	const bool lookupStatus = lookupTransform(frames::odomFrame, frames::rangeSensorFrame, timestamp, tfBuffer_,
 			&odomToRangeSensor);
 	const auto odometryMotion = odomToRangeSensorPrev_.inverse() * odomToRangeSensor;
-	//todo check rotation and trans
 	if (!lookupStatus) {
 		isMatchingInProgress_ = false;
 		return;
@@ -106,8 +104,6 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const ros::T
 //		std::cout << "avg preprocess: " << avgTime / count << "\n";
 	}
 
-//	mapRef_=*wideCroppedCloud;
-	// wee need to get an active map here
 
 	const auto result = open3d::pipelines::registration::RegistrationICP(*narrowCropped, *mapPatch,
 			params_.scanMatcher_.maxCorrespondenceDistance_, mapToRangeSensorEstimate.matrix(), *icpObjective,
@@ -141,21 +137,6 @@ std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud &raw
 	m545_mapping::randomDownSample(params_.scanProcessing_.downSamplingRatio_, wideCroppedCloud.get());
 	estimateNormalsIfNeeded(wideCroppedCloud.get());
 	return wideCroppedCloud;
-}
-
-void Mapper::carve(const PointCloud &scan, const CroppingVolume &cropper, const SpaceCarvingParameters &params,
-		PointCloud *map, Timer *timer) const {
-	if (map->points_.empty() || timer->elapsedSec() < params.carveSpaceEveryNsec_) {
-		return;
-	}
-//	Timer timer("carving");
-	const auto wideCroppedIdxs = cropper.getIndicesWithinVolume(*map);
-	auto idxsToRemove = std::move(
-			getIdxsOfCarvedPoints(scan, *map, mapToRangeSensor_.translation(), wideCroppedIdxs, params));
-
-//	std::cout << "Would remove: " << idxsToRemove.size() << std::endl;
-	removeByIds(idxsToRemove, map);
-	timer->reset();
 }
 
 const Mapper::PointCloud& Mapper::getMap() const {
@@ -202,11 +183,6 @@ bool Mapper::isManipulatingMap() const {
 	return isManipulatingMap_;
 }
 
-Mapper::PointCloud* Mapper::getMapPtr() {
-	return &map_;
-}
-Mapper::PointCloud* Mapper::getDenseMapPtr() {
-	return &denseMap_;
-}
+
 
 } /* namespace m545_mapping */

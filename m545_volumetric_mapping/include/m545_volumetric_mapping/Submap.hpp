@@ -70,7 +70,7 @@ public:
 	using PointCloud = open3d::geometry::PointCloud;
 	void setMapToRangeSensor(const Eigen::Isometry3d &T);
 	const Submap &getActiveSubmap() const;
-	bool insertScan(const PointCloud &rawScan,const PointCloud &preProcessedScan, const Eigen::Isometry3d &transform);
+	bool insertScan(const PointCloud &rawScan,const PointCloud &preProcessedScan, const Eigen::Isometry3d &mapToRangeSensor);
 	void setParameters(const MapperParameters &p);
 	bool isEmpty() const;
 	const Submaps &getSubmaps() const;

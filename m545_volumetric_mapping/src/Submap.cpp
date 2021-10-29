@@ -132,15 +132,13 @@ size_t SubmapCollection::getTotalNumPoints() const {
 }
 
 void SubmapCollection::updateActiveSubmap() {
-	if (numScansMergedInActiveSubmap_ < 5) {
+	if (numScansMergedInActiveSubmap_ < params_.submaps_.minNumRangeData_) {
 		return;
 	}
 	const size_t closestMapIdx = findClosestSubmap(mapToRangeSensor_);
 	Eigen::Vector3d submapPosition = submaps_.at(closestMapIdx).getMapToSubmap().translation();
-	const bool isWithinRange = (mapToRangeSensor_.translation() - submapPosition).norm() < 15;
-	//todo fix magic
-	//todo ensure min num scans in each submap
-	if (isWithinRange) {
+	const bool isOriginWithinRange = (mapToRangeSensor_.translation() - submapPosition).norm() < params_.submaps_.radius_;
+	if (isOriginWithinRange) {
 		activeSubmapIdx_ = closestMapIdx;
 	} else {
 		createNewSubmap(mapToRangeSensor_);
@@ -174,11 +172,12 @@ const Submap& SubmapCollection::getActiveSubmap() const {
 }
 
 bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan,
-		const Eigen::Isometry3d &transform) {
+		const Eigen::Isometry3d &mapToRangeSensor) {
 
+	mapToRangeSensor_ = mapToRangeSensor;
 	if (submaps_.empty()) {
 		createNewSubmap(mapToRangeSensor_);
-		submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, transform);
+		submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor);
 		++numScansMergedInActiveSubmap_;
 		return true;
 	}
@@ -187,9 +186,9 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 	// either different one is active or new one is created
 	const bool isActiveSubmapChanged = prevActiveSubmapIdx != activeSubmapIdx_;
 	if (isActiveSubmapChanged) {
-		submaps_.at(prevActiveSubmapIdx).insertScan(rawScan, preProcessedScan, transform);
+		submaps_.at(prevActiveSubmapIdx).insertScan(rawScan, preProcessedScan, mapToRangeSensor);
 	}
-	submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, transform);
+	submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor);
 	++numScansMergedInActiveSubmap_;
 	return true;
 }

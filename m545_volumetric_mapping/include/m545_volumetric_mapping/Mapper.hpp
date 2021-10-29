@@ -32,8 +32,6 @@ public:
 
 	const PointCloud& getMap() const;
 	const PointCloud& getDenseMap() const;
-	PointCloud* getMapPtr();
-	PointCloud* getDenseMapPtr();
 	const Submap& getActiveSubmap() const;
 	const SubmapCollection &getSubmaps() const;
 	PointCloud getAssembledMap() const;
@@ -44,21 +42,16 @@ public:
 
 	Eigen::Isometry3d getMapToOdom() const;
 	Eigen::Isometry3d getMapToRangeSensor() const;
-	void carve(const PointCloud &scan, const CroppingVolume &cropper, const SpaceCarvingParameters &params,
-			PointCloud *map, Timer *timer) const;
+
 
 private:
 	std::shared_ptr<PointCloud> preProcessScan(const PointCloud &scan) const;
 	void update(const MapperParameters &p);
 	void estimateNormalsIfNeeded(PointCloud *pcl) const;
-	void insertScanInMap(const std::shared_ptr<PointCloud> &wideCroppedCloud,
-			const open3d::pipelines::registration::RegistrationResult &result, const PointCloud &rawScan);
-	void insertFirstScan(const PointCloud &scan);
+
+
 	bool isMatchingInProgress_ = false;
 	bool isManipulatingMap_ = false;
-
-	PointCloud map_;
-	PointCloud denseMap_;
 	tf2_ros::Buffer tfBuffer_;
 	tf2_ros::TransformListener tfListener_;
 	ros::Time lastMeasurementTimestamp_;
@@ -68,12 +61,8 @@ private:
 	MapperParameters params_;
 	open3d::pipelines::registration::ICPConvergenceCriteria icpCriteria_;
 	std::mutex mapManipulationMutex_;
-	Timer carvingTimer_;
-	Timer carveDenseMapTimer_;
-
 	std::shared_ptr<CroppingVolume> scanMatcherCropper_;
 	std::shared_ptr<CroppingVolume> mapBuilderCropper_;
-	std::shared_ptr<CroppingVolume> denseMapCropper_;
 	SubmapCollection submaps_;
 
 };

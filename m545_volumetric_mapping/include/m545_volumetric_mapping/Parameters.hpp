@@ -76,6 +76,11 @@ struct MapBuilderParameters{
 	SpaceCarvingParameters carving_;
 };
 
+struct SubmapParameters{
+	double radius_=20.0;
+	int minNumRangeData_ = 5;
+};
+
 struct MapperParameters {
 	IcpParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
@@ -84,6 +89,7 @@ struct MapperParameters {
 	MapBuilderParameters mapBuilder_;
 	MapBuilderParameters denseMapBuilder_;
 	bool isBuildDenseMap_ = true;
+	SubmapParameters submaps_;
 
 };
 
@@ -105,6 +111,8 @@ struct MesherParameters{
 };
 
 
+void loadParameters(const std::string &filename, SubmapParameters *p);
+void loadParameters(const YAML::Node &node, SubmapParameters *p);
 void loadParameters(const std::string &filename, ScanProcessingParameters *p);
 void loadParameters(const YAML::Node &node, ScanProcessingParameters *p);
 void loadParameters(const std::string &filename, IcpParameters *p);
