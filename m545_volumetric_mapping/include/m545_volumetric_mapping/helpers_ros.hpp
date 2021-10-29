@@ -15,7 +15,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/buffer.h>
 #include <std_msgs/ColorRGBA.h>
-
+#include <visualization_msgs/MarkerArray.h>
 
 
 namespace m545_mapping {
@@ -45,6 +45,11 @@ class Color : public std_msgs::ColorRGBA {
   static const int numColors_ = 13;
   static const Color getColor (int colorCode);
 };
+
+void publishSubmapCoordinateAxes(const SubmapCollection &submaps, const std::string &frame_id,
+		const ros::Time &timestamp, const ros::Publisher &pub);
+geometry_msgs::Point createPoint(double x, double y, double z);
+void drawAxes(const Eigen::Vector3d& p, const Eigen::Quaterniond& q, double scale, double line_width, visualization_msgs::Marker* marker);
 
 void assembleColoredPointCloud(const SubmapCollection &submaps, open3d::geometry::PointCloud *cloud);
 

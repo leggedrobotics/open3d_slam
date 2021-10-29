@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /PointCloud24
       Splitter Ratio: 0.5
     Tree Height: 719
   - Class: rviz/Selection
@@ -219,6 +218,15 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /mapping_node/submap_origins
+      Name: MarkerArray
+      Namespaces:
+        submap_0: true
+        submap_1: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -247,7 +255,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 30.869693756103516
+      Distance: 33.14194869995117
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -255,17 +263,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -7.448073387145996
-        Y: -4.763216495513916
-        Z: 10.78945541381836
+        X: 3.6170589923858643
+        Y: -1.073634147644043
+        Z: 3.7261109352111816
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8097971677780151
+      Pitch: 0.8647971153259277
       Target Frame: <Fixed Frame>
-      Yaw: 3.9390957355499268
+      Yaw: 5.824105739593506
     Saved: ~
 Window Geometry:
   Displays:

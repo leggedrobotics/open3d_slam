@@ -31,7 +31,7 @@ using namespace m545_mapping::frames;
 open3d::geometry::PointCloud cloudPrev;
 ros::NodeHandlePtr nh;
 std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
-ros::Publisher refPub, subsampledPub, mapPub, localMapPub, meshPub, debugPub, debugPub2, submapPub;
+ros::Publisher refPub, subsampledPub, mapPub, localMapPub, meshPub, debugPub, debugPub2, submapPub, submapOriginsPub;
 std::shared_ptr<m545_mapping::Mesher> mesher;
 std::shared_ptr<m545_mapping::LidarOdometry> odometry;
 std::shared_ptr<m545_mapping::Mapper> mapper;
@@ -68,7 +68,7 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
 	m545_mapping::publishCloud(mapper->getActiveSubmap().toRemove_, m545_mapping::frames::mapFrame, timestamp, debugPub);
 	m545_mapping::publishCloud(mapper->getActiveSubmap().scanRef_, m545_mapping::frames::mapFrame, timestamp, debugPub2);
 	m545_mapping::publishCloud(mapper->getDenseMap(), m545_mapping::frames::mapFrame, timestamp, localMapPub);
-
+	m545_mapping::publishSubmapCoordinateAxes(mapper->getSubmaps(),m545_mapping::frames::mapFrame,timestamp,submapOriginsPub);
 	if(submapPub.getNumSubscribers()>0){
 		open3d::geometry::PointCloud cloud;
 		m545_mapping::assembleColoredPointCloud(mapper->getSubmaps(), &cloud);
@@ -137,6 +137,7 @@ int main(int argc, char **argv) {
 	debugPub = nh->advertise<sensor_msgs::PointCloud2>("debug", 1, true);
 	debugPub2 = nh->advertise<sensor_msgs::PointCloud2>("debug2", 1, true);
 	submapPub = nh->advertise<sensor_msgs::PointCloud2>("submaps", 1, true);
+	submapOriginsPub= nh->advertise<visualization_msgs::MarkerArray>("submap_origins", 1, true);
 
 	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
 	std::cout << "loading params from: " << paramFile << "\n";

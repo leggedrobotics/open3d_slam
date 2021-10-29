@@ -62,26 +62,52 @@ Color operator*(double scalar, const Color &c) {
 	return c * scalar;
 }
 
+void publishSubmapCoordinateAxes(const SubmapCollection &submaps, const std::string &frame_id,
+		const ros::Time &timestamp, const ros::Publisher &pub) {
+	visualization_msgs::MarkerArray msg;
+	int id = 0;
+	msg.markers.reserve(2 * submaps.getSubmaps().size());
+	for (size_t j = 0; j < submaps.getSubmaps().size(); ++j) {
+		const auto &submap = submaps.getSubmaps().at(j);
+		visualization_msgs::Marker axes, text;
+		drawAxes(submap.getMapToSubmap().translation(), Eigen::Quaterniond(submap.getMapToSubmap().rotation()), 0.8, 0.08,
+				&axes);
+		axes.ns = "submap_" + std::to_string(j);
+		axes.header.frame_id = frame_id;
+		axes.header.stamp = timestamp;
+		axes.id = id++;
+		msg.markers.push_back(axes);
+		text = axes;
+		text.pose.position.x += 0.3;
+		text.pose.position.y += 0.3;
+		text.scale.x = text.scale.y = text.scale.z = 0.4;
+		text.color.r=text.color.g=text.color.b=1.0;
+		text.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+		text.text = "(" + std::to_string(j) + ")";
+		text.ns = "submap_id_" + std::to_string(j);
+		text.id=id++;
+		msg.markers.push_back(text);
+	}
+	pub.publish(msg);
+}
 
-
-
-void assembleColoredPointCloud(const SubmapCollection &submaps, open3d::geometry::PointCloud *cloud){
-	if(submaps.isEmpty()){
+void assembleColoredPointCloud(const SubmapCollection &submaps, open3d::geometry::PointCloud *cloud) {
+	if (submaps.isEmpty()) {
 		return;
 	}
 	std::mt19937 rndGen;
 	rndGen.seed(time(NULL));
 	const int nSubmaps = submaps.getSubmaps().size();
-	const  int nPoints = submaps.getTotalNumPoints();
+	const int nPoints = submaps.getTotalNumPoints();
 	cloud->points_.reserve(nPoints);
 	cloud->colors_.reserve(nPoints);
-	std::uniform_int_distribution<int> rndInt(2,12);
-	for(size_t j =0;j < submaps.getSubmaps().size(); ++j){
+	std::uniform_int_distribution<int> rndInt(2, 12);
+	for (size_t j = 0; j < submaps.getSubmaps().size(); ++j) {
 		const auto &submap = submaps.getSubmaps().at(j);
-		const auto color = Color::getColor(j % (Color::numColors_-2) +2);
-		for(size_t i =0;i < submap.getMap().points_.size(); ++i){
+		const auto color = Color::getColor(j % (Color::numColors_ - 2) + 2);
+		for (size_t i = 0; i < submap.getMap().points_.size(); ++i) {
 			cloud->points_.push_back(submap.getMap().points_.at(i));
-			cloud->colors_.emplace_back(Eigen::Vector3d(color.r,color.g,color.b));
+			cloud->colors_.emplace_back(Eigen::Vector3d(color.r, color.g, color.b));
 		}
 	}
 }
@@ -153,9 +179,44 @@ geometry_msgs::TransformStamped toRos(const Eigen::Matrix4d &Mat, const ros::Tim
 	return transformStamped;
 }
 
-const Color Color::getColor (int colorCode){
+geometry_msgs::Point createPoint(double x, double y, double z) {
+	geometry_msgs::Point p;
+	p.x = x;
+	p.y = y;
+	p.z = z;
+	return p;
+}
 
-	switch (colorCode){
+void drawAxes(const Eigen::Vector3d &p, const Eigen::Quaterniond &q, double scale, double line_width,
+		visualization_msgs::Marker *marker) {
+	marker->colors.resize(6);
+	marker->points.resize(6);
+	marker->points[0] = createPoint(0, 0, 0);
+	marker->points[1] = createPoint(1 * scale, 0, 0);
+	marker->points[2] = createPoint(0, 0, 0);
+	marker->points[3] = createPoint(0, 1 * scale, 0);
+	marker->points[4] = createPoint(0, 0, 0);
+	marker->points[5] = createPoint(0, 0, 1 * scale);
+
+	marker->color = Color::Black();
+	marker->colors[0] = Color::Red();
+	marker->colors[1] = Color::Red();
+	marker->colors[2] = Color::Green();
+	marker->colors[3] = Color::Green();
+	marker->colors[4] = Color::Blue();
+	marker->colors[5] = Color::Blue();
+
+	marker->scale.x = line_width;  // rest is unused
+	marker->type = visualization_msgs::Marker::LINE_LIST;
+	marker->action = visualization_msgs::Marker::ADD;
+
+	tf::pointEigenToMsg(p, marker->pose.position);
+	tf::quaternionEigenToMsg(q, marker->pose.orientation);
+}
+
+const Color Color::getColor(int colorCode) {
+
+	switch (colorCode) {
 	case 0: {
 		return White();
 	}
