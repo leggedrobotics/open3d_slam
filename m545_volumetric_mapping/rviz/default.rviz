@@ -6,14 +6,9 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-<<<<<<< HEAD:m545_volumetric_mapping/rviz/odom.rviz
-        - /TFTrajectory1
-        - /PointCloud23
-        - /Image1
-=======
         - /PointCloud21
         - /Mesh1
->>>>>>> master:m545_volumetric_mapping/rviz/default.rviz
+        - /Image1
       Splitter Ratio: 0.5
     Tree Height: 514
   - Class: rviz/Selection
@@ -71,69 +66,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-<<<<<<< HEAD:m545_volumetric_mapping/rviz/odom.rviz
-        Max Value: 13.443052291870117
-        Min Value: -5.452987194061279
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: AxisColor
-      Decay Time: 0
-      Enabled: false
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Min Color: 0; 0; 0
-      Name: PointCloud2
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.029999999329447746
-      Style: Flat Squares
-      Topic: /odometry_node/reference
-      Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: false
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 13.698351860046387
-        Min Value: -4.411580562591553
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: AxisColor
-      Decay Time: 0
-      Enabled: false
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Min Color: 0; 0; 0
-      Name: PointCloud2
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 2
-      Size (m): 0.009999999776482582
-      Style: Points
-      Topic: /odometry_node/subsampled
-      Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: false
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 94.75584411621094
-        Min Value: -6.277710437774658
-=======
-        Max Value: 14.199247360229492
-        Min Value: -40.057334899902344
->>>>>>> master:m545_volumetric_mapping/rviz/default.rviz
+        Max Value: 13.896611213684082
+        Min Value: -5.612662315368652
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -149,14 +83,10 @@ Visualization Manager:
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
-      Size (Pixels): 3
+      Size (Pixels): 5
       Size (m): 0.009999999776482582
       Style: Points
-<<<<<<< HEAD:m545_volumetric_mapping/rviz/odom.rviz
-      Topic: /odometry_node/color_cloud
-=======
-      Topic: /mapping_node/map
->>>>>>> master:m545_volumetric_mapping/rviz/default.rviz
+      Topic: /mapping_node/color_cloud
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -188,7 +118,13 @@ Visualization Manager:
                 {}
       Update Interval: 0
       Value: true
-<<<<<<< HEAD:m545_volumetric_mapping/rviz/odom.rviz
+    - Class: m545_volumetric_mapping_rviz_plugin/Mesh
+      Enabled: true
+      Name: Mesh
+      Queue Size: 10
+      Topic: /mapping_node/mesh
+      Unreliable: false
+      Value: true
     - Class: rviz/Image
       Enabled: true
       Image Topic: /camMainView/Downsampled
@@ -199,45 +135,6 @@ Visualization Manager:
       Normalize Range: true
       Queue Size: 2
       Transport Hint: raw
-      Unreliable: false
-      Value: true
-    - Alpha: 1
-      Class: rviz/Axes
-      Enabled: true
-      Length: 1
-      Name: Axes
-      Radius: 0.10000000149011612
-      Reference Frame: <Fixed Frame>
-      Value: true
-    - Alpha: 1
-      Buffer Length: 1
-      Class: rviz/Path
-      Color: 25; 255; 0
-      Enabled: true
-      Head Diameter: 0.30000001192092896
-      Head Length: 0.20000000298023224
-      Length: 0.30000001192092896
-      Line Style: Lines
-      Line Width: 0.029999999329447746
-      Name: Path
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Pose Color: 255; 85; 255
-      Pose Style: None
-      Queue Size: 10
-      Radius: 0.029999999329447746
-      Shaft Diameter: 0.10000000149011612
-      Shaft Length: 0.10000000149011612
-      Topic: ""
-=======
-    - Class: m545_volumetric_mapping_rviz_plugin/Mesh
-      Enabled: true
-      Name: Mesh
-      Queue Size: 10
-      Topic: /mapping_node/mesh
->>>>>>> master:m545_volumetric_mapping/rviz/default.rviz
       Unreliable: false
       Value: true
   Enabled: true
@@ -268,11 +165,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-<<<<<<< HEAD:m545_volumetric_mapping/rviz/odom.rviz
-      Distance: 0.15240170061588287
-=======
-      Distance: 112.0611801147461
->>>>>>> master:m545_volumetric_mapping/rviz/default.rviz
+      Distance: 53.832420349121094
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -288,9 +181,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4997974634170532
+      Pitch: 0.3447975516319275
       Target Frame: <Fixed Frame>
-      Yaw: 1.9859076738357544
+      Yaw: 1.8640776872634888
     Saved: ~
 Window Geometry:
   Displays:

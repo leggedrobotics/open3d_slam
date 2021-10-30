@@ -49,14 +49,12 @@ local_map:
   crop_box_max_y: 12.0
   crop_box_max_z: 100.0
 
-<<<<<<< HEAD
 Projection:
   K: [781.4463516, 0.000000, 802.8165184, 0.000000, 781.0776036, 595.8946684, 0.000000, 0.000000, 1.000000]   
   D: [-0.032929, 0.005035, -0.001666, -0.000796, 0.000000]
-  quaternion: [0.611, -0.503, 0.466, 0.395]
-  translation: [-0.180, -0.009, -0.157]
+  quaternion: [0.593, -0.502, 0.485, 0.401]
+  translation: [-0.219, 0.202, -0.016]
 
-=======
 mesher:
   is_compute_mesh: false
   voxel_size: 0.2
@@ -68,6 +66,3 @@ mesher:
   poisson_scale: 0.8
   ball_pivot_radii: [0.5] 
 
-
-    
->>>>>>> master

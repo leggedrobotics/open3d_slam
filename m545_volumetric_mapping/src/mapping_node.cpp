@@ -6,12 +6,19 @@
  */
 #include <open3d/Open3D.h>
 #include <open3d/pipelines/registration/Registration.h>
+#include <open3d/geometry/Image.h>
+#include <open3d/geometry/PointCloud.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+
 #include "m545_volumetric_mapping/Parameters.hpp"
 #include "m545_volumetric_mapping/frames.hpp"
 #include "m545_volumetric_mapping/helpers.hpp"
 #include "m545_volumetric_mapping/Mapper.hpp"
 #include "m545_volumetric_mapping/Mesher.hpp"
-
+#include "m545_volumetric_mapping/Projection.hpp"
+#include "m545_volumetric_mapping/CvImage.hpp"
 #include "m545_volumetric_mapping/Odometry.hpp"
 #include <m545_volumetric_mapping_msgs/PolygonMesh.h>
 
@@ -19,21 +26,27 @@
 #include <ros/ros.h>
 
 #include <sensor_msgs/PointCloud2.h>
-
 #include <tf2_ros/transform_broadcaster.h>
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/image_encodings.h>
 #include <nav_msgs/Odometry.h>
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
+#include <Eigen/Core>
 
 using namespace m545_mapping::frames;
 open3d::geometry::PointCloud cloudPrev;
 ros::NodeHandlePtr nh;
 std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
-ros::Publisher refPub, subsampledPub, mapPub, localMapPub, meshPub;
+ros::Publisher refPub, subsampledPub, mapPub, localMapPub, meshPub, colorCloudPub;
 std::shared_ptr<m545_mapping::Mesher> mesher;
 std::shared_ptr<m545_mapping::LidarOdometry> odometry;
 std::shared_ptr<m545_mapping::Mapper> mapper;
 m545_mapping::MapperParameters mapperParams;
 m545_mapping::LocalMapParameters localMapParams;
 m545_mapping::MesherParameters mesherParams;
+m545_mapping::ProjectionParameters projectionParams;
+
 
 bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
 	odometry->addRangeScan(cloud, timestamp);
@@ -113,6 +126,37 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 
 }
 
+//yidan
+void synchronizeCallback(const sensor_msgs::PointCloud2ConstPtr& cloudmsg, const sensor_msgs::ImageConstPtr& imagemsg) {
+
+    open3d::geometry::PointCloud pointCloud;
+    sensor_msgs::PointCloud2 colorCloud;
+    open3d_conversions::rosToOpen3d(cloudmsg, pointCloud, true);
+    ros::Time timestamp = cloudmsg->header.stamp;
+    std::vector<Eigen::Vector2i> pixels(pointCloud.points_.size());
+    Eigen::Matrix<double, 3, 1> zeroPoint = Eigen::Vector3d::Zero();
+
+//    std::vector<Eigen::Matrix<double, 3, 1>> pointCloud_points_crop;
+//
+//    for (int i = 0; i < pointCloud.points_.size(); i++) {
+//        if(pointCloud.points_[i] != zeroPoint) {
+//            pointCloud_points_crop.push_back(pointCloud.points_[i]);
+//        }
+//    }
+    pixels = projectionLidarToPixel(pointCloud.points_,  projectionParams.K, projectionParams.D, projectionParams.quaternion, projectionParams.translation);
+    pointCloud.colors_ = imageConversion(imagemsg, pixels, sensor_msgs::image_encodings::RGB8);
+//    std::cout << "cloudsize" << pointCloud.colors_.size() <<std::endl;
+//    for (int i = 0; i < pointCloud.points_.size(); i++) {
+//        std::cout << "color:" << pointCloud.colors_[i] << std::endl;
+//    }
+//    std::cout << "colors" << pointCloud.colors_[10] <<std::endl;
+
+    m545_mapping::publishCloud(pointCloud, m545_mapping::frames::rangeSensorFrame, timestamp, colorCloudPub);
+    mappingUpdateIfMapperNotBusy(pointCloud, timestamp);
+
+}
+
+
 int main(int argc, char **argv) {
 	ros::init(argc, argv, "lidar_odometry_mapping_node");
 	nh.reset(new ros::NodeHandle("~"));
@@ -120,14 +164,22 @@ int main(int argc, char **argv) {
 	const std::string cloudTopic = nh->param<std::string>("cloud_topic", "");
 	ros::Subscriber cloudSub = nh->subscribe(cloudTopic, 100, &cloudCallback);
 
+    //yidan
+    const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
+    std::cout << "loading params from: " << paramFile << "\n";
+    m545_mapping::loadParameters(paramFile, &projectionParams);
+    message_filters::Subscriber<sensor_msgs::PointCloud2> cloud_sub(*nh, "/ouster_points_self_filtered", 1);
+    message_filters::Subscriber<sensor_msgs::Image> image_sub(*nh, "/camMainView/Downsampled", 1);
+    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::PointCloud2, sensor_msgs::Image> MySyncPolicy;
+    message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), cloud_sub, image_sub);
+    sync.registerCallback(boost::bind(&synchronizeCallback, _1, _2));
+
 	refPub = nh->advertise<sensor_msgs::PointCloud2>("reference", 1, true);
 	subsampledPub = nh->advertise<sensor_msgs::PointCloud2>("subsampled", 1, true);
 	mapPub = nh->advertise<sensor_msgs::PointCloud2>("map", 1, true);
 	localMapPub = nh->advertise<sensor_msgs::PointCloud2>("local_map", 1, true);
 	meshPub = nh->advertise<m545_volumetric_mapping_msgs::PolygonMesh>("mesh", 1, true);
-
-	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
-	std::cout << "loading params from: " << paramFile << "\n";
+    colorCloudPub = nh->advertise<sensor_msgs::PointCloud2>("color_cloud", 1, true);
 
 	m545_mapping::OdometryParameters odometryParams;
 	m545_mapping::loadParameters(paramFile, &odometryParams);

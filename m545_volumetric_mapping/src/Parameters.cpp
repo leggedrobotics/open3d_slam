@@ -97,7 +97,6 @@ void loadParameters(const YAML::Node &node, OdometryParameters *p){
 }
 
 
-<<<<<<< HEAD
 void loadParameters(const std::string &filename, ProjectionParameters *p){
 
     YAML::Node basenode = YAML::LoadFile(filename);
@@ -141,7 +140,7 @@ void loadParameters(const YAML::Node &nProj, ProjectionParameters *p){
     p->translation.z() = vtran[2];
 }
 
-=======
+
 void loadParameters(const YAML::Node &n, MesherParameters *p) {
 
 	p->strategy_ = mesherStrategyNames.at(n["strategy"].as<std::string>());
@@ -165,7 +164,7 @@ void loadParameters(const std::string &filename, MesherParameters *p) {
 
 	loadParameters(basenode["mesher"], p);
 }
->>>>>>> master
+
 
 } // namespace m545_mapping
 

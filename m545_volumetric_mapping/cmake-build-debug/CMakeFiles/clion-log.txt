@@ -1,23 +1,10 @@
 /snap/clion/169/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_DEPENDS_USE_COMPILER=FALSE -G "CodeBlocks - Unix Makefiles" /home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping
--- The C compiler identification is GNU 9.3.0
--- The CXX compiler identification is GNU 9.3.0
--- Detecting C compiler ABI info
--- Detecting C compiler ABI info - done
--- Check for working C compiler: /usr/bin/cc - skipped
--- Detecting C compile features
--- Detecting C compile features - done
--- Detecting CXX compiler ABI info
--- Detecting CXX compiler ABI info - done
--- Check for working CXX compiler: /usr/bin/c++ - skipped
--- Detecting CXX compile features
--- Detecting CXX compile features - done
 -- Using CATKIN_DEVEL_PREFIX: /home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/cmake-build-debug/devel
--- Using CMAKE_PREFIX_PATH: /home/helecomika/sp_ws/devel;/opt/ros/noetic
--- This workspace overlays: /home/helecomika/sp_ws/devel;/opt/ros/noetic
+-- Using CMAKE_PREFIX_PATH: /home/helecomika/catkin_ws/devel;/opt/ros/noetic
+-- This workspace overlays: /home/helecomika/catkin_ws/devel;/opt/ros/noetic
 -- Found PythonInterp: /usr/bin/python3 (found suitable version "3.8.10", minimum required is "3") 
 -- Using PYTHON_EXECUTABLE: /usr/bin/python3
 -- Using Debian Python package layout
--- Found PY_em: /usr/lib/python3/dist-packages/em.py  
 -- Using empy: /usr/lib/python3/dist-packages/em.py
 -- Using CATKIN_ENABLE_TESTING: ON
 -- Call enable_testing()
@@ -50,11 +37,26 @@ CMake Deprecation Warning at /usr/src/googletest/googletest/CMakeLists.txt:56 (c
 
 
 -- Found PythonInterp: /usr/bin/python3 (found version "3.8.10") 
--- Found Threads: TRUE  
 -- Using Python nosetests: /usr/bin/nosetests3
 -- catkin 0.8.10
 -- BUILD_SHARED_LIBS is on
--- Using these message generators: gencpp;geneus;genlisp;gennodejs;genpy
--- Configuring done
--- Generating done
--- Build files have been written to: /home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/cmake-build-debug
+-- Could NOT find open3d_conversions (missing: open3d_conversions_DIR)
+-- Could not find the required component 'open3d_conversions'. The following CMake error indicates that you either need to install the package with the same name or change your environment so that it can be found.
+CMake Error at /opt/ros/noetic/share/catkin/cmake/catkinConfig.cmake:83 (find_package):
+  Could not find a package configuration file provided by
+  "open3d_conversions" with any of the following names:
+
+    open3d_conversionsConfig.cmake
+    open3d_conversions-config.cmake
+
+  Add the installation prefix of "open3d_conversions" to CMAKE_PREFIX_PATH or
+  set "open3d_conversions_DIR" to a directory containing one of the above
+  files.  If "open3d_conversions" provides a separate development package or
+  SDK, be sure it has been installed.
+Call Stack (most recent call first):
+  CMakeLists.txt:33 (find_package)
+
+
+-- Configuring incomplete, errors occurred!
+See also "/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/cmake-build-debug/CMakeFiles/CMakeOutput.log".
+See also "/home/helecomika/sp_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/cmake-build-debug/CMakeFiles/CMakeError.log".

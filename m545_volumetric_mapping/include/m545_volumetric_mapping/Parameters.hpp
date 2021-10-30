@@ -68,7 +68,7 @@ struct LocalMapParameters {
 	Eigen::Vector3d cropBoxHighBound_ = Eigen::Vector3d(50.0,50.0,1e3);
 };
 
-<<<<<<< HEAD
+
 struct ProjectionParameters {
     Eigen::Matrix<double, 3, 3, Eigen::RowMajor> K;
     Eigen::Matrix<double, 5, 1> D;
@@ -78,7 +78,6 @@ struct ProjectionParameters {
 //    Eigen::MatrixXd RT;
 };
 
-=======
 struct MesherParameters{
 	bool isComputeMesh_ = false;
 	double voxelSize_ = 0.05;
@@ -92,8 +91,6 @@ struct MesherParameters{
 };
 
 
-
->>>>>>> master
 void loadParameters(const std::string &filename, IcpParameters *p);
 void loadParameters(const YAML::Node &node, IcpParameters *p);
 void loadParameters(const std::string &filename, MapperParameters *p);
@@ -102,12 +99,10 @@ void loadParameters(const std::string &filename, LocalMapParameters *p);
 void loadParameters(const YAML::Node &node, LocalMapParameters *p);
 void loadParameters(const std::string &filename, OdometryParameters *p);
 void loadParameters(const YAML::Node &node, OdometryParameters *p);
-<<<<<<< HEAD
 void loadParameters(const std::string &filename, ProjectionParameters *p);
 void loadParameters(const YAML::Node &node, ProjectionParameters *p);
-=======
 void loadParameters(const YAML::Node &n, MesherParameters *p);
 void loadParameters(const std::string &filename, MesherParameters *p);
->>>>>>> master
+
 
 } // namespace m545_mapping

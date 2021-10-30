@@ -50,9 +50,6 @@ local_map:
   crop_box_max_z: 100.0
   
 
-<<<<<<< HEAD
-    
-=======
 mesher:
   is_compute_mesh: false
   voxel_size: 0.2
@@ -63,5 +60,3 @@ mesher:
   poisson_min_density: -0.5
   poisson_scale: 0.8
   ball_pivot_radii: [0.5] 
-    
->>>>>>> master
