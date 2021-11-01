@@ -10,6 +10,9 @@
 #include <algorithm>
 #include <numeric>
 #include <utility>
+#include <open3d/pipelines/registration/FastGlobalRegistration.h>
+#include <open3d/pipelines/registration/Registration.h>
+
 
 namespace m545_mapping {
 
@@ -104,6 +107,15 @@ bool Submap::isEmpty() const {
 	return map_.points_.empty();
 }
 
+void Submap::computeFeatures() {
+	const int knn = 5;
+	feature_ = open3d::pipelines::registration::ComputeFPFHFeature(map_, open3d::geometry::KDTreeSearchParamKNN(knn));
+}
+
+const Submap::Feature& Submap::getFeatures() const {
+	return *feature_;
+}
+
 /////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////
@@ -137,7 +149,8 @@ void SubmapCollection::updateActiveSubmap() {
 	}
 	const size_t closestMapIdx = findClosestSubmap(mapToRangeSensor_);
 	Eigen::Vector3d submapPosition = submaps_.at(closestMapIdx).getMapToSubmap().translation();
-	const bool isOriginWithinRange = (mapToRangeSensor_.translation() - submapPosition).norm() < params_.submaps_.radius_;
+	const bool isOriginWithinRange = (mapToRangeSensor_.translation() - submapPosition).norm()
+			< params_.submaps_.radius_;
 	if (isOriginWithinRange) {
 		activeSubmapIdx_ = closestMapIdx;
 	} else {
@@ -186,7 +199,10 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 	// either different one is active or new one is created
 	const bool isActiveSubmapChanged = prevActiveSubmapIdx != activeSubmapIdx_;
 	if (isActiveSubmapChanged) {
+		std::lock_guard<std::mutex> lck(featureComputationMutex_);
 		submaps_.at(prevActiveSubmapIdx).insertScan(rawScan, preProcessedScan, mapToRangeSensor);
+		isFinishedSubmap_ = true;
+		lastFinishedSubmapIdx_ = prevActiveSubmapIdx;
 	}
 	submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor);
 	++numScansMergedInActiveSubmap_;
@@ -198,6 +214,73 @@ void SubmapCollection::setParameters(const MapperParameters &p) {
 	for (auto &submap : submaps_) {
 		submap.setParameters(p);
 	}
+}
+
+bool SubmapCollection::isFinishedSubmap() const {
+	return isFinishedSubmap_;
+}
+
+bool SubmapCollection::isBuildingLoopClosureConstraints()const {
+	return isBuildingLoopClosureConstraints_;
+}
+
+void SubmapCollection::computeFeaturesInLastFinishedSubmap() {
+	std::lock_guard<std::mutex> lck(featureComputationMutex_);
+	Timer t("feature computation");
+
+	isFinishedSubmap_ = false;
+	std::cout << "computing features for submap: " << lastFinishedSubmapIdx_ << std::endl;
+	submaps_.at(lastFinishedSubmapIdx_).computeFeatures();
+}
+
+void SubmapCollection::buildLoopClosureConstraints() {
+	std::lock_guard<std::mutex> lck(loopClosureConstraintMutex_);
+	isBuildingLoopClosureConstraints_=true;
+	// look at the last submap finished
+	// iterate over all submaps, except the active one
+	// prune the search!!!!
+	// do the fast matching
+	// refine with icp
+	Timer t("loop closing");
+
+	using namespace open3d::pipelines::registration;
+	FastGlobalRegistrationOption options;
+
+	const auto &lastBuiltSubmap = submaps_.at(lastFinishedSubmapIdx_);
+	const auto closeSubmapsIdxs = std::move(getCloseSubmapsIdxs(mapToRangeSensor_));
+
+	for (const auto id : closeSubmapsIdxs) {
+		std::cout << "computing  for submap: "<< id<<"\n";
+		const auto &source = lastBuiltSubmap.getMap();
+		const auto &sourceFeature = lastBuiltSubmap.getFeatures();
+		const auto &candidateSubmap = submaps_.at(id);
+		const auto &target = candidateSubmap.getMap();
+		const auto &targetFeature = candidateSubmap.getFeatures();
+		const auto res = FastGlobalRegistration(source, target, sourceFeature, targetFeature, options);
+		std::cout << "registration result of map " <<lastFinishedSubmapIdx_ << "with submap: " << id << ":";
+		std::cout << "fitness: "<< res.fitness_ << ", rmse: " << res.inlier_rmse_ << "\n";
+	}
+	isBuildingLoopClosureConstraints_=false;
+}
+
+std::vector<size_t> SubmapCollection::getCloseSubmapsIdxs(const Eigen::Isometry3d &mapToRangeSensor) const {
+	std::vector<size_t> idxs;
+	const size_t nSubmaps = submaps_.size();
+	idxs.reserve(nSubmaps);
+	for (size_t i = 0; i < nSubmaps; ++i) {
+		if (i == lastFinishedSubmapIdx_ || i == activeSubmapIdx_) {
+			continue;
+		}
+
+		const bool isTooFar = (mapToRangeSensor_.translation() - submaps_.at(i).getMapToSubmap().translation()).norm()
+				> params_.submaps_.radius_ * 2.0;
+		if (isTooFar) {
+			continue;
+		}
+
+		idxs.push_back(i);
+	}
+	return idxs;
 }
 
 } // namespace m545_mapping

@@ -5,7 +5,6 @@
  *      Author: jelavice
  */
 #include <open3d/Open3D.h>
-#include <open3d/pipelines/registration/Registration.h>
 #include "m545_volumetric_mapping/Parameters.hpp"
 #include "m545_volumetric_mapping/frames.hpp"
 #include "m545_volumetric_mapping/helpers.hpp"
@@ -38,7 +37,7 @@ std::shared_ptr<m545_mapping::Mapper> mapper;
 m545_mapping::MapperParameters mapperParams;
 m545_mapping::LocalMapParameters localMapParams;
 m545_mapping::MesherParameters mesherParams;
-double avgTime=0.0;
+double avgTime = 0.0;
 int count = 0;
 bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
 	odometry->addRangeScan(cloud, timestamp);
@@ -56,20 +55,23 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
 	{
 		m545_mapping::Timer timer;
 		mapper->addRangeMeasurement(cloud, timestamp);
-		avgTime+= timer.elapsedMsec();
-		++count;
-		std::cout << "Mapping step avg: " << avgTime / count <<"\n";
+//		avgTime += timer.elapsedMsec();
+//		++count;
+//		std::cout << "Mapping step avg: " << avgTime / count << "\n";
 	}
 	m545_mapping::publishTfTransform(mapper->getMapToOdom().matrix(), timestamp, mapFrame, odomFrame,
 			tfBroadcaster.get());
 
 	m545_mapping::publishCloud(mapper->getAssembledMap(), m545_mapping::frames::mapFrame, timestamp, mapPub);
 
-	m545_mapping::publishCloud(mapper->getActiveSubmap().toRemove_, m545_mapping::frames::mapFrame, timestamp, debugPub);
-	m545_mapping::publishCloud(mapper->getActiveSubmap().scanRef_, m545_mapping::frames::mapFrame, timestamp, debugPub2);
+	m545_mapping::publishCloud(mapper->getActiveSubmap().toRemove_, m545_mapping::frames::mapFrame, timestamp,
+			debugPub);
+	m545_mapping::publishCloud(mapper->getActiveSubmap().scanRef_, m545_mapping::frames::mapFrame, timestamp,
+			debugPub2);
 	m545_mapping::publishCloud(mapper->getDenseMap(), m545_mapping::frames::mapFrame, timestamp, localMapPub);
-	m545_mapping::publishSubmapCoordinateAxes(mapper->getSubmaps(),m545_mapping::frames::mapFrame,timestamp,submapOriginsPub);
-	if(submapPub.getNumSubscribers()>0){
+	m545_mapping::publishSubmapCoordinateAxes(mapper->getSubmaps(), m545_mapping::frames::mapFrame, timestamp,
+			submapOriginsPub);
+	if (submapPub.getNumSubscribers() > 0) {
 		open3d::geometry::PointCloud cloud;
 		m545_mapping::assembleColoredPointCloud(mapper->getSubmaps(), &cloud);
 		m545_mapping::publishCloud(cloud, m545_mapping::frames::mapFrame, timestamp, submapPub);
@@ -94,6 +96,13 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 			mesher->setCurrentPose(mapper->getMapToRangeSensor());
 			mesher->buildMeshFromCloud(*downSampledMap);
 			m545_mapping::publishMesh(mesher->getMesh(), mapFrame, timestamp, meshPub);
+		});
+		t.detach();
+	}
+
+	if (mapper->isReadyForLoopClosure()) {
+		std::thread t([]() {
+			mapper->attemptLoopClosures();
 		});
 		t.detach();
 	}
@@ -137,7 +146,7 @@ int main(int argc, char **argv) {
 	debugPub = nh->advertise<sensor_msgs::PointCloud2>("debug", 1, true);
 	debugPub2 = nh->advertise<sensor_msgs::PointCloud2>("debug2", 1, true);
 	submapPub = nh->advertise<sensor_msgs::PointCloud2>("submaps", 1, true);
-	submapOriginsPub= nh->advertise<visualization_msgs::MarkerArray>("submap_origins", 1, true);
+	submapOriginsPub = nh->advertise<visualization_msgs::MarkerArray>("submap_origins", 1, true);
 
 	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
 	std::cout << "loading params from: " << paramFile << "\n";

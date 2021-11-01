@@ -183,6 +183,18 @@ bool Mapper::isManipulatingMap() const {
 	return isManipulatingMap_;
 }
 
+void Mapper::attemptLoopClosures(){
+	submaps_.computeFeaturesInLastFinishedSubmap();
+
+	if(!submaps_.isBuildingLoopClosureConstraints()){
+		submaps_.buildLoopClosureConstraints();
+	}
+}
+
+bool Mapper::isReadyForLoopClosure() const{
+	return submaps_.isFinishedSubmap();
+}
+
 
 
 } /* namespace m545_mapping */

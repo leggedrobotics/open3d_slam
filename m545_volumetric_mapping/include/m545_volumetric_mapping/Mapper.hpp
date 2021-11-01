@@ -39,7 +39,8 @@ public:
 	void setParameters(const MapperParameters &p);
 	bool isMatchingInProgress() const;
 	bool isManipulatingMap() const;
-
+	bool isReadyForLoopClosure()const;
+	void attemptLoopClosures();
 	Eigen::Isometry3d getMapToOdom() const;
 	Eigen::Isometry3d getMapToRangeSensor() const;
 
