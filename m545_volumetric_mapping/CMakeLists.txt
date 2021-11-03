@@ -12,6 +12,7 @@ set(SRC_FILES
   src/helpers.cpp
   src/Mesher.cpp
   src/Odometry.cpp
+  src/Color.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES
