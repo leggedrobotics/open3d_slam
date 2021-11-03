@@ -5,6 +5,8 @@
  *      Author: jelavice
  */
 #include <open3d/Open3D.h>
+#include <open3d/io/PointCloudIO.h>
+#include <open3d/utility/Console.h>
 #include <open3d/pipelines/registration/Registration.h>
 #include <open3d/geometry/Image.h>
 #include <open3d/geometry/PointCloud.h>
@@ -105,6 +107,7 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 }
 
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
+
 	open3d::geometry::PointCloud cloud;
 	open3d_conversions::rosToOpen3d(msg, cloud, true);
 	ros::Time timestamp = msg->header.stamp;
@@ -129,6 +132,7 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 //yidan
 void synchronizeCallback(const sensor_msgs::PointCloud2ConstPtr& cloudmsg, const sensor_msgs::ImageConstPtr& imagemsg) {
 
+//    callbackTime += 1;
     open3d::geometry::PointCloud pointCloud;
     sensor_msgs::PointCloud2 colorCloud;
     open3d_conversions::rosToOpen3d(cloudmsg, pointCloud, true);
@@ -145,6 +149,7 @@ void synchronizeCallback(const sensor_msgs::PointCloud2ConstPtr& cloudmsg, const
 //    }
     pixels = projectionLidarToPixel(pointCloud.points_,  projectionParams.K, projectionParams.D, projectionParams.quaternion, projectionParams.translation);
     pointCloud.colors_ = imageConversion(imagemsg, pixels, sensor_msgs::image_encodings::RGB8);
+
 //    std::cout << "cloudsize" << pointCloud.colors_.size() <<std::endl;
 //    for (int i = 0; i < pointCloud.points_.size(); i++) {
 //        std::cout << "color:" << pointCloud.colors_[i] << std::endl;
@@ -153,6 +158,9 @@ void synchronizeCallback(const sensor_msgs::PointCloud2ConstPtr& cloudmsg, const
 
     m545_mapping::publishCloud(pointCloud, m545_mapping::frames::rangeSensorFrame, timestamp, colorCloudPub);
     mappingUpdateIfMapperNotBusy(pointCloud, timestamp);
+    auto pcd = std::make_shared<open3d::geometry::PointCloud>(pointCloud);
+    if(!open3d::io::WritePointCloud("pcd_.ply", pointCloud))
+        open3d::utility::LogError("Failed to write to pointcloud");
 
 }
 
@@ -167,6 +175,7 @@ int main(int argc, char **argv) {
     //yidan
     const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
     std::cout << "loading params from: " << paramFile << "\n";
+    const std::string pcdFile = nh->param<std::string>("pointcloud_file_path", "");
     m545_mapping::loadParameters(paramFile, &projectionParams);
     message_filters::Subscriber<sensor_msgs::PointCloud2> cloud_sub(*nh, "/ouster_points_self_filtered", 1);
     message_filters::Subscriber<sensor_msgs::Image> image_sub(*nh, "/camMainView/Downsampled", 1);

@@ -9,6 +9,7 @@
 	<arg name="use_sim_time" default="true" />
 
 	<arg name="parameter_file_path" default="$(find m545_volumetric_mapping)/param/params_ouster_os0_128.yaml"/>
+	<arg name="pointcloud_file_path" default="$(find m545_volumetric_mapping)/pcd"/>
 	<arg name="bag_filename" default="filtered_cloud_and_image.bag" /> 
 	<arg name="bag_filepath" 
 		default="$(find m545_volumetric_mapping)/data/$(arg bag_filename)" /> 

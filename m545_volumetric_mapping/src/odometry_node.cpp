@@ -5,6 +5,7 @@
  *      Author: jelavice
  */
 #include <open3d/Open3D.h>
+#include <iostream>
 #include <open3d/pipelines/registration/Registration.h>
 #include <open3d/geometry/Image.h>
 #include <open3d/geometry/PointCloud.h>
@@ -167,7 +168,7 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 //yidan
 void synchronizeCallback(const sensor_msgs::PointCloud2ConstPtr& cloudmsg, const sensor_msgs::ImageConstPtr& imagemsg) {
 
-	open3d::geometry::PointCloud pointCloud;
+	open3d::geometry::pointCloud pointCloud;
     sensor_msgs::PointCloud2 colorCloud;
 //    sensor_msgs::PointCloud2ConstPtr colorcloudmsg;
 	open3d_conversions::rosToOpen3d(cloudmsg, pointCloud, true);
@@ -196,6 +197,8 @@ void synchronizeCallback(const sensor_msgs::PointCloud2ConstPtr& cloudmsg, const
 
     m545_mapping::publishCloud(pointCloud, m545_mapping::frames::rangeSensorFrame, timestamp, colorCloudPub);
     mappingUpdateIfMapperNotBusy(pointCloud, timestamp);
+//    std::shared_ptr<open3d::geometry::PointCloud> pcd(new open3d::geometry::PointCloud);
+//    open3d::io::WritePointCloud("")
 
 }
 
