@@ -83,7 +83,7 @@ Visualization Manager:
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
-      Size (Pixels): 3
+      Size (Pixels): 2
       Size (m): 0.009999999776482582
       Style: Points
       Topic: /mapping_node/map
@@ -139,7 +139,7 @@ Visualization Manager:
       Value: true
   Enabled: true
   Global Options:
-    Background Color: 238; 238; 236
+    Background Color: 136; 138; 133
     Default Light: true
     Fixed Frame: map
     Frame Rate: 30
@@ -165,7 +165,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 98.82242584228516
+      Distance: 52.77056121826172
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -181,9 +181,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8297971487045288
+      Pitch: 0.9347970485687256
       Target Frame: <Fixed Frame>
-      Yaw: 1.8940776586532593
+      Yaw: 1.759077787399292
     Saved: ~
 Window Geometry:
   Displays:

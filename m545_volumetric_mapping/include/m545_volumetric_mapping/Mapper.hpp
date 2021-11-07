@@ -17,50 +17,50 @@
 namespace m545_mapping{
 
 
-class Mapper {
+    class Mapper {
 
-public:
+    public:
 
-	using PointCloud = open3d::geometry::PointCloud;
+        using PointCloud = open3d::geometry::PointCloud;
 
-	Mapper();
-	~Mapper()=default;
+        Mapper();
+        ~Mapper()=default;
 
-	void addRangeMeasurement(const PointCloud &cloud, const ros::Time &timestamp);
-	const PointCloud &getMap() const;
-	const PointCloud &getDenseMap() const;
-	PointCloud *getMapPtr();
-	PointCloud *getDenseMapPtr();
-	void setParameters(const MapperParameters &p);
-	bool isMatchingInProgress() const;
-	bool isManipulatingMap() const;
+        void addRangeMeasurement(const PointCloud &cloud, const ros::Time &timestamp);
+        const PointCloud &getMap() const;
+        const PointCloud &getDenseMap() const;
+        PointCloud *getMapPtr();
+        PointCloud *getDenseMapPtr();
+        void setParameters(const MapperParameters &p);
+        bool isMatchingInProgress() const;
+        bool isManipulatingMap() const;
 
-	Eigen::Isometry3d getMapToOdom() const;
-	Eigen::Isometry3d getMapToRangeSensor() const;
+        Eigen::Isometry3d getMapToOdom() const;
+        Eigen::Isometry3d getMapToRangeSensor() const;
 
-private:
+    private:
 
-	bool lookupTransform(const std::string& target_frame, const std::string& source_frame,
-		    const ros::Time& time, Eigen::Isometry3d *transform) const;
-	void update(const MapperParameters &p);
-	void estimateNormalsIfNeeded(PointCloud *pcl) const;
+        bool lookupTransform(const std::string& target_frame, const std::string& source_frame,
+                             const ros::Time& time, Eigen::Isometry3d *transform) const;
+        void update(const MapperParameters &p);
+        void estimateNormalsIfNeeded(PointCloud *pcl) const;
 
-  bool isMatchingInProgress_ = false;
-  bool isManipulatingMap_ = false;
+        bool isMatchingInProgress_ = false;
+        bool isManipulatingMap_ = false;
 
-  PointCloud map_;
-  PointCloud denseMap_;
-  tf2_ros::Buffer tfBuffer_;
-  tf2_ros::TransformListener tfListener_;
-  ros::Time lastMeasurementTimestamp_;
-  Eigen::Isometry3d mapToOdom_ = Eigen::Isometry3d::Identity();
-  Eigen::Isometry3d odomToRangeSensorPrev_ = Eigen::Isometry3d::Identity();
-  Eigen::Isometry3d mapToRangeSensor_ = Eigen::Isometry3d::Identity();
-  MapperParameters params_;
-  open3d::pipelines::registration::ICPConvergenceCriteria icpCriteria_;
-  std::mutex mapManipulationMutex_;
+        PointCloud map_;
+        PointCloud denseMap_;
+        tf2_ros::Buffer tfBuffer_;
+        tf2_ros::TransformListener tfListener_;
+        ros::Time lastMeasurementTimestamp_;
+        Eigen::Isometry3d mapToOdom_ = Eigen::Isometry3d::Identity();
+        Eigen::Isometry3d odomToRangeSensorPrev_ = Eigen::Isometry3d::Identity();
+        Eigen::Isometry3d mapToRangeSensor_ = Eigen::Isometry3d::Identity();
+        MapperParameters params_;
+        open3d::pipelines::registration::ICPConvergenceCriteria icpCriteria_;
+        std::mutex mapManipulationMutex_;
 
 
-};
+    };
 
 } /* namespace m545_mapping */
