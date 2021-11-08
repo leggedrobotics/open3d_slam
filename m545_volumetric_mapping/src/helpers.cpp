@@ -28,10 +28,11 @@ namespace registration = open3d::pipelines::registration;
 class AccumulatedPoint {
 public:
 	AccumulatedPoint() :
-			num_of_points_(0), point_(0.0, 0.0, 0.0), normal_(0.0, 0.0, 0.0), color_(0.0, 0.0, 0.0) {
+			num_of_points_(0), num_of_nonwhite_points_(0), point_(0.0, 0.0, 0.0), normal_(0.0, 0.0, 0.0), color_(0.0, 0.0, 0.0) {
 	}
 
 public:
+    //change on AddPoint
 	void AddPoint(const open3d::geometry::PointCloud &cloud, int index) {
 		point_ += cloud.points_[index];
 		if (cloud.HasNormals()) {
@@ -40,8 +41,21 @@ public:
 				normal_ += cloud.normals_[index];
 			}
 		}
+        Eigen::Matrix<double, 3, 1> White = {1.0, 1.0, 1.0};
 		if (cloud.HasColors()) {
-			color_ += cloud.colors_[index];
+            if (cloud.colors_[index] != White) {
+                if (color_ == White) {
+                    color_ = cloud.colors_[index] * num_of_points_;
+                }
+                else {
+                    color_ += cloud.colors_[index];
+                    num_of_nonwhite_points_++;
+                }
+            }
+//            else if (cloud.colors_[index] == White) {
+//                if (num_of_nonwhite_points_)
+//                    color_ += color_ / num_of_nonwhite_points_;
+//            }
 		}
 		num_of_points_++;
 	}
@@ -56,11 +70,17 @@ public:
 	}
 
 	Eigen::Vector3d GetAverageColor() const {
-		return color_ / double(num_of_points_);
+        Eigen::Matrix<double, 3, 1> noColor = {0.0, 0.0, 0.0};
+        Eigen::Matrix<double, 3, 1> white = {1.0, 1.0, 1.0};
+        if (color_ == noColor)
+            return white;
+        else
+		    return color_ / double(num_of_nonwhite_points_);
 	}
 
 public:
 	int num_of_points_;
+    int num_of_nonwhite_points_;
 	Eigen::Vector3d point_;
 	Eigen::Vector3d normal_;
 	Eigen::Vector3d color_;
@@ -306,6 +326,7 @@ std::shared_ptr<open3d::geometry::PointCloud> voxelizeAroundPosition(double voxe
 			if (has_normals) {
 				output->normals_.push_back(cloud.normals_[i]);
 			}
+            Eigen::Matrix<double, 3, 1> white = {1.0, 1.0, 1.0};
 			if (has_colors) {
 				output->colors_.push_back(cloud.colors_[i]);
 			}

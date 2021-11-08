@@ -82,7 +82,7 @@ namespace m545_mapping {
         cloud2.points_ = posArrayCloud2;
         cloud2.colors_ = colorArrayCloud2;
 
-        return newCloud;
+        return newCloud + cloud2;
 //    return cloud;
 
     }

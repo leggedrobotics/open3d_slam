@@ -36,7 +36,7 @@ std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
 ros::Publisher refPub, subsampledPub, mapPub, localMapPub, meshPub, colorCloudPub;
 std::shared_ptr<m545_mapping::Mesher> mesher;
 std::shared_ptr<m545_mapping::LidarOdometry> odometry;
-std::shared_ptr<m545_mapping::Mapper> mapper, mapper2;
+std::shared_ptr<m545_mapping::Mapper> mapper;
 std::shared_ptr<m545_mapping::Color> color;
 m545_mapping::MapperParameters mapperParams;
 m545_mapping::LocalMapParameters localMapParams;
@@ -55,25 +55,16 @@ bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const 
     return true;
 }
 
-void mappingUpdate(const open3d::geometry::PointCloud &cloud, const open3d::geometry::PointCloud &cloud2, const ros::Time &timestamp) {
+void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
     {
 //		m545_mapping::Timer timer("Mapping step.");
         mapper->addRangeMeasurement(cloud, timestamp);
-        mapper2->addRangeMeasurement(cloud2, timestamp);
     }
     m545_mapping::publishTfTransform(mapper->getMapToOdom().matrix(), timestamp, mapFrame, odomFrame,
                                      tfBroadcaster.get());
-    m545_mapping::publishTfTransform(mapper2->getMapToOdom().matrix(), timestamp, mapFrame, odomFrame,
-                                     tfBroadcaster.get());
-//    align two clouds
-//    const auto transBetweenClouds = open3d::pipelines::registration::RegistrationICP(mapper->getDenseMap(), mapper2->getMap(), 0.2, Eigen::Matrix4d::Identity(),
-//                                                     *m545_mapping::icpObjectiveFactory(m545_mapping::IcpObjectiveNames.at("PointToPlane")), 100);
-//    open3d::geometry::PointCloud transMap = mapper->getDenseMap();
-//    transMap.Transform(transBetweenClouds.transformation_);
-    open3d::geometry::PointCloud map = mapper->getDenseMap() + mapper2->getMap();
-    m545_mapping::publishCloud(mapper->getDenseMap() + mapper2->getMap(), m545_mapping::frames::mapFrame, timestamp, mapPub);
-//    open3d::geometry::PointCloud map2 = mapper->getMap();
-//    m545_mapping::publishCloud(mapper2->getMap(), m545_mapping::frames::mapFrame, timestamp, mapPub);
+
+    open3d::geometry::PointCloud map = mapper->getMap();
+    m545_mapping::publishCloud(mapper->getMap(), m545_mapping::frames::mapFrame, timestamp, mapPub);
 
     if (localMapPub.getNumSubscribers() > 0) {
         open3d::geometry::PointCloud map = mapper->getDenseMap();
@@ -85,10 +76,10 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const open3d::geom
     }
 }
 
-void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, const open3d::geometry::PointCloud &cloud2, const ros::Time &timestamp) {
+void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
     if (!mapper->isMatchingInProgress()) {
-        std::thread t([cloud, cloud2, timestamp]() {
-            mappingUpdate(cloud, cloud2, timestamp);
+        std::thread t([cloud, timestamp]() {
+            mappingUpdate(cloud, timestamp);
         });
         t.detach();
     }
@@ -136,31 +127,26 @@ void synchronizeCallback(const sensor_msgs::PointCloud2ConstPtr& cloudmsg, const
 
     open3d::geometry::PointCloud pointCloud;
     open3d::geometry::PointCloud modifiedCloud;
-    open3d::geometry::PointCloud pointCloud2;
     open3d_conversions::rosToOpen3d(cloudmsg, pointCloud, true);
-//    open3d_conversions::rosToOpen3d(cloudmsg, pointCloud2, true);
     ros::Time timestamp = cloudmsg->header.stamp;
-//    std::vector<Eigen::Vector2i> pixels(pointCloud.points_.size());
+    std::vector<Eigen::Vector2i> pixels(pointCloud.points_.size());
 
 //    pixels = projectionLidarToPixel(pointCloud.points_,  projectionParams.K, projectionParams.D, projectionParams.quaternion, projectionParams.translation);
 //    pointCloud.colors_ = imageConversion(imagemsg, pixels, sensor_msgs::image_encodings::RGB8);
     modifiedCloud = color->projectionAndColor(pointCloud, imagemsg, projectionParams.K, projectionParams.D, projectionParams.quaternion, projectionParams.translation, true);
-    pointCloud2 = color->getCloud2();
+
     if (cloudPrev.IsEmpty()) {
         cloudPrev = modifiedCloud;
-        mappingUpdateIfMapperNotBusy(modifiedCloud, pointCloud2, timestamp);
+        mappingUpdateIfMapperNotBusy(modifiedCloud, timestamp);
         return;
     }
-    if (!computeAndPublishOdometry(pointCloud2, timestamp)) {
+    if (!computeAndPublishOdometry(modifiedCloud, timestamp)) {
         return;
     }
-//    if (!computeAndPublishOdometry(modifiedCloud, timestamp)) {
-//        return;
-//    }
     m545_mapping::publishTfTransform(Eigen::Matrix4d::Identity(), timestamp, rangeSensorFrame, cloudmsg->header.frame_id,
                                      tfBroadcaster.get());
     m545_mapping::publishCloud(modifiedCloud, m545_mapping::frames::rangeSensorFrame, timestamp, colorCloudPub);
-    mappingUpdateIfMapperNotBusy(modifiedCloud, pointCloud2, timestamp);
+    mappingUpdateIfMapperNotBusy(modifiedCloud, timestamp);
 
 }
 
@@ -195,10 +181,8 @@ int main(int argc, char **argv) {
     odometry->setParameters(odometryParams);
 
     mapper = std::make_shared<m545_mapping::Mapper>();
-    mapper2 = std::make_shared<m545_mapping::Mapper>();
     m545_mapping::loadParameters(paramFile, &mapperParams);
     mapper->setParameters(mapperParams);
-    mapper2->setParameters(mapperParams);
 
     m545_mapping::loadParameters(paramFile, &localMapParams);
 
