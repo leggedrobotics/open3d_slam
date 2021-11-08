@@ -29,7 +29,7 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 
 	mapToRangeSensor_ = mapToRangeSensor;
 	auto transformedCloud = transform(mapToRangeSensor.matrix(), preProcessedScan);
-	estimateNormalsIfNeeded(params_.scanMatcher_.kNNnormalEstimation_,transformedCloud.get());
+	estimateNormalsIfNeeded(params_.scanMatcher_.kNNnormalEstimation_, transformedCloud.get());
 	carve(rawScan, mapToRangeSensor, *mapBuilderCropper_, params_.mapBuilder_.carving_, &map_, &carvingTimer_);
 	map_ += *transformedCloud;
 	mapBuilderCropper_->setPose(mapToRangeSensor);
@@ -119,16 +119,20 @@ void Submap::computeFeatures() {
 	const int featureKnn = 100; //todo magic
 	const int normalKnn = 30;
 	sparseMap_ = *(map_.VoxelDownSample(featureVoxelSize));
-	sparseMap_.EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(featureVoxelSize*2.0,normalKnn));
+	sparseMap_.EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(featureVoxelSize * 2.0, normalKnn));
 	sparseMap_.NormalizeNormals();
 	sparseMap_.OrientNormalsTowardsCameraLocation(Eigen::Vector3d::Zero());
 	feature_ = open3d::pipelines::registration::ComputeFPFHFeature(sparseMap_,
-			open3d::geometry::KDTreeSearchParamHybrid(featureVoxelSize * 5,featureKnn));
+			open3d::geometry::KDTreeSearchParamHybrid(featureVoxelSize * 5, featureKnn));
 //	std::cout <<"map num points: " << map_.points_.size() << ", sparse map: " << sparseMap_.points_.size() << "\n";
 }
 
 const Submap::Feature& Submap::getFeatures() const {
 	return *feature_;
+}
+
+void Submap::centerOrigin() {
+	mapToSubmap_.translation() = map_.GetCenter();
 }
 
 /////////////////////////////////////////////////////////////////
@@ -180,6 +184,7 @@ void SubmapCollection::createNewSubmap(const Eigen::Isometry3d &mapToSubmap) {
 	submaps_.emplace_back(std::move(newSubmap));
 	activeSubmapIdx_ = submaps_.size() - 1;
 	numScansMergedInActiveSubmap_ = 0;
+	std::cout << "Created submap: " << activeSubmapIdx_ << std::endl;
 }
 
 size_t SubmapCollection::findClosestSubmap(const Eigen::Isometry3d &mapToRangeSensor) const {
@@ -210,13 +215,17 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 		return true;
 	}
 	const size_t prevActiveSubmapIdx = activeSubmapIdx_;
+//	const size_t prevNumSubmap = submaps_.size();
 	updateActiveSubmap();
 	// either different one is active or new one is created
 	const bool isActiveSubmapChanged = prevActiveSubmapIdx != activeSubmapIdx_;
+//	const bool isNewSubmapCreated = prevNumSubmap != submaps_.size();
 	if (isActiveSubmapChanged) {
 		std::lock_guard<std::mutex> lck(featureComputationMutex_);
 		submaps_.at(prevActiveSubmapIdx).insertScan(rawScan, preProcessedScan, mapToRangeSensor);
+		submaps_.at(prevActiveSubmapIdx).centerOrigin();
 		isFinishedSubmap_ = true;
+		std::cout << "Active submap changed from " << prevActiveSubmapIdx << " to " << activeSubmapIdx_ << "\n";
 		lastFinishedSubmapIdx_ = prevActiveSubmapIdx;
 	}
 	submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor);
@@ -261,26 +270,28 @@ void SubmapCollection::buildLoopClosureConstraints() {
 	using namespace open3d::pipelines::registration;
 	const auto edgeLengthChecker = CorrespondenceCheckerBasedOnEdgeLength(0.5);
 	const auto distanceChecker = CorrespondenceCheckerBasedOnDistance(1.5 * featureVoxelSize);
-//	std::vector<std::reference_wrapper<const CorrespondenceChecker>> checkers{edgeLengthChecker,distanceChecker};
-
-	const auto &lastBuiltSubmap = submaps_.at(lastFinishedSubmapIdx_);
-	const auto closeSubmapsIdxs = std::move(getCloseSubmapsIdxs(mapToRangeSensor_));
-	std::cout << "submaps in the pruned set: " << closeSubmapsIdxs.size() << std::endl;
+	const size_t lastFinishedSubmapIdx = lastFinishedSubmapIdx_;
+	const size_t activeSubmapIdx = activeSubmapIdx_;
+	const auto &lastBuiltSubmap = submaps_.at(lastFinishedSubmapIdx);
+	const auto closeSubmapsIdxs = std::move(
+			getCloseSubmapsIdxs(lastBuiltSubmap.getMapToSubmap(), lastFinishedSubmapIdx, activeSubmapIdx));
+	std::cout << "considering submap " << lastFinishedSubmapIdx << " for loop closure, candidate submaps: "
+			<< closeSubmapsIdxs.size() << std::endl;
 	for (const auto id : closeSubmapsIdxs) {
-		std::cout << "matching submap: " << lastFinishedSubmapIdx_ << " with submap: " << id << "\n";
-		auto source = lastBuiltSubmap.getSparseMap();
+		std::cout << "matching submap: " << lastFinishedSubmapIdx << " with submap: " << id << "\n";
+		const auto &source = lastBuiltSubmap.getSparseMap();
 		const auto &sourceFeature = lastBuiltSubmap.getFeatures();
 		const auto &candidateSubmap = submaps_.at(id);
-		auto target = candidateSubmap.getSparseMap();
+		const auto &target = candidateSubmap.getSparseMap();
 		const auto &targetFeature = candidateSubmap.getFeatures();
 		RegistrationResult ransacResult;
-		while(ransacResult.correspondence_set_.size() < 30 ) {
+		for (int i = 0; i < 1 && ransacResult.correspondence_set_.size() < 20; ++i) {
 			RegistrationResult ransacResult = RegistrationRANSACBasedOnFeatureMatching(source, target, sourceFeature,
 					targetFeature, true, featureVoxelSize * 1.5, TransformationEstimationPointToPoint(false), 3, {
 							distanceChecker, edgeLengthChecker }, RANSACConvergenceCriteria(1000000, 0.99));
 			std::cout << "source features num: " << sourceFeature.Num() << "\n";
 			std::cout << "target features num: " << targetFeature.Num() << "\n";
-			std::cout << "num points source: " << source.points_.size()<< "\n";
+			std::cout << "num points source: " << source.points_.size() << "\n";
 			std::cout << "num points target: " << target.points_.size() << "\n";
 			std::cout << "registered num correspondences: " << ransacResult.correspondence_set_.size() << std::endl;
 			std::cout << "registered with fitness: " << ransacResult.fitness_ << std::endl;
@@ -305,19 +316,20 @@ void SubmapCollection::buildLoopClosureConstraints() {
 	isBuildingLoopClosureConstraints_ = false;
 }
 
-std::vector<size_t> SubmapCollection::getCloseSubmapsIdxs(const Eigen::Isometry3d &mapToRangeSensor) const {
+std::vector<size_t> SubmapCollection::getCloseSubmapsIdxs(const Eigen::Isometry3d &mapToRangeSensor,
+		size_t lastFinishedSubmapIdx, size_t currentActiveSubmapIdx) const {
 	std::vector<size_t> idxs;
 	const size_t nSubmaps = submaps_.size();
 	idxs.reserve(nSubmaps);
 	for (size_t i = 0; i < nSubmaps; ++i) {
-		if (i == lastFinishedSubmapIdx_ || i == activeSubmapIdx_) {
+		if (i == lastFinishedSubmapIdx || i == currentActiveSubmapIdx) {
 			continue;
 		}
 
 		const double distance =
 				(mapToRangeSensor_.translation() - submaps_.at(i).getMapToSubmap().translation()).norm();
-		const bool isTooFar = distance > params_.submaps_.radius_ * 2.0;
-		std::cout << "d: " << distance << std::endl;
+		const bool isTooFar = distance > params_.submaps_.radius_;
+		std::cout << "distance submap to submap " << i << " : " << distance << std::endl;
 		if (isTooFar) {
 			continue;
 		}
