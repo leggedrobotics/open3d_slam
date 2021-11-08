@@ -40,6 +40,7 @@ public:
 	bool isEmpty() const;
 	void computeFeatures();
 	const Feature &getFeatures() const;
+	const PointCloud &getSparseMap() const;
 
 	mutable PointCloud toRemove_;
 	mutable PointCloud scanRef_;
@@ -47,10 +48,11 @@ public:
 
 private:
 	void update(const MapperParameters &mapperParams);
-	void estimateNormalsIfNeeded(PointCloud *pcl) const;
+	void estimateNormalsIfNeeded(int knn, PointCloud *pcl) const;
 	void carve(const PointCloud &rawScan, const Eigen::Isometry3d &mapToRangeSensor, const CroppingVolume &cropper, const SpaceCarvingParameters &params,
 			PointCloud *map, Timer *timer) const;
 
+	PointCloud sparseMap_;
 	PointCloud map_;
 	PointCloud denseMap_;
 	Eigen::Isometry3d mapToSubmap_ = Eigen::Isometry3d::Identity();

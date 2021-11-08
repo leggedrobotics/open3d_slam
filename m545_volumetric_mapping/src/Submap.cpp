@@ -12,9 +12,13 @@
 #include <utility>
 #include <open3d/pipelines/registration/FastGlobalRegistration.h>
 #include <open3d/pipelines/registration/Registration.h>
-
+#include <open3d/io/PointCloudIO.h>
 
 namespace m545_mapping {
+
+namespace {
+const double featureVoxelSize = 0.5;
+}
 
 Submap::Submap() {
 	update(params_);
@@ -25,7 +29,7 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 
 	mapToRangeSensor_ = mapToRangeSensor;
 	auto transformedCloud = transform(mapToRangeSensor.matrix(), preProcessedScan);
-	estimateNormalsIfNeeded(transformedCloud.get());
+	estimateNormalsIfNeeded(params_.scanMatcher_.kNNnormalEstimation_,transformedCloud.get());
 	carve(rawScan, mapToRangeSensor, *mapBuilderCropper_, params_.mapBuilder_.carving_, &map_, &carvingTimer_);
 	map_ += *transformedCloud;
 	mapBuilderCropper_->setPose(mapToRangeSensor);
@@ -63,9 +67,9 @@ void Submap::carve(const PointCloud &rawScan, const Eigen::Isometry3d &mapToRang
 	timer->reset();
 }
 
-void Submap::estimateNormalsIfNeeded(PointCloud *pcl) const {
+void Submap::estimateNormalsIfNeeded(int knn, PointCloud *pcl) const {
 	if (!pcl->HasNormals() && params_.scanMatcher_.icpObjective_ == IcpObjective::PointToPlane) {
-		estimateNormals(params_.scanMatcher_.kNNnormalEstimation_, pcl);
+		estimateNormals(knn, pcl);
 		pcl->NormalizeNormals(); //todo, dunno if I need this
 	}
 }
@@ -94,6 +98,10 @@ const Submap::PointCloud& Submap::getDenseMap() const {
 	return denseMap_;
 }
 
+const Submap::PointCloud& Submap::getSparseMap() const {
+	return sparseMap_;
+}
+
 void Submap::setMapToSubmap(const Eigen::Isometry3d &T) {
 	mapToSubmap_ = T;
 }
@@ -108,8 +116,15 @@ bool Submap::isEmpty() const {
 }
 
 void Submap::computeFeatures() {
-	const int knn = 5;
-	feature_ = open3d::pipelines::registration::ComputeFPFHFeature(map_, open3d::geometry::KDTreeSearchParamKNN(knn));
+	const int featureKnn = 100; //todo magic
+	const int normalKnn = 30;
+	sparseMap_ = *(map_.VoxelDownSample(featureVoxelSize));
+	sparseMap_.EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(featureVoxelSize*2.0,normalKnn));
+	sparseMap_.NormalizeNormals();
+	sparseMap_.OrientNormalsTowardsCameraLocation(Eigen::Vector3d::Zero());
+	feature_ = open3d::pipelines::registration::ComputeFPFHFeature(sparseMap_,
+			open3d::geometry::KDTreeSearchParamHybrid(featureVoxelSize * 5,featureKnn));
+//	std::cout <<"map num points: " << map_.points_.size() << ", sparse map: " << sparseMap_.points_.size() << "\n";
 }
 
 const Submap::Feature& Submap::getFeatures() const {
@@ -220,7 +235,7 @@ bool SubmapCollection::isFinishedSubmap() const {
 	return isFinishedSubmap_;
 }
 
-bool SubmapCollection::isBuildingLoopClosureConstraints()const {
+bool SubmapCollection::isBuildingLoopClosureConstraints() const {
 	return isBuildingLoopClosureConstraints_;
 }
 
@@ -234,33 +249,60 @@ void SubmapCollection::computeFeaturesInLastFinishedSubmap() {
 }
 
 void SubmapCollection::buildLoopClosureConstraints() {
+
 	std::lock_guard<std::mutex> lck(loopClosureConstraintMutex_);
-	isBuildingLoopClosureConstraints_=true;
+	isBuildingLoopClosureConstraints_ = true;
 	// look at the last submap finished
 	// iterate over all submaps, except the active one
 	// prune the search!!!!
 	// do the fast matching
 	// refine with icp
 	Timer t("loop closing");
-
 	using namespace open3d::pipelines::registration;
-	FastGlobalRegistrationOption options;
+	const auto edgeLengthChecker = CorrespondenceCheckerBasedOnEdgeLength(0.5);
+	const auto distanceChecker = CorrespondenceCheckerBasedOnDistance(1.5 * featureVoxelSize);
+//	std::vector<std::reference_wrapper<const CorrespondenceChecker>> checkers{edgeLengthChecker,distanceChecker};
 
 	const auto &lastBuiltSubmap = submaps_.at(lastFinishedSubmapIdx_);
 	const auto closeSubmapsIdxs = std::move(getCloseSubmapsIdxs(mapToRangeSensor_));
-
+	std::cout << "submaps in the pruned set: " << closeSubmapsIdxs.size() << std::endl;
 	for (const auto id : closeSubmapsIdxs) {
-		std::cout << "computing  for submap: "<< id<<"\n";
-		const auto &source = lastBuiltSubmap.getMap();
+		std::cout << "matching submap: " << lastFinishedSubmapIdx_ << " with submap: " << id << "\n";
+		auto source = lastBuiltSubmap.getSparseMap();
 		const auto &sourceFeature = lastBuiltSubmap.getFeatures();
 		const auto &candidateSubmap = submaps_.at(id);
-		const auto &target = candidateSubmap.getMap();
+		auto target = candidateSubmap.getSparseMap();
 		const auto &targetFeature = candidateSubmap.getFeatures();
-		const auto res = FastGlobalRegistration(source, target, sourceFeature, targetFeature, options);
-		std::cout << "registration result of map " <<lastFinishedSubmapIdx_ << "with submap: " << id << ":";
-		std::cout << "fitness: "<< res.fitness_ << ", rmse: " << res.inlier_rmse_ << "\n";
+		RegistrationResult ransacResult;
+		while(ransacResult.correspondence_set_.size() < 30 ) {
+			RegistrationResult ransacResult = RegistrationRANSACBasedOnFeatureMatching(source, target, sourceFeature,
+					targetFeature, true, featureVoxelSize * 1.5, TransformationEstimationPointToPoint(false), 3, {
+							distanceChecker, edgeLengthChecker }, RANSACConvergenceCriteria(1000000, 0.99));
+			std::cout << "source features num: " << sourceFeature.Num() << "\n";
+			std::cout << "target features num: " << targetFeature.Num() << "\n";
+			std::cout << "num points source: " << source.points_.size()<< "\n";
+			std::cout << "num points target: " << target.points_.size() << "\n";
+			std::cout << "registered num correspondences: " << ransacResult.correspondence_set_.size() << std::endl;
+			std::cout << "registered with fitness: " << ransacResult.fitness_ << std::endl;
+			std::cout << "registered with rmse: " << ransacResult.inlier_rmse_ << std::endl;
+			std::cout << "registered with transformation: \n" << ransacResult.transformation_ << std::endl;
+		}
+//
+//		const std::string folder =
+//				"/home/jelavice/catkin_workspaces/open3d_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/data/";
+//		open3d::io::WritePointCloudToPCD(folder + "target.pcd", target, open3d::io::WritePointCloudOption());
+//		open3d::io::WritePointCloudToPCD(folder + "source.pcd", source, open3d::io::WritePointCloudOption());
+//
+//		auto sourceCopy = source;
+//		auto registeredGlobal = source.Transform(ransacResult.transformation_);
+////		auto registeredRefined = sourceCopy.Transform(result.transformation_);
+//
+//		open3d::io::WritePointCloudToPCD(folder + "source_global.pcd", registeredGlobal,
+//				open3d::io::WritePointCloudOption());
+////		open3d::io::WritePointCloudToPCD(folder + "source_refined.pcd", registeredRefined, open3d::io::WritePointCloudOption());
+
 	}
-	isBuildingLoopClosureConstraints_=false;
+	isBuildingLoopClosureConstraints_ = false;
 }
 
 std::vector<size_t> SubmapCollection::getCloseSubmapsIdxs(const Eigen::Isometry3d &mapToRangeSensor) const {
@@ -272,8 +314,10 @@ std::vector<size_t> SubmapCollection::getCloseSubmapsIdxs(const Eigen::Isometry3
 			continue;
 		}
 
-		const bool isTooFar = (mapToRangeSensor_.translation() - submaps_.at(i).getMapToSubmap().translation()).norm()
-				> params_.submaps_.radius_ * 2.0;
+		const double distance =
+				(mapToRangeSensor_.translation() - submaps_.at(i).getMapToSubmap().translation()).norm();
+		const bool isTooFar = distance > params_.submaps_.radius_ * 2.0;
+		std::cout << "d: " << distance << std::endl;
 		if (isTooFar) {
 			continue;
 		}

@@ -79,6 +79,7 @@ struct MapBuilderParameters{
 struct SubmapParameters{
 	double radius_=20.0;
 	int minNumRangeData_ = 5;
+	double featureVoxelSize_ = 0.5;
 };
 
 struct MapperParameters {
