@@ -16,7 +16,7 @@ mapping:
     min_refinement_fitness: 0.7
     scan_matching:
       icp_objective: PointToPlane
-      max_correspondence_dist: 3.0
+      max_correspondence_dist: 1.0
       knn_normal_estimation: 5
       max_n_iter: 50
     scan_processing:
@@ -25,7 +25,7 @@ mapping:
       cropping_radius: 30.0
 
   submaps:
-    size: 15
+    size: 30
     min_num_range_data: 10
 
   map_builder:
