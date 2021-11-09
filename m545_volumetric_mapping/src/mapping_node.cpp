@@ -26,6 +26,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
 
+using namespace m545_mapping;
 using namespace m545_mapping::frames;
 open3d::geometry::PointCloud cloudPrev;
 ros::NodeHandlePtr nh;
@@ -40,9 +41,10 @@ m545_mapping::MesherParameters mesherParams;
 double avgTime = 0.0;
 int count = 0;
 bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
-	odometry->addRangeScan(cloud, timestamp);
+	const Time time = fromRos(timestamp);
+	odometry->addRangeScan(cloud, time);
 
-	m545_mapping::publishTfTransform(odometry->getOdomToRangeSensor().matrix(), timestamp, odomFrame, rangeSensorFrame,
+	m545_mapping::publishTfTransform(odometry->getOdomToRangeSensor(time).matrix(), timestamp, odomFrame, rangeSensorFrame,
 			tfBroadcaster.get());
 
 	m545_mapping::publishCloud(odometry->getPreProcessedCloud(), m545_mapping::frames::rangeSensorFrame, timestamp,
@@ -54,7 +56,8 @@ bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const 
 void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
 	{
 		m545_mapping::Timer timer;
-		mapper->addRangeMeasurement(cloud, timestamp);
+		const Time time = fromRos(timestamp);
+		mapper->addRangeMeasurement(cloud, time);
 //		avgTime += timer.elapsedMsec();
 //		++count;
 //		std::cout << "Mapping step avg: " << avgTime / count << "\n";
@@ -112,7 +115,13 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	open3d::geometry::PointCloud cloud;
 	open3d_conversions::rosToOpen3d(msg, cloud, true);
+	const Time time = fromRos(msg->header.stamp);
 	ros::Time timestamp = msg->header.stamp;
+
+	if (!computeAndPublishOdometry(cloud, timestamp)) {
+		return;
+	}
+
 
 	if (cloudPrev.IsEmpty()) {
 		cloudPrev = cloud;
@@ -120,9 +129,6 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 		return;
 	}
 
-	if (!computeAndPublishOdometry(cloud, timestamp)) {
-		return;
-	}
 
 	m545_mapping::publishTfTransform(Eigen::Matrix4d::Identity(), timestamp, rangeSensorFrame, msg->header.frame_id,
 			tfBroadcaster.get());
@@ -158,7 +164,7 @@ int main(int argc, char **argv) {
 	odometry = std::make_shared<m545_mapping::LidarOdometry>();
 	odometry->setParameters(odometryParams);
 
-	mapper = std::make_shared<m545_mapping::Mapper>();
+	mapper = std::make_shared<m545_mapping::Mapper>(odometry->getBuffer());
 	m545_mapping::loadParameters(paramFile, &mapperParams);
 	mapper->setParameters(mapperParams);
 

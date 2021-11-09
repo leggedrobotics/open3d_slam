@@ -18,9 +18,10 @@ LidarOdometry::LidarOdometry() {
 	cropper_ = std::make_shared<CroppingVolume>();
 }
 
-bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
+bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, const Time &timestamp) {
 	if (cloudPrev_.IsEmpty()) {
 		cloudPrev_ = cloud;
+		odomToRangeSensorBuffer_.push(timestamp, odomToRangeSensorCumulative_);
 		return true;
 	}
 //	const m545_mapping::Timer timer("scan_to_scan_odometry");
@@ -46,16 +47,21 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 	if (result.fitness_ <= 1e-2) {
 		return false;
 	}
-	odomToRangeSensor_.matrix() *= result.transformation_.inverse();
+	odomToRangeSensorCumulative_.matrix() *= result.transformation_.inverse();
 	cloudPrev_ = std::move(*downSampledCloud);
+	odomToRangeSensorBuffer_.push(timestamp, odomToRangeSensorCumulative_);
 	return true;
 }
-const Eigen::Isometry3d& LidarOdometry::getOdomToRangeSensor() const {
-	return odomToRangeSensor_;
+const Transform LidarOdometry::getOdomToRangeSensor(const Time &t) const {
+	return getTransform(t, odomToRangeSensorBuffer_);
 }
 
 const open3d::geometry::PointCloud& LidarOdometry::getPreProcessedCloud() const {
 	return cloudPrev_;
+}
+
+const TransformInterpolationBuffer &LidarOdometry::getBuffer() const{
+	return odomToRangeSensorBuffer_;
 }
 
 void LidarOdometry::setParameters(const OdometryParameters &p) {

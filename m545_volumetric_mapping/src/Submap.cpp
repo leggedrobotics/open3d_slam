@@ -284,8 +284,6 @@ void SubmapCollection::buildLoopClosureConstraints() {
 		const auto &candidateSubmap = submaps_.at(id);
 		const auto &target = candidateSubmap.getSparseMap();
 		const auto &targetFeature = candidateSubmap.getFeatures();
-		RegistrationResult ransacResult;
-		for (int i = 0; i < 1 && ransacResult.correspondence_set_.size() < 20; ++i) {
 			RegistrationResult ransacResult = RegistrationRANSACBasedOnFeatureMatching(source, target, sourceFeature,
 					targetFeature, true, featureVoxelSize * 1.5, TransformationEstimationPointToPoint(false), 3, {
 							distanceChecker, edgeLengthChecker }, RANSACConvergenceCriteria(1000000, 0.99));
@@ -297,21 +295,22 @@ void SubmapCollection::buildLoopClosureConstraints() {
 			std::cout << "registered with fitness: " << ransacResult.fitness_ << std::endl;
 			std::cout << "registered with rmse: " << ransacResult.inlier_rmse_ << std::endl;
 			std::cout << "registered with transformation: \n" << ransacResult.transformation_ << std::endl;
-		}
-//
-//		const std::string folder =
-//				"/home/jelavice/catkin_workspaces/open3d_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/data/";
-//		open3d::io::WritePointCloudToPCD(folder + "target.pcd", target, open3d::io::WritePointCloudOption());
-//		open3d::io::WritePointCloudToPCD(folder + "source.pcd", source, open3d::io::WritePointCloudOption());
-//
-//		auto sourceCopy = source;
-//		auto registeredGlobal = source.Transform(ransacResult.transformation_);
-////		auto registeredRefined = sourceCopy.Transform(result.transformation_);
-//
-//		open3d::io::WritePointCloudToPCD(folder + "source_global.pcd", registeredGlobal,
-//				open3d::io::WritePointCloudOption());
-////		open3d::io::WritePointCloudToPCD(folder + "source_refined.pcd", registeredRefined, open3d::io::WritePointCloudOption());
 
+//
+		if (ransacResult.correspondence_set_.size() >= 10) {
+			const std::string folder =
+					"/home/jelavice/catkin_workspaces/open3d_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/data/";
+			open3d::io::WritePointCloudToPCD(folder + "target.pcd", target, open3d::io::WritePointCloudOption());
+			open3d::io::WritePointCloudToPCD(folder + "source.pcd", source, open3d::io::WritePointCloudOption());
+
+			auto sourceCopy = source;
+			auto registeredGlobal = sourceCopy.Transform(ransacResult.transformation_);
+//		auto registeredRefined = sourceCopy.Transform(result.transformation_);
+
+			open3d::io::WritePointCloudToPCD(folder + "source_global.pcd", registeredGlobal,
+					open3d::io::WritePointCloudOption());
+//		open3d::io::WritePointCloudToPCD(folder + "source_refined.pcd", registeredRefined, open3d::io::WritePointCloudOption());
+		}
 	}
 	isBuildingLoopClosureConstraints_ = false;
 }

@@ -9,11 +9,10 @@
 
 #include <open3d/pipelines/registration/Registration.h>
 #include <open3d/geometry/PointCloud.h>
-#include <ros/time.h>
 #include <Eigen/Dense>
 #include "m545_volumetric_mapping/Parameters.hpp"
 #include "m545_volumetric_mapping/croppers.hpp"
-
+#include "m545_volumetric_mapping/TransformInterpolationBuffer.hpp"
 
 namespace m545_mapping {
 class LidarOdometry {
@@ -24,17 +23,17 @@ public:
 	LidarOdometry();
 	~LidarOdometry() = default;
 
-	bool addRangeScan(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp);
-	const Eigen::Isometry3d &getOdomToRangeSensor() const;
+	bool addRangeScan(const open3d::geometry::PointCloud &cloud, const Time &timestamp);
+	const Transform getOdomToRangeSensor(const Time &t) const;
 	const open3d::geometry::PointCloud &getPreProcessedCloud() const;
 	void setParameters (const OdometryParameters &p);
-
+	const TransformInterpolationBuffer &getBuffer() const;
 
 private:
 
-
+	TransformInterpolationBuffer odomToRangeSensorBuffer_;
 	open3d::geometry::PointCloud cloudPrev_;
-	Eigen::Isometry3d odomToRangeSensor_ = Eigen::Isometry3d::Identity();
+	Transform odomToRangeSensorCumulative_ = Transform::Identity();
 	OdometryParameters params_;
 	std::shared_ptr<open3d::pipelines::registration::TransformationEstimation> icpObjective_;
 	open3d::pipelines::registration::ICPConvergenceCriteria icpConvergenceCriteria_;

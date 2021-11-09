@@ -10,13 +10,11 @@
 #include <Eigen/Geometry>
 #include <open3d/geometry/PointCloud.h>
 #include <open3d/pipelines/registration/Registration.h>
-#include <tf2_ros/transform_listener.h>
-#include <tf2_ros/buffer.h>
-#include <tf2/LinearMath/Transform.h>
 #include "m545_volumetric_mapping/Parameters.hpp"
 #include "m545_volumetric_mapping/time.hpp"
 #include "m545_volumetric_mapping/croppers.hpp"
 #include "m545_volumetric_mapping/Submap.hpp"
+#include "m545_volumetric_mapping/TransformInterpolationBuffer.hpp"
 
 
 namespace m545_mapping {
@@ -27,7 +25,7 @@ public:
 
 	using PointCloud = open3d::geometry::PointCloud;
 
-	Mapper();
+	Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer);
 	~Mapper() = default;
 
 	const PointCloud& getMap() const;
@@ -35,14 +33,14 @@ public:
 	const Submap& getActiveSubmap() const;
 	const SubmapCollection &getSubmaps() const;
 	PointCloud getAssembledMap() const;
-	void addRangeMeasurement(const PointCloud &cloud, const ros::Time &timestamp);
+	void addRangeMeasurement(const PointCloud &cloud, const Time &timestamp);
 	void setParameters(const MapperParameters &p);
 	bool isMatchingInProgress() const;
 	bool isManipulatingMap() const;
 	bool isReadyForLoopClosure()const;
 	void attemptLoopClosures();
-	Eigen::Isometry3d getMapToOdom() const;
-	Eigen::Isometry3d getMapToRangeSensor() const;
+	Transform getMapToOdom() const;
+	Transform getMapToRangeSensor() const;
 
 
 private:
@@ -53,18 +51,17 @@ private:
 
 	bool isMatchingInProgress_ = false;
 	bool isManipulatingMap_ = false;
-	tf2_ros::Buffer tfBuffer_;
-	tf2_ros::TransformListener tfListener_;
-	ros::Time lastMeasurementTimestamp_;
-	Eigen::Isometry3d mapToOdom_ = Eigen::Isometry3d::Identity();
-	Eigen::Isometry3d odomToRangeSensorPrev_ = Eigen::Isometry3d::Identity();
-	Eigen::Isometry3d mapToRangeSensor_ = Eigen::Isometry3d::Identity();
+	Time lastMeasurementTimestamp_;
+	Transform mapToOdom_ = Transform::Identity();
+	Transform odomToRangeSensorPrev_ = Transform::Identity();
+	Transform mapToRangeSensor_ = Transform::Identity();
 	MapperParameters params_;
 	open3d::pipelines::registration::ICPConvergenceCriteria icpCriteria_;
 	std::mutex mapManipulationMutex_;
 	std::shared_ptr<CroppingVolume> scanMatcherCropper_;
 	std::shared_ptr<CroppingVolume> mapBuilderCropper_;
 	SubmapCollection submaps_;
+	const TransformInterpolationBuffer &odomToRangeSensorBuffer_;
 
 };
 
