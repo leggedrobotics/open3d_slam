@@ -54,17 +54,16 @@ bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const 
 }
 
 void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
+	const Time time = fromRos(timestamp);
 	{
 		m545_mapping::Timer timer;
-		const Time time = fromRos(timestamp);
 		mapper->addRangeMeasurement(cloud, time);
 //		avgTime += timer.elapsedMsec();
 //		++count;
 //		std::cout << "Mapping step avg: " << avgTime / count << "\n";
 	}
-	m545_mapping::publishTfTransform(mapper->getMapToOdom().matrix(), timestamp, mapFrame, odomFrame,
+	m545_mapping::publishTfTransform(mapper->getMapToOdom(time).matrix(), timestamp, mapFrame, odomFrame,
 			tfBroadcaster.get());
-
 	m545_mapping::publishCloud(mapper->getAssembledMap(), m545_mapping::frames::mapFrame, timestamp, mapPub);
 
 	m545_mapping::publishCloud(mapper->getActiveSubmap().toRemove_, m545_mapping::frames::mapFrame, timestamp,
@@ -77,11 +76,13 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
 	if (submapPub.getNumSubscribers() > 0) {
 		open3d::geometry::PointCloud cloud;
 		m545_mapping::assembleColoredPointCloud(mapper->getSubmaps(), &cloud);
-		m545_mapping::publishCloud(cloud, m545_mapping::frames::mapFrame, timestamp, submapPub);
+		auto decimated = *(cloud.VoxelDownSample(0.2));
+		m545_mapping::publishCloud(decimated, m545_mapping::frames::mapFrame, timestamp, submapPub);
 	}
 }
 
 void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
+	const Time time = fromRos(timestamp);
 	if (!mapper->isMatchingInProgress()) {
 		std::thread t([cloud, timestamp]() {
 			mappingUpdate(cloud, timestamp);
@@ -90,13 +91,13 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 	}
 
 	if (mesherParams.isComputeMesh_ && !mesher->isMeshingInProgress() && !mapper->getMap().points_.empty()) {
-		std::thread t([timestamp]() {
+		std::thread t([timestamp,time]() {
 			auto map = mapper->getMap();
 			m545_mapping::MaxRadiusCroppingVolume cropper(localMapParams.croppingRadius_);
-			cropper.setPose(mapper->getMapToRangeSensor());
+			cropper.setPose(mapper->getMapToRangeSensor(time));
 			cropper.crop(&map);
 			auto downSampledMap = map.VoxelDownSample(mesherParams.voxelSize_);
-			mesher->setCurrentPose(mapper->getMapToRangeSensor());
+			mesher->setCurrentPose(mapper->getMapToRangeSensor(time));
 			mesher->buildMeshFromCloud(*downSampledMap);
 			m545_mapping::publishMesh(mesher->getMesh(), mapFrame, timestamp, meshPub);
 		});
@@ -115,8 +116,7 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	open3d::geometry::PointCloud cloud;
 	open3d_conversions::rosToOpen3d(msg, cloud, true);
-	const Time time = fromRos(msg->header.stamp);
-	ros::Time timestamp = msg->header.stamp;
+	const ros::Time timestamp = msg->header.stamp;
 
 	if (!computeAndPublishOdometry(cloud, timestamp)) {
 		return;

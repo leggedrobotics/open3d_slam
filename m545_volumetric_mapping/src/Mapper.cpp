@@ -14,6 +14,7 @@
 #include "m545_volumetric_mapping/time.hpp"
 #include "m545_volumetric_mapping/math.hpp"
 #include "m545_volumetric_mapping/Voxel.hpp"
+#include "m545_volumetric_mapping/assert.hpp"
 #include "open3d/utility/Eigen.h"
 #include "open3d/utility/Helper.h"
 
@@ -27,7 +28,6 @@ std::shared_ptr<registration::TransformationEstimation> icpObjective;
 Mapper::Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer) :
 		odomToRangeSensorBuffer_(odomToRangeSensorBuffer) {
 	update(params_);
-
 }
 
 void Mapper::setParameters(const MapperParameters &p) {
@@ -47,11 +47,14 @@ bool Mapper::isMatchingInProgress() const {
 	return isMatchingInProgress_;
 }
 
-Transform Mapper::getMapToOdom() const {
-	return mapToOdom_;
+Transform Mapper::getMapToOdom( const Time &timestamp) const {
+	const Transform odomToRangeSensor = getTransform(timestamp, odomToRangeSensorBuffer_);
+	const Transform mapToRangeSensor = getTransform(timestamp, mapToRangeSensorBuffer_);
+	return mapToRangeSensor * odomToRangeSensor.inverse();
+//	return getTransform(timestamp, mapToOdomBuffer_);
 }
-Transform Mapper::getMapToRangeSensor() const {
-	return mapToRangeSensor_;
+Transform Mapper::getMapToRangeSensor( const Time &timestamp) const {
+	return getTransform(timestamp, mapToRangeSensorBuffer_);
 }
 
 const SubmapCollection& Mapper::getSubmaps() const {
@@ -74,7 +77,9 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	//insert first scan
 	if (submaps_.getActiveSubmap().isEmpty()) {
 		auto wideCroppedCloud = preProcessScan(rawScan);
-		submaps_.insertScan(rawScan, *wideCroppedCloud, Transform::Identity());
+		submaps_.insertScan(rawScan, *wideCroppedCloud, Transform::Identity(),timestamp);
+		mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
+//		mapToOdomBuffer_.push(timestamp,mapToOdom_);
 		isMatchingInProgress_ = false;
 		return;
 	}
@@ -88,7 +93,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 
 	Transform odomToRangeSensor = getTransform(timestamp, odomToRangeSensorBuffer_);
 	const auto odometryMotion = odomToRangeSensorPrev_.inverse() * odomToRangeSensor;
-	const auto mapToRangeSensorEstimate = mapToOdom_ * odomToRangeSensor;
+	const auto mapToRangeSensorEstimate = getMapToOdom(timestamp) * odomToRangeSensor;
 	const auto &activeSubmap = submaps_.getActiveSubmap().getMap();
 	std::shared_ptr<PointCloud> narrowCropped, wideCroppedCloud, mapPatch;
 	{
@@ -117,14 +122,36 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	// update transforms
 	mapToRangeSensor_.matrix() = result.transformation_;
 	mapToOdom_ = mapToRangeSensor_ * odomToRangeSensor.inverse();
-	submaps_.setMapToRangeSensor(mapToRangeSensor_);
+	mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
+//	mapToOdomBuffer_.push(timestamp,mapToOdom_);
 
 	// concatenate registered cloud into map
+	submaps_.setMapToRangeSensor(mapToRangeSensor_);
 	const bool isMovedTooLittle = odometryMotion.translation().norm() < params_.minMovementBetweenMappingSteps_;
 	if (!isMovedTooLittle) {
-		submaps_.insertScan(rawScan, *wideCroppedCloud, mapToRangeSensor_);
+		submaps_.insertScan(rawScan, *wideCroppedCloud, mapToRangeSensor_,timestamp);
 		odomToRangeSensorPrev_ = odomToRangeSensor;
 	}
+
+	//check the constraints
+	// update the mapToRange sensor interpolation buffer
+	// update submaps - only do this once pose graph is added
+	// update active submaps!
+	const auto constraints = submaps_.getAndClearConstraints();
+	if(!constraints.empty()){
+		std::cout << "loop closing resulted in " << constraints.size() << " constraints \n";
+	}
+	auto mapToRangeSensorCopy = mapToRangeSensor_;
+	for(const auto &c : constraints){
+		const auto lastTimeInBuffer= mapToRangeSensorBuffer_.latest_time();
+		const auto beginTimeInBuffer = std::max(c.timeBegin_,c.timeFinish_);
+		assert_ge(toUniversal(lastTimeInBuffer), toUniversal(beginTimeInBuffer));
+		mapToRangeSensorBuffer_.applyToAllElementsInTimeInterval(c.relativeTransformation_, beginTimeInBuffer, lastTimeInBuffer);
+		mapToRangeSensor_ = mapToRangeSensorCopy * c.relativeTransformation_;
+		std::cout << "updating current pose estimate with transform: \n" <<asString(c.relativeTransformation_) << "\n";
+	}
+	submaps_.updateActiveSubmap(mapToRangeSensor_);
+
 
 	isMatchingInProgress_ = false;
 }
@@ -188,6 +215,10 @@ void Mapper::attemptLoopClosures() {
 	if (!submaps_.isBuildingLoopClosureConstraints()) {
 		submaps_.buildLoopClosureConstraints();
 	}
+}
+
+const TransformInterpolationBuffer &Mapper::getMapToRangeSensorBuffer() const{
+	return mapToRangeSensorBuffer_;
 }
 
 bool Mapper::isReadyForLoopClosure() const {

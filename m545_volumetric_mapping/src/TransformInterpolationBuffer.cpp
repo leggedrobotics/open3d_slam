@@ -7,13 +7,13 @@
 
 #include "m545_volumetric_mapping/TransformInterpolationBuffer.hpp"
 #include "m545_volumetric_mapping/time.hpp"
+#include "m545_volumetric_mapping/assert.hpp"
 
 namespace m545_mapping {
 
 TransformInterpolationBuffer::TransformInterpolationBuffer() :
 		TransformInterpolationBuffer(2000) {
 }
-
 
 TransformInterpolationBuffer::TransformInterpolationBuffer(size_t bufferSize) {
 	setSizeLimit(bufferSize);
@@ -45,8 +45,17 @@ void TransformInterpolationBuffer::push(const Time &time, const Transform &tf) {
 	removeOldMeasurementsIfNeeded();
 }
 
-void TransformInterpolationBuffer::setSizeLimit(
-		const size_t buffer_size_limit) {
+void TransformInterpolationBuffer::applyToAllElementsInTimeInterval(const Transform &t, const Time &begin,
+		const Time &end) {
+//	assert_ge(toUniversal(end),toUniversal(begin));
+	for(auto it = transforms_.begin(); it != transforms_.end(); ++it){
+		if(it->time_ >= begin && it->time_ <= end){
+			it->transform_ = it->transform_ * t;
+		}
+	}
+}
+
+void TransformInterpolationBuffer::setSizeLimit(const size_t buffer_size_limit) {
 
 	bufferSizeLimit_ = buffer_size_limit;
 	removeOldMeasurementsIfNeeded();
@@ -56,8 +65,7 @@ void TransformInterpolationBuffer::clear() {
 	transforms_.clear();
 }
 
-const TimestampedTransform& TransformInterpolationBuffer::latest_measurement(
-		int n) const {
+const TimestampedTransform& TransformInterpolationBuffer::latest_measurement(int n) const {
 	if (empty()) {
 		throw std::runtime_error("TransformInterpolationBuffer:: latest_measurement: Empty buffer");
 	}
@@ -80,9 +88,7 @@ bool TransformInterpolationBuffer::has(const Time &time) const {
 Transform TransformInterpolationBuffer::lookup(const Time &time) const {
 
 	if (!has(time)) {
-		throw std::runtime_error(
-				"TransformInterpolationBuffer:: Missing transform for: "
-						+ toString(time));
+		throw std::runtime_error("TransformInterpolationBuffer:: Missing transform for: " + toString(time));
 	}
 
 	if (size() == 1) {
@@ -90,8 +96,8 @@ Transform TransformInterpolationBuffer::lookup(const Time &time) const {
 	}
 
 	//just return the closest
-	const auto getMeasurement = std::find_if(transforms_.begin(),
-			transforms_.end(), [&time](const TimestampedTransform &tf) {
+	const auto getMeasurement = std::find_if(transforms_.begin(), transforms_.end(),
+			[&time](const TimestampedTransform &tf) {
 				return time <= tf.time_;
 			});
 	const bool isIteratorValid = getMeasurement != transforms_.end();
@@ -148,8 +154,7 @@ void TransformInterpolationBuffer::printTimesCurrentlyInBuffer() const {
 	}
 }
 
-Transform getTransform(const Time &time,
-		const TransformInterpolationBuffer &buffer) {
+Transform getTransform(const Time &time, const TransformInterpolationBuffer &buffer) {
 	if (time < buffer.earliest_time()) {
 		return buffer.lookup(buffer.earliest_time());
 	}
@@ -160,5 +165,4 @@ Transform getTransform(const Time &time,
 }
 
 } // namespace m545_mapping
-
 

@@ -63,6 +63,8 @@ public:
 
 	void printTimesCurrentlyInBuffer() const;
 
+	void applyToAllElementsInTimeInterval(const Transform &t, const Time &begin, const Time &end );
+
 private:
 	void removeOldMeasurementsIfNeeded();
 	static constexpr size_t kUnlimitedBufferSize = std::numeric_limits<size_t>::max();

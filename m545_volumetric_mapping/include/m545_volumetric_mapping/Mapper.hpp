@@ -39,9 +39,9 @@ public:
 	bool isManipulatingMap() const;
 	bool isReadyForLoopClosure()const;
 	void attemptLoopClosures();
-	Transform getMapToOdom() const;
-	Transform getMapToRangeSensor() const;
-
+	Transform getMapToOdom( const Time &timestamp) const;
+	Transform getMapToRangeSensor( const Time &timestamp) const;
+	const TransformInterpolationBuffer &getMapToRangeSensorBuffer() const;
 
 private:
 	std::shared_ptr<PointCloud> preProcessScan(const PointCloud &scan) const;
@@ -62,6 +62,8 @@ private:
 	std::shared_ptr<CroppingVolume> mapBuilderCropper_;
 	SubmapCollection submaps_;
 	const TransformInterpolationBuffer &odomToRangeSensorBuffer_;
+	TransformInterpolationBuffer mapToRangeSensorBuffer_;
+	TransformInterpolationBuffer mapToOdomBuffer_;
 
 };
 
