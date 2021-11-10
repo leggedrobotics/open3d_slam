@@ -28,12 +28,10 @@ namespace m545_mapping {
         class AccumulatedPoint {
         public:
             AccumulatedPoint() :
-                    num_of_points_(0), num_of_nonwhite_points_(0), point_(0.0, 0.0, 0.0), normal_(0.0, 0.0, 0.0),
-                    color_(0.0, 0.0, 0.0), color_nonwhite(0.0, 0.0, 0.0) {
+                    num_of_points_(0), point_(0.0, 0.0, 0.0), normal_(0.0, 0.0, 0.0), color_(0.0, 0.0, 0.0) {
             }
 
         public:
-            //change on AddPoint
             void AddPoint(const open3d::geometry::PointCloud &cloud, int index) {
                 point_ += cloud.points_[index];
                 if (cloud.HasNormals()) {
@@ -42,15 +40,10 @@ namespace m545_mapping {
                         normal_ += cloud.normals_[index];
                     }
                 }
-
                 if (cloud.HasColors()) {
-                    if (cloud.colors_[index] != White) {
-                        color_nonwhite += cloud.colors_[index];
-                        num_of_nonwhite_points_++;
-                    }
                     color_ += cloud.colors_[index];
-                    num_of_points_++;
                 }
+                num_of_points_++;
             }
 
             Eigen::Vector3d GetAveragePoint() const {
@@ -63,20 +56,14 @@ namespace m545_mapping {
             }
 
             Eigen::Vector3d GetAverageColor() const {
-                if (!num_of_nonwhite_points_)
-                    return White;
-                else
-                    return color_nonwhite / double(num_of_nonwhite_points_);
+                return color_ / double(num_of_points_);
             }
 
         public:
             int num_of_points_;
-            int num_of_nonwhite_points_;
             Eigen::Vector3d point_;
             Eigen::Vector3d normal_;
             Eigen::Vector3d color_;
-            Eigen::Vector3d color_nonwhite;
-            Eigen::Vector3d White = {1.0, 1.0, 1.0};
         };
 
         class point_cubic_id {
@@ -101,7 +88,7 @@ namespace m545_mapping {
         }
         const double mean = calcMean(data);
         double stdDev = 0.0;
-        for (const auto d: data) {
+        for (const auto d : data) {
             const double e = d - mean;
             stdDev += e * e;
         }
@@ -120,9 +107,8 @@ namespace m545_mapping {
         }
     }
 
-    void
-    publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, const ros::Time &timestamp,
-                 ros::Publisher &pub) {
+    void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &frame_id, const ros::Time &timestamp,
+                      ros::Publisher &pub) {
         if (pub.getNumSubscribers() > 0) {
             sensor_msgs::PointCloud2 msg;
             open3d_conversions::open3dToRos(cloud, msg, frame_id);
@@ -218,7 +204,6 @@ namespace m545_mapping {
         }
 
     }
-
     Timer::Timer() :
             Timer(false, "") {
 
@@ -227,13 +212,11 @@ namespace m545_mapping {
     Timer::Timer(const std::string &name) :
             Timer(true, name) {
     }
-
     Timer::Timer(bool isPrintInDestructor, const std::string &name) {
         startTime_ = std::chrono::steady_clock::now();
         isPrintInDestructor_ = isPrintInDestructor;
         name_ = name;
     }
-
     Timer::~Timer() {
         if (isPrintInDestructor_) {
             std::cout << "Timer " << name_ << ": Elapsed time: " << elapsedMsec() << " msec \n";
@@ -241,8 +224,7 @@ namespace m545_mapping {
     }
 
     open3d::geometry::AxisAlignedBoundingBox boundingBoxAroundPosition(const Eigen::Vector3d &low,
-                                                                       const Eigen::Vector3d &high,
-                                                                       const Eigen::Vector3d &origin /*= Eigen::Vector3d::Zero()*/) {
+                                                                       const Eigen::Vector3d &high, const Eigen::Vector3d &origin /*= Eigen::Vector3d::Zero()*/) {
         open3d::geometry::AxisAlignedBoundingBox bbox;
         bbox.min_bound_ = origin + low;
         bbox.max_bound_ = origin + high;
@@ -253,7 +235,6 @@ namespace m545_mapping {
         const auto endTime = std::chrono::steady_clock::now();
         return std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime_).count() / 1e3;
     }
-
     double Timer::elapsedSec() const {
         const auto endTime = std::chrono::steady_clock::now();
         return std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime_).count() / 1e3;
@@ -266,7 +247,6 @@ namespace m545_mapping {
         auto downSampled = pcl->RandomDownSample(downSamplingRatio);
         *pcl = *downSampled;
     }
-
     void voxelize(double voxelSize, open3d::geometry::PointCloud *pcl) {
         if (voxelSize <= 0) {
             return;
@@ -280,10 +260,9 @@ namespace m545_mapping {
         geometry_msgs::TransformStamped transformStamped = m545_mapping::toRos(Mat, time, frame, childFrame);
         broadcaster->sendTransform(transformStamped);
     }
-    //change on voxelizeAroundPosition
+
     std::shared_ptr<open3d::geometry::PointCloud> voxelizeAroundPosition(double voxel_size,
-                                                                         const open3d::geometry::AxisAlignedBoundingBox &bbox,
-                                                                         const open3d::geometry::PointCloud &cloud) {
+                                                                         const open3d::geometry::AxisAlignedBoundingBox &bbox, const open3d::geometry::PointCloud &cloud) {
         using namespace open3d::geometry;
         auto output = std::make_shared<PointCloud>();
         if (voxel_size <= 0.0) {
@@ -318,34 +297,33 @@ namespace m545_mapping {
         Eigen::Vector3d ref_coord;
         Eigen::Vector3i voxel_index;
         for (int i = 0; i < (int) cloud.points_.size(); i++) {
-//            if (isInside(cloud.points_[i])) {
+            if (isInside(cloud.points_[i])) {
                 ref_coord = (cloud.points_[i] - voxel_min_bound) / voxel_size;
                 voxel_index << int(floor(ref_coord(0))), int(floor(ref_coord(1))), int(floor(ref_coord(2)));
                 voxelindex_to_accpoint[voxel_index].AddPoint(cloud, i);
-//            } else {
-//                output->points_.push_back(cloud.points_[i]);
-//                if (has_normals) {
-//                    output->normals_.push_back(cloud.normals_[i]);
-//                }
-//                if (has_colors) {
-//                    output->colors_.push_back(cloud.colors_[i]);
-//                }
-
-//            }
-        }
-
-            for (auto accpoint: voxelindex_to_accpoint) {
-                output->points_.push_back(accpoint.second.GetAveragePoint());
+            } else {
+                output->points_.push_back(cloud.points_[i]);
                 if (has_normals) {
-                    output->normals_.push_back(accpoint.second.GetAverageNormal());
+                    output->normals_.push_back(cloud.normals_[i]);
                 }
                 if (has_colors) {
-                    output->colors_.push_back(accpoint.second.GetAverageColor());
+                    output->colors_.push_back(cloud.colors_[i]);
                 }
             }
-
-            return output;
         }
 
-    } /* namespace m545_mapping */
+        for (auto accpoint : voxelindex_to_accpoint) {
+            output->points_.push_back(accpoint.second.GetAveragePoint());
+            if (has_normals) {
+                output->normals_.push_back(accpoint.second.GetAverageNormal());
+            }
+            if (has_colors) {
+                output->colors_.push_back(accpoint.second.GetAverageColor());
+            }
+        }
+
+        return output;
+    }
+
+} /* namespace m545_mapping */
 

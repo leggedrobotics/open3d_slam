@@ -64,7 +64,8 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
                                      tfBroadcaster.get());
 
     open3d::geometry::PointCloud map = mapper->getMap();
-    m545_mapping::publishCloud(mapper->getMap(), m545_mapping::frames::mapFrame, timestamp, mapPub);
+    Eigen::Matrix<double, 3, 1> white = {1.0, 1.0, 1.0};
+    m545_mapping::publishCloud(map.PaintUniformColor(white), m545_mapping::frames::mapFrame, timestamp, mapPub);
 
     if (localMapPub.getNumSubscribers() > 0) {
         open3d::geometry::PointCloud map = mapper->getDenseMap();
@@ -126,13 +127,12 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 void synchronizeCallback(const sensor_msgs::PointCloud2ConstPtr& cloudmsg, const sensor_msgs::ImageConstPtr& imagemsg) {
 
     open3d::geometry::PointCloud pointCloud;
+    open3d::geometry::PointCloud fullCloud;
     open3d::geometry::PointCloud modifiedCloud;
     open3d_conversions::rosToOpen3d(cloudmsg, pointCloud, true);
     ros::Time timestamp = cloudmsg->header.stamp;
     std::vector<Eigen::Vector2i> pixels(pointCloud.points_.size());
 
-//    pixels = projectionLidarToPixel(pointCloud.points_,  projectionParams.K, projectionParams.D, projectionParams.quaternion, projectionParams.translation);
-//    pointCloud.colors_ = imageConversion(imagemsg, pixels, sensor_msgs::image_encodings::RGB8);
     modifiedCloud = color->projectionAndColor(pointCloud, imagemsg, projectionParams.K, projectionParams.D, projectionParams.quaternion, projectionParams.translation, true);
 
     if (cloudPrev.IsEmpty()) {

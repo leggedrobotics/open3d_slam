@@ -58,44 +58,27 @@ namespace m545_mapping {
         }
         cloud.colors_ = imageConversion(msg, pos_udimage);
 
+        return cloud;
+
+    }
+
+    open3d::geometry::PointCloud Color::filterColor(open3d::geometry::PointCloud &cloud) {
         std::vector<Eigen::Matrix<double, 3, 1>> posArray;
         std::vector<Eigen::Matrix<double, 3, 1>> colorArray;
-        std::vector<Eigen::Matrix<double, 3, 1>> posArrayCloud2;
-        std::vector<Eigen::Matrix<double, 3, 1>> colorArrayCloud2;
-
-        if (cropFlag) {
-            int j = 0;
-            for (int i = 0; i < cloud.points_.size(); i++) {
-                if (cloud.colors_[i] != whitePoint) {
-                    posArray.push_back(cloud.points_[i]);
-                    colorArray.push_back(cloud.colors_[i]);
-                    j++;
-                }
-                else {
-                    posArrayCloud2.push_back(cloud.points_[i]);
-                    colorArrayCloud2.push_back(whitePoint);
-                }
+        for (int i = 0; i < cloud.points_.size(); i++) {
+            if (cloud.colors_[i] != noColor) {
+                posArray.push_back(cloud.points_[i]);
+                colorArray.push_back(cloud.colors_[i]);
             }
         }
         open3d::geometry::PointCloud newCloud(posArray);
         newCloud.colors_ = colorArray;
-        cloud2.points_ = posArrayCloud2;
-        cloud2.colors_ = colorArrayCloud2;
-
-        return newCloud + cloud2;
-//    return cloud;
-
+        return newCloud;
     }
 
     std::vector<Eigen::Matrix<double, 3, 1>> Color::imageConversion(const sensor_msgs::ImageConstPtr &msg, const std::vector<Eigen::Vector2i> pixels) {
         cv_bridge::CvImagePtr cv_ptr;
-//        try {
         cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
-//        }
-//        catch (cv_bridge::Exception &e) {
-//            ROS_ERROR("cv_bridge exception: %s", e.what());
-//        }
-
         std::vector<cv::Vec3b> pixelColorscv(pixels.size());
         std::vector<Eigen::Matrix<double, 3, 1>> pixelColors(pixels.size());
         for (int i = 0; i < pixels.size(); i++) {
@@ -109,18 +92,13 @@ namespace m545_mapping {
 //                std::cout << "pixelcolor:" << pixelColors[i].transpose() << std::endl;
             }
             else {
-                pixelColors[i].x() = 1.0;
-                pixelColors[i].y() = 1.0;
-                pixelColors[i].z() = 1.0;
-                pixelColorscv[i] = cv::Vec3b(1.0, 1.0, 1.0);
+                pixelColors[i].x() = -1.0;
+                pixelColors[i].y() = -1.0;
+                pixelColors[i].z() = -1.0;
             }
 //            std::cout << "pixelcolor:" << pixelColors[i].transpose() << std::endl;
         }
         return pixelColors;
     }
 
-    open3d::geometry::PointCloud Color::getCloud2() {
-
-        return cloud2;
-    }
 }

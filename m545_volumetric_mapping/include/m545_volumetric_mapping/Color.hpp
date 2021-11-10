@@ -30,15 +30,12 @@ namespace m545_mapping {
                                                         const Eigen::Vector3d &translation,
                                                         const bool &cropFlag);
 
-        open3d::geometry::PointCloud getCloud2();
+        open3d::geometry::PointCloud filterColor(open3d::geometry::PointCloud &cloud);
 
     private:
         std::vector<Eigen::Matrix<double, 3, 1>> imageConversion(const sensor_msgs::ImageConstPtr& msg, const std::vector<Eigen::Vector2i> pixels);
-
-        const Eigen::Matrix<double, 3, 1> whitePoint = {1.0, 1.0, 1.0};
+        const Eigen::Matrix<double, 3, 1> noColor = {-1.0, -1.0, -1.0};
         std::vector<Eigen::Matrix<double, 3, 1>> pos_lidar;
-        std::vector<Eigen::Matrix<double, 3, 1>> posArrayWhite;
-        open3d::geometry::PointCloud cloud2;
     };
 
 }

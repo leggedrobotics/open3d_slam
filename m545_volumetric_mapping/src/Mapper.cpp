@@ -10,6 +10,7 @@
 #include <open3d/pipelines/registration/Registration.h>
 #include "m545_volumetric_mapping/frames.hpp"
 #include "m545_volumetric_mapping/helpers.hpp"
+#include "m545_volumetric_mapping/Color.hpp"
 #include <tf2/convert.h>
 #include <tf2_eigen/tf2_eigen.h>
 
@@ -24,6 +25,9 @@ namespace m545_mapping {
             tfListener_(tfBuffer_) {
         update(params_);
     }
+
+    std::shared_ptr<m545_mapping::Color> color;
+//    Color::Color() {}
 
     void Mapper::setParameters(const MapperParameters &p) {
         params_ = p;
@@ -56,17 +60,18 @@ namespace m545_mapping {
     void Mapper::addRangeMeasurement(const Mapper::PointCloud &cloudIn, const ros::Time &timestamp) {
         isMatchingInProgress_ = true;
         lastMeasurementTimestamp_ = timestamp;
+        color = std::make_shared<Color>();
         //insert first scan
         if (map_.points_.empty()) {
             auto cloud = cloudIn;
+            auto cloud2 = color->filterColor(cloud);
             auto bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_, params_.mapBuilderCropBoxHighBound_);
             auto croppedCloud = cloud.Crop(bbox);
             m545_mapping::voxelize(params_.voxelSize_, croppedCloud.get());
-
 //		auto voxelizedCloud = croppedCloud->VoxelDownSample(params_.mapVoxelSize_);
             estimateNormalsIfNeeded(croppedCloud.get());
             map_ += *croppedCloud;
-            denseMap_ += cloud;
+            denseMap_ += cloud2;
             isMatchingInProgress_ = false;
             return;
         }
@@ -147,7 +152,8 @@ namespace m545_mapping {
             }
             {
 //			Timer timer("merge_dense_map");
-                denseMap_ += cloud.Transform(result.transformation_);
+                auto cloud2 = color->filterColor(cloud);
+                denseMap_ += cloud2.Transform(result.transformation_);
             }
 
 //		std::cout << "\n";

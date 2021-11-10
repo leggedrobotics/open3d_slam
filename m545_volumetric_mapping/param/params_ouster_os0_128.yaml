@@ -56,7 +56,7 @@ Projection:
   translation: [0.219, -0.202, 0.016]
 
 mesher:
-  is_compute_mesh: false
+  is_compute_mesh: true
   voxel_size: 0.2
   knn_normal_estimation: 4
   strategy: Poisson # options: AlphaShape, Poisson, BallPivot
