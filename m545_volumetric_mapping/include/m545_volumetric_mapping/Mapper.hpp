@@ -13,7 +13,7 @@
 #include "m545_volumetric_mapping/Parameters.hpp"
 #include "m545_volumetric_mapping/time.hpp"
 #include "m545_volumetric_mapping/croppers.hpp"
-#include "m545_volumetric_mapping/Submap.hpp"
+#include "m545_volumetric_mapping/SubmapCollection.hpp"
 #include "m545_volumetric_mapping/TransformInterpolationBuffer.hpp"
 
 

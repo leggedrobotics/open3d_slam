@@ -18,8 +18,10 @@ set(SRC_FILES
   src/Voxel.cpp
   src/croppers.cpp
   src/Submap.cpp
+  src/SubmapCollection.cpp
   src/Transform.cpp
   src/TransformInterpolationBuffer.cpp
+  src/AdjacencyMatrix.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES

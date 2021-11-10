@@ -6,7 +6,7 @@
  */
 
 #include "m545_volumetric_mapping/helpers_ros.hpp"
-#include "m545_volumetric_mapping/Submap.hpp"
+#include "m545_volumetric_mapping/SubmapCollection.hpp"
 #include <random>
 // ros stuff
 #include "open3d_conversions/open3d_conversions.h"

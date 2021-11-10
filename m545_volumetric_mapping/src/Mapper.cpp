@@ -47,13 +47,13 @@ bool Mapper::isMatchingInProgress() const {
 	return isMatchingInProgress_;
 }
 
-Transform Mapper::getMapToOdom( const Time &timestamp) const {
+Transform Mapper::getMapToOdom(const Time &timestamp) const {
 	const Transform odomToRangeSensor = getTransform(timestamp, odomToRangeSensorBuffer_);
 	const Transform mapToRangeSensor = getTransform(timestamp, mapToRangeSensorBuffer_);
 	return mapToRangeSensor * odomToRangeSensor.inverse();
 //	return getTransform(timestamp, mapToOdomBuffer_);
 }
-Transform Mapper::getMapToRangeSensor( const Time &timestamp) const {
+Transform Mapper::getMapToRangeSensor(const Time &timestamp) const {
 	return getTransform(timestamp, mapToRangeSensorBuffer_);
 }
 
@@ -77,16 +77,15 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	//insert first scan
 	if (submaps_.getActiveSubmap().isEmpty()) {
 		auto wideCroppedCloud = preProcessScan(rawScan);
-		submaps_.insertScan(rawScan, *wideCroppedCloud, Transform::Identity(),timestamp);
+		submaps_.insertScan(rawScan, *wideCroppedCloud, Transform::Identity(), timestamp);
 		mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
 //		mapToOdomBuffer_.push(timestamp,mapToOdom_);
 		isMatchingInProgress_ = false;
 		return;
 	}
 
-
-	if(!odomToRangeSensorBuffer_.has(timestamp)){
-		std::cerr <<"WARNING: odomToRangeSensorBuffer_ DOES NOT HAVE THE DESIRED TRANSFORM! \n";
+	if (!odomToRangeSensorBuffer_.has(timestamp)) {
+		std::cerr << "WARNING: odomToRangeSensorBuffer_ DOES NOT HAVE THE DESIRED TRANSFORM! \n";
 		isMatchingInProgress_ = false;
 		return;
 	}
@@ -129,7 +128,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	submaps_.setMapToRangeSensor(mapToRangeSensor_);
 	const bool isMovedTooLittle = odometryMotion.translation().norm() < params_.minMovementBetweenMappingSteps_;
 	if (!isMovedTooLittle) {
-		submaps_.insertScan(rawScan, *wideCroppedCloud, mapToRangeSensor_,timestamp);
+		submaps_.insertScan(rawScan, *wideCroppedCloud, mapToRangeSensor_, timestamp);
 		odomToRangeSensorPrev_ = odomToRangeSensor;
 	}
 
@@ -138,20 +137,25 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	// update submaps - only do this once pose graph is added
 	// update active submaps!
 	const auto constraints = submaps_.getAndClearConstraints();
-	if(!constraints.empty()){
+	if (!constraints.empty()) {
+		std::cout << "\n ABOUT TO RELOCALIZE \n";
 		std::cout << "loop closing resulted in " << constraints.size() << " constraints \n";
-	}
-	auto mapToRangeSensorCopy = mapToRangeSensor_;
-	for(const auto &c : constraints){
-		const auto lastTimeInBuffer= mapToRangeSensorBuffer_.latest_time();
-		const auto beginTimeInBuffer = std::max(c.timeBegin_,c.timeFinish_);
-		assert_ge(toUniversal(lastTimeInBuffer), toUniversal(beginTimeInBuffer));
-		mapToRangeSensorBuffer_.applyToAllElementsInTimeInterval(c.relativeTransformation_, beginTimeInBuffer, lastTimeInBuffer);
-		mapToRangeSensor_ = mapToRangeSensorCopy * c.relativeTransformation_;
-		std::cout << "updating current pose estimate with transform: \n" <<asString(c.relativeTransformation_) << "\n";
-	}
-	submaps_.updateActiveSubmap(mapToRangeSensor_);
 
+		auto mapToRangeSensorCopy = mapToRangeSensor_;
+		for (const auto &c : constraints) {
+			const auto lastTimeInBuffer = mapToRangeSensorBuffer_.latest_time();
+			const auto beginTimeInBuffer = std::max(c.timeBegin_, c.timeFinish_);
+			assert_ge(toUniversal(lastTimeInBuffer), toUniversal(beginTimeInBuffer));
+			mapToRangeSensorBuffer_.applyToAllElementsInTimeInterval(c.relativeTransformation_, beginTimeInBuffer,
+					lastTimeInBuffer);
+			mapToRangeSensor_ = mapToRangeSensorCopy * c.relativeTransformation_;
+			std::cout << "updating current pose estimate with transform: \n" << asString(c.relativeTransformation_)
+					<< "\n";
+		}
+		std::cout <<"ABOUT to update \n";
+		submaps_.updateActiveSubmap(mapToRangeSensor_);
+		std::cout <<"DONE updating \n";
+	}
 
 	isMatchingInProgress_ = false;
 }
@@ -217,7 +221,7 @@ void Mapper::attemptLoopClosures() {
 	}
 }
 
-const TransformInterpolationBuffer &Mapper::getMapToRangeSensorBuffer() const{
+const TransformInterpolationBuffer& Mapper::getMapToRangeSensorBuffer() const {
 	return mapToRangeSensorBuffer_;
 }
 
