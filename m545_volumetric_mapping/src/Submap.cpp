@@ -13,7 +13,6 @@
 #include <numeric>
 #include <utility>
 
-
 namespace m545_mapping {
 
 namespace {
@@ -21,23 +20,33 @@ const double featureVoxelSize = 0.5;
 namespace registration = open3d::pipelines::registration;
 } // namespace
 
-Submap::Submap() {
+Submap::Submap(size_t id) :
+		id_(id) {
 	update(params_);
 
 }
 
-Time Submap::getLastScanInsertionTime() const {
-	return lastScanInsertionTime_;
+int64 Submap::getId() const {
+	return id_;
+//	return toUniversal(creationTime_);
+}
+
+Time Submap::getCreationTime() const {
+	return creationTime_;
 }
 
 bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan,
-		const Transform &mapToRangeSensor, const Time &time) {
+		const Transform &mapToRangeSensor, const Time &time, bool isPerformCarving) {
 
+	if (map_.points_.empty()) {
+		creationTime_ = time;
+	}
 	mapToRangeSensor_ = mapToRangeSensor;
-	lastScanInsertionTime_ = time;
 	auto transformedCloud = transform(mapToRangeSensor.matrix(), preProcessedScan);
 	estimateNormalsIfNeeded(params_.scanMatcher_.kNNnormalEstimation_, transformedCloud.get());
-	carve(rawScan, mapToRangeSensor, *mapBuilderCropper_, params_.mapBuilder_.carving_, &map_, &carvingTimer_);
+	if (isPerformCarving) {
+		carve(rawScan, mapToRangeSensor, *mapBuilderCropper_, params_.mapBuilder_.carving_, &map_, &carvingTimer_);
+	}
 	map_ += *transformedCloud;
 	mapBuilderCropper_->setPose(mapToRangeSensor);
 	voxelizeInsideCroppingVolume(*mapBuilderCropper_, params_.mapBuilder_, &map_);
@@ -46,8 +55,10 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 //		Timer timer("merge_dense_map");
 		denseMapCropper_->setPose(mapToRangeSensor);
 		auto denseCropped = denseMapCropper_->crop(*transformedCloud);
-		carve(rawScan, mapToRangeSensor, *denseMapCropper_, params_.denseMapBuilder_.carving_, &denseMap_,
-				&carveDenseMapTimer_);
+		if (isPerformCarving) {
+			carve(rawScan, mapToRangeSensor, *denseMapCropper_, params_.denseMapBuilder_.carving_, &denseMap_,
+					&carveDenseMapTimer_);
+		}
 		denseMap_ += *denseCropped;
 		auto voxelizedDense = voxelizeWithinCroppingVolume(params_.denseMapBuilder_.mapVoxelSize_, *denseMapCropper_,
 				denseMap_);
@@ -123,6 +134,9 @@ bool Submap::isEmpty() const {
 }
 
 void Submap::computeFeatures() {
+	if (featureTimer_.elapsedSec() < 5.0) {
+		return;
+	}
 	const int featureKnn = 100; //todo magic
 	const int normalKnn = 30;
 	sparseMap_ = *(map_.VoxelDownSample(featureVoxelSize));
@@ -132,6 +146,7 @@ void Submap::computeFeatures() {
 	feature_ = registration::ComputeFPFHFeature(sparseMap_,
 			open3d::geometry::KDTreeSearchParamHybrid(featureVoxelSize * 5, featureKnn));
 //	std::cout <<"map num points: " << map_.points_.size() << ", sparse map: " << sparseMap_.points_.size() << "\n";
+	featureTimer_.reset();
 }
 
 const Submap::Feature& Submap::getFeatures() const {
@@ -141,6 +156,5 @@ const Submap::Feature& Submap::getFeatures() const {
 void Submap::centerOrigin() {
 	mapToSubmap_.translation() = map_.GetCenter();
 }
-
 
 } // namespace m545_mapping

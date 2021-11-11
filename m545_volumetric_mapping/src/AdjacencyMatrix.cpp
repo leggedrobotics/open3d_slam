@@ -11,7 +11,7 @@
 namespace m545_mapping {
 
 
-void AdjacencyMatrix::addNode(SubmapId id1, SubmapId id2)
+void AdjacencyMatrix::addEdge(SubmapId id1, SubmapId id2)
 {
 	adjacency_[id1].insert(id2);
 	adjacency_[id2].insert(id1);

@@ -5,10 +5,6 @@
  *      Author: jelavice
  */
 
-
-
-
-
 #include "m545_volumetric_mapping/SubmapCollection.hpp"
 #include "m545_volumetric_mapping/helpers.hpp"
 #include "m545_volumetric_mapping/assert.hpp"
@@ -27,7 +23,6 @@ const double featureVoxelSize = 0.5;
 namespace registration = open3d::pipelines::registration;
 std::shared_ptr<registration::TransformationEstimation> icpObjective;
 } // namespace
-
 
 SubmapCollection::SubmapCollection() {
 	submaps_.reserve(100);
@@ -54,23 +49,36 @@ size_t SubmapCollection::getTotalNumPoints() const {
 	});
 }
 
-void SubmapCollection::updateActiveSubmap() {
+void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor) {
 	if (numScansMergedInActiveSubmap_ < params_.submaps_.minNumRangeData_) {
 		return;
 	}
 	const size_t closestMapIdx = findClosestSubmap(mapToRangeSensor_);
-	Eigen::Vector3d submapPosition = submaps_.at(closestMapIdx).getMapToSubmap().translation();
-	const bool isOriginWithinRange = (mapToRangeSensor_.translation() - submapPosition).norm()
+	const auto &closestSubmap = submaps_.at(closestMapIdx);
+	const auto &activeSubmap = submaps_.at(activeSubmapIdx_);
+	const Eigen::Vector3d closestSubmapPosition = closestSubmap.getMapToSubmap().translation();
+	const bool isAnotherSubmapWithinRange = (mapToRangeSensor_.translation() - closestSubmapPosition).norm()
 			< params_.submaps_.radius_;
-	if (isOriginWithinRange) {
-		activeSubmapIdx_ = closestMapIdx;
+	if (isAnotherSubmapWithinRange) {
+		if (closestMapIdx == activeSubmapIdx_) {
+			return;
+		}
+		if (adjacencyMatrix_.isAdjacent(closestSubmap.getId(), activeSubmap.getId())) {
+			activeSubmapIdx_ = closestMapIdx;
+		} else {
+			const bool isTraveledSufficientDistance = (mapToRangeSensor_.translation()
+					- activeSubmap.getMapToSubmap().translation()).norm() > params_.submaps_.radius_;
+			if (isTraveledSufficientDistance) {
+				createNewSubmap(mapToRangeSensor_);
+			}
+		}
 	} else {
 		createNewSubmap(mapToRangeSensor_);
 	}
 }
 
 void SubmapCollection::createNewSubmap(const Transform &mapToSubmap) {
-	Submap newSubmap;
+	Submap newSubmap(submapId_++);
 	newSubmap.setMapToSubmap(mapToSubmap);
 	newSubmap.setParameters(params_);
 	submaps_.emplace_back(std::move(newSubmap));
@@ -102,53 +110,30 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 	mapToRangeSensor_ = mapToRangeSensor;
 	if (submaps_.empty()) {
 		createNewSubmap(mapToRangeSensor_);
-		submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp);
+		submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp,true);
 		++numScansMergedInActiveSubmap_;
 		return true;
 	}
 	const size_t prevActiveSubmapIdx = activeSubmapIdx_;
-//	const size_t prevNumSubmap = submaps_.size();
-	updateActiveSubmap();
+	updateActiveSubmap(mapToRangeSensor);
 	// either different one is active or new one is created
 	const bool isActiveSubmapChanged = prevActiveSubmapIdx != activeSubmapIdx_;
-//	const bool isNewSubmapCreated = prevNumSubmap != submaps_.size();
 	if (isActiveSubmapChanged) {
 		std::lock_guard<std::mutex> lck(featureComputationMutex_);
-		submaps_.at(prevActiveSubmapIdx).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp);
+		submaps_.at(prevActiveSubmapIdx).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp,true);
 		submaps_.at(prevActiveSubmapIdx).centerOrigin();
 		isFinishedSubmap_ = true;
 		std::cout << "Active submap changed from " << prevActiveSubmapIdx << " to " << activeSubmapIdx_ << "\n";
 		lastFinishedSubmapIdx_ = prevActiveSubmapIdx;
-		numScansMergedInActiveSubmap_=0;
+		numScansMergedInActiveSubmap_ = 0;
+		const auto id1 = submaps_.at(prevActiveSubmapIdx).getId();
+		const auto id2 = submaps_.at(activeSubmapIdx_).getId();
+		adjacencyMatrix_.addEdge(id1, id2);
+		std::cout << "Adding edge between " << id1 << " and " << id2 << std::endl;
 	}
-	submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp);
+	submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp,true);
 	++numScansMergedInActiveSubmap_;
 	return true;
-}
-
-void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor) {
-	const size_t prevActiveSubmapIdx = activeSubmapIdx_;
-	const size_t closestMapIdx = findClosestSubmap(mapToRangeSensor);
-	Eigen::Vector3d submapPosition = submaps_.at(closestMapIdx).getMapToSubmap().translation();
-	const bool isOriginWithinRange = (mapToRangeSensor_.translation() - submapPosition).norm()
-			< params_.submaps_.radius_;
-	if (isOriginWithinRange) {
-		activeSubmapIdx_ = closestMapIdx;
-	} else {
-//			createNewSubmap(mapToRangeSensor_);
-		const std::string errMsg= "want to create a new submap!!! This should not happen!\n";
-		std::cerr << errMsg;
-		throw std::runtime_error(errMsg);
-	}
-	const bool isActiveSubmapChanged = prevActiveSubmapIdx != activeSubmapIdx_;
-	if (isActiveSubmapChanged) {
-		std::lock_guard<std::mutex> lck(featureComputationMutex_);
-		submaps_.at(prevActiveSubmapIdx).centerOrigin();
-		isFinishedSubmap_ = true;
-		std::cout << "Active submap changed from " << prevActiveSubmapIdx << " to " << activeSubmapIdx_ << "\n";
-		lastFinishedSubmapIdx_ = prevActiveSubmapIdx;
-		numScansMergedInActiveSubmap_=0;
-	}
 }
 
 void SubmapCollection::setParameters(const MapperParameters &p) {
@@ -197,11 +182,11 @@ void SubmapCollection::buildLoopClosureConstraints() {
 			<< closeSubmapsIdxs.size() << std::endl;
 	const auto source = lastBuiltSubmap.getSparseMap();
 	const auto sourceFeature = lastBuiltSubmap.getFeatures();
-	const Time lastBuiltSubmapFinishTime_= lastBuiltSubmap.getLastScanInsertionTime();
+	const Time lastBuiltSubmapFinishTime_ = lastBuiltSubmap.getCreationTime();
 	for (const auto id : closeSubmapsIdxs) {
 		std::cout << "matching submap: " << lastFinishedSubmapIdx << " with submap: " << id << "\n";
 		const auto &candidateSubmap = submaps_.at(id);
-		const Time candidateSubmapFinishTime = candidateSubmap.getLastScanInsertionTime();
+		const Time candidateSubmapFinishTime = candidateSubmap.getCreationTime();
 		const auto target = candidateSubmap.getSparseMap();
 		const auto targetFeature = candidateSubmap.getFeatures();
 		RegistrationResult ransacResult = RegistrationRANSACBasedOnFeatureMatching(source, target, sourceFeature,
@@ -216,14 +201,16 @@ void SubmapCollection::buildLoopClosureConstraints() {
 			std::cout << "registered num correspondences: " << ransacResult.correspondence_set_.size() << std::endl;
 			std::cout << "registered with fitness: " << ransacResult.fitness_ << std::endl;
 			std::cout << "registered with rmse: " << ransacResult.inlier_rmse_ << std::endl;
-			std::cout << "registered with transformation: \n" << asString(Transform(ransacResult.transformation_)) << std::endl;
+			std::cout << "registered with transformation: \n" << asString(Transform(ransacResult.transformation_))
+					<< std::endl;
 			registration::ICPConvergenceCriteria icpCriteria;
 			icpCriteria.max_iteration_ = 40;
 			const auto icpResult = open3d::pipelines::registration::RegistrationICP(source, target,
 					featureVoxelSize * 3.0, ransacResult.transformation_, *icpObjective, icpCriteria);
 			std::cout << "refined with fitness: " << icpResult.fitness_ << std::endl;
 			std::cout << "refined with rmse: " << icpResult.inlier_rmse_ << std::endl;
-			std::cout << "refined with transformation: \n" << asString(Transform(icpResult.transformation_)) << std::endl;
+			std::cout << "refined with transformation: \n" << asString(Transform(icpResult.transformation_))
+					<< std::endl;
 //			const std::string folder =
 //					"/home/jelavice/catkin_workspaces/open3d_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/data/";
 //			open3d::io::WritePointCloudToPCD(folder + "target.pcd", target, open3d::io::WritePointCloudOption());

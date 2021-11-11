@@ -20,7 +20,7 @@ public:
 	AdjacencyMatrix() = default;
 	using SubmapId = int64;
 
-	void addNode(SubmapId id1, SubmapId id2);
+	void addEdge(SubmapId id1, SubmapId id2);
 	bool isAdjacent(SubmapId id1, SubmapId id2) const;
 
 private:

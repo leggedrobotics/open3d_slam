@@ -44,10 +44,9 @@ public:
 	const std::vector<Constraint> &getConstraints() const;
 	void clearConstraints();
 	std::vector<Constraint> getAndClearConstraints();
-	void updateActiveSubmap(const Transform &mapToRangeSensor);
 private:
 
-	void updateActiveSubmap();
+	void updateActiveSubmap(const Transform &mapToRangeSensor);
 	void createNewSubmap(const Transform &mapToSubmap);
 	size_t findClosestSubmap(const Transform &mapToRangesensor) const;
 	std::vector<size_t> getCloseSubmapsIdxs(const Transform &mapToRangeSensor, size_t lastFinishedSubmapIdx,
@@ -66,6 +65,7 @@ private:
 	std::mutex constraintBuildMutex_;
 	std::vector<Constraint> constraints_;
 	AdjacencyMatrix adjacencyMatrix_;
+	size_t submapId_=0;
 
 };
 

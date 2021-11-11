@@ -26,11 +26,11 @@ public:
 	using Feature = open3d::pipelines::registration::Feature;
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
-	Submap();
+	Submap(size_t id);
 	~Submap() = default;
 
 	void setParameters(const MapperParameters &mapperParams);
-	bool insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan, const Transform &transform, const Time &time);
+	bool insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan, const Transform &transform, const Time &time, bool isPerformCarving);
 	void voxelizeInsideCroppingVolume(const CroppingVolume &cropper, const MapBuilderParameters &param,
 			PointCloud *map) const;
 	const Transform& getMapToSubmap() const;
@@ -38,11 +38,13 @@ public:
 	const PointCloud& getDenseMap() const;
 	void setMapToSubmap(const Transform &T);
 	bool isEmpty() const;
-	void computeFeatures();
 	const Feature& getFeatures() const;
 	const PointCloud& getSparseMap() const;
 	void centerOrigin();
-	Time getLastScanInsertionTime() const;
+	void computeFeatures();
+
+	Time getCreationTime() const;
+	int64 getId() const;
 	mutable PointCloud toRemove_;
 	mutable PointCloud scanRef_;
 	mutable PointCloud mapRef_;
@@ -58,9 +60,10 @@ private:
 	Transform mapToRangeSensor_ = Transform::Identity();
 	std::shared_ptr<CroppingVolume> denseMapCropper_,mapBuilderCropper_;
 	MapperParameters params_;
-	Timer carveDenseMapTimer_, carvingTimer_;
+	Timer carveDenseMapTimer_, carvingTimer_, featureTimer_;
 	std::shared_ptr<Feature> feature_;
-	Time lastScanInsertionTime_;
+	Time creationTime_;
+	size_t id_=0;
 };
 
 } // namespace m545_mapping
