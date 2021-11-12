@@ -17,6 +17,7 @@
 #include "m545_volumetric_mapping/Submap.hpp"
 #include "m545_volumetric_mapping/Constraint.hpp"
 #include "m545_volumetric_mapping/AdjacencyMatrix.hpp"
+#include "m545_volumetric_mapping/PlaceRecognition.hpp"
 
 
 namespace m545_mapping {
@@ -49,8 +50,7 @@ private:
 	void updateActiveSubmap(const Transform &mapToRangeSensor);
 	void createNewSubmap(const Transform &mapToSubmap);
 	size_t findClosestSubmap(const Transform &mapToRangesensor) const;
-	std::vector<size_t> getLoopClosureCandidatesIdxs(const Transform &mapToRangeSensor,
-			size_t currentActiveSubmapIdx) const;
+
 
 	Transform mapToRangeSensor_ = Transform::Identity();
 	std::vector<Submap> submaps_;
@@ -63,9 +63,10 @@ private:
 	std::mutex featureComputationMutex_;
 	std::mutex loopClosureConstraintMutex_;
 	std::mutex constraintBuildMutex_;
-	std::vector<Constraint> constraints_;
+	Constraints constraints_;
 	AdjacencyMatrix adjacencyMatrix_;
 	size_t submapId_=0;
+	PlaceRecognition placeRecognition_;
 
 };
 
