@@ -19,7 +19,6 @@
 namespace m545_mapping {
 
 namespace {
-const double featureVoxelSize = 0.5;
 namespace registration = open3d::pipelines::registration;
 std::shared_ptr<registration::TransformationEstimation> icpObjective;
 } // namespace
@@ -110,7 +109,7 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 	mapToRangeSensor_ = mapToRangeSensor;
 	if (submaps_.empty()) {
 		createNewSubmap(mapToRangeSensor_);
-		submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp,true);
+		submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, true);
 		++numScansMergedInActiveSubmap_;
 		return true;
 	}
@@ -120,7 +119,7 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 	const bool isActiveSubmapChanged = prevActiveSubmapIdx != activeSubmapIdx_;
 	if (isActiveSubmapChanged) {
 		std::lock_guard<std::mutex> lck(featureComputationMutex_);
-		submaps_.at(prevActiveSubmapIdx).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp,true);
+		submaps_.at(prevActiveSubmapIdx).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, true);
 		submaps_.at(prevActiveSubmapIdx).centerOrigin();
 		isFinishedSubmap_ = true;
 		std::cout << "Active submap changed from " << prevActiveSubmapIdx << " to " << activeSubmapIdx_ << "\n";
@@ -131,7 +130,7 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 		adjacencyMatrix_.addEdge(id1, id2);
 		std::cout << "Adding edge between " << id1 << " and " << id2 << std::endl;
 	}
-	submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp,true);
+	submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, true);
 	++numScansMergedInActiveSubmap_;
 	return true;
 }
@@ -171,8 +170,9 @@ void SubmapCollection::buildLoopClosureConstraints() {
 	// refine with icp
 	Timer t("loop closing");
 	using namespace open3d::pipelines::registration;
-	const auto edgeLengthChecker = CorrespondenceCheckerBasedOnEdgeLength(0.5);
-	const auto distanceChecker = CorrespondenceCheckerBasedOnDistance(1.5 * featureVoxelSize);
+	const auto &cfg = params_.placeRecognition_;
+	const auto edgeLengthChecker = CorrespondenceCheckerBasedOnEdgeLength(cfg.correspondenceCheckerEdgeLength_);
+	const auto distanceChecker = CorrespondenceCheckerBasedOnDistance(cfg.correspondenceCheckerDistance_);
 	const size_t lastFinishedSubmapIdx = lastFinishedSubmapIdx_;
 	const size_t activeSubmapIdx = activeSubmapIdx_;
 	const auto &lastBuiltSubmap = submaps_.at(lastFinishedSubmapIdx);
@@ -190,27 +190,37 @@ void SubmapCollection::buildLoopClosureConstraints() {
 		const auto target = candidateSubmap.getSparseMap();
 		const auto targetFeature = candidateSubmap.getFeatures();
 		RegistrationResult ransacResult = RegistrationRANSACBasedOnFeatureMatching(source, target, sourceFeature,
-				targetFeature, true, featureVoxelSize * 1.5, TransformationEstimationPointToPoint(false), 3, {
-						distanceChecker, edgeLengthChecker }, RANSACConvergenceCriteria(1000000, 0.99));
+				targetFeature, true, cfg.ransacMaxCorrespondenceDistance_, TransformationEstimationPointToPoint(false),
+				cfg.ransacModelSize_, { distanceChecker, edgeLengthChecker },
+				RANSACConvergenceCriteria(cfg.ransacNumIter_, cfg.ransacProbability_));
 
-		if (ransacResult.correspondence_set_.size() >= 25) {
-			std::cout << "source features num: " << sourceFeature.Num() << "\n";
-			std::cout << "target features num: " << targetFeature.Num() << "\n";
-			std::cout << "num points source: " << source.points_.size() << "\n";
-			std::cout << "num points target: " << target.points_.size() << "\n";
-			std::cout << "registered num correspondences: " << ransacResult.correspondence_set_.size() << std::endl;
-			std::cout << "registered with fitness: " << ransacResult.fitness_ << std::endl;
-			std::cout << "registered with rmse: " << ransacResult.inlier_rmse_ << std::endl;
-			std::cout << "registered with transformation: \n" << asString(Transform(ransacResult.transformation_))
-					<< std::endl;
-			registration::ICPConvergenceCriteria icpCriteria;
-			icpCriteria.max_iteration_ = 40;
-			const auto icpResult = open3d::pipelines::registration::RegistrationICP(source, target,
-					featureVoxelSize * 3.0, ransacResult.transformation_, *icpObjective, icpCriteria);
-			std::cout << "refined with fitness: " << icpResult.fitness_ << std::endl;
-			std::cout << "refined with rmse: " << icpResult.inlier_rmse_ << std::endl;
-			std::cout << "refined with transformation: \n" << asString(Transform(icpResult.transformation_))
-					<< std::endl;
+		if (ransacResult.correspondence_set_.size() < cfg.ransacMinCorrespondenceSetSize_) {
+			std::cout << "skipping place recognition with: " << ransacResult.correspondence_set_.size()
+					<< " correspondences. \n";
+			continue;
+		}
+
+		registration::ICPConvergenceCriteria icpCriteria;
+		icpCriteria.max_iteration_ = cfg.icp_.maxNumIter_;
+		const auto icpResult = open3d::pipelines::registration::RegistrationICP(source, target,
+				cfg.featureVoxelSize_ * 3.0, ransacResult.transformation_, *icpObjective, icpCriteria);
+		if (icpResult.fitness_ < cfg.minRefinementFitness_) {
+			std::cout << "skipping place recognition with refinement score: " << icpResult.fitness_ << " \n";
+			continue;
+		}
+
+		std::cout << "source features num: " << sourceFeature.Num() << "\n";
+		std::cout << "target features num: " << targetFeature.Num() << "\n";
+		std::cout << "num points source: " << source.points_.size() << "\n";
+		std::cout << "num points target: " << target.points_.size() << "\n";
+		std::cout << "registered num correspondences: " << ransacResult.correspondence_set_.size() << std::endl;
+		std::cout << "registered with fitness: " << ransacResult.fitness_ << std::endl;
+		std::cout << "registered with rmse: " << ransacResult.inlier_rmse_ << std::endl;
+		std::cout << "registered with transformation: \n" << asString(Transform(ransacResult.transformation_))
+				<< std::endl;
+		std::cout << "refined with fitness: " << icpResult.fitness_ << std::endl;
+		std::cout << "refined with rmse: " << icpResult.inlier_rmse_ << std::endl;
+		std::cout << "refined with transformation: \n" << asString(Transform(icpResult.transformation_)) << std::endl;
 //			const std::string folder =
 //					"/home/jelavice/catkin_workspaces/open3d_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/data/";
 //			open3d::io::WritePointCloudToPCD(folder + "target.pcd", target, open3d::io::WritePointCloudOption());
@@ -219,22 +229,21 @@ void SubmapCollection::buildLoopClosureConstraints() {
 //
 //			open3d::io::WritePointCloudToPCD(folder + "source_registered.pcd", registered,
 //					open3d::io::WritePointCloudOption());
-			Constraint c;
-			c.relativeTransformation_ = Transform(icpResult.transformation_);
-			c.timeBegin_ = candidateSubmapFinishTime;
-			c.timeFinish_ = lastBuiltSubmapFinishTime_;
-			c.submapIdxBegin_ = id;
-			c.submapIdxBegin_ = lastFinishedSubmapIdx;
-			std::lock_guard<std::mutex> lck(constraintBuildMutex_);
-			constraints_.emplace_back(std::move(c));
-			//todo not sure is this a valid assumption
+		Constraint c;
+		c.transformSubmapToSubmap_ = Transform(icpResult.transformation_);
+		c.fromSubmapIdx_ = lastFinishedSubmapIdx;
+		c.toSubmapIdx_ = id;
+		std::lock_guard<std::mutex> lck(constraintBuildMutex_);
+		constraints_.emplace_back(std::move(c));
+		//todo not sure is this a valid assumption
 //			assert_ge(toUniversal(c.timeFinish_), toUniversal(c.timeBegin_));
-		}
-	}
+
+	} // end for loop
 	isBuildingLoopClosureConstraints_ = false;
 }
 
-std::vector<size_t> SubmapCollection::getLoopClosureCandidatesIdxs(const Transform &mapToRangeSensor, size_t currentActiveSubmapIdx) const {
+std::vector<size_t> SubmapCollection::getLoopClosureCandidatesIdxs(const Transform &mapToRangeSensor,
+		size_t currentActiveSubmapIdx) const {
 	std::vector<size_t> idxs;
 	const size_t nSubmaps = submaps_.size();
 	idxs.reserve(nSubmaps);
@@ -244,10 +253,9 @@ std::vector<size_t> SubmapCollection::getLoopClosureCandidatesIdxs(const Transfo
 		}
 		const auto id1 = submaps_.at(i).getId();
 		const auto id2 = submaps_.at(currentActiveSubmapIdx).getId();
-		if(adjacencyMatrix_.isAdjacent(id1, id2)){
+		if (adjacencyMatrix_.isAdjacent(id1, id2)) {
 			continue;
 		}
-
 
 		const double distance =
 				(mapToRangeSensor_.translation() - submaps_.at(i).getMapToSubmap().translation()).norm();

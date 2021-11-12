@@ -16,7 +16,6 @@
 namespace m545_mapping {
 
 namespace {
-const double featureVoxelSize = 0.5;
 namespace registration = open3d::pipelines::registration;
 } // namespace
 
@@ -134,17 +133,16 @@ bool Submap::isEmpty() const {
 }
 
 void Submap::computeFeatures() {
-	if (featureTimer_.elapsedSec() < 5.0) {
+	if (featureTimer_.elapsedSec() < params_.submaps_.minSecondsBetweenFeatureComputation_) {
 		return;
 	}
-	const int featureKnn = 100; //todo magic
-	const int normalKnn = 30;
-	sparseMap_ = *(map_.VoxelDownSample(featureVoxelSize));
-	sparseMap_.EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(featureVoxelSize * 2.0, normalKnn));
+	const auto &p = params_.placeRecognition_;
+	sparseMap_ = *(map_.VoxelDownSample(p.featureVoxelSize_));
+	sparseMap_.EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(p.normalEstimationRadius_, p.normalKnn_));
 	sparseMap_.NormalizeNormals();
 	sparseMap_.OrientNormalsTowardsCameraLocation(Eigen::Vector3d::Zero());
 	feature_ = registration::ComputeFPFHFeature(sparseMap_,
-			open3d::geometry::KDTreeSearchParamHybrid(featureVoxelSize * 5, featureKnn));
+			open3d::geometry::KDTreeSearchParamHybrid(p.featureRadius_, p.featureKnn_));
 //	std::cout <<"map num points: " << map_.points_.size() << ", sparse map: " << sparseMap_.points_.size() << "\n";
 	featureTimer_.reset();
 }

@@ -12,10 +12,10 @@
 namespace m545_mapping {
 
 struct Constraint{
-	Transform relativeTransformation_ = Transform::Identity();
-	Time timeBegin_, timeFinish_;
-	size_t submapIdxBegin_=0, submapIdxFinish_=0;
+	Transform transformSubmapToSubmap_ = Transform::Identity();
+	size_t fromSubmapIdx_=0, toSubmapIdx_=0;
 };
+
 
 
 } //namespace m545_mapping

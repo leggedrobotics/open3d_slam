@@ -40,6 +40,7 @@ void AdjacencyMatrix::clear(){
 	adjacency_.clear();
 }
 
+//todo the function is not really correct
 std::vector<AdjacencyMatrix::SubmapId> AdjacencyMatrix::findLoopInvolvingEdge(SubmapId source, SubmapId dest) const {
 
 	std::stack<SubmapId> stack;
