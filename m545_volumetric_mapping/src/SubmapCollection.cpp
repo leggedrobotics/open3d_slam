@@ -177,7 +177,7 @@ void SubmapCollection::buildLoopClosureConstraints() {
 	const size_t activeSubmapIdx = activeSubmapIdx_;
 	const auto &lastBuiltSubmap = submaps_.at(lastFinishedSubmapIdx);
 	const auto closeSubmapsIdxs = std::move(
-			getCloseSubmapsIdxs(lastBuiltSubmap.getMapToSubmap(), lastFinishedSubmapIdx, activeSubmapIdx));
+			getLoopClosureCandidatesIdxs(lastBuiltSubmap.getMapToSubmap(), activeSubmapIdx));
 	std::cout << "considering submap " << lastFinishedSubmapIdx << " for loop closure, candidate submaps: "
 			<< closeSubmapsIdxs.size() << std::endl;
 	const auto source = lastBuiltSubmap.getSparseMap();
@@ -234,15 +234,20 @@ void SubmapCollection::buildLoopClosureConstraints() {
 	isBuildingLoopClosureConstraints_ = false;
 }
 
-std::vector<size_t> SubmapCollection::getCloseSubmapsIdxs(const Transform &mapToRangeSensor,
-		size_t lastFinishedSubmapIdx, size_t currentActiveSubmapIdx) const {
+std::vector<size_t> SubmapCollection::getLoopClosureCandidatesIdxs(const Transform &mapToRangeSensor, size_t currentActiveSubmapIdx) const {
 	std::vector<size_t> idxs;
 	const size_t nSubmaps = submaps_.size();
 	idxs.reserve(nSubmaps);
 	for (size_t i = 0; i < nSubmaps; ++i) {
-		if (i == lastFinishedSubmapIdx || i == currentActiveSubmapIdx) {
+		if (i == currentActiveSubmapIdx) {
 			continue;
 		}
+		const auto id1 = submaps_.at(i).getId();
+		const auto id2 = submaps_.at(currentActiveSubmapIdx).getId();
+		if(adjacencyMatrix_.isAdjacent(id1, id2)){
+			continue;
+		}
+
 
 		const double distance =
 				(mapToRangeSensor_.translation() - submaps_.at(i).getMapToSubmap().translation()).norm();

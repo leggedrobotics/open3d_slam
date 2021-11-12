@@ -49,7 +49,7 @@ private:
 	void updateActiveSubmap(const Transform &mapToRangeSensor);
 	void createNewSubmap(const Transform &mapToSubmap);
 	size_t findClosestSubmap(const Transform &mapToRangesensor) const;
-	std::vector<size_t> getCloseSubmapsIdxs(const Transform &mapToRangeSensor, size_t lastFinishedSubmapIdx,
+	std::vector<size_t> getLoopClosureCandidatesIdxs(const Transform &mapToRangeSensor,
 			size_t currentActiveSubmapIdx) const;
 
 	Transform mapToRangeSensor_ = Transform::Identity();

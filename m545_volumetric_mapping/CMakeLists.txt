@@ -90,3 +90,10 @@ target_link_libraries(mapping_node
     ${PROJECT_NAME}
 )
 
+add_executable(graph_node
+  src/graph_node.cpp)
+target_link_libraries(graph_node
+    ${catkin_LIBRARIES}
+    ${PROJECT_NAME}
+)
+

@@ -22,8 +22,12 @@ public:
 
 	void addEdge(SubmapId id1, SubmapId id2);
 	bool isAdjacent(SubmapId id1, SubmapId id2) const;
-
+	void print() const;
+	std::vector<SubmapId> findLoopInvolvingEdge(SubmapId id1, SubmapId id2) const;
+	void clear();
 private:
+
+
 
 	std::unordered_map<SubmapId, std::set<SubmapId>> adjacency_;
 
