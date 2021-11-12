@@ -70,12 +70,12 @@ void publishSubmapCoordinateAxes(const SubmapCollection &submaps, const std::str
 	for (size_t j = 0; j < submaps.getSubmaps().size(); ++j) {
 		const auto &submap = submaps.getSubmaps().at(j);
 		visualization_msgs::Marker axes, text;
-		drawAxes(submap.getMapToSubmap().translation(), Eigen::Quaterniond(submap.getMapToSubmap().rotation()), 0.8, 0.08,
+		drawAxes(submap.getMapToSubmapCenter(), Eigen::Quaterniond(submap.getMapToSubmapOrigin().rotation()), 0.8, 0.08,
 				&axes);
 		axes.ns = "submap_" + std::to_string(j);
 		axes.header.frame_id = frame_id;
 		axes.header.stamp = timestamp;
-		axes.id = id++;
+		axes.id = submap.getId();
 		msg.markers.push_back(axes);
 		text = axes;
 		text.pose.position.x += 0.3;

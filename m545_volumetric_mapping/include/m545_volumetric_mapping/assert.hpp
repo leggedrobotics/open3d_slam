@@ -49,4 +49,13 @@ void assert_lt(T val, T ref)
     throw std::runtime_error(errMsg);
   }
 }
+
+template<typename T>
+void assert_nonNullptr(T ptr, const std::string &errMsg="")
+{
+  if (ptr == nullptr) {
+    throw std::runtime_error(errMsg);
+  }
+}
+
 } // namespace m545_mapping

@@ -33,14 +33,15 @@ public:
 	bool insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan, const Transform &transform, const Time &time, bool isPerformCarving);
 	void voxelizeInsideCroppingVolume(const CroppingVolume &cropper, const MapBuilderParameters &param,
 			PointCloud *map) const;
-	const Transform& getMapToSubmap() const;
+	const Transform& getMapToSubmapOrigin() const;
+	Eigen::Vector3d getMapToSubmapCenter() const;
+	void setMapToSubmapOrigin(const Transform &T);
 	const PointCloud& getMap() const;
 	const PointCloud& getDenseMap() const;
-	void setMapToSubmap(const Transform &T);
 	bool isEmpty() const;
 	const Feature& getFeatures() const;
 	const PointCloud& getSparseMap() const;
-	void centerOrigin();
+	void computeSubmapCenter();
 	void computeFeatures();
 
 	Time getCreationTime() const;
@@ -58,12 +59,14 @@ private:
 	PointCloud sparseMap_, map_, denseMap_;
 	Transform mapToSubmap_ = Transform::Identity();
 	Transform mapToRangeSensor_ = Transform::Identity();
+	Eigen::Vector3d submapCenter_ = Eigen::Vector3d::Zero();
 	std::shared_ptr<CroppingVolume> denseMapCropper_,mapBuilderCropper_;
 	MapperParameters params_;
 	Timer carveDenseMapTimer_, carvingTimer_, featureTimer_;
 	std::shared_ptr<Feature> feature_;
 	Time creationTime_;
 	size_t id_=0;
+	bool isCenterComputed_ = false;
 };
 
 } // namespace m545_mapping

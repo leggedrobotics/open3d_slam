@@ -123,7 +123,7 @@ std::vector<size_t> PlaceRecognition::getLoopClosureCandidatesIdxs(const Transfo
 			continue;
 		}
 
-		const double distance = (mapToRangeSensor.translation() - submaps.at(i).getMapToSubmap().translation()).norm();
+		const double distance = (mapToRangeSensor.translation() - submaps.at(i).getMapToSubmapCenter()).norm();
 		const bool isTooFar = distance > params_.submaps_.radius_;
 //		std::cout << "distance submap to submap " << i << " : " << distance << std::endl;
 		if (isTooFar) {

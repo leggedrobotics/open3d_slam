@@ -46,7 +46,7 @@ void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor) {
 	const size_t closestMapIdx = findClosestSubmap(mapToRangeSensor_);
 	const auto &closestSubmap = submaps_.at(closestMapIdx);
 	const auto &activeSubmap = submaps_.at(activeSubmapIdx_);
-	const Eigen::Vector3d closestSubmapPosition = closestSubmap.getMapToSubmap().translation();
+	const Eigen::Vector3d closestSubmapPosition = closestSubmap.getMapToSubmapCenter();
 	const bool isAnotherSubmapWithinRange = (mapToRangeSensor_.translation() - closestSubmapPosition).norm()
 			< params_.submaps_.radius_;
 	if (isAnotherSubmapWithinRange) {
@@ -57,7 +57,7 @@ void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor) {
 			activeSubmapIdx_ = closestMapIdx;
 		} else {
 			const bool isTraveledSufficientDistance = (mapToRangeSensor_.translation()
-					- activeSubmap.getMapToSubmap().translation()).norm() > params_.submaps_.radius_;
+					- activeSubmap.getMapToSubmapCenter()).norm() > params_.submaps_.radius_;
 			if (isTraveledSufficientDistance) {
 				createNewSubmap(mapToRangeSensor_);
 			}
@@ -69,7 +69,7 @@ void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor) {
 
 void SubmapCollection::createNewSubmap(const Transform &mapToSubmap) {
 	Submap newSubmap(submapId_++);
-	newSubmap.setMapToSubmap(mapToSubmap);
+	newSubmap.setMapToSubmapOrigin(mapToSubmap);
 	newSubmap.setParameters(params_);
 	submaps_.emplace_back(std::move(newSubmap));
 	activeSubmapIdx_ = submaps_.size() - 1;
@@ -83,8 +83,8 @@ size_t SubmapCollection::findClosestSubmap(const Transform &mapToRangeSensor) co
 	std::iota(idxs.begin(), idxs.end(), 0);
 	auto lessThan = [this, &mapToRangeSensor](size_t idxa, size_t idxb) {
 		const auto p0 = mapToRangeSensor.translation();
-		const auto pa = submaps_.at(idxa).getMapToSubmap().translation();
-		const auto pb = submaps_.at(idxb).getMapToSubmap().translation();
+		const auto pa = submaps_.at(idxa).getMapToSubmapCenter();
+		const auto pb = submaps_.at(idxb).getMapToSubmapCenter();
 		return (p0 - pa).norm() < (p0 - pb).norm();
 	};
 	return *(std::min_element(idxs.begin(), idxs.end(), lessThan));
@@ -111,7 +111,7 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 	if (isActiveSubmapChanged) {
 		std::lock_guard<std::mutex> lck(featureComputationMutex_);
 		submaps_.at(prevActiveSubmapIdx).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, true);
-		submaps_.at(prevActiveSubmapIdx).centerOrigin();
+		submaps_.at(prevActiveSubmapIdx).computeSubmapCenter();
 		isFinishedSubmap_ = true;
 		std::cout << "Active submap changed from " << prevActiveSubmapIdx << " to " << activeSubmapIdx_ << "\n";
 		lastFinishedSubmapIdx_ = prevActiveSubmapIdx;

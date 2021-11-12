@@ -105,9 +105,14 @@ void Submap::setParameters(const MapperParameters &mapperParams) {
 	update(mapperParams);
 }
 
-const Transform& Submap::getMapToSubmap() const {
+const Transform& Submap::getMapToSubmapOrigin() const {
 	return mapToSubmap_;
 }
+
+Eigen::Vector3d Submap::getMapToSubmapCenter() const {
+	return isCenterComputed_ ? submapCenter_ : mapToSubmap_.translation();
+}
+
 const Submap::PointCloud& Submap::getMap() const {
 	return map_;
 }
@@ -119,7 +124,7 @@ const Submap::PointCloud& Submap::getSparseMap() const {
 	return sparseMap_;
 }
 
-void Submap::setMapToSubmap(const Transform &T) {
+void Submap::setMapToSubmapOrigin(const Transform &T) {
 	mapToSubmap_ = T;
 }
 
@@ -148,11 +153,13 @@ void Submap::computeFeatures() {
 }
 
 const Submap::Feature& Submap::getFeatures() const {
+	assert_nonNullptr(feature_, "Feature ptr is nullptr");
 	return *feature_;
 }
 
-void Submap::centerOrigin() {
-	mapToSubmap_.translation() = map_.GetCenter();
+void Submap::computeSubmapCenter() {
+	submapCenter_ = map_.GetCenter();
+	isCenterComputed_=true;
 }
 
 } // namespace m545_mapping
