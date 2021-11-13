@@ -19,10 +19,12 @@ namespace m545_mapping {
 //}
 
 void VoxelMap::buildFromCloud(const open3d::geometry::PointCloud &cloud) {
-	std::vector<size_t> idxs;
+	std::vector<size_t> idxs(cloud.points_.size());
 	std::iota(idxs.begin(),idxs.end(),0);
 	buildFromCloud(cloud, idxs);
 }
+
+VoxelMap::VoxelMap():VoxelMap(Eigen::Vector3d::Constant(0.25)){}
 
 VoxelMap::VoxelMap(const Eigen::Vector3d &voxelSize) :
 		voxelSize_(voxelSize) {
@@ -52,6 +54,7 @@ void VoxelMap::buildFromCloud(const open3d::geometry::PointCloud &cloud, const s
 //			Timer t;
 			const size_t idx = idxs[i];
 			const auto voxelIdx = getVoxelIdx(cloud.points_[idx], voxelSize_);
+//			std::cout<<"Voxel idx: " << voxelIdx.transpose() << "\n";
 			voxels_[voxelIdx].idxs_.emplace_back(idx);
 
 ////			computing +=t.elapsedMsec();

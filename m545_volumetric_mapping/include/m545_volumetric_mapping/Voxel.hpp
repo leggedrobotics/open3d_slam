@@ -37,7 +37,7 @@ class VoxelMap{
 
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	VoxelMap() = default;
+	VoxelMap();
 	VoxelMap(const Eigen::Vector3d &voxelSize);
 	void buildFromCloud(const open3d::geometry::PointCloud &cloud);
 	void buildFromCloud(const open3d::geometry::PointCloud &cloud, const std::vector<size_t> &idxs);
