@@ -75,6 +75,9 @@ void SubmapCollection::createNewSubmap(const Transform &mapToSubmap) {
 	activeSubmapIdx_ = submaps_.size() - 1;
 	numScansMergedInActiveSubmap_ = 0;
 	std::cout << "Created submap: " << activeSubmapIdx_ << std::endl;
+	if(submaps_.size()>1){
+		const auto c = buildOdometryConstraint(activeSubmapIdx_-1, activeSubmapIdx_);
+	}
 }
 
 size_t SubmapCollection::findClosestSubmap(const Transform &mapToRangeSensor) const {
@@ -174,6 +177,25 @@ const std::vector<Constraint>& SubmapCollection::getConstraints() const {
 void SubmapCollection::clearConstraints() {
 	std::lock_guard<std::mutex> lck(constraintBuildMutex_);
 	constraints_.clear();
+}
+
+Constraint SubmapCollection::buildOdometryConstraint(size_t sourceSubmapIdx, size_t targetSubmapIdx) const{
+
+	Constraint c;
+	c.sourceSubmapIdx_ = sourceSubmapIdx;
+	c.targetSubmapIdx_ = targetSubmapIdx;
+	const Transform &mapToSource = submaps_.at(sourceSubmapIdx).getMapToSubmapOrigin();
+	const Transform &mapToTarget = submaps_.at(targetSubmapIdx).getMapToSubmapOrigin();
+	c.sourceToTarget_ = mapToSource.inverse()*mapToTarget;
+
+//	std::cout << "odom constraints: \n";
+//	std::cout << " source: " << asString(mapToSource) << std::endl;
+//	std::cout << " target: " << asString(mapToTarget) << std::endl;
+//	std::cout << " source to target: " << asString(c.sourceToTarget_) << std::endl;
+//	std::cout << " source transformed into target: \n";
+//	std::cout << asString(mapToSource * c.sourceToTarget_) << "\n \n";
+	return std::move(c);
+
 }
 
 } // namespace m545_mapping

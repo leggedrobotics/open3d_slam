@@ -9,6 +9,7 @@
 #include "m545_volumetric_mapping/output.hpp"
 #include "m545_volumetric_mapping/math.hpp"
 #include "m545_volumetric_mapping/time.hpp"
+#include "m545_volumetric_mapping/assert.hpp"
 #include "m545_volumetric_mapping/croppers.hpp"
 #include "m545_volumetric_mapping/Voxel.hpp"
 
@@ -80,7 +81,7 @@ void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d
 	*pcl = std::move(*croppedCloud);
 }
 
-std::string asString(const Eigen::Isometry3d &T) {
+std::string asString(const Transform &T) {
 	const double kRadToDeg = 180.0 / M_PI;
 	const auto &t = T.translation();
 	const auto &q = Eigen::Quaterniond(T.rotation());
@@ -325,6 +326,42 @@ std::shared_ptr<open3d::geometry::PointCloud> transform(const Eigen::Matrix4d &T
 		}
 	}
 	return out;
+
+}
+
+void computeIndicesOfOverlappingPoints(const open3d::geometry::PointCloud &source,
+		const open3d::geometry::PointCloud &target, const Transform &sourceToTarget, double voxelSize,
+		std::vector<size_t> *idxsSource, std::vector<size_t> *idxsTarget) {
+	std::cout << "computing overlap with voxel size: " << voxelSize << std::endl;
+	VoxelMap targetMap(Eigen::Vector3d::Constant(voxelSize));
+	targetMap.buildFromCloud(target);
+	std::cout << "num points targget: " << target.points_.size() << std::endl;
+	std::cout << "voxel map size: " << targetMap.voxels_.size() << std::endl;
+	std::cout << "voxel map bucket count: " << targetMap.voxels_.bucket_count() << std::endl;
+	idxsSource->clear();
+	idxsSource->reserve(source.points_.size());
+	idxsTarget->clear();
+	idxsTarget->reserve(target.points_.size());
+	std::set<size_t> setTargetIdxs;
+	for (size_t i = 0; i < source.points_.size(); ++i) {
+		const auto p = sourceToTarget * source.points_.at(i);
+		const auto targetIdxsInVoxel = targetMap.getIndicesInVoxel(p);
+		if (!targetIdxsInVoxel.empty()) {
+			setTargetIdxs.insert(targetIdxsInVoxel.begin(), targetIdxsInVoxel.end());
+			idxsSource->push_back(i);
+		}
+	}
+	idxsTarget->insert(idxsTarget->end(), setTargetIdxs.begin(), setTargetIdxs.end());
+}
+
+Eigen::Vector3d computeCenter(const open3d::geometry::PointCloud &cloud, const std::vector<size_t> &idxs){
+
+	assert_gt<size_t>(idxs.size(),0);
+	Eigen::Vector3d center(0.0,0.0,0.0);
+	for(const auto idx : idxs){
+		center += cloud.points_.at(idx);
+	}
+	return center / static_cast<double>(idxs.size());
 
 }
 

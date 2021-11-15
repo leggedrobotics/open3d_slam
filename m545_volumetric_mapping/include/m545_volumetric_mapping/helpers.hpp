@@ -12,13 +12,15 @@
 
 #include <open3d/pipelines/registration/TransformationEstimation.h>
 #include "m545_volumetric_mapping/Parameters.hpp"
+#include "m545_volumetric_mapping/Transform.hpp"
+
 
 namespace m545_mapping {
 
 class CroppingVolume;
 
-
-std::shared_ptr<open3d::geometry::PointCloud> transform(const Eigen::Matrix4d &T, const open3d::geometry::PointCloud &cloud);
+std::shared_ptr<open3d::geometry::PointCloud> transform(const Eigen::Matrix4d &T,
+		const open3d::geometry::PointCloud &cloud);
 
 std::shared_ptr<open3d::geometry::PointCloud> voxelizeWithinCroppingVolume(double voxel_size,
 		const CroppingVolume &croppingVolume, const open3d::geometry::PointCloud &cloud);
@@ -30,7 +32,7 @@ void estimateNormals(int numNearestNeighbours, open3d::geometry::PointCloud *pcl
 std::shared_ptr<open3d::pipelines::registration::TransformationEstimation> icpObjectiveFactory(
 		const m545_mapping::IcpObjective &obj);
 
-std::string asString(const Eigen::Isometry3d &T);
+std::string asString(const Transform &T);
 
 bool isInside(const open3d::geometry::AxisAlignedBoundingBox &bbox, const Eigen::Vector3d &p);
 
@@ -43,8 +45,16 @@ std::pair<std::vector<double>, std::vector<size_t>> computePointCloudDistance(
 
 void removeByIds(const std::vector<size_t> &ids, open3d::geometry::PointCloud *cloud);
 std::vector<size_t> getIdxsOfCarvedPoints(const open3d::geometry::PointCloud &scan,
-		const open3d::geometry::PointCloud &cloud, const Eigen::Vector3d &sensorPosition, const SpaceCarvingParameters &param);
+		const open3d::geometry::PointCloud &cloud, const Eigen::Vector3d &sensorPosition,
+		const SpaceCarvingParameters &param);
 std::vector<size_t> getIdxsOfCarvedPoints(const open3d::geometry::PointCloud &scan,
-		const open3d::geometry::PointCloud &cloud, const Eigen::Vector3d &sensorPosition,const std::vector<size_t> &cloudIdxsSubset, const SpaceCarvingParameters &param);
+		const open3d::geometry::PointCloud &cloud, const Eigen::Vector3d &sensorPosition,
+		const std::vector<size_t> &cloudIdxsSubset, const SpaceCarvingParameters &param);
+
+void computeIndicesOfOverlappingPoints(const open3d::geometry::PointCloud &source,
+		const open3d::geometry::PointCloud &target, const Transform &sourceToTarget, double voxelSize,
+		std::vector<size_t> *idxsSource, std::vector<size_t> *idxsTarget);
+
+Eigen::Vector3d computeCenter(const open3d::geometry::PointCloud &cloud, const std::vector<size_t> &idxs);
 
 } /* namespace m545_mapping */

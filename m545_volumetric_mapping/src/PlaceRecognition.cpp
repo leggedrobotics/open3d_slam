@@ -40,7 +40,7 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 	const auto edgeLengthChecker = CorrespondenceCheckerBasedOnEdgeLength(cfg.correspondenceCheckerEdgeLength_);
 	const auto distanceChecker = CorrespondenceCheckerBasedOnDistance(cfg.correspondenceCheckerDistance_);
 	const auto &submaps = submapCollection.getSubmaps();
-	const auto &lastBuiltSubmap = submaps.at(lastFinishedSubmapIdx);
+	const auto &sourceSubmap = submaps.at(lastFinishedSubmapIdx);
 	const auto closeSubmapsIdxs = std::move(
 			getLoopClosureCandidatesIdxs(mapToRangeSensor, submapCollection, adjMatrix, lastFinishedSubmapIdx,
 					activeSubmapIdx));
@@ -48,15 +48,13 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 			<< closeSubmapsIdxs.size() << std::endl;
 	using namespace open3d::pipelines::registration;
 
-	const auto source = lastBuiltSubmap.getSparseMap();
-	const auto sourceFeature = lastBuiltSubmap.getFeatures();
-	const Time lastBuiltSubmapFinishTime_ = lastBuiltSubmap.getCreationTime();
+	const auto source = sourceSubmap.getSparseMap();
+	const auto sourceFeature = sourceSubmap.getFeatures();
 	for (const auto id : closeSubmapsIdxs) {
 		std::cout << "matching submap: " << lastFinishedSubmapIdx << " with submap: " << id << "\n";
-		const auto &candidateSubmap = submaps.at(id);
-		const Time candidateSubmapFinishTime = candidateSubmap.getCreationTime();
-		const auto target = candidateSubmap.getSparseMap();
-		const auto targetFeature = candidateSubmap.getFeatures();
+		const auto &targetSubmap = submaps.at(id);
+		const auto target = targetSubmap.getSparseMap();
+		const auto targetFeature = targetSubmap.getFeatures();
 		RegistrationResult ransacResult = RegistrationRANSACBasedOnFeatureMatching(source, target, sourceFeature,
 				targetFeature, true, cfg.ransacMaxCorrespondenceDistance_, TransformationEstimationPointToPoint(false),
 				cfg.ransacModelSize_, { distanceChecker, edgeLengthChecker },
@@ -89,26 +87,71 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		std::cout << "refined with fitness: " << icpResult.fitness_ << std::endl;
 		std::cout << "refined with rmse: " << icpResult.inlier_rmse_ << std::endl;
 		std::cout << "refined with transformation: \n" << asString(Transform(icpResult.transformation_)) << std::endl;
-		//			const std::string folder =
-		//					"/home/jelavice/catkin_workspaces/open3d_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/data/";
-		//			open3d::io::WritePointCloudToPCD(folder + "target.pcd", target, open3d::io::WritePointCloudOption());
-		//			open3d::io::WritePointCloudToPCD(folder + "source.pcd", source, open3d::io::WritePointCloudOption());
-		//			auto registered = source.Transform(icpResult.transformation_);
-		//
-		//			open3d::io::WritePointCloudToPCD(folder + "source_registered.pcd", registered,
-		//					open3d::io::WritePointCloudOption());
+
+		const Transform sourceToTarget(icpResult.transformation_);
+
+//		const std::string folder =
+//				"/home/jelavice/catkin_workspaces/open3d_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/data/";
+//		open3d::io::WritePointCloudToPCD(folder + "target.pcd", target, open3d::io::WritePointCloudOption());
+//		open3d::io::WritePointCloudToPCD(folder + "source.pcd", source, open3d::io::WritePointCloudOption());
+//		auto sourceCopy = source;
+//		auto registered = sourceCopy.Transform(icpResult.transformation_);
+//		const auto overlappingSource = *(registered.SelectByIndex(sourceIdxs));
+//		const auto overlappingTarget = *(target.SelectByIndex(targetIdxs));
+//		std::cout <<"Source overlap: " << overlappingSource.points_.size() << " points \n";
+//		std::cout <<"target overlap: " << overlappingTarget.points_.size() << " points \n";
+//		open3d::io::WritePointCloudToPCD(folder + "source_registered.pcd", registered,
+//				open3d::io::WritePointCloudOption());
+//		open3d::io::WritePointCloudToPCD(folder + "source_overlap.pcd", overlappingSource,
+//				open3d::io::WritePointCloudOption());
+//		open3d::io::WritePointCloudToPCD(folder + "target_overlap.pcd", overlappingTarget,
+//				open3d::io::WritePointCloudOption());
+
+		//todo FIGURE THIS OUT
+//		const auto &mapToTarget = targetSubmap.getMapToSubmapOrigin();
+//		const auto &mapToSource = sourceSubmap.getMapToSubmapOrigin();
 		Constraint c;
-		c.transformSubmapToSubmap_ = Transform(icpResult.transformation_);
-		c.fromSubmapIdx_ = lastFinishedSubmapIdx;
-		c.toSubmapIdx_ = id;
+		c.sourceToTarget_ = computeLoopClosingTransform(sourceSubmap, targetSubmap, sourceToTarget);
+		c.sourceSubmapIdx_ = lastFinishedSubmapIdx;
+		c.targetSubmapIdx_ = id;
 		constraints.emplace_back(std::move(c));
 	} // end for loop
 	return constraints;
 }
 
+Transform PlaceRecognition::computeLoopClosingTransform(const Submap &sourceSubmap, const Submap &targetSubmap,
+		const Transform &sourceToTarget) const {
+
+//	std::vector<size_t> sourceIdxs, targetIdxs;
+//	{
+//		Timer t("overlap compute");
+//	computeIndicesOfOverlappingPoints(source, target, sourceToTarget,
+//			params_.placeRecognition_.featureVoxelSize_, &sourceIdxs, &targetIdxs);
+//	}
+//
+//	Transform mapToSource = sourceSubmap.getMapToSubmapOrigin();
+//	mapToSource.translation() = computeCenter(source, sourceIdxs);
+//	Transform mapTotarget = targetSubmap.getMapToSubmapOrigin();
+//	mapTotarget.translation() = computeCenter(target, targetIdxs);
+
+	const auto mapToSource = sourceSubmap.getMapToSubmapOrigin() * sourceToTarget;
+	const auto mapToTarget = targetSubmap.getMapToSubmapOrigin();
+	const Transform T = mapToSource.inverse() * mapToTarget;
+
+//	std::cout << "loop closing constraints: \n";
+//	std::cout << " source: " << asString(mapToSource) << std::endl;
+//	std::cout << " target: " << asString(mapToTarget) << std::endl;
+//	std::cout << " source to target: " << asString(T) << std::endl;
+//	std::cout << " source transformed into target: \n";
+//	std::cout << asString(mapToSource * T) << "\n \n";
+
+	return std::move(T);
+
+}
+
 std::vector<size_t> PlaceRecognition::getLoopClosureCandidatesIdxs(const Transform &mapToRangeSensor,
-		const SubmapCollection &submapCollection, const AdjacencyMatrix &adjMatrix,
-		size_t lastFinishedSubmapIdx, size_t activeSubmapIdx) const {
+		const SubmapCollection &submapCollection, const AdjacencyMatrix &adjMatrix, size_t lastFinishedSubmapIdx,
+		size_t activeSubmapIdx) const {
 	std::vector<size_t> idxs;
 	const auto &submaps = submapCollection.getSubmaps();
 	const size_t nSubmaps = submaps.size();

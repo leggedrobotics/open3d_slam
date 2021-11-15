@@ -23,6 +23,7 @@ set(SRC_FILES
   src/TransformInterpolationBuffer.cpp
   src/AdjacencyMatrix.cpp
   src/PlaceRecognition.cpp
+  src/OptimizationProblem.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES

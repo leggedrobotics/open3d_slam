@@ -11,13 +11,12 @@
 
 namespace m545_mapping {
 
-
-
 struct Constraint{
-	Transform transformSubmapToSubmap_ = Transform::Identity();
-	size_t fromSubmapIdx_=0, toSubmapIdx_=0;
+	Transform sourceToTarget_ = Transform::Identity();
+	size_t sourceSubmapIdx_=0, targetSubmapIdx_=0;
 };
 
 using Constraints = std::vector<Constraint>;
+
 
 } //namespace m545_mapping
