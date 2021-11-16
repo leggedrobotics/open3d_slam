@@ -123,7 +123,10 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 	}
 	if (optimizationProblem->isReadyToOptimize() && !optimizationProblem->isRunningOptimization()) {
 		std::thread t([]() {
+			std::cout << "before optimization: \n";
+			optimizationProblem->print();
 			optimizationProblem->solve(*submaps);
+			optimizationProblem->print();
 		});
 		t.detach();
 	}

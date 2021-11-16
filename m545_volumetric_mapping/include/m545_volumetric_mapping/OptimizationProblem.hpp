@@ -32,6 +32,7 @@ public:
 	void setIsReadyToOptimize(bool val);
 	bool isReadyToOptimize() const;
 	bool isRunningOptimization() const;
+	void print() const;
 private:
 	bool isRunningOptimization_ = false;
 	bool isReadyToOptimize_ = false;

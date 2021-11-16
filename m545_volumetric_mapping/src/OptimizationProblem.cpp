@@ -8,6 +8,7 @@
 #include "m545_volumetric_mapping/OptimizationProblem.hpp"
 #include "m545_volumetric_mapping/Submap.hpp"
 #include "m545_volumetric_mapping/assert.hpp"
+#include "m545_volumetric_mapping/helpers.hpp"
 
 #include "m545_volumetric_mapping/SubmapCollection.hpp"
 #include <open3d/pipelines/registration/GlobalOptimization.h>
@@ -53,6 +54,7 @@ void OptimizationProblem::solve(const SubmapCollection &submaps) {
 			poseGraph_.edges_.push_back(std::move(edge));
 		}
 	}
+	print();
 	std::cout << "Optimizing graph...\n";
 	GlobalOptimization(poseGraph_);
 	isRunningOptimization_ = false;
@@ -61,6 +63,23 @@ void OptimizationProblem::solve(const SubmapCollection &submaps) {
 bool OptimizationProblem::isReadyToOptimize() const {
 	assert_ge(loopClosureConstraints_.size(), numLoopClosuresPrev_);
 	return numLoopClosuresPrev_ < loopClosureConstraints_.size();
+}
+
+void OptimizationProblem::print() const {
+	const auto graph = poseGraph_; // copy
+	const size_t nNodes = graph.nodes_.size();
+	const size_t nEdges = graph.edges_.size();
+	std::cout << "The problem contains: " << nNodes << " nodes and " << nEdges << " edges \n";
+	for (int i = 0; i < nEdges; ++i) {
+		const auto &e = graph.edges_.at(i);
+		std::cout << " edge " << i << " from " << e.source_node_id_ << " to " << e.target_node_id_ << std::endl;
+	}
+	for (int i = 0; i < nNodes; ++i) {
+		const auto &n = graph.nodes_.at(i);
+		const Transform T(n.pose_);
+		std::cout << " node " << i << " pose: " << asString(T) << " \n ";
+	}
+
 }
 
 void OptimizationProblem::clearOdometryConstraints() {
