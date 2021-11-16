@@ -19,13 +19,14 @@
 #include "m545_volumetric_mapping/AdjacencyMatrix.hpp"
 #include "m545_volumetric_mapping/PlaceRecognition.hpp"
 #include "m545_volumetric_mapping/OptimizationProblem.hpp"
-
+#include "m545_volumetric_mapping/ThreadSafeBuffer.hpp"
 
 namespace m545_mapping {
 
 class SubmapCollection {
 public:
 	using Submaps = std::vector<Submap>;
+	using SubmapId = Submap::SubmapId;
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 	SubmapCollection();
 	~SubmapCollection() = default;
@@ -39,10 +40,17 @@ public:
 	bool isEmpty() const;
 	const Submaps& getSubmaps() const;
 	size_t getTotalNumPoints() const;
-	void computeFeaturesInLastFinishedSubmap();
-	bool isFinishedSubmap() const;
+
+	void computeFeatures();
+	bool isComputingFeatures() const;
+	const ThreadSafeBuffer<SubmapId> & getFinishedSubmapIds() const;
+
+
+	const ThreadSafeBuffer<SubmapId> & getLoopClosureCandidateIds() const;
 	void buildLoopClosureConstraints();
 	bool isBuildingLoopClosureConstraints() const;
+
+
 	const std::vector<Constraint> &getConstraints() const;
 	void clearConstraints();
 	std::vector<Constraint> getAndClearConstraints();
@@ -58,10 +66,10 @@ private:
 	size_t activeSubmapIdx_ = 0;
 	MapperParameters params_;
 	size_t numScansMergedInActiveSubmap_ = 0;
-	bool isFinishedSubmap_ = false;
 	bool isBuildingLoopClosureConstraints_ = false;
 	size_t lastFinishedSubmapIdx_ = 0;
 	std::mutex featureComputationMutex_;
+	bool isComputingFeatures_ = false;
 	std::mutex loopClosureConstraintMutex_;
 	std::mutex constraintBuildMutex_;
 	Constraints constraints_;
@@ -69,6 +77,8 @@ private:
 	size_t submapId_=0;
 	PlaceRecognition placeRecognition_;
 	OptimizationProblem optimization_;
+	ThreadSafeBuffer<SubmapId> finishedSubmapsIdxs_;
+	ThreadSafeBuffer<SubmapId> loopClosureCandidatesIdxs_;
 
 };
 

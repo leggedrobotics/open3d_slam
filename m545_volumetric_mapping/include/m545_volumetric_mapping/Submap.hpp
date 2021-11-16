@@ -24,6 +24,7 @@ class Submap {
 public:
 	using PointCloud = open3d::geometry::PointCloud;
 	using Feature = open3d::pipelines::registration::Feature;
+	using SubmapId = int64;
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
 	Submap(size_t id);
@@ -45,7 +46,7 @@ public:
 	void computeFeatures();
 
 	Time getCreationTime() const;
-	int64 getId() const;
+	SubmapId getId() const;
 	mutable PointCloud toRemove_;
 	mutable PointCloud scanRef_;
 	mutable PointCloud mapRef_;
@@ -67,6 +68,7 @@ private:
 	Time creationTime_;
 	size_t id_=0;
 	bool isCenterComputed_ = false;
+
 };
 
 } // namespace m545_mapping

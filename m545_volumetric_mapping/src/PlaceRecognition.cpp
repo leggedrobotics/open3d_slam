@@ -33,8 +33,6 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		size_t activeSubmapIdx) const {
 
 	using namespace open3d::pipelines::registration;
-
-	Timer t("loop closing");
 	Constraints constraints;
 	const auto &cfg = params_.placeRecognition_;
 	const auto edgeLengthChecker = CorrespondenceCheckerBasedOnEdgeLength(cfg.correspondenceCheckerEdgeLength_);

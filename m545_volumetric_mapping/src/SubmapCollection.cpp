@@ -75,8 +75,8 @@ void SubmapCollection::createNewSubmap(const Transform &mapToSubmap) {
 	activeSubmapIdx_ = submaps_.size() - 1;
 	numScansMergedInActiveSubmap_ = 0;
 	std::cout << "Created submap: " << activeSubmapIdx_ << std::endl;
-	if(submaps_.size()>1){
-		const auto c = buildOdometryConstraint(activeSubmapIdx_-1, activeSubmapIdx_);
+	if (submaps_.size() > 1) {
+		const auto c = buildOdometryConstraint(activeSubmapIdx_ - 1, activeSubmapIdx_);
 	}
 }
 
@@ -115,9 +115,9 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 		std::lock_guard<std::mutex> lck(featureComputationMutex_);
 		submaps_.at(prevActiveSubmapIdx).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, true);
 		submaps_.at(prevActiveSubmapIdx).computeSubmapCenter();
-		isFinishedSubmap_ = true;
 		std::cout << "Active submap changed from " << prevActiveSubmapIdx << " to " << activeSubmapIdx_ << "\n";
 		lastFinishedSubmapIdx_ = prevActiveSubmapIdx;
+		finishedSubmapsIdxs_.push(prevActiveSubmapIdx);
 		numScansMergedInActiveSubmap_ = 0;
 		const auto id1 = submaps_.at(prevActiveSubmapIdx).getId();
 		const auto id2 = submaps_.at(activeSubmapIdx_).getId();
@@ -137,30 +137,53 @@ void SubmapCollection::setParameters(const MapperParameters &p) {
 	placeRecognition_.setParameters(p);
 }
 
-bool SubmapCollection::isFinishedSubmap() const {
-	return isFinishedSubmap_;
-}
-
 bool SubmapCollection::isBuildingLoopClosureConstraints() const {
 	return isBuildingLoopClosureConstraints_;
 }
 
-void SubmapCollection::computeFeaturesInLastFinishedSubmap() {
+void SubmapCollection::computeFeatures() {
 	std::lock_guard<std::mutex> lck(featureComputationMutex_);
+	isComputingFeatures_ = true;
 	Timer t("feature computation");
+	const auto submapsIdxsForFeatureComputation = finishedSubmapsIdxs_.popAllElements();
+	for (const auto &id : submapsIdxsForFeatureComputation) {
+		std::cout << "computing features for submap: " << id << std::endl;
+		submaps_.at(id).computeFeatures();
+		loopClosureCandidatesIdxs_.push(id);
+	}
+	// if the features inthose maps are computed, they can be considered for a loop closure
 
-	isFinishedSubmap_ = false;
-	std::cout << "computing features for submap: " << lastFinishedSubmapIdx_ << std::endl;
-	submaps_.at(lastFinishedSubmapIdx_).computeFeatures();
+	isComputingFeatures_ = false;
+}
+
+bool SubmapCollection::isComputingFeatures() const {
+	return isComputingFeatures_;
+}
+
+const ThreadSafeBuffer<SubmapCollection::SubmapId>& SubmapCollection::getFinishedSubmapIds() const {
+	return finishedSubmapsIdxs_;
+}
+
+const ThreadSafeBuffer<SubmapCollection::SubmapId>& SubmapCollection::getLoopClosureCandidateIds() const {
+	return loopClosureCandidatesIdxs_;
 }
 
 void SubmapCollection::buildLoopClosureConstraints() {
-
 	std::lock_guard<std::mutex> lck(loopClosureConstraintMutex_);
 	isBuildingLoopClosureConstraints_ = true;
+	Timer t("loop closing");
 
-	constraints_ = placeRecognition_.buildLoopClosureConstraints(mapToRangeSensor_, *this, adjacencyMatrix_,
-			lastFinishedSubmapIdx_, activeSubmapIdx_);
+	const auto loopClosureCandidatesIdxs = loopClosureCandidatesIdxs_.popAllElements();
+	for (const auto &id : loopClosureCandidatesIdxs) {
+		const auto constraints = placeRecognition_.buildLoopClosureConstraints(mapToRangeSensor_, *this,
+				adjacencyMatrix_, id, activeSubmapIdx_);
+		constraints_.insert(constraints_.end(), constraints.begin(), constraints.end());
+		if (!constraints.empty()) {
+			std::cout << " building loop closure constraints for submap: " << id << " resulted in: "
+					<< constraints.size() << " new constraints \n";
+		}
+	}
+
 	isBuildingLoopClosureConstraints_ = false;
 }
 
@@ -179,14 +202,14 @@ void SubmapCollection::clearConstraints() {
 	constraints_.clear();
 }
 
-Constraint SubmapCollection::buildOdometryConstraint(size_t sourceSubmapIdx, size_t targetSubmapIdx) const{
+Constraint SubmapCollection::buildOdometryConstraint(size_t sourceSubmapIdx, size_t targetSubmapIdx) const {
 
 	Constraint c;
 	c.sourceSubmapIdx_ = sourceSubmapIdx;
 	c.targetSubmapIdx_ = targetSubmapIdx;
 	const Transform &mapToSource = submaps_.at(sourceSubmapIdx).getMapToSubmapOrigin();
 	const Transform &mapToTarget = submaps_.at(targetSubmapIdx).getMapToSubmapOrigin();
-	c.sourceToTarget_ = mapToSource.inverse()*mapToTarget;
+	c.sourceToTarget_ = mapToSource.inverse() * mapToTarget;
 
 //	std::cout << "odom constraints: \n";
 //	std::cout << " source: " << asString(mapToSource) << std::endl;

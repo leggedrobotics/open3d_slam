@@ -35,6 +35,7 @@ ros::Publisher refPub, subsampledPub, mapPub, localMapPub, meshPub, debugPub, de
 std::shared_ptr<m545_mapping::Mesher> mesher;
 std::shared_ptr<m545_mapping::LidarOdometry> odometry;
 std::shared_ptr<m545_mapping::Mapper> mapper;
+std::shared_ptr<SubmapCollection> submaps;
 m545_mapping::MapperParameters mapperParams;
 m545_mapping::LocalMapParameters localMapParams;
 m545_mapping::MesherParameters mesherParams;
@@ -104,9 +105,16 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 		t.detach();
 	}
 
-	if (mapper->isReadyForLoopClosure()) {
+	if (!submaps->getFinishedSubmapIds().empty() && !submaps->isComputingFeatures()) {
 		std::thread t([]() {
-			mapper->attemptLoopClosures();
+			submaps->computeFeatures();
+		});
+		t.detach();
+	}
+
+	if (!submaps->getLoopClosureCandidateIds().empty() && !submaps->isBuildingLoopClosureConstraints()) {
+		std::thread t([]() {
+			submaps->buildLoopClosureConstraints();
 		});
 		t.detach();
 	}
@@ -164,7 +172,8 @@ int main(int argc, char **argv) {
 	odometry = std::make_shared<m545_mapping::LidarOdometry>();
 	odometry->setParameters(odometryParams);
 
-	mapper = std::make_shared<m545_mapping::Mapper>(odometry->getBuffer());
+	submaps = std::make_shared<m545_mapping::SubmapCollection>();
+	mapper = std::make_shared<m545_mapping::Mapper>(odometry->getBuffer(), submaps);
 	m545_mapping::loadParameters(paramFile, &mapperParams);
 	mapper->setParameters(mapperParams);
 

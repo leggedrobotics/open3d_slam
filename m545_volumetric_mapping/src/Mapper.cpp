@@ -25,8 +25,8 @@ namespace registration = open3d::pipelines::registration;
 std::shared_ptr<registration::TransformationEstimation> icpObjective;
 } // namespace
 
-Mapper::Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer) :
-		odomToRangeSensorBuffer_(odomToRangeSensorBuffer) {
+Mapper::Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer,std::shared_ptr<SubmapCollection> submaps) :
+		odomToRangeSensorBuffer_(odomToRangeSensorBuffer), submaps_(submaps) {
 	update(params_);
 }
 
@@ -40,7 +40,7 @@ void Mapper::update(const MapperParameters &p) {
 	icpObjective = icpObjectiveFactory(p.scanMatcher_.icpObjective_);
 	scanMatcherCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.scanProcessing_.croppingRadius_);
 	mapBuilderCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.mapBuilder_.scanCroppingRadius_);
-	submaps_.setParameters(p);
+	submaps_->setParameters(p);
 }
 
 bool Mapper::isMatchingInProgress() const {
@@ -58,7 +58,7 @@ Transform Mapper::getMapToRangeSensor(const Time &timestamp) const {
 }
 
 const SubmapCollection& Mapper::getSubmaps() const {
-	return submaps_;
+	return *submaps_;
 }
 
 void Mapper::estimateNormalsIfNeeded(PointCloud *pcl) const {
@@ -72,12 +72,12 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	isMatchingInProgress_ = true;
 	lastMeasurementTimestamp_ = timestamp;
 	scanMatcherCropper_->setPose(Transform::Identity());
-	submaps_.setMapToRangeSensor(mapToRangeSensor_);
+	submaps_->setMapToRangeSensor(mapToRangeSensor_);
 
 	//insert first scan
-	if (submaps_.getActiveSubmap().isEmpty()) {
+	if (submaps_->getActiveSubmap().isEmpty()) {
 		auto wideCroppedCloud = preProcessScan(rawScan);
-		submaps_.insertScan(rawScan, *wideCroppedCloud, Transform::Identity(), timestamp);
+		submaps_->insertScan(rawScan, *wideCroppedCloud, Transform::Identity(), timestamp);
 		mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
 //		mapToOdomBuffer_.push(timestamp,mapToOdom_);
 		isMatchingInProgress_ = false;
@@ -93,7 +93,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	Transform odomToRangeSensor = getTransform(timestamp, odomToRangeSensorBuffer_);
 	const auto odometryMotion = odomToRangeSensorPrev_.inverse() * odomToRangeSensor;
 	const auto mapToRangeSensorEstimate = getMapToOdom(timestamp) * odomToRangeSensor;
-	const auto &activeSubmap = submaps_.getActiveSubmap().getMap();
+	const auto &activeSubmap = submaps_->getActiveSubmap().getMap();
 	std::shared_ptr<PointCloud> narrowCropped, wideCroppedCloud, mapPatch;
 	{
 		static double avgTime = 0;
@@ -125,10 +125,10 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 //	mapToOdomBuffer_.push(timestamp,mapToOdom_);
 
 	// concatenate registered cloud into map
-	submaps_.setMapToRangeSensor(mapToRangeSensor_);
+	submaps_->setMapToRangeSensor(mapToRangeSensor_);
 	const bool isMovedTooLittle = odometryMotion.translation().norm() < params_.minMovementBetweenMappingSteps_;
 	if (!isMovedTooLittle) {
-		submaps_.insertScan(rawScan, *wideCroppedCloud, mapToRangeSensor_, timestamp);
+		submaps_->insertScan(rawScan, *wideCroppedCloud, mapToRangeSensor_, timestamp);
 		odomToRangeSensorPrev_ = odomToRangeSensor;
 	}
 
@@ -136,7 +136,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	// update the mapToRange sensor interpolation buffer
 	// update submaps - only do this once pose graph is added
 	// update active submaps!
-//	const auto constraints = submaps_.getAndClearConstraints();
+//	const auto constraints = submaps_->getAndClearConstraints();
 //	if (!constraints.empty()) {
 //		std::cout << "\n ABOUT TO RELOCALIZE \n";
 //		std::cout << "loop closing resulted in " << constraints.size() << " constraints \n";
@@ -153,7 +153,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 //					<< "\n";
 //		}
 //		std::cout <<"ABOUT to update \n";
-//		submaps_.updateActiveSubmap(mapToRangeSensor_);
+//		submaps_->updateActiveSubmap(mapToRangeSensor_);
 //		std::cout <<"DONE updating \n";
 //	}
 
@@ -170,13 +170,13 @@ std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud &raw
 }
 
 const Mapper::PointCloud& Mapper::getMap() const {
-	return submaps_.getActiveSubmap().getMap();
+	return submaps_->getActiveSubmap().getMap();
 }
 
 Mapper::PointCloud Mapper::getAssembledMap() const {
 	PointCloud cloud;
-	const int nSubmaps = submaps_.getSubmaps().size();
-	const int nPoints = submaps_.getTotalNumPoints();
+	const int nSubmaps = submaps_->getSubmaps().size();
+	const int nPoints = submaps_->getTotalNumPoints();
 	cloud.points_.reserve(nPoints);
 	if (getMap().HasColors()) {
 		cloud.colors_.reserve(nPoints);
@@ -185,8 +185,8 @@ Mapper::PointCloud Mapper::getAssembledMap() const {
 		cloud.normals_.reserve(nPoints);
 	}
 
-	for (size_t j = 0; j < submaps_.getSubmaps().size(); ++j) {
-		const auto &submap = submaps_.getSubmaps().at(j);
+	for (size_t j = 0; j < submaps_->getSubmaps().size(); ++j) {
+		const auto &submap = submaps_->getSubmaps().at(j);
 		const auto color = Color::getColor(j % (Color::numColors_ - 2) + 2);
 		for (size_t i = 0; i < submap.getMap().points_.size(); ++i) {
 			cloud.points_.push_back(submap.getMap().points_.at(i));
@@ -202,31 +202,19 @@ Mapper::PointCloud Mapper::getAssembledMap() const {
 }
 
 const Submap& Mapper::getActiveSubmap() const {
-	return submaps_.getActiveSubmap();
+	return submaps_->getActiveSubmap();
 }
 
 const Mapper::PointCloud& Mapper::getDenseMap() const {
-	return submaps_.getActiveSubmap().getDenseMap();
+	return submaps_->getActiveSubmap().getDenseMap();
 }
 
 bool Mapper::isManipulatingMap() const {
 	return isManipulatingMap_;
 }
 
-void Mapper::attemptLoopClosures() {
-	submaps_.computeFeaturesInLastFinishedSubmap();
-
-	if (!submaps_.isBuildingLoopClosureConstraints()) {
-		submaps_.buildLoopClosureConstraints();
-	}
-}
-
 const TransformInterpolationBuffer& Mapper::getMapToRangeSensorBuffer() const {
 	return mapToRangeSensorBuffer_;
-}
-
-bool Mapper::isReadyForLoopClosure() const {
-	return submaps_.isFinishedSubmap();
 }
 
 } /* namespace m545_mapping */

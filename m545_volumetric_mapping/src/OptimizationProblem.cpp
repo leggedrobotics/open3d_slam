@@ -8,6 +8,8 @@
 #include "m545_volumetric_mapping/OptimizationProblem.hpp"
 #include "m545_volumetric_mapping/Submap.hpp"
 #include "m545_volumetric_mapping/SubmapCollection.hpp"
+#include <open3d/pipelines/registration/GlobalOptimization.h>
+
 
 namespace m545_mapping {
 
@@ -17,13 +19,38 @@ namespace registration = open3d::pipelines::registration;
 
 void OptimizationProblem::addNodes(const SubmapCollection &submaps) {
 
-	nodes_.clear();
-	nodes_.reserve(submaps.getSubmaps().size());
+
 	for (const auto &submap : submaps.getSubmaps()) {
 		registration::PoseGraphNode node;
 		node.pose_ = submap.getMapToSubmapOrigin().matrix();
-		nodes_.emplace_back(std::move(node));
+		poseGraph_.nodes_.emplace_back(std::move(node));
 	}
+
+}
+
+void OptimizationProblem::buildOptimizationProblem() {
+
+	registration::PoseGraph poseGraph;
+
+	for (const auto &c : odometryConstraints_) {
+		registration::PoseGraphEdge edge;
+		edge.source_node_id_ = c.sourceSubmapIdx_;
+		edge.target_node_id_ = c.targetSubmapIdx_;
+		edge.transformation_ = c.sourceToTarget_.matrix();
+		edge.uncertain_ = false;
+		poseGraph_.edges_.push_back(std::move(edge));
+	}
+
+	for (const auto &c : loopClosureConstraints_) {
+		registration::PoseGraphEdge edge;
+		edge.source_node_id_ = c.sourceSubmapIdx_;
+		edge.target_node_id_ = c.targetSubmapIdx_;
+		edge.transformation_ = c.sourceToTarget_.matrix();
+		edge.uncertain_ = true;
+		poseGraph_.edges_.push_back(std::move(edge));
+	}
+
+	GlobalOptimization(poseGraph_);
 
 }
 

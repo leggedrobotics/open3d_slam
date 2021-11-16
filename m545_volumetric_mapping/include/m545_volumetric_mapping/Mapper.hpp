@@ -25,7 +25,7 @@ public:
 
 	using PointCloud = open3d::geometry::PointCloud;
 
-	Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer);
+	Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer, std::shared_ptr<SubmapCollection> submaps);
 	~Mapper() = default;
 
 	const PointCloud& getMap() const;
@@ -37,8 +37,6 @@ public:
 	void setParameters(const MapperParameters &p);
 	bool isMatchingInProgress() const;
 	bool isManipulatingMap() const;
-	bool isReadyForLoopClosure()const;
-	void attemptLoopClosures();
 	Transform getMapToOdom( const Time &timestamp) const;
 	Transform getMapToRangeSensor( const Time &timestamp) const;
 	const TransformInterpolationBuffer &getMapToRangeSensorBuffer() const;
@@ -60,7 +58,7 @@ private:
 	std::mutex mapManipulationMutex_;
 	std::shared_ptr<CroppingVolume> scanMatcherCropper_;
 	std::shared_ptr<CroppingVolume> mapBuilderCropper_;
-	SubmapCollection submaps_;
+	std::shared_ptr<SubmapCollection> submaps_;
 	const TransformInterpolationBuffer &odomToRangeSensorBuffer_;
 	TransformInterpolationBuffer mapToRangeSensorBuffer_;
 	TransformInterpolationBuffer mapToOdomBuffer_;
