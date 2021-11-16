@@ -15,7 +15,8 @@
 
 namespace m545_mapping {
 
-SubmapCollection::SubmapCollection() {
+SubmapCollection::SubmapCollection(std::shared_ptr<OptimizationProblem> optimization) :
+		optimization_(optimization) {
 	submaps_.reserve(100);
 	createNewSubmap(mapToRangeSensor_);
 }
@@ -77,6 +78,7 @@ void SubmapCollection::createNewSubmap(const Transform &mapToSubmap) {
 	std::cout << "Created submap: " << activeSubmapIdx_ << std::endl;
 	if (submaps_.size() > 1) {
 		const auto c = buildOdometryConstraint(activeSubmapIdx_ - 1, activeSubmapIdx_);
+		optimization_->addOdometryConstraint(c);
 	}
 }
 
@@ -177,29 +179,16 @@ void SubmapCollection::buildLoopClosureConstraints() {
 	for (const auto &id : loopClosureCandidatesIdxs) {
 		const auto constraints = placeRecognition_.buildLoopClosureConstraints(mapToRangeSensor_, *this,
 				adjacencyMatrix_, id, activeSubmapIdx_);
-		constraints_.insert(constraints_.end(), constraints.begin(), constraints.end());
 		if (!constraints.empty()) {
+			for (int i = 0; i < constraints.size(); ++i) {
+				optimization_->addLoopClosureConstraint(constraints.at(i));
+			}
 			std::cout << " building loop closure constraints for submap: " << id << " resulted in: "
 					<< constraints.size() << " new constraints \n";
 		}
 	}
 
 	isBuildingLoopClosureConstraints_ = false;
-}
-
-std::vector<Constraint> SubmapCollection::getAndClearConstraints() {
-	std::lock_guard<std::mutex> lck(constraintBuildMutex_);
-	auto copy = constraints_;
-	constraints_.clear();
-	return copy;
-}
-
-const std::vector<Constraint>& SubmapCollection::getConstraints() const {
-	return constraints_;
-}
-void SubmapCollection::clearConstraints() {
-	std::lock_guard<std::mutex> lck(constraintBuildMutex_);
-	constraints_.clear();
 }
 
 Constraint SubmapCollection::buildOdometryConstraint(size_t sourceSubmapIdx, size_t targetSubmapIdx) const {

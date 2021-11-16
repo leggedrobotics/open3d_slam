@@ -28,7 +28,7 @@ public:
 	using Submaps = std::vector<Submap>;
 	using SubmapId = Submap::SubmapId;
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-	SubmapCollection();
+	SubmapCollection(std::shared_ptr<OptimizationProblem> optimization);
 	~SubmapCollection() = default;
 
 	using PointCloud = open3d::geometry::PointCloud;
@@ -50,10 +50,6 @@ public:
 	void buildLoopClosureConstraints();
 	bool isBuildingLoopClosureConstraints() const;
 
-
-	const std::vector<Constraint> &getConstraints() const;
-	void clearConstraints();
-	std::vector<Constraint> getAndClearConstraints();
 private:
 
 	void updateActiveSubmap(const Transform &mapToRangeSensor);
@@ -72,11 +68,10 @@ private:
 	bool isComputingFeatures_ = false;
 	std::mutex loopClosureConstraintMutex_;
 	std::mutex constraintBuildMutex_;
-	Constraints constraints_;
 	AdjacencyMatrix adjacencyMatrix_;
 	size_t submapId_=0;
 	PlaceRecognition placeRecognition_;
-	OptimizationProblem optimization_;
+	std::shared_ptr<OptimizationProblem> optimization_;
 	ThreadSafeBuffer<SubmapId> finishedSubmapsIdxs_;
 	ThreadSafeBuffer<SubmapId> loopClosureCandidatesIdxs_;
 

@@ -14,6 +14,7 @@
 #include "m545_volumetric_mapping/croppers.hpp"
 #include "m545_volumetric_mapping/Mapper.hpp"
 #include "m545_volumetric_mapping/Mesher.hpp"
+#include "m545_volumetric_mapping/OptimizationProblem.hpp"
 
 #include "m545_volumetric_mapping/Odometry.hpp"
 #include <m545_volumetric_mapping_msgs/PolygonMesh.h>
@@ -36,6 +37,8 @@ std::shared_ptr<m545_mapping::Mesher> mesher;
 std::shared_ptr<m545_mapping::LidarOdometry> odometry;
 std::shared_ptr<m545_mapping::Mapper> mapper;
 std::shared_ptr<SubmapCollection> submaps;
+std::shared_ptr<OptimizationProblem> optimizationProblem;
+
 m545_mapping::MapperParameters mapperParams;
 m545_mapping::LocalMapParameters localMapParams;
 m545_mapping::MesherParameters mesherParams;
@@ -118,6 +121,12 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 		});
 		t.detach();
 	}
+	if (optimizationProblem->isReadyToOptimize() && !optimizationProblem->isRunningOptimization()) {
+		std::thread t([]() {
+			optimizationProblem->solve(*submaps);
+		});
+		t.detach();
+	}
 
 }
 
@@ -172,7 +181,8 @@ int main(int argc, char **argv) {
 	odometry = std::make_shared<m545_mapping::LidarOdometry>();
 	odometry->setParameters(odometryParams);
 
-	submaps = std::make_shared<m545_mapping::SubmapCollection>();
+	optimizationProblem = std::make_shared<m545_mapping::OptimizationProblem>();
+	submaps = std::make_shared<m545_mapping::SubmapCollection>(optimizationProblem);
 	mapper = std::make_shared<m545_mapping::Mapper>(odometry->getBuffer(), submaps);
 	m545_mapping::loadParameters(paramFile, &mapperParams);
 	mapper->setParameters(mapperParams);
