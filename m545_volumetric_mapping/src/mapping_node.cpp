@@ -127,13 +127,11 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 void synchronizeCallback(const sensor_msgs::PointCloud2ConstPtr& cloudmsg, const sensor_msgs::ImageConstPtr& imagemsg) {
 
     open3d::geometry::PointCloud pointCloud;
-    open3d::geometry::PointCloud fullCloud;
     open3d::geometry::PointCloud modifiedCloud;
     open3d_conversions::rosToOpen3d(cloudmsg, pointCloud, true);
     ros::Time timestamp = cloudmsg->header.stamp;
-    std::vector<Eigen::Vector2i> pixels(pointCloud.points_.size());
 
-    modifiedCloud = color->projectionAndColor(pointCloud, imagemsg, projectionParams.K, projectionParams.D, projectionParams.quaternion, projectionParams.translation, true);
+    modifiedCloud = color->projectionAndColor(pointCloud, imagemsg, projectionParams.K, projectionParams.D, projectionParams.rpy, projectionParams.translation, true);
 
     if (cloudPrev.IsEmpty()) {
         cloudPrev = modifiedCloud;
@@ -192,7 +190,6 @@ int main(int argc, char **argv) {
 
     color = std::make_shared<m545_mapping::Color>();
     m545_mapping::loadParameters(paramFile, &projectionParams);
-//    color->
 
 
 //	ros::AsyncSpinner spinner(4); // Use 4 threads
@@ -202,4 +199,5 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+
 

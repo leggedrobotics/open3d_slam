@@ -72,10 +72,8 @@ struct LocalMapParameters {
 struct ProjectionParameters {
     Eigen::Matrix<double, 3, 3, Eigen::RowMajor> K;
     Eigen::Matrix<double, 5, 1> D;
-    Eigen::Quaternion<double> quaternion;
     Eigen::Vector3d translation;
-//    Eigen::Matrix3d rotation;
-//    Eigen::MatrixXd RT;
+    Eigen::Vector3d rpy;
 };
 
 struct MesherParameters{

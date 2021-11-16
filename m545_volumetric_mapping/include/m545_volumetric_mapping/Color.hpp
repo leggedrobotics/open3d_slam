@@ -26,7 +26,7 @@ namespace m545_mapping {
                                                         const sensor_msgs::ImageConstPtr &msg,
                                                         const Eigen::Matrix<double, 3, 3, Eigen::RowMajor> &K,
                                                         const Eigen::Matrix<double, 5, 1> &D,
-                                                        const Eigen::Quaternion<double> &quaternion,
+                                                        const Eigen::Vector3d &rpy,
                                                         const Eigen::Vector3d &translation,
                                                         const bool &cropFlag);
 

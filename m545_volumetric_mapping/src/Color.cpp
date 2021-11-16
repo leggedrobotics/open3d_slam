@@ -3,6 +3,8 @@
 //
 #include "m545_volumetric_mapping/Color.hpp"
 #include <open3d/geometry/PointCloud.h>
+#include "m545_volumetric_mapping/helpers.hpp"
+#include <Eigen/Geometry>
 
 namespace m545_mapping {
 
@@ -12,51 +14,40 @@ namespace m545_mapping {
                                                            const sensor_msgs::ImageConstPtr &msg,
                                                            const Eigen::Matrix<double, 3, 3, Eigen::RowMajor> &K,
                                                            const Eigen::Matrix<double, 5, 1> &D,
-                                                           const Eigen::Quaternion<double> &quaternion,
+                                                           const Eigen::Vector3d &rpy,
                                                            const Eigen::Vector3d &translation,
                                                            const bool &cropFlag) {
 
         Color::pos_lidar = cloud.points_;
-        std::vector<Eigen::Vector4d> pos_lidar_aux(pos_lidar.size());       //[x_l,y_l,z_l,1]
         std::vector<Eigen::Vector3d> pos_udimage_aux(pos_lidar.size());     //[u,v,1]
-        std::vector<Eigen::Vector2i> pos_udimage(pos_lidar.size());         //[u,v]
         std::vector<Eigen::Vector2i> pos_dimage(pos_lidar.size());          //with distortion
-        Eigen::Matrix3d rotation;
+        std::vector<Eigen::Vector3d> pos_lidar_aux(pos_lidar.size());
+        Eigen::Quaterniond quaternion = m545_mapping::fromRPY(rpy);
+        const Eigen::Matrix3d rotation = quaternion.toRotationMatrix();
         Eigen::MatrixXd RT(3, 4);           //[R|T]
-        rotation = quaternion.toRotationMatrix();
-        RT.leftCols(3) = rotation;
+        RT.leftCols(3) = rotation.inverse();
         RT.col(3) = translation;
         for (int i = 0; i < pos_lidar.size(); i++) {
-//        pos_lidar_aux[i].topRows(3) = pos_lidar[i];
-            pos_lidar_aux[i].x() = -pos_lidar[i].y();
-            pos_lidar_aux[i].y() = pos_lidar[i].x();
-            pos_lidar_aux[i].z() = pos_lidar[i].z();
+            pos_lidar_aux[i].topRows(3) = pos_lidar[i];
             pos_lidar_aux[i](3) = 1.0;
             pos_udimage_aux[i] = RT * pos_lidar_aux[i];         //[K*[R|T]*[x_l,y_l,z_l,1] = lamda*[u.v.1]
             if(pos_udimage_aux[i].z() < 0) {
-                pos_udimage[i].x() = -1.0;
-                pos_udimage[i].y() = -1.0;          //get rid of the points with z<0 and color them later with white
+                pos_dimage[i].x() = -1.0;
+                pos_dimage[i].y() = -1.0;          //get rid of the points with z<0 and color them later with white
             }
             else {
-                pos_udimage_aux[i] = K * pos_udimage_aux[i];
-                pos_udimage_aux[i] = pos_udimage_aux[i] / pos_udimage_aux[i](2);
-                pos_udimage[i].x() = ceil(pos_udimage_aux[i].x());            //consider pixel size
-                pos_udimage[i].y() = ceil(pos_udimage_aux[i].y());
+                pos_lidar[i] = rotation.inverse() * pos_lidar[i] + translation;
+                pos_lidar[i].x() /= pos_lidar[i].z();
+                pos_lidar[i].y() /= pos_lidar[i].z();
                 //the distortion part
-                double u0 = K(0, 2);
-                double v0 = K(1, 2);
-                double u_differ = pos_udimage_aux[i].x() - u0;
-                double v_differ = pos_udimage_aux[i].y() - v0;
-                double r_square = pow(u_differ, 2) + pow(v_differ, 2);
-                pos_dimage[i].x() = round(pos_udimage_aux[i].x());
-                pos_dimage[i].y() = round(pos_udimage_aux[i].y());
-                pos_dimage[i].x() = round((1 + D(0) * r_square + D(1) * pow(r_square, 2) + D(4) * pow(r_square, 3)) * u_differ +
-                                          2 * D(2) * u_differ * v_differ + D(3) * (r_square + 2 * pow(u_differ, 2)) + u0);
-                pos_dimage[i].y() = round((1 + D(0) * r_square + D(1) * pow(r_square, 2) + D(4) * pow(r_square, 3)) * v_differ +
-                                          2 * D(3) * u_differ * v_differ + D(2) * (r_square + 2 * pow(v_differ, 2)) + v0);
+                double r_square = pow(pos_lidar[i].x(), 2) + pow(pos_lidar[i].y(), 2);
+                double x = pos_lidar[i].x() * (1 + D(0) * r_square + D(1) * pow(r_square, 2)) + 2 * D(2) * pos_lidar[i].x() * pos_lidar[i].y() + D(3);
+                double y = pos_lidar[i].y() * (1 + D(0) * r_square + D(1) * pow(r_square, 2)) + D(2) * (r_square + 2 * pow(pos_lidar[i].y(), 2)) + 2 * D(3) * pos_lidar[i].x() * pos_lidar[i].y();
+                pos_dimage[i].x() = round(K(0, 0) * x + K(0, 2));
+                pos_dimage[i].y() = round(K(1, 1) * y + K(1, 2));
             }
         }
-        cloud.colors_ = imageConversion(msg, pos_udimage);
+        cloud.colors_ = imageConversion(msg, pos_dimage);
 
         return cloud;
 
@@ -83,8 +74,8 @@ namespace m545_mapping {
         std::vector<Eigen::Matrix<double, 3, 1>> pixelColors(pixels.size());
         for (int i = 0; i < pixels.size(); i++) {
 
-            if (pixels[i].x() >= 0 && pixels[i].x() < cv_ptr->image.rows && pixels[i].y() >= 0 && pixels[i].y() < cv_ptr->image.cols) {
-                pixelColorscv[i] = cv_ptr->image.at<cv::Vec3b>(pixels[i].x(), cv_ptr->image.cols-pixels[i].y());
+            if (pixels[i].y() >= 0 && pixels[i].y() < cv_ptr->image.rows && pixels[i].x() >= 0 && pixels[i].x() < cv_ptr->image.cols) {
+                pixelColorscv[i] = cv_ptr->image.at<cv::Vec3b>(pixels[i].y(), pixels[i].x());
                 pixelColors[i].x() = pixelColorscv[i](0);
                 pixelColors[i].y() = pixelColorscv[i](1);
                 pixelColors[i].z() = pixelColorscv[i](2);
@@ -96,7 +87,6 @@ namespace m545_mapping {
                 pixelColors[i].y() = -1.0;
                 pixelColors[i].z() = -1.0;
             }
-//            std::cout << "pixelcolor:" << pixelColors[i].transpose() << std::endl;
         }
         return pixelColors;
     }

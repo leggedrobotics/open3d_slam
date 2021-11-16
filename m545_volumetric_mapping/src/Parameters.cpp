@@ -109,8 +109,6 @@ void loadParameters(const std::string &filename, ProjectionParameters *p){
 }
 void loadParameters(const YAML::Node &nProj, ProjectionParameters *p){
     const std::vector<double> vK = nProj["K"].as<std::vector<double> >();
-//    Eigen::Matrix<double, 3, 3, Eigen::RowMajor> K(vK.data());
-//    p->K(vK.data());
     p->K(0, 0) = vK[0];
     p->K(0, 1) = vK[1];
     p->K(0, 2) = vK[2];
@@ -127,22 +125,25 @@ void loadParameters(const YAML::Node &nProj, ProjectionParameters *p){
     p->D(2, 0) = vD[2];
     p->D(3, 0) = vD[3];
     p->D(4, 0) = vD[4];
-    const std::vector<double> vqua = nProj["quaternion"].as<std::vector<double> >();
-//    Eigen::Quaternion<double> quaternion(vqua.data());
-    p->quaternion.w() = vqua[3];
-    p->quaternion.x() = vqua[0];
-    p->quaternion.y() = vqua[1];
-    p->quaternion.z() = vqua[2];
+//    const std::vector<double> vqua = nProj["quaternion"].as<std::vector<double> >();
+////    Eigen::Quaternion<double> quaternion(vqua.data());
+//    p->quaternion.w() = vqua[3];
+//    p->quaternion.x() = vqua[0];
+//    p->quaternion.y() = vqua[1];
+//    p->quaternion.z() = vqua[2];
     const std::vector<double> vtran = nProj["translation"].as<std::vector<double> >();
 //    Eigen::Vector3d translation(vtran.data());
     p->translation.x() = vtran[0];
     p->translation.y() = vtran[1];
     p->translation.z() = vtran[2];
+    const std::vector<double> vRPY = nProj["rpy"].as<std::vector<double> >();
+    p->rpy.x() = vRPY[0];
+    p->rpy.y() = vRPY[1];
+    p->rpy.z() = vRPY[2];
 }
 
 
 void loadParameters(const YAML::Node &n, MesherParameters *p) {
-
 	p->strategy_ = mesherStrategyNames.at(n["strategy"].as<std::string>());
 	p->knnNormalEstimation_ = n["knn_normal_estimation"].as<int>();
 	p->voxelSize_=n["voxel_size"].as<double>();

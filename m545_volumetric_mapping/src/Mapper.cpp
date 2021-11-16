@@ -68,7 +68,7 @@ namespace m545_mapping {
             auto bbox = boundingBoxAroundPosition(params_.mapBuilderCropBoxLowBound_, params_.mapBuilderCropBoxHighBound_);
             auto croppedCloud = cloud.Crop(bbox);
             m545_mapping::voxelize(params_.voxelSize_, croppedCloud.get());
-//		auto voxelizedCloud = croppedCloud->VoxelDownSample(params_.mapVoxelSize_);
+            auto voxelizedCloud = croppedCloud->VoxelDownSample(params_.mapVoxelSize_);
             estimateNormalsIfNeeded(croppedCloud.get());
             map_ += *croppedCloud;
             denseMap_ += cloud2;

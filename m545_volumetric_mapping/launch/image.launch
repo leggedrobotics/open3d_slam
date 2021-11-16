@@ -1,0 +1,7 @@
+<launch>
+    <arg name="bag_filename" default="filtered_cloud_and_image.bag" />
+    <node pkg="rosbag" type="play" name="rosbag" required="true" args="$(find m545_volumetric_mapping)/data/$(arg bag_filename)"/>
+    <node name="extract" pkg="image_view" type="extract_images" respawn="false" required="true" output="screen" cwd="ROS_HOME">
+        <remap from="image" to="/camMainView/Downsampled"/>
+    </node>
+</launch>

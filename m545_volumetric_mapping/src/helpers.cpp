@@ -42,6 +42,7 @@ namespace m545_mapping {
                 }
                 if (cloud.HasColors()) {
                     color_ += cloud.colors_[index];
+//                    color_ = cloud.colors_[index];
                 }
                 num_of_points_++;
             }
@@ -57,6 +58,7 @@ namespace m545_mapping {
 
             Eigen::Vector3d GetAverageColor() const {
                 return color_ / double(num_of_points_);
+//                return color_;
             }
 
         public:
