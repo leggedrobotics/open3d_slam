@@ -213,20 +213,16 @@ void SubmapCollection::dumpToFile(const std::string &folderPath, const std::stri
 
 	for (size_t i = 0; i < submaps_.size(); ++i) {
 		auto copy = submaps_.at(i).getMap();
-
-			const auto optimizedPoses = optimization_->getNodeValues();
-			if (!optimizedPoses.empty()){
-				const auto mapToOld = submaps_.at(i).getMapToSubmapOrigin();
-				const auto mapToNew = optimizedPoses.at(i).mapToSubmap_;
-				const auto deltaT = mapToOld.inverse() * mapToNew;
-				copy.Transform(deltaT.matrix());
-			}
-			//todo handle a case where a submap has been added in the meantime
-
-
+		const auto optimizedPoses = optimization_->getNodeValues();
+		if (i < optimizedPoses.size()) {
+			const auto mapToOld = submaps_.at(i).getMapToSubmapOrigin();
+			const auto mapToNew = optimizedPoses.at(i).mapToSubmap_;
+			const auto deltaT = mapToOld.inverse() * mapToNew;
+			copy.Transform(deltaT.matrix());
+		}
+		//todo handle a case where a submap has been added in the meantime
 		const std::string fullPath = folderPath + "/" + filename + "_" + std::to_string(i) + ".pcd";
-		open3d::io::WritePointCloudToPCD(fullPath, copy,
-				open3d::io::WritePointCloudOption());
+		open3d::io::WritePointCloudToPCD(fullPath, copy, open3d::io::WritePointCloudOption());
 //		std::cout <<"written to: " << fullPath << std::endl;
 	}
 

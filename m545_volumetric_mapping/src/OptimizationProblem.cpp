@@ -38,6 +38,7 @@ void OptimizationProblem::solve() {
 
 void OptimizationProblem::buildOptimizationProblem(const SubmapCollection &submaps) {
 	std::lock_guard<std::mutex> lck(optimizationMutex_);
+	std::lock_guard<std::mutex> lck2(constraintMutex_);
 	isRunningOptimization_ = true;
 	isReadyToOptimize_ = false;
 
@@ -48,28 +49,26 @@ void OptimizationProblem::buildOptimizationProblem(const SubmapCollection &subma
 		poseGraph_.nodes_.emplace_back(std::move(node));
 	}
 
-	{
-		std::lock_guard<std::mutex> lck2(constraintMutex_);
-		poseGraph_.edges_.clear();
+	poseGraph_.edges_.clear();
 
-		for (const auto &c : odometryConstraints_) {
-			registration::PoseGraphEdge edge;
-			edge.source_node_id_ = c.sourceSubmapIdx_;
-			edge.target_node_id_ = c.targetSubmapIdx_;
-			edge.transformation_ = c.sourceToTarget_.inverse().matrix();
-			edge.uncertain_ = false;
-			poseGraph_.edges_.push_back(std::move(edge));
-		}
-		numLoopClosuresPrev_ = loopClosureConstraints_.size();
-		for (const auto &c : loopClosureConstraints_) {
-			registration::PoseGraphEdge edge;
-			edge.source_node_id_ = c.sourceSubmapIdx_;
-			edge.target_node_id_ = c.targetSubmapIdx_;
-			edge.transformation_ = c.sourceToTarget_.inverse().matrix();
-			edge.uncertain_ = true;
-			poseGraph_.edges_.push_back(std::move(edge));
-		}
+	for (const auto &c : odometryConstraints_) {
+		registration::PoseGraphEdge edge;
+		edge.source_node_id_ = c.sourceSubmapIdx_;
+		edge.target_node_id_ = c.targetSubmapIdx_;
+		edge.transformation_ = c.sourceToTarget_.inverse().matrix();
+		edge.uncertain_ = false;
+		poseGraph_.edges_.push_back(std::move(edge));
 	}
+	numLoopClosuresPrev_ = loopClosureConstraints_.size();
+	for (const auto &c : loopClosureConstraints_) {
+		registration::PoseGraphEdge edge;
+		edge.source_node_id_ = c.sourceSubmapIdx_;
+		edge.target_node_id_ = c.targetSubmapIdx_;
+		edge.transformation_ = c.sourceToTarget_.inverse().matrix();
+		edge.uncertain_ = true;
+		poseGraph_.edges_.push_back(std::move(edge));
+	}
+
 	isRunningOptimization_ = false;
 }
 
@@ -95,7 +94,7 @@ void OptimizationProblem::print() const {
 }
 
 void OptimizationProblem::dumpToFile(const std::string &filename) const {
-open3d::io::WritePoseGraph(filename, poseGraph_);
+	open3d::io::WritePoseGraph(filename, poseGraph_);
 //	auto asStringLine = [](const Eigen::Matrix4d &m) {
 //		std::string line;
 //		for (size_t i = 0; i < m.size(); ++i) {
