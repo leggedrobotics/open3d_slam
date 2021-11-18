@@ -21,6 +21,7 @@
 
 #include "open3d_conversions/open3d_conversions.h"
 #include <ros/ros.h>
+#include <ros/package.h>
 
 #include <sensor_msgs/PointCloud2.h>
 
@@ -38,7 +39,7 @@ std::shared_ptr<m545_mapping::LidarOdometry> odometry;
 std::shared_ptr<m545_mapping::Mapper> mapper;
 std::shared_ptr<SubmapCollection> submaps;
 std::shared_ptr<OptimizationProblem> optimizationProblem;
-
+std::string folderPath;
 m545_mapping::MapperParameters mapperParams;
 m545_mapping::LocalMapParameters localMapParams;
 m545_mapping::MesherParameters mesherParams;
@@ -48,8 +49,8 @@ bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const 
 	const Time time = fromRos(timestamp);
 	odometry->addRangeScan(cloud, time);
 
-	m545_mapping::publishTfTransform(odometry->getOdomToRangeSensor(time).matrix(), timestamp, odomFrame, rangeSensorFrame,
-			tfBroadcaster.get());
+	m545_mapping::publishTfTransform(odometry->getOdomToRangeSensor(time).matrix(), timestamp, odomFrame,
+			rangeSensorFrame, tfBroadcaster.get());
 
 	m545_mapping::publishCloud(odometry->getPreProcessedCloud(), m545_mapping::frames::rangeSensorFrame, timestamp,
 			subsampledPub);
@@ -95,7 +96,7 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 	}
 
 	if (mesherParams.isComputeMesh_ && !mesher->isMeshingInProgress() && !mapper->getMap().points_.empty()) {
-		std::thread t([timestamp,time]() {
+		std::thread t([timestamp, time]() {
 			auto map = mapper->getMap();
 			m545_mapping::MaxRadiusCroppingVolume cropper(localMapParams.croppingRadius_);
 			cropper.setPose(mapper->getMapToRangeSensor(time));
@@ -123,10 +124,14 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 	}
 	if (optimizationProblem->isReadyToOptimize() && !optimizationProblem->isRunningOptimization()) {
 		std::thread t([]() {
+
 			std::cout << "before optimization: \n";
-			optimizationProblem->print();
-			optimizationProblem->solve(*submaps);
-			optimizationProblem->print();
+			optimizationProblem->buildOptimizationProblem(*submaps);
+//					optimizationProblem->print();
+			submaps->dumpToFile(folderPath, "before");
+			optimizationProblem->dumpToFile(folderPath + "/poseGraph.json");
+			optimizationProblem->solve();
+			submaps->dumpToFile(folderPath, "after");
 		});
 		t.detach();
 	}
@@ -142,13 +147,11 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 		return;
 	}
 
-
 	if (cloudPrev.IsEmpty()) {
 		cloudPrev = cloud;
 		mappingUpdateIfMapperNotBusy(cloud, timestamp);
 		return;
 	}
-
 
 	m545_mapping::publishTfTransform(Eigen::Matrix4d::Identity(), timestamp, rangeSensorFrame, msg->header.frame_id,
 			tfBroadcaster.get());
@@ -173,6 +176,11 @@ int main(int argc, char **argv) {
 	debugPub2 = nh->advertise<sensor_msgs::PointCloud2>("debug2", 1, true);
 	submapPub = nh->advertise<sensor_msgs::PointCloud2>("submaps", 1, true);
 	submapOriginsPub = nh->advertise<visualization_msgs::MarkerArray>("submap_origins", 1, true);
+
+//	auto &logger = open3d::utility::Logger::GetInstance();
+//	logger.SetVerbosityLevel(open3d::utility::VerbosityLevel::Debug);
+
+	folderPath = ros::package::getPath("m545_volumetric_mapping") + "/data/";
 
 	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
 	std::cout << "loading params from: " << paramFile << "\n";

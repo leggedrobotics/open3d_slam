@@ -9,9 +9,11 @@
 #include "m545_volumetric_mapping/Submap.hpp"
 #include "m545_volumetric_mapping/assert.hpp"
 #include "m545_volumetric_mapping/helpers.hpp"
-
 #include "m545_volumetric_mapping/SubmapCollection.hpp"
 #include <open3d/pipelines/registration/GlobalOptimization.h>
+#include <open3d/io/PoseGraphIO.h>
+
+#include <fstream>
 
 namespace m545_mapping {
 
@@ -19,8 +21,22 @@ namespace {
 namespace registration = open3d::pipelines::registration;
 } //namespace
 
-void OptimizationProblem::solve(const SubmapCollection &submaps) {
+void OptimizationProblem::solve() {
 	const Timer t("global_optimization");
+	std::lock_guard<std::mutex> lck(optimizationMutex_);
+	isRunningOptimization_ = true;
+	isReadyToOptimize_ = false;
+	std::cout << "Optimizing graph...\n";
+	registration::GlobalOptimizationLevenbergMarquardt method;
+	registration::GlobalOptimizationConvergenceCriteria criteria;
+	registration::GlobalOptimizationOption option;
+	option.max_correspondence_distance_ = 30.0;
+	option.reference_node_ = 0;
+	GlobalOptimization(poseGraph_, method, criteria, option);
+	isRunningOptimization_ = false;
+}
+
+void OptimizationProblem::buildOptimizationProblem(const SubmapCollection &submaps) {
 	std::lock_guard<std::mutex> lck(optimizationMutex_);
 	isRunningOptimization_ = true;
 	isReadyToOptimize_ = false;
@@ -40,7 +56,7 @@ void OptimizationProblem::solve(const SubmapCollection &submaps) {
 			registration::PoseGraphEdge edge;
 			edge.source_node_id_ = c.sourceSubmapIdx_;
 			edge.target_node_id_ = c.targetSubmapIdx_;
-			edge.transformation_ = c.sourceToTarget_.matrix();
+			edge.transformation_ = c.sourceToTarget_.inverse().matrix();
 			edge.uncertain_ = false;
 			poseGraph_.edges_.push_back(std::move(edge));
 		}
@@ -49,14 +65,11 @@ void OptimizationProblem::solve(const SubmapCollection &submaps) {
 			registration::PoseGraphEdge edge;
 			edge.source_node_id_ = c.sourceSubmapIdx_;
 			edge.target_node_id_ = c.targetSubmapIdx_;
-			edge.transformation_ = c.sourceToTarget_.matrix();
+			edge.transformation_ = c.sourceToTarget_.inverse().matrix();
 			edge.uncertain_ = true;
 			poseGraph_.edges_.push_back(std::move(edge));
 		}
 	}
-	print();
-	std::cout << "Optimizing graph...\n";
-	GlobalOptimization(poseGraph_);
 	isRunningOptimization_ = false;
 }
 
@@ -79,7 +92,58 @@ void OptimizationProblem::print() const {
 		const Transform T(n.pose_);
 		std::cout << " node " << i << " pose: " << asString(T) << " \n ";
 	}
+}
 
+void OptimizationProblem::dumpToFile(const std::string &filename) const {
+open3d::io::WritePoseGraph(filename, poseGraph_);
+//	auto asStringLine = [](const Eigen::Matrix4d &m) {
+//		std::string line;
+//		for (size_t i = 0; i < m.size(); ++i) {
+//			const std::string character = std::to_string(m.array()(i));
+//			line += (i == m.size() - 1) ? character : character + ", ";
+//		}
+//		return line;
+//	};
+//
+//	std::ofstream outFile(filename);
+//	std::cout << "dumping to file: " << filename << std::endl;
+//
+//	outFile << "Optimization problem: \n";
+//
+//	// put the num nodes
+//	// num constraints
+//	// then dump the nodes first and constraints the second
+//	const auto copy = poseGraph_;
+//	const size_t nNodes = copy.nodes_.size();
+//	const size_t nEdges = copy.edges_.size();
+//	outFile << nNodes << "\n";
+//	outFile << nEdges << "\n";
+//
+//	for (size_t i = 0; i < nNodes; ++i) {
+//		outFile << asStringLine(copy.nodes_.at(i).pose_) + "\n";
+//	}
+//
+//	for (size_t i = 0; i < nEdges; ++i) {
+//		const auto &e = copy.edges_.at(i);
+//		outFile << e.uncertain_ << ", " << e.source_node_id_ << ", " << e.target_node_id_ << ", "
+//				<< asStringLine(e.transformation_)+ "\n";
+//	}
+//
+//	// Close the file
+//	outFile.close();
+
+}
+
+std::vector<OptimizedSubmapPose> OptimizationProblem::getNodeValues() const {
+	std::vector<OptimizedSubmapPose> retVal;
+	retVal.reserve(poseGraph_.nodes_.size());
+	for (size_t i = 0; i < poseGraph_.nodes_.size(); ++i) {
+		OptimizedSubmapPose p;
+		p.mapToSubmap_ = Transform(poseGraph_.nodes_.at(i).pose_);
+		p.submapId_ = i;
+		retVal.emplace_back(std::move(p));
+	}
+	return retVal;
 }
 
 void OptimizationProblem::clearOdometryConstraints() {

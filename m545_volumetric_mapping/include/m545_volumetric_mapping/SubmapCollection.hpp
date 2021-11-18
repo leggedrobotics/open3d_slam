@@ -50,6 +50,8 @@ public:
 	void buildLoopClosureConstraints();
 	bool isBuildingLoopClosureConstraints() const;
 
+	void dumpToFile(const std::string &folderPath, const std::string &filename) const;
+
 private:
 
 	void updateActiveSubmap(const Transform &mapToRangeSensor);

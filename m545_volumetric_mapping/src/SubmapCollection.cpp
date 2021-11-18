@@ -8,6 +8,7 @@
 #include "m545_volumetric_mapping/SubmapCollection.hpp"
 #include "m545_volumetric_mapping/helpers.hpp"
 #include "m545_volumetric_mapping/assert.hpp"
+#include <open3d/io/PointCloudIO.h>
 
 #include <algorithm>
 #include <numeric>
@@ -199,7 +200,6 @@ Constraint SubmapCollection::buildOdometryConstraint(size_t sourceSubmapIdx, siz
 	const Transform &mapToSource = submaps_.at(sourceSubmapIdx).getMapToSubmapOrigin();
 	const Transform &mapToTarget = submaps_.at(targetSubmapIdx).getMapToSubmapOrigin();
 	c.sourceToTarget_ = mapToSource.inverse() * mapToTarget;
-
 //	std::cout << "odom constraints: \n";
 //	std::cout << " source: " << asString(mapToSource) << std::endl;
 //	std::cout << " target: " << asString(mapToTarget) << std::endl;
@@ -207,6 +207,28 @@ Constraint SubmapCollection::buildOdometryConstraint(size_t sourceSubmapIdx, siz
 //	std::cout << " source transformed into target: \n";
 //	std::cout << asString(mapToSource * c.sourceToTarget_) << "\n \n";
 	return std::move(c);
+}
+
+void SubmapCollection::dumpToFile(const std::string &folderPath, const std::string &filename) const {
+
+	for (size_t i = 0; i < submaps_.size(); ++i) {
+		auto copy = submaps_.at(i).getMap();
+
+			const auto optimizedPoses = optimization_->getNodeValues();
+			if (!optimizedPoses.empty()){
+				const auto mapToOld = submaps_.at(i).getMapToSubmapOrigin();
+				const auto mapToNew = optimizedPoses.at(i).mapToSubmap_;
+				const auto deltaT = mapToOld.inverse() * mapToNew;
+				copy.Transform(deltaT.matrix());
+			}
+			//todo handle a case where a submap has been added in the meantime
+
+
+		const std::string fullPath = folderPath + "/" + filename + "_" + std::to_string(i) + ".pcd";
+		open3d::io::WritePointCloudToPCD(fullPath, copy,
+				open3d::io::WritePointCloudOption());
+//		std::cout <<"written to: " << fullPath << std::endl;
+	}
 
 }
 

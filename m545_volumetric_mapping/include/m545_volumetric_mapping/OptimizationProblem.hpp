@@ -14,9 +14,12 @@
 
 namespace m545_mapping {
 
-class Submap;
-class AdjacencyMatrix;
 class SubmapCollection;
+
+struct OptimizedSubmapPose{
+	Transform mapToSubmap_;
+	int64 submapId_;
+};
 
 
 class OptimizationProblem {
@@ -28,11 +31,15 @@ public:
 	void clearLoopClosureConstraints();
 	void addOdometryConstraint(const Constraint &c);
 	void addLoopClosureConstraint(const Constraint &c);
-	void solve(const SubmapCollection &submaps);
+	void solve();
+	void buildOptimizationProblem(const SubmapCollection &submaps);
 	void setIsReadyToOptimize(bool val);
 	bool isReadyToOptimize() const;
 	bool isRunningOptimization() const;
 	void print() const;
+	std::vector<OptimizedSubmapPose> getNodeValues() const;
+	void dumpToFile(const std::string &filename) const;
+
 private:
 	bool isRunningOptimization_ = false;
 	bool isReadyToOptimize_ = false;
