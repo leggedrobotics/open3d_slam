@@ -9,6 +9,8 @@
 #include "m545_volumetric_mapping/helpers.hpp"
 #include <open3d/io/TriangleMeshIO.h>
 #include <ros/package.h>
+#include "open3d_conversions/open3d_conversions.h"
+#include "m545_volumetric_mapping/frames.hpp"
 
 namespace m545_mapping {
 
@@ -49,26 +51,22 @@ void Mesher::buildMeshFromCloud(const PointCloud &cloudIn) {
 		auto meshAndDensities = TriangleMesh::CreateFromPointCloudPoisson(cloud, params_.poissonDepth_, dummyWidth,
 				params_.poissonScale_);
 		mesh = std::get<0>(meshAndDensities);
-//        std::cout << mesh->vertices_.size() << "see if different" << cloud.points_.size() << std::endl;
 		auto densities = std::get<1>(meshAndDensities);
 		std::vector<size_t> idsToRemove;
 		idsToRemove.reserve(mesh->vertices_.size());
 		const double removalThreshold = calcMean(densities) + params_.poissonMinDensity_*calcStandardDeviation(densities);
-        Eigen::Vector3d white{1.0, 1.0, 1.0};
+        //color the mesh here, based on that poisson mesh and the pointcloud share the same points
 		for (int i = 0; i < (int) mesh->vertices_.size(); ++i) {
-//            mesh->vertex_colors_.at(i) = white;
 			const double d = densities.at(i);
+            double threshold = 0.0001;
+            for (int j = 0; j < cloud.points_.size(); j++)
+                if ((mesh->vertices_[i] - cloud.points_[j]).norm() < threshold)
+                    mesh->vertex_colors_[i] = cloud.colors_[j];
 			if (d < removalThreshold) {
 				idsToRemove.push_back(i);
 			}
-
-//            std::cout << mesh->vertex_colors_[i]<<std::endl;
 		}
 		mesh->RemoveVerticesByIndex(idsToRemove);
-//        mesh->PaintUniformColor(white);
-//		std::cout<<"Density std: " <<calcStandardDeviation(densities) << "\n\n";
-//        mesh->vertex_colors_ = cloud.colors_;
-//        std::cout << "is working" <<std::endl;
 		break;
 	}
 	default:
@@ -100,8 +98,9 @@ void Mesher::setParameters(const MesherParameters &p) {
 
 const Mesher::TriangleMesh &Mesher::getMesh() const{
 	std::lock_guard<std::mutex> lck(meshingAccessMutex_);
-    Eigen::Vector3d white{1.0, 1.0, 1.0};
-    mesh_->PaintUniformColor(white);
+//    Eigen::Vector3d grey{0.5, 0.5, 0.5};
+//    for(int i = 0; i < mesh_->vertices_.size(); i++)
+//        mesh_->vertex_colors_.at(i) = grey;
     return *mesh_;
 }
 

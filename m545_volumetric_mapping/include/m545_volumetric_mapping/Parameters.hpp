@@ -78,10 +78,10 @@ struct ProjectionParameters {
 
 struct MesherParameters{
 	bool isComputeMesh_ = true;
-	double voxelSize_ = 0.05;
+	double voxelSize_ = 0.01;
 	MesherStrategy strategy_ = MesherStrategy::AlphaShape;
 	double alphaShapeAlpha_ = 0.5;
-	int poissonDepth_ = 8;
+	int poissonDepth_ = 10;
 	double poissonMinDensity_ = 5.0;
 	float poissonScale_=1.1;
 	std::vector<double> ballPivotRadii_ { 0.3, 1.0 };

@@ -53,7 +53,6 @@ target_link_libraries(${PROJECT_NAME}
   ${QT_LIBRARIES}
 )
 
-
 ##########
 # EXPORT #
 ##########

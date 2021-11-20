@@ -5,7 +5,6 @@
  *      Author: jelavice
  */
 #include <open3d/Open3D.h>
-#include <open3d/utility/Console.h>
 #include <open3d/pipelines/registration/Registration.h>
 #include <open3d/geometry/PointCloud.h>
 #include <message_filters/subscriber.h>
@@ -87,13 +86,14 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 
     if (mesherParams.isComputeMesh_ && !mesher->isMeshingInProgress() && !mapper->getMap().points_.empty()) {
         std::thread t([timestamp]() {
-            auto map = mapper->getMap();
+            auto map = mapper->getDenseMap();
             auto bbox = m545_mapping::boundingBoxAroundPosition(localMapParams.cropBoxLowBound_, localMapParams.cropBoxHighBound_, mapper->getMapToRangeSensor().translation());
             m545_mapping::cropPointcloud(bbox, &map);
             auto downSampledMap = map.VoxelDownSample(mesherParams.voxelSize_);
             mesher->setCurrentPose(mapper->getMapToRangeSensor());
             mesher->buildMeshFromCloud(*downSampledMap);
             m545_mapping::publishMesh(mesher->getMesh(), mapFrame,timestamp,meshPub);
+//            std::cout << mesher->getMesh().vertex_colors_.at(20) << std::endl;
         });
         t.detach();
     }
@@ -141,6 +141,7 @@ void synchronizeCallback(const sensor_msgs::PointCloud2ConstPtr& cloudmsg, const
     if (!computeAndPublishOdometry(modifiedCloud, timestamp)) {
         return;
     }
+
     m545_mapping::publishTfTransform(Eigen::Matrix4d::Identity(), timestamp, rangeSensorFrame, cloudmsg->header.frame_id,
                                      tfBroadcaster.get());
     m545_mapping::publishCloud(modifiedCloud, m545_mapping::frames::rangeSensorFrame, timestamp, colorCloudPub);
@@ -148,6 +149,14 @@ void synchronizeCallback(const sensor_msgs::PointCloud2ConstPtr& cloudmsg, const
 
 }
 
+void meshCallback(const m545_volumetric_mapping_msgs::PolygonMesh& msg) {
+    open3d::geometry::PointCloud colorCloud;
+    open3d_conversions::rosToOpen3d(msg.cloud, colorCloud, false);
+//    if(colorCloud.HasColors())
+//        std::cout << colorCloud.colors_[10] <<std::endl;
+//    else
+//        std::cout << "there's no color" << std::endl;
+}
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "lidar_odometry_mapping_node");
@@ -158,7 +167,7 @@ int main(int argc, char **argv) {
 
     //yidan
     const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
-    std::cout << "loading params from: " << paramFile << "\n";
+//    std::cout << "loading params from: " << paramFile << "\n";
 
     message_filters::Subscriber<sensor_msgs::PointCloud2> cloud_sub(*nh, "/ouster_points_self_filtered", 1);
     message_filters::Subscriber<sensor_msgs::Image> image_sub(*nh, "/camMainView/Downsampled", 1);
@@ -172,6 +181,7 @@ int main(int argc, char **argv) {
     localMapPub = nh->advertise<sensor_msgs::PointCloud2>("local_map", 1, true);
     meshPub = nh->advertise<m545_volumetric_mapping_msgs::PolygonMesh>("mesh", 1, true);
     colorCloudPub = nh->advertise<sensor_msgs::PointCloud2>("color_cloud", 1, true);
+//    ros::Subscriber meshSub = nh->subscribe("mesh", 100, &meshCallback);
 
     m545_mapping::OdometryParameters odometryParams;
     m545_mapping::loadParameters(paramFile, &odometryParams);

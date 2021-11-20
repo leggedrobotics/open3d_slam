@@ -42,7 +42,6 @@ namespace m545_mapping {
                 }
                 if (cloud.HasColors()) {
                     color_ += cloud.colors_[index];
-//                    color_ = cloud.colors_[index];
                 }
                 num_of_points_++;
             }
@@ -58,7 +57,6 @@ namespace m545_mapping {
 
             Eigen::Vector3d GetAverageColor() const {
                 return color_ / double(num_of_points_);
-//                return color_;
             }
 
         public:
@@ -102,9 +100,20 @@ namespace m545_mapping {
                      ros::Publisher &pub) {
         if (pub.getNumSubscribers() > 0) {
             m545_volumetric_mapping_msgs::PolygonMesh meshMsg;
+            open3d::geometry::PointCloud pointcloud;
             open3d_conversions::open3dToRos(mesh, frame_id, meshMsg);
             meshMsg.header.frame_id = frame_id;
             meshMsg.header.stamp = timestamp;
+            //recolor here
+            pointcloud.points_ = mesh.vertices_;
+            pointcloud.colors_ = mesh.vertex_colors_;
+            open3d_conversions::open3dToRos(pointcloud, meshMsg.cloud, frame_id);
+//            auto color_it = std::find_if(meshMsg.cloud.fields.begin(), meshMsg.cloud.fields.end(), [](const sensor_msgs::PointField &field) {
+//                return field.name == "rgb";});
+//            if (color_it == meshMsg.cloud.fields.end())
+//                std::cout << "sorry no color here" << std::endl;
+//            else
+//                std::cout << "works here" << std::endl;
             pub.publish(meshMsg);
         }
     }

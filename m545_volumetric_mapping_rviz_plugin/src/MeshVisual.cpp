@@ -1,10 +1,9 @@
 #include "m545_volumetric_mapping_rviz_plugin/MeshVisual.hpp"
 #include "open3d_conversions/open3d_conversions.h"
-#include <limits>
-#include "open3d_conversions/open3d_conversions.h"
 
 #include <OGRE/OgreSceneManager.h>
 #include <OGRE/OgreSceneNode.h>
+#include <ros/ros.h>
 
 namespace m545_volumetric_mapping_rviz_plugin {
 
@@ -27,11 +26,12 @@ void MeshVisual::setMessage(const m545_volumetric_mapping_msgs::PolygonMesh::Con
 //	auto 	startTime_ = std::chrono::steady_clock::now();
 	open3d::geometry::TriangleMesh mesh;
 	open3d_conversions::rosToOpen3d(msg, mesh);
+    auto color_it = std::find_if(msg->cloud.fields.begin(), msg->cloud.fields.end(), [](const sensor_msgs::PointField &field) {
+        return field.name == "rgb";});
+
 	// calculate normals
 	mesh.ComputeVertexNormals();
-
 	object_->clear();
-
 	if (firstTime_) {
 		frame_node_->attachObject(object_);
 		firstTime_ = false;
@@ -46,24 +46,24 @@ void MeshVisual::setMessage(const m545_volumetric_mapping_msgs::PolygonMesh::Con
 	object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
 	for (size_t i = 0; i < mesh.vertices_.size(); ++i) {
-		object_->position(mesh.vertices_[i].x(), mesh.vertices_[i].y(), mesh.vertices_[i].z());
-		object_->normal(mesh.vertex_normals_[i].x(), mesh.vertex_normals_[i].y(), mesh.vertex_normals_[i].z());
+        object_->position(mesh.vertices_[i].x(), mesh.vertices_[i].y(), mesh.vertices_[i].z());
+        object_->normal(mesh.vertex_normals_[i].x(), mesh.vertex_normals_[i].y(), mesh.vertex_normals_[i].z());
 
+        Eigen::Vector3d color(0.0, 0.0, 0.0);
+//        const bool isHasColors = true;
+        if (color_it != msg->cloud.fields.end()) {
+            color = mesh.vertex_colors_.at(i);
+        }
+        else {
+            // reconstruct normals coloring
+            color.x() = mesh.vertex_normals_[i].x() * 0.5f + 0.5f;
+            color.y() = mesh.vertex_normals_[i].y() * 0.5f + 0.5f;
+            color.z() = mesh.vertex_normals_[i].z() * 0.5f + 0.5f;
+        }
 
-		Eigen::Vector3d color(0.0,0.0,0.0);
-		const bool isHasColors = false;
-	      if (isHasColors) {
-	        color = mesh.vertex_colors_.at(i);
-	      } else {
-	        // reconstruct normals coloring
-	        color.x() = mesh.vertex_normals_[i].x() * 0.5f + 0.5f;
-	        color.y() = mesh.vertex_normals_[i].y() * 0.5f + 0.5f;
-	        color.z() = mesh.vertex_normals_[i].z() * 0.5f + 0.5f;
-	      }
-
-		object_->colour(static_cast<float>(color.x()), static_cast<float>(color.y()),
-				static_cast<float>(color.z()), static_cast<float>(255));
-	}
+        object_->colour(static_cast<float>(color.x()), static_cast<float>(color.y()),
+                        static_cast<float>(color.z()), static_cast<float>(255));
+    }
 
 	// needed for anything other than flat rendering
 	int ogreTriangleIdx = 0;

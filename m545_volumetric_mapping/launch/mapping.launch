@@ -15,7 +15,6 @@
 			
 		<param name="parameter_file_path" type="string"
 			value="$(arg parameter_file_path)" />
-			
 	</node>
 
 

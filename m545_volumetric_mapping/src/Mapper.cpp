@@ -27,7 +27,6 @@ namespace m545_mapping {
     }
 
     std::shared_ptr<m545_mapping::Color> color;
-//    Color::Color() {}
 
     void Mapper::setParameters(const MapperParameters &p) {
         params_ = p;

@@ -45,6 +45,7 @@ void MeshDisplay::processMessage(
   visual_->setMessage(msg);
   visual_->setFramePosition(position);
   visual_->setFrameOrientation(orientation);
+//  visual_->visualizeMesh(msg);
 }
 
 }  // namespace m545_volumetric_mapping_rviz_plugin

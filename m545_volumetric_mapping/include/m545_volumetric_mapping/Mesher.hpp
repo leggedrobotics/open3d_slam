@@ -11,6 +11,7 @@
 #include <open3d/geometry/PointCloud.h>
 #include <open3d/geometry/TriangleMesh.h>
 #include "m545_volumetric_mapping/Parameters.hpp"
+#include <sensor_msgs/PointCloud2.h>
 
 
 namespace m545_mapping {
@@ -30,6 +31,7 @@ public:
 	void setParameters(const MesherParameters &p);
 	const TriangleMesh &getMesh() const;
 	void setCurrentPose(const Eigen::Isometry3d &pose);
+//    const sensor_msgs::PointCloud2 getCloud(sensor_msgs::PointCloud2 &cloud);
 private:
 	bool isMeshingInProgress_ = false;
 	std::mutex meshingMutex_;

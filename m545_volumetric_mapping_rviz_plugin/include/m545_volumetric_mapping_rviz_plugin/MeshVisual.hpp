@@ -18,6 +18,7 @@ class MeshVisual {
   /// Set the coordinate frame pose.
   void setFramePosition(const Ogre::Vector3& position);
   void setFrameOrientation(const Ogre::Quaternion& orientation);
+//  void visualizeMesh(const m545_volumetric_mapping_msgs::PolygonMesh::ConstPtr& msg);
 
  private:
   Ogre::SceneNode* frame_node_;
