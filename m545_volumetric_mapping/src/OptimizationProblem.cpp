@@ -30,8 +30,10 @@ void OptimizationProblem::solve() {
 	registration::GlobalOptimizationLevenbergMarquardt method;
 	registration::GlobalOptimizationConvergenceCriteria criteria;
 	registration::GlobalOptimizationOption option;
-	option.max_correspondence_distance_ = 30.0;
+	option.max_correspondence_distance_ = 3.0;
 	option.reference_node_ = 0;
+	option.edge_prune_threshold_ = 0.05;
+	option.preference_loop_closure_ = 1.0;
 	GlobalOptimization(poseGraph_, method, criteria, option);
 	isRunningOptimization_ = false;
 }
@@ -56,6 +58,7 @@ void OptimizationProblem::buildOptimizationProblem(const SubmapCollection &subma
 		edge.source_node_id_ = c.sourceSubmapIdx_;
 		edge.target_node_id_ = c.targetSubmapIdx_;
 		edge.transformation_ = c.sourceToTarget_.inverse().matrix();
+		edge.information_ = c.informationMatrix_;
 		edge.uncertain_ = false;
 		poseGraph_.edges_.push_back(std::move(edge));
 	}
@@ -65,6 +68,10 @@ void OptimizationProblem::buildOptimizationProblem(const SubmapCollection &subma
 		edge.source_node_id_ = c.sourceSubmapIdx_;
 		edge.target_node_id_ = c.targetSubmapIdx_;
 		edge.transformation_ = c.sourceToTarget_.inverse().matrix();
+		edge.information_ = c.informationMatrix_;
+		assert_true(c.isInformationMatrixValid_,
+				"Invalid information matrix between: " + std::to_string(c.sourceSubmapIdx_) + " and "
+						+ std::to_string(c.targetSubmapIdx_));
 		edge.uncertain_ = true;
 		poseGraph_.edges_.push_back(std::move(edge));
 	}
@@ -131,6 +138,10 @@ void OptimizationProblem::dumpToFile(const std::string &filename) const {
 //	// Close the file
 //	outFile.close();
 
+}
+
+Constraints* OptimizationProblem::getOdometryConstraintsPtr() {
+	return &odometryConstraints_;
 }
 
 std::vector<OptimizedSubmapPose> OptimizationProblem::getNodeValues() const {

@@ -30,6 +30,7 @@ public:
 			size_t activeSubmapIdx) const;
 
 private:
+
 	Transform computeLoopClosingTransform(const Submap &sourceSubmap, const Submap &targetSubmap,
 			const Transform &sourceToTarget) const;
 	MapperParameters params_;

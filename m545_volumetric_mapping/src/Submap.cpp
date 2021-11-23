@@ -157,6 +157,10 @@ const Submap::Feature& Submap::getFeatures() const {
 	return *feature_;
 }
 
+Submap::Feature *Submap::getFeaturePtr() const {
+	return feature_.get();
+}
+
 void Submap::computeSubmapCenter() {
 	submapCenter_ = map_.GetCenter();
 	isCenterComputed_=true;

@@ -39,6 +39,7 @@ public:
 	void print() const;
 	std::vector<OptimizedSubmapPose> getNodeValues() const;
 	void dumpToFile(const std::string &filename) const;
+	Constraints *getOdometryConstraintsPtr();
 
 private:
 	bool isRunningOptimization_ = false;

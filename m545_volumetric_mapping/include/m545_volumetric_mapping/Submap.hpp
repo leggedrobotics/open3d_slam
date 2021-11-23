@@ -32,8 +32,7 @@ public:
 
 	void setParameters(const MapperParameters &mapperParams);
 	bool insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan, const Transform &transform, const Time &time, bool isPerformCarving);
-	void voxelizeInsideCroppingVolume(const CroppingVolume &cropper, const MapBuilderParameters &param,
-			PointCloud *map) const;
+
 	const Transform& getMapToSubmapOrigin() const;
 	Eigen::Vector3d getMapToSubmapCenter() const;
 	void setMapToSubmapOrigin(const Transform &T);
@@ -44,7 +43,7 @@ public:
 	const PointCloud& getSparseMap() const;
 	void computeSubmapCenter();
 	void computeFeatures();
-
+	Feature *getFeaturePtr() const;
 	Time getCreationTime() const;
 	SubmapId getId() const;
 	mutable PointCloud toRemove_;
@@ -56,6 +55,8 @@ private:
 	void estimateNormalsIfNeeded(int knn, PointCloud *pcl) const;
 	void carve(const PointCloud &rawScan, const Transform &mapToRangeSensor, const CroppingVolume &cropper,
 			const SpaceCarvingParameters &params, PointCloud *map, Timer *timer) const;
+	void voxelizeInsideCroppingVolume(const CroppingVolume &cropper, const MapBuilderParameters &param,
+			PointCloud *map) const;
 
 	PointCloud sparseMap_, map_, denseMap_;
 	Transform mapToSubmap_ = Transform::Identity();

@@ -87,31 +87,14 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		std::cout << "refined with transformation: \n" << asString(Transform(icpResult.transformation_)) << std::endl;
 
 		const Transform sourceToTarget(icpResult.transformation_);
-
-//		const std::string folder =
-//				"/home/jelavice/catkin_workspaces/open3d_ws/src/m545_volumetric_mapping/m545_volumetric_mapping/data/";
-//		open3d::io::WritePointCloudToPCD(folder + "target.pcd", target, open3d::io::WritePointCloudOption());
-//		open3d::io::WritePointCloudToPCD(folder + "source.pcd", source, open3d::io::WritePointCloudOption());
-//		auto sourceCopy = source;
-//		auto registered = sourceCopy.Transform(icpResult.transformation_);
-//		const auto overlappingSource = *(registered.SelectByIndex(sourceIdxs));
-//		const auto overlappingTarget = *(target.SelectByIndex(targetIdxs));
-//		std::cout <<"Source overlap: " << overlappingSource.points_.size() << " points \n";
-//		std::cout <<"target overlap: " << overlappingTarget.points_.size() << " points \n";
-//		open3d::io::WritePointCloudToPCD(folder + "source_registered.pcd", registered,
-//				open3d::io::WritePointCloudOption());
-//		open3d::io::WritePointCloudToPCD(folder + "source_overlap.pcd", overlappingSource,
-//				open3d::io::WritePointCloudOption());
-//		open3d::io::WritePointCloudToPCD(folder + "target_overlap.pcd", overlappingTarget,
-//				open3d::io::WritePointCloudOption());
-
-		//todo FIGURE THIS OUT
-//		const auto &mapToTarget = targetSubmap.getMapToSubmapOrigin();
-//		const auto &mapToSource = sourceSubmap.getMapToSubmapOrigin();
 		Constraint c;
 		c.sourceToTarget_ = computeLoopClosingTransform(sourceSubmap, targetSubmap, sourceToTarget);
 		c.sourceSubmapIdx_ = lastFinishedSubmapIdx;
 		c.targetSubmapIdx_ = id;
+		c.informationMatrix_ = open3d::pipelines::registration::GetInformationMatrixFromPointClouds(source,
+				target, cfg.featureVoxelSize_ * 3.0 , icpResult.transformation_);
+		c.isInformationMatrixValid_ = true;
+		c.isOdometryConstraint_ = false;
 		constraints.emplace_back(std::move(c));
 	} // end for loop
 	return constraints;

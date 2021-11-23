@@ -126,12 +126,14 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 		std::thread t([]() {
 
 			std::cout << "before optimization: \n";
+			computeInformationMatrixOdometryConstraints(*submaps, mapperParams.placeRecognition_.featureVoxelSize_*3.0, optimizationProblem->getOdometryConstraintsPtr());
 			optimizationProblem->buildOptimizationProblem(*submaps);
-//					optimizationProblem->print();
+					optimizationProblem->print();
 			submaps->dumpToFile(folderPath, "before");
 			optimizationProblem->dumpToFile(folderPath + "/poseGraph.json");
 			optimizationProblem->solve();
 			submaps->dumpToFile(folderPath, "after");
+			optimizationProblem->print();
 		});
 		t.detach();
 	}

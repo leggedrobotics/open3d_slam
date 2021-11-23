@@ -8,7 +8,9 @@
 #include "m545_volumetric_mapping/SubmapCollection.hpp"
 #include "m545_volumetric_mapping/helpers.hpp"
 #include "m545_volumetric_mapping/assert.hpp"
+#include "m545_volumetric_mapping/typedefs.hpp"
 #include <open3d/io/PointCloudIO.h>
+#include <open3d/pipelines/registration/Registration.h>
 
 #include <algorithm>
 #include <numeric>
@@ -155,7 +157,8 @@ void SubmapCollection::computeFeatures() {
 		loopClosureCandidatesIdxs_.push(id);
 	}
 	// if the features inthose maps are computed, they can be considered for a loop closure
-
+	computeInformationMatrixOdometryConstraints(*this, params_.placeRecognition_.featureVoxelSize_ * 3.0,
+			optimization_->getOdometryConstraintsPtr());
 	isComputingFeatures_ = false;
 }
 
@@ -193,7 +196,6 @@ void SubmapCollection::buildLoopClosureConstraints() {
 }
 
 Constraint SubmapCollection::buildOdometryConstraint(size_t sourceSubmapIdx, size_t targetSubmapIdx) const {
-
 	Constraint c;
 	c.sourceSubmapIdx_ = sourceSubmapIdx;
 	c.targetSubmapIdx_ = targetSubmapIdx;
@@ -210,7 +212,6 @@ Constraint SubmapCollection::buildOdometryConstraint(size_t sourceSubmapIdx, siz
 }
 
 void SubmapCollection::dumpToFile(const std::string &folderPath, const std::string &filename) const {
-
 	for (size_t i = 0; i < submaps_.size(); ++i) {
 		auto copy = submaps_.at(i).getMap();
 		const auto optimizedPoses = optimization_->getNodeValues();
@@ -225,7 +226,29 @@ void SubmapCollection::dumpToFile(const std::string &folderPath, const std::stri
 		open3d::io::WritePointCloudToPCD(fullPath, copy, open3d::io::WritePointCloudOption());
 //		std::cout <<"written to: " << fullPath << std::endl;
 	}
+}
 
+void computeInformationMatrixOdometryConstraints(const SubmapCollection &submaps, double maxCorrespondenceDistance,
+		Constraints *constraints) {
+	const size_t nConstraints = constraints->size();
+	for (size_t i = 0; i < nConstraints; ++i) {
+		Constraint &c = constraints->at(i);
+		if (!c.isInformationMatrixValid_ && c.isOdometryConstraint_) {
+			const size_t sourceIdx = c.sourceSubmapIdx_;
+			const size_t targetIdx = c.targetSubmapIdx_;
+			const bool isSourceMapFinished = submaps.getSubmaps().at(sourceIdx).getFeaturePtr() != nullptr;
+			const bool istargetMapFinished = submaps.getSubmaps().at(targetIdx).getFeaturePtr() != nullptr;
+			if (isSourceMapFinished && istargetMapFinished) {
+				const auto source = submaps.getSubmaps().at(sourceIdx).getSparseMap();
+				const auto target = submaps.getSubmaps().at(targetIdx).getSparseMap();
+				c.informationMatrix_ = open3d::pipelines::registration::GetInformationMatrixFromPointClouds(source,
+						target, maxCorrespondenceDistance, Eigen::Matrix4d::Identity());
+				c.isInformationMatrixValid_ = true;
+				std::cout << "computing the information matrix for the edge between submaps: " << sourceIdx << " and "
+						<< targetIdx << "\n";
+			}
+		}
+	}
 }
 
 } // namespace m545_mapping

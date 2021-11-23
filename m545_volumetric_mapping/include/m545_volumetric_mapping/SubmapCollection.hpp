@@ -59,6 +59,7 @@ private:
 	size_t findClosestSubmap(const Transform &mapToRangesensor) const;
 	Constraint buildOdometryConstraint(size_t sourceSubmapIdx, size_t targetSubmapIdx) const;
 
+
 	Transform mapToRangeSensor_ = Transform::Identity();
 	std::vector<Submap> submaps_;
 	size_t activeSubmapIdx_ = 0;
@@ -78,5 +79,7 @@ private:
 	ThreadSafeBuffer<SubmapId> loopClosureCandidatesIdxs_;
 
 };
+
+void computeInformationMatrixOdometryConstraints(const SubmapCollection &submaps,double maxCorrespondenceDistance, Constraints *constraints);
 
 } // namespace m545_mapping

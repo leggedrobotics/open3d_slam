@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cstdint>
+#include <Eigen/Core>
 
 namespace m545_mapping {
 
@@ -19,6 +20,7 @@ using uint8 = uint8_t;
 using uint16 = uint16_t;
 using uint32 = uint32_t;
 using uint64 = uint64_t;
+using Matrix6d = Eigen::Matrix<double, 6, 6>;
 
 
 
