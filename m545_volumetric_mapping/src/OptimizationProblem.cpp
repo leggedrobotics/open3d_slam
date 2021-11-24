@@ -75,7 +75,7 @@ void OptimizationProblem::buildOptimizationProblem(const SubmapCollection &subma
 		edge.uncertain_ = true;
 		poseGraph_.edges_.push_back(std::move(edge));
 	}
-
+	poseGraphPrev_ = poseGraph_;
 	isRunningOptimization_ = false;
 }
 
@@ -102,54 +102,22 @@ void OptimizationProblem::print() const {
 
 void OptimizationProblem::dumpToFile(const std::string &filename) const {
 	open3d::io::WritePoseGraph(filename, poseGraph_);
-//	auto asStringLine = [](const Eigen::Matrix4d &m) {
-//		std::string line;
-//		for (size_t i = 0; i < m.size(); ++i) {
-//			const std::string character = std::to_string(m.array()(i));
-//			line += (i == m.size() - 1) ? character : character + ", ";
-//		}
-//		return line;
-//	};
-//
-//	std::ofstream outFile(filename);
-//	std::cout << "dumping to file: " << filename << std::endl;
-//
-//	outFile << "Optimization problem: \n";
-//
-//	// put the num nodes
-//	// num constraints
-//	// then dump the nodes first and constraints the second
-//	const auto copy = poseGraph_;
-//	const size_t nNodes = copy.nodes_.size();
-//	const size_t nEdges = copy.edges_.size();
-//	outFile << nNodes << "\n";
-//	outFile << nEdges << "\n";
-//
-//	for (size_t i = 0; i < nNodes; ++i) {
-//		outFile << asStringLine(copy.nodes_.at(i).pose_) + "\n";
-//	}
-//
-//	for (size_t i = 0; i < nEdges; ++i) {
-//		const auto &e = copy.edges_.at(i);
-//		outFile << e.uncertain_ << ", " << e.source_node_id_ << ", " << e.target_node_id_ << ", "
-//				<< asStringLine(e.transformation_)+ "\n";
-//	}
-//
-//	// Close the file
-//	outFile.close();
-
 }
 
 Constraints* OptimizationProblem::getOdometryConstraintsPtr() {
 	return &odometryConstraints_;
 }
 
-std::vector<OptimizedSubmapPose> OptimizationProblem::getNodeValues() const {
-	std::vector<OptimizedSubmapPose> retVal;
-	retVal.reserve(poseGraph_.nodes_.size());
-	for (size_t i = 0; i < poseGraph_.nodes_.size(); ++i) {
+OptimizedSubmapPoses OptimizationProblem::getOptimizedNodeValues() const {
+	return getNodeValues(poseGraph_);
+}
+
+OptimizedSubmapPoses OptimizationProblem::getNodeValues(const registration::PoseGraph &poseGraph) const {
+	OptimizedSubmapPoses retVal;
+	retVal.reserve(poseGraph.nodes_.size());
+	for (size_t i = 0; i < poseGraph.nodes_.size(); ++i) {
 		OptimizedSubmapPose p;
-		p.mapToSubmap_ = Transform(poseGraph_.nodes_.at(i).pose_);
+		p.mapToSubmap_ = Transform(poseGraph.nodes_.at(i).pose_);
 		p.submapId_ = i;
 		retVal.emplace_back(std::move(p));
 	}
@@ -175,6 +143,22 @@ void OptimizationProblem::addOdometryConstraint(const Constraint &c) {
 void OptimizationProblem::addLoopClosureConstraint(const Constraint &c) {
 	std::lock_guard<std::mutex> lck(constraintMutex_);
 	loopClosureConstraints_.push_back(c);
+}
+
+OptimizedTransforms OptimizationProblem::getOptimizedTransformIncrements() const {
+	OptimizedTransforms retVal;
+	const auto nonOptimizedPoses = getNodeValues(poseGraphPrev_);
+	const auto optimizedPoses = getNodeValues(poseGraph_);
+	assert_eq(nonOptimizedPoses.size(), optimizedPoses.size(),
+			"Graphs are not of same size, did you run the optimization?");
+	for (size_t i = 0; i < optimizedPoses.size(); ++i) {
+		const auto mapToOld = nonOptimizedPoses.at(i).mapToSubmap_;
+		const auto mapToNew = optimizedPoses.at(i).mapToSubmap_;
+		const auto deltaT = mapToOld.inverse() * mapToNew;
+		retVal.emplace_back(OptimizedTransform{ deltaT, nonOptimizedPoses.at(i).submapId_ });
+	}
+
+	return retVal;
 }
 
 } //namespace m545_mapping

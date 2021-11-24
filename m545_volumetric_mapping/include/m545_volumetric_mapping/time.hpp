@@ -25,10 +25,17 @@ public:
 	double elapsedMsec() const;
 	double elapsedSec() const;
 	void reset();
+	void startStopwatch();
+	double elapsedMsecSinceStopwatchStart() const;
+	void addMeasurementMsec(double msec);
+	double getAvgMeasurementMsec() const;
 private:
 	std::chrono::steady_clock::time_point startTime_;
+	std::chrono::steady_clock::time_point startTimeStopWatch_;
 	bool isPrintInDestructor_ = false;
 	std::string name_;
+	double cumulativeMeasurementMsec_ = 0.0;
+	size_t numMeasurementsMsec_ = 0;
 };
 
 

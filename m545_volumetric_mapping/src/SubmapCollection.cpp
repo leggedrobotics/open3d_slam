@@ -44,7 +44,7 @@ size_t SubmapCollection::getTotalNumPoints() const {
 }
 
 void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor) {
-	if (numScansMergedInActiveSubmap_ < params_.submaps_.minNumRangeData_) {
+	if (isBlockUpdatingActiveSubmap_ || numScansMergedInActiveSubmap_ < params_.submaps_.minNumRangeData_) {
 		return;
 	}
 	const size_t closestMapIdx = findClosestSubmap(mapToRangeSensor_);
@@ -130,6 +130,9 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 		std::cout << "Adding edge between " << id1 << " and " << id2 << std::endl;
 	}
 	submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, true);
+	// todo possibly here we need to update the active map
+	// that update needs to be thread safe
+
 	++numScansMergedInActiveSubmap_;
 	return true;
 }
@@ -214,20 +217,29 @@ Constraint SubmapCollection::buildOdometryConstraint(size_t sourceSubmapIdx, siz
 void SubmapCollection::dumpToFile(const std::string &folderPath, const std::string &filename) const {
 	for (size_t i = 0; i < submaps_.size(); ++i) {
 		auto copy = submaps_.at(i).getMap();
-		const auto optimizedPoses = optimization_->getNodeValues();
-		if (i < optimizedPoses.size()) {
-			const auto mapToOld = submaps_.at(i).getMapToSubmapOrigin();
-			const auto mapToNew = optimizedPoses.at(i).mapToSubmap_;
-			const auto deltaT = mapToOld.inverse() * mapToNew;
-			copy.Transform(deltaT.matrix());
-		}
-		//todo handle a case where a submap has been added in the meantime
 		const std::string fullPath = folderPath + "/" + filename + "_" + std::to_string(i) + ".pcd";
 		open3d::io::WritePointCloudToPCD(fullPath, copy, open3d::io::WritePointCloudOption());
-//		std::cout <<"written to: " << fullPath << std::endl;
 	}
 }
 
+void SubmapCollection::transform(const OptimizedTransforms &transformIncrements){
+	isBlockUpdatingActiveSubmap_ = true;
+	const Timer t("submaps_update");
+	std::cout << "updating submaps: \n";
+	for (const auto &update : transformIncrements){
+		if (update.submapId_ == activeSubmapIdx_){
+			// here do nothing or at least just save the update
+		} else {
+			submaps_.at(update.submapId_).transform(update.dT_);
+		}
+	}
+
+
+}
+
+////////////////////////////////////////////////////////////////////
+/// NON MEMBER ////////
+////////////////////////////////////////////////////////////////////
 void computeInformationMatrixOdometryConstraints(const SubmapCollection &submaps, double maxCorrespondenceDistance,
 		Constraints *constraints) {
 	const size_t nConstraints = constraints->size();
@@ -239,13 +251,28 @@ void computeInformationMatrixOdometryConstraints(const SubmapCollection &submaps
 			const bool isSourceMapFinished = submaps.getSubmaps().at(sourceIdx).getFeaturePtr() != nullptr;
 			const bool istargetMapFinished = submaps.getSubmaps().at(targetIdx).getFeaturePtr() != nullptr;
 			if (isSourceMapFinished && istargetMapFinished) {
-				const auto source = submaps.getSubmaps().at(sourceIdx).getSparseMap();
-				const auto target = submaps.getSubmaps().at(targetIdx).getSparseMap();
-				c.informationMatrix_ = open3d::pipelines::registration::GetInformationMatrixFromPointClouds(source,
-						target, maxCorrespondenceDistance, Eigen::Matrix4d::Identity());
-				c.isInformationMatrixValid_ = true;
+				const auto source = submaps.getSubmaps().at(sourceIdx).getMap();
+				const auto target = submaps.getSubmaps().at(targetIdx).getMap();
 				std::cout << "computing the information matrix for the edge between submaps: " << sourceIdx << " and "
 						<< targetIdx << "\n";
+								std::shared_ptr<open3d::geometry::PointCloud> sourceOverlap, targetOverlap;
+				{
+					Timer("compute_overlap");
+				// at this voxel size about half a points are dropped
+				// the compute intersection function is quite fast
+				const double voxelSize = 0.25;
+				const size_t minNumPointsVoxel = 3;
+				std::vector<size_t> idxsSource, idxsTarget;
+				computeIndicesOfOverlappingPoints(source, target, Transform::Identity(), voxelSize, minNumPointsVoxel,
+						&idxsSource, &idxsTarget);
+					std::cout << "in total there is " << idxsSource.size() << "/"<< source.points_.size() << " points in source and "
+							<< idxsTarget.size() << "/"<<target.points_.size() << " points in target that overlap \n";
+				sourceOverlap = source.SelectByIndex(idxsSource);
+				targetOverlap = target.SelectByIndex(idxsTarget);
+				}
+				c.informationMatrix_ = open3d::pipelines::registration::GetInformationMatrixFromPointClouds(
+						*sourceOverlap, *targetOverlap, maxCorrespondenceDistance, Eigen::Matrix4d::Identity());
+				c.isInformationMatrixValid_ = true;
 			}
 		}
 	}

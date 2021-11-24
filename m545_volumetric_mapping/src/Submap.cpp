@@ -41,7 +41,7 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 		creationTime_ = time;
 	}
 	mapToRangeSensor_ = mapToRangeSensor;
-	auto transformedCloud = transform(mapToRangeSensor.matrix(), preProcessedScan);
+	auto transformedCloud = m545_mapping::transform(mapToRangeSensor.matrix(), preProcessedScan);
 	estimateNormalsIfNeeded(params_.scanMatcher_.kNNnormalEstimation_, transformedCloud.get());
 	if (isPerformCarving) {
 		carve(rawScan, mapToRangeSensor, *mapBuilderCropper_, params_.mapBuilder_.carving_, &map_, &carvingTimer_);
@@ -67,13 +67,25 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 	return true;
 }
 
+void Submap::transform(const Transform &T){
+	const Eigen::Matrix4d mat(T.matrix());
+	sparseMap_.Transform(mat);
+	map_.Transform(mat);
+	denseMap_.Transform(mat);
+	// not really sure whether I should update this map to submap thingy, since
+	// that guy is used to compute the odometry
+//	mapToSubmap_ = mapToSubmap_ * T;
+	mapToRangeSensor_ = mapToRangeSensor_ * T;
+	submapCenter_ = T * submapCenter_;
+}
+
 void Submap::carve(const PointCloud &rawScan, const Transform &mapToRangeSensor, const CroppingVolume &cropper,
 		const SpaceCarvingParameters &params, PointCloud *map, Timer *timer) const {
 	if (map->points_.empty() || timer->elapsedSec() < params.carveSpaceEveryNsec_) {
 		return;
 	}
 //	Timer timer("carving");
-	auto scan = transform(mapToRangeSensor.matrix(), rawScan);
+	auto scan = m545_mapping::transform(mapToRangeSensor.matrix(), rawScan);
 	const auto wideCroppedIdxs = cropper.getIndicesWithinVolume(*map);
 	auto idxsToRemove = std::move(
 			getIdxsOfCarvedPoints(*scan, *map, mapToRangeSensor.translation(), wideCroppedIdxs, params));

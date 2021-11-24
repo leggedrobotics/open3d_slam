@@ -51,7 +51,7 @@ public:
 	bool isBuildingLoopClosureConstraints() const;
 
 	void dumpToFile(const std::string &folderPath, const std::string &filename) const;
-
+	void transform(const OptimizedTransforms &transformIncrements);
 private:
 
 	void updateActiveSubmap(const Transform &mapToRangeSensor);
@@ -77,6 +77,7 @@ private:
 	std::shared_ptr<OptimizationProblem> optimization_;
 	ThreadSafeBuffer<SubmapId> finishedSubmapsIdxs_;
 	ThreadSafeBuffer<SubmapId> loopClosureCandidatesIdxs_;
+	bool isBlockUpdatingActiveSubmap_ = false;
 
 };
 

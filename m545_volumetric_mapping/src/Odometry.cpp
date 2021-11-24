@@ -44,7 +44,7 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 	//	std::cout << "target size: " << cloud.points_.size() << std::endl;
 	//	std::cout << "reference size: " << cloudPrev.points_.size() << std::endl;
 	//	std::cout << "\n \n";
-	if (result.fitness_ <= 1e-2) {
+	if (result.fitness_ <= 0.1) {
 		return false;
 	}
 	odomToRangeSensorCumulative_.matrix() *= result.transformation_.inverse();

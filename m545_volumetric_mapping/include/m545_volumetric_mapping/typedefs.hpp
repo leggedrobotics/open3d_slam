@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <Eigen/Core>
+#include <open3d/geometry/PointCloud.h>
 
 namespace m545_mapping {
 
@@ -21,7 +22,7 @@ using uint16 = uint16_t;
 using uint32 = uint32_t;
 using uint64 = uint64_t;
 using Matrix6d = Eigen::Matrix<double, 6, 6>;
-
+using PointCloud = open3d::geometry::PointCloud;
 
 
 } //namespace m545_mapping

@@ -46,6 +46,7 @@ public:
 	Feature *getFeaturePtr() const;
 	Time getCreationTime() const;
 	SubmapId getId() const;
+	void transform(const Transform &T);
 	mutable PointCloud toRemove_;
 	mutable PointCloud scanRef_;
 	mutable PointCloud mapRef_;

@@ -24,6 +24,7 @@ set(SRC_FILES
   src/AdjacencyMatrix.cpp
   src/PlaceRecognition.cpp
   src/OptimizationProblem.cpp
+  src/WrapperRos.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES

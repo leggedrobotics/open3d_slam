@@ -22,5 +22,19 @@ struct Constraint{
 
 using Constraints = std::vector<Constraint>;
 
+struct OptimizedTransform {
+	Transform dT_;
+	size_t submapId_;
+};
+
+using OptimizedTransforms = std::vector<OptimizedTransform>;
+
+struct OptimizedSubmapPose{
+	Transform mapToSubmap_;
+	int64 submapId_;
+};
+
+using OptimizedSubmapPoses = std::vector<OptimizedSubmapPose>;
+
 
 } //namespace m545_mapping

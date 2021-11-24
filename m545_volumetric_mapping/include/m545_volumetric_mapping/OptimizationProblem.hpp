@@ -16,11 +16,6 @@ namespace m545_mapping {
 
 class SubmapCollection;
 
-struct OptimizedSubmapPose{
-	Transform mapToSubmap_;
-	int64 submapId_;
-};
-
 
 class OptimizationProblem {
 
@@ -37,17 +32,21 @@ public:
 	bool isReadyToOptimize() const;
 	bool isRunningOptimization() const;
 	void print() const;
-	std::vector<OptimizedSubmapPose> getNodeValues() const;
+	OptimizedSubmapPoses getOptimizedNodeValues() const;
+	OptimizedTransforms getOptimizedTransformIncrements() const;
 	void dumpToFile(const std::string &filename) const;
 	Constraints *getOdometryConstraintsPtr();
 
 private:
+
+	OptimizedSubmapPoses getNodeValues(const open3d::pipelines::registration::PoseGraph &poseGraph) const;
+
 	bool isRunningOptimization_ = false;
 	bool isReadyToOptimize_ = false;
 	std::mutex constraintMutex_, optimizationMutex_;
 	Constraints loopClosureConstraints_;
 	Constraints odometryConstraints_;
-	open3d::pipelines::registration::PoseGraph poseGraph_;
+	open3d::pipelines::registration::PoseGraph poseGraph_, poseGraphPrev_;
 	size_t numLoopClosuresPrev_ = 0;
 
 };

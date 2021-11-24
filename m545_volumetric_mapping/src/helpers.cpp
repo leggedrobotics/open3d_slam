@@ -331,13 +331,11 @@ std::shared_ptr<open3d::geometry::PointCloud> transform(const Eigen::Matrix4d &T
 
 void computeIndicesOfOverlappingPoints(const open3d::geometry::PointCloud &source,
 		const open3d::geometry::PointCloud &target, const Transform &sourceToTarget, double voxelSize,
+		size_t minNumPointsPerVoxel,
 		std::vector<size_t> *idxsSource, std::vector<size_t> *idxsTarget) {
-	std::cout << "computing overlap with voxel size: " << voxelSize << std::endl;
+	assert_ge<size_t>(minNumPointsPerVoxel,1);
 	VoxelMap targetMap(Eigen::Vector3d::Constant(voxelSize));
 	targetMap.buildFromCloud(target);
-	std::cout << "num points targget: " << target.points_.size() << std::endl;
-	std::cout << "voxel map size: " << targetMap.voxels_.size() << std::endl;
-	std::cout << "voxel map bucket count: " << targetMap.voxels_.bucket_count() << std::endl;
 	idxsSource->clear();
 	idxsSource->reserve(source.points_.size());
 	idxsTarget->clear();
@@ -346,7 +344,7 @@ void computeIndicesOfOverlappingPoints(const open3d::geometry::PointCloud &sourc
 	for (size_t i = 0; i < source.points_.size(); ++i) {
 		const auto p = sourceToTarget * source.points_.at(i);
 		const auto targetIdxsInVoxel = targetMap.getIndicesInVoxel(p);
-		if (!targetIdxsInVoxel.empty()) {
+		if (targetIdxsInVoxel.size() >= minNumPointsPerVoxel) {
 			setTargetIdxs.insert(targetIdxsInVoxel.begin(), targetIdxsInVoxel.end());
 			idxsSource->push_back(i);
 		}
