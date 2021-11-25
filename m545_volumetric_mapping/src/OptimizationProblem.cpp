@@ -30,9 +30,9 @@ void OptimizationProblem::solve() {
 	registration::GlobalOptimizationLevenbergMarquardt method;
 	registration::GlobalOptimizationConvergenceCriteria criteria;
 	registration::GlobalOptimizationOption option;
-	option.max_correspondence_distance_ = 3.0;
+	option.max_correspondence_distance_ = 0.5;
 	option.reference_node_ = 0;
-	option.edge_prune_threshold_ = 0.05;
+	option.edge_prune_threshold_ = 0.1;
 	option.preference_loop_closure_ = 1.0;
 	GlobalOptimization(poseGraph_, method, criteria, option);
 	isRunningOptimization_ = false;

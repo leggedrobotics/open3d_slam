@@ -313,7 +313,8 @@ void computeInformationMatrixOdometryConstraints(const SubmapCollection &submaps
 					sourceOverlap = source.SelectByIndex(idxsSource);
 					targetOverlap = target.SelectByIndex(idxsTarget);
 					c.informationMatrix_ = open3d::pipelines::registration::GetInformationMatrixFromPointClouds(
-							*sourceOverlap, *targetOverlap, maxCorrespondenceDistance, Eigen::Matrix4d::Identity());
+							source, target, maxCorrespondenceDistance, Eigen::Matrix4d::Identity());
+//					std::cout << "information mat: \n" << c.informationMatrix_  << "\n";
 					c.isInformationMatrixValid_ = true;
 				}
 			}

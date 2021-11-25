@@ -77,7 +77,11 @@ public:
 } //namespace
 
 double informationMatrixMaxCorrespondenceDistance(double mappingVoxelSize){
-	return isClose(mappingVoxelSize, 0.0, 1e-3) ? 0.02 : mappingVoxelSize;
+	return isClose(mappingVoxelSize, 0.0, 1e-3) ? 0.05 : (2.0*mappingVoxelSize);
+}
+
+double icpMaxCorrespondenceDistance(double mappingVoxelSize){
+	return isClose(mappingVoxelSize, 0.0, 1e-3) ? 0.05 : (2.0*mappingVoxelSize);
 }
 
 void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::PointCloud *pcl) {

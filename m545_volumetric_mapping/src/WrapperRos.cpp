@@ -229,7 +229,6 @@ void WrapperRos::loopClosureWorker() {
 			Timer t("loop_closing_attempt");
 			const auto lcc = loopClosureCandidates_.popAllElements();
 			loopClosureConstraints = submaps_->buildLoopClosureConstraints(lcc);
-			submaps_->addLoopClosureConstraints(loopClosureConstraints);
 		}
 
 		if (loopClosureConstraints.empty()){
@@ -242,6 +241,7 @@ void WrapperRos::loopClosureWorker() {
 			auto odometryConstraints = submaps_->getOdometryConstraints();
 			const double d = informationMatrixMaxCorrespondenceDistance(mapperParams_.mapBuilder_.mapVoxelSize_);
 			computeInformationMatrixOdometryConstraints(*submaps_, d, &odometryConstraints);
+			submaps_->addLoopClosureConstraints(loopClosureConstraints);
 
 			optimizationProblem_->clearLoopClosureConstraints();
 			optimizationProblem_->clearOdometryConstraints();
@@ -279,7 +279,12 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 	assert_gt(latestLoopClosureConstraint.sourceSubmapIdx_, latestLoopClosureConstraint.targetSubmapIdx_);
 	const auto dT = optimizedTransformations.at(latestLoopClosureConstraint.sourceSubmapIdx_);
 	const Time latestTime = mapper_->getMapToRangeSensorBuffer().latest_time();
-	const Time lastLoopClosureTime = latestLoopClosureConstraint.timestamp_;
+//	const Time lastLoopClosureTime = latestLoopClosureConstraint.timestamp_;
+	const Time lastLoopClosureTime = mapper_->getMapToRangeSensorBuffer().earliest_time();
+
+	std::cout << "Applying the delta T from submap " << latestLoopClosureConstraint.sourceSubmapIdx_ << "\n";
+	std::cout << "the transform is: " << asString(dT.dT_) << std::endl;
+
 	mapper_->getMapToRangeSensorBufferPtr()->applyToAllElementsInTimeInterval(dT.dT_,lastLoopClosureTime , latestTime);
 
 }

@@ -46,16 +46,18 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 			<< closeSubmapsIdxs.size() << std::endl;
 	using namespace open3d::pipelines::registration;
 
-	const auto source = sourceSubmap.getSparseMap();
+	const auto sourceSparse = sourceSubmap.getSparseMap();
+	const auto source = sourceSubmap.getMap();
 	const auto sourceFeature = sourceSubmap.getFeatures();
 	for (const auto id : closeSubmapsIdxs) {
 		std::cout << "matching submap: " << lastFinishedSubmapIdx << " with submap: " << id << "\n";
 		const auto &targetSubmap = submaps.at(id);
-		const auto target = targetSubmap.getSparseMap();
+		const auto targetSparse = targetSubmap.getSparseMap();
 		const auto targetFeature = targetSubmap.getFeatures();
-		RegistrationResult ransacResult = RegistrationRANSACBasedOnFeatureMatching(source, target, sourceFeature,
-				targetFeature, true, cfg.ransacMaxCorrespondenceDistance_, TransformationEstimationPointToPoint(false),
-				cfg.ransacModelSize_, { distanceChecker, edgeLengthChecker },
+		RegistrationResult ransacResult = RegistrationRANSACBasedOnFeatureMatching(sourceSparse, targetSparse,
+				sourceFeature, targetFeature, true, cfg.ransacMaxCorrespondenceDistance_,
+				TransformationEstimationPointToPoint(false), cfg.ransacModelSize_,
+				{ distanceChecker, edgeLengthChecker },
 				RANSACConvergenceCriteria(cfg.ransacNumIter_, cfg.ransacProbability_));
 
 		if (ransacResult.correspondence_set_.size() < cfg.ransacMinCorrespondenceSetSize_) {
@@ -66,8 +68,11 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 
 		ICPConvergenceCriteria icpCriteria;
 		icpCriteria.max_iteration_ = cfg.icp_.maxNumIter_;
-		const auto icpResult = open3d::pipelines::registration::RegistrationICP(source, target,
-				cfg.featureVoxelSize_ * 3.0, ransacResult.transformation_, *icpObjective, icpCriteria);
+		const auto target = targetSubmap.getMap();
+//		const double icpCorrespondenceDistance = icpMaxCorrespondenceDistance(params_.mapBuilder_.mapVoxelSize_);
+		const double icpCorrespondenceDistance = icpMaxCorrespondenceDistance(cfg.featureVoxelSize_);
+		const auto icpResult = open3d::pipelines::registration::RegistrationICP(sourceSparse, targetSparse,
+				icpCorrespondenceDistance, ransacResult.transformation_, *icpObjective, icpCriteria);
 		if (icpResult.fitness_ < cfg.minRefinementFitness_) {
 			std::cout << "skipping place recognition with refinement score: " << icpResult.fitness_ << " \n";
 			continue;
@@ -91,8 +96,9 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		c.sourceToTarget_ = computeLoopClosingTransform(sourceSubmap, targetSubmap, sourceToTarget);
 		c.sourceSubmapIdx_ = lastFinishedSubmapIdx;
 		c.targetSubmapIdx_ = id;
-		c.informationMatrix_ = open3d::pipelines::registration::GetInformationMatrixFromPointClouds(source,
-				target, cfg.featureVoxelSize_ * 3.0 , icpResult.transformation_);
+		c.informationMatrix_ = open3d::pipelines::registration::GetInformationMatrixFromPointClouds(source, target,
+				informationMatrixMaxCorrespondenceDistance(params_.mapBuilder_.mapVoxelSize_),
+				icpResult.transformation_);
 		c.isInformationMatrixValid_ = true;
 		c.isOdometryConstraint_ = false;
 		c.timestamp_ = timestamp;
