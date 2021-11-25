@@ -122,40 +122,15 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	mapToRangeSensor_.matrix() = result.transformation_;
 	mapToOdom_ = mapToRangeSensor_ * odomToRangeSensor.inverse();
 	mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
-//	mapToOdomBuffer_.push(timestamp,mapToOdom_);
 
 	// concatenate registered cloud into map
 	submaps_->setMapToRangeSensor(mapToRangeSensor_);
 	const bool isMovedTooLittle = odometryMotion.translation().norm() < params_.minMovementBetweenMappingSteps_;
 	if (!isMovedTooLittle) {
+		//Timer t("scan_insertion_and_bookeeping");
 		submaps_->insertScan(rawScan, *wideCroppedCloud, mapToRangeSensor_, timestamp);
 		odomToRangeSensorPrev_ = odomToRangeSensor;
 	}
-
-	//check the constraints
-	// update the mapToRange sensor interpolation buffer
-	// update submaps - only do this once pose graph is added
-	// update active submaps!
-//	const auto constraints = submaps_->getAndClearConstraints();
-//	if (!constraints.empty()) {
-//		std::cout << "\n ABOUT TO RELOCALIZE \n";
-//		std::cout << "loop closing resulted in " << constraints.size() << " constraints \n";
-//
-//		auto mapToRangeSensorCopy = mapToRangeSensor_;
-//		for (const auto &c : constraints) {
-//			const auto lastTimeInBuffer = mapToRangeSensorBuffer_.latest_time();
-//			const auto beginTimeInBuffer = std::max(c.timeBegin_, c.timeFinish_);
-//			assert_ge(toUniversal(lastTimeInBuffer), toUniversal(beginTimeInBuffer));
-//			mapToRangeSensorBuffer_.applyToAllElementsInTimeInterval(c.relativeTransformation_, beginTimeInBuffer,
-//					lastTimeInBuffer);
-//			mapToRangeSensor_ = mapToRangeSensorCopy * c.relativeTransformation_;
-//			std::cout << "updating current pose estimate with transform: \n" << asString(c.relativeTransformation_)
-//					<< "\n";
-//		}
-//		std::cout <<"ABOUT to update \n";
-//		submaps_->updateActiveSubmap(mapToRangeSensor_);
-//		std::cout <<"DONE updating \n";
-//	}
 
 	isMatchingInProgress_ = false;
 }
@@ -216,5 +191,9 @@ bool Mapper::isManipulatingMap() const {
 const TransformInterpolationBuffer& Mapper::getMapToRangeSensorBuffer() const {
 	return mapToRangeSensorBuffer_;
 }
+TransformInterpolationBuffer *Mapper::getMapToRangeSensorBufferPtr(){
+	return &mapToRangeSensorBuffer_;
+}
+
 
 } /* namespace m545_mapping */

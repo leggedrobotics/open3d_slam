@@ -40,6 +40,7 @@ public:
 	Transform getMapToOdom( const Time &timestamp) const;
 	Transform getMapToRangeSensor( const Time &timestamp) const;
 	const TransformInterpolationBuffer &getMapToRangeSensorBuffer() const;
+	TransformInterpolationBuffer *getMapToRangeSensorBufferPtr();
 
 private:
 	std::shared_ptr<PointCloud> preProcessScan(const PointCloud &scan) const;
@@ -61,7 +62,6 @@ private:
 	std::shared_ptr<SubmapCollection> submaps_;
 	const TransformInterpolationBuffer &odomToRangeSensorBuffer_;
 	TransformInterpolationBuffer mapToRangeSensorBuffer_;
-	TransformInterpolationBuffer mapToOdomBuffer_;
 
 };
 

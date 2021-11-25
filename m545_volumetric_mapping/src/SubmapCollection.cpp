@@ -9,17 +9,19 @@
 #include "m545_volumetric_mapping/helpers.hpp"
 #include "m545_volumetric_mapping/assert.hpp"
 #include "m545_volumetric_mapping/typedefs.hpp"
+#include "m545_volumetric_mapping/math.hpp"
+
 #include <open3d/io/PointCloudIO.h>
 #include <open3d/pipelines/registration/Registration.h>
 
 #include <algorithm>
 #include <numeric>
 #include <utility>
+#include <set>
 
 namespace m545_mapping {
 
-SubmapCollection::SubmapCollection(std::shared_ptr<OptimizationProblem> optimization) :
-		optimization_(optimization) {
+SubmapCollection::SubmapCollection() {
 	submaps_.reserve(100);
 	createNewSubmap(mapToRangeSensor_);
 }
@@ -36,6 +38,22 @@ const SubmapCollection::Submaps& SubmapCollection::getSubmaps() const {
 	return submaps_;
 }
 
+SubmapCollection::TimestampedSubmapIds SubmapCollection::popFinishedSubmapIds() {
+	return finishedSubmapsIdxs_.popAllElements();
+}
+
+SubmapCollection::TimestampedSubmapIds SubmapCollection::popLoopClosureCandidates() {
+	return loopClosureCandidatesIdxs_.popAllElements();
+}
+
+size_t SubmapCollection::numFinishedSubmaps() const{
+	return finishedSubmapsIdxs_.size();
+}
+
+size_t SubmapCollection::numLoopClosureCandidates() const{
+	return loopClosureCandidatesIdxs_.size();
+}
+
 size_t SubmapCollection::getTotalNumPoints() const {
 	const int nSubmaps = submaps_.size();
 	return std::accumulate(submaps_.begin(), submaps_.end(), 0, [](size_t sum, const Submap &s) {
@@ -44,7 +62,7 @@ size_t SubmapCollection::getTotalNumPoints() const {
 }
 
 void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor) {
-	if (isBlockUpdatingActiveSubmap_ || numScansMergedInActiveSubmap_ < params_.submaps_.minNumRangeData_) {
+	if (numScansMergedInActiveSubmap_ < params_.submaps_.minNumRangeData_) {
 		return;
 	}
 	const size_t closestMapIdx = findClosestSubmap(mapToRangeSensor_);
@@ -72,16 +90,18 @@ void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor) {
 }
 
 void SubmapCollection::createNewSubmap(const Transform &mapToSubmap) {
-	Submap newSubmap(submapId_++);
+	const size_t submapId = submapId_++;
+	const size_t submapParentId = std::max<int>(0, static_cast<int>(submapId) - 1);
+	Submap newSubmap(submapId, submapParentId);
 	newSubmap.setMapToSubmapOrigin(mapToSubmap);
 	newSubmap.setParameters(params_);
 	submaps_.emplace_back(std::move(newSubmap));
 	activeSubmapIdx_ = submaps_.size() - 1;
 	numScansMergedInActiveSubmap_ = 0;
-	std::cout << "Created submap: " << activeSubmapIdx_ << std::endl;
+	std::cout << "Created submap: " << activeSubmapIdx_ << " with parent " << submapParentId << std::endl;
 	if (submaps_.size() > 1) {
 		const auto c = buildOdometryConstraint(activeSubmapIdx_ - 1, activeSubmapIdx_);
-		optimization_->addOdometryConstraint(c);
+		odometryConstraints_.push_back(c);
 	}
 }
 
@@ -122,7 +142,8 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 		submaps_.at(prevActiveSubmapIdx).computeSubmapCenter();
 		std::cout << "Active submap changed from " << prevActiveSubmapIdx << " to " << activeSubmapIdx_ << "\n";
 		lastFinishedSubmapIdx_ = prevActiveSubmapIdx;
-		finishedSubmapsIdxs_.push(prevActiveSubmapIdx);
+		TimestampedSubmapId timestampedId { prevActiveSubmapIdx, timestamp };
+		finishedSubmapsIdxs_.push(timestampedId);
 		numScansMergedInActiveSubmap_ = 0;
 		const auto id1 = submaps_.at(prevActiveSubmapIdx).getId();
 		const auto id2 = submaps_.at(activeSubmapIdx_).getId();
@@ -145,23 +166,18 @@ void SubmapCollection::setParameters(const MapperParameters &p) {
 	placeRecognition_.setParameters(p);
 }
 
-bool SubmapCollection::isBuildingLoopClosureConstraints() const {
-	return isBuildingLoopClosureConstraints_;
-}
-
-void SubmapCollection::computeFeatures() {
+void SubmapCollection::computeFeatures(const TimestampedSubmapIds &finishedSubmapIds) {
 	std::lock_guard<std::mutex> lck(featureComputationMutex_);
 	isComputingFeatures_ = true;
 	Timer t("feature computation");
-	const auto submapsIdxsForFeatureComputation = finishedSubmapsIdxs_.popAllElements();
-	for (const auto &id : submapsIdxsForFeatureComputation) {
-		std::cout << "computing features for submap: " << id << std::endl;
-		submaps_.at(id).computeFeatures();
+	for (const auto &id : finishedSubmapIds) {
+		std::cout << "computing features for submap: " << id.submapId_ << std::endl;
+		submaps_.at(id.submapId_).computeFeatures();
 		loopClosureCandidatesIdxs_.push(id);
 	}
-	// if the features inthose maps are computed, they can be considered for a loop closure
-	computeInformationMatrixOdometryConstraints(*this, params_.placeRecognition_.featureVoxelSize_ * 3.0,
-			optimization_->getOdometryConstraintsPtr());
+	// if the features in those maps are computed, they can be considered for a loop closure
+	const double d = informationMatrixMaxCorrespondenceDistance(params_.mapBuilder_.mapVoxelSize_);
+	computeInformationMatrixOdometryConstraints(*this, d, &odometryConstraints_);
 	isComputingFeatures_ = false;
 }
 
@@ -169,33 +185,30 @@ bool SubmapCollection::isComputingFeatures() const {
 	return isComputingFeatures_;
 }
 
-const ThreadSafeBuffer<SubmapCollection::SubmapId>& SubmapCollection::getFinishedSubmapIds() const {
-	return finishedSubmapsIdxs_;
+const Constraints& SubmapCollection::getOdometryConstraints() const {
+	return odometryConstraints_;
+}
+const Constraints& SubmapCollection::getLoopClosureConstraints() const {
+	return loopClosureConstraints_;
+}
+void SubmapCollection::addLoopClosureConstraints(const Constraints &lccs) {
+	loopClosureConstraints_.insert(loopClosureConstraints_.end(), lccs.begin(), lccs.end());
 }
 
-const ThreadSafeBuffer<SubmapCollection::SubmapId>& SubmapCollection::getLoopClosureCandidateIds() const {
-	return loopClosureCandidatesIdxs_;
-}
-
-void SubmapCollection::buildLoopClosureConstraints() {
-	std::lock_guard<std::mutex> lck(loopClosureConstraintMutex_);
-	isBuildingLoopClosureConstraints_ = true;
-	Timer t("loop closing");
-
-	const auto loopClosureCandidatesIdxs = loopClosureCandidatesIdxs_.popAllElements();
+Constraints SubmapCollection::buildLoopClosureConstraints(const TimestampedSubmapIds &loopClosureCandidatesIdxs) const {
+	Constraints retVal;
 	for (const auto &id : loopClosureCandidatesIdxs) {
 		const auto constraints = placeRecognition_.buildLoopClosureConstraints(mapToRangeSensor_, *this,
-				adjacencyMatrix_, id, activeSubmapIdx_);
+				adjacencyMatrix_, id.submapId_, activeSubmapIdx_, id.time_);
 		if (!constraints.empty()) {
 			for (int i = 0; i < constraints.size(); ++i) {
-				optimization_->addLoopClosureConstraint(constraints.at(i));
+				retVal.push_back(constraints.at(i));
 			}
-			std::cout << " building loop closure constraints for submap: " << id << " resulted in: "
+			std::cout << " building loop closure constraints for submap: " << id.submapId_ << " resulted in: "
 					<< constraints.size() << " new constraints \n";
 		}
 	}
-
-	isBuildingLoopClosureConstraints_ = false;
+	return retVal;
 }
 
 Constraint SubmapCollection::buildOdometryConstraint(size_t sourceSubmapIdx, size_t targetSubmapIdx) const {
@@ -222,19 +235,49 @@ void SubmapCollection::dumpToFile(const std::string &folderPath, const std::stri
 	}
 }
 
-void SubmapCollection::transform(const OptimizedTransforms &transformIncrements){
-	isBlockUpdatingActiveSubmap_ = true;
-	const Timer t("submaps_update");
-	std::cout << "updating submaps: \n";
-	for (const auto &update : transformIncrements){
-		if (update.submapId_ == activeSubmapIdx_){
-			// here do nothing or at least just save the update
-		} else {
-			submaps_.at(update.submapId_).transform(update.dT_);
+void SubmapCollection::transform(const OptimizedTransforms &transformIncrements) {
+	const size_t nTransforms = transformIncrements.size();
+	std::vector<size_t> optimizedIdxs;
+	for (size_t i = 0; i < nTransforms; ++i) {
+		const auto &update = transformIncrements.at(i);
+		submaps_.at(update.submapId_).transform(update.dT_);
+		optimizedIdxs.push_back(update.submapId_);
+	}
+	std::sort(optimizedIdxs.begin(), optimizedIdxs.end());
+	std::vector<size_t> allIdxs = getAllSubmapIdxs();
+
+	std::vector<size_t> submapIdxsToUpdate;
+	std::set_difference(allIdxs.begin(), allIdxs.end(), optimizedIdxs.begin(), optimizedIdxs.end(),
+			std::inserter(submapIdxsToUpdate, submapIdxsToUpdate.begin()));
+
+	for (auto idx : submapIdxsToUpdate) {
+		//look at the node parent
+		// if the parent is not in the list of nodes to update
+		// then you are done, take the transform of the parent node
+		// otherwise, set the current node to be the parent node
+		size_t currentNode;
+		currentNode = idx;
+		while (true) {
+			currentNode = submaps_.at(currentNode).getParentId();
+			if (std::find(submapIdxsToUpdate.begin(), submapIdxsToUpdate.end(), currentNode)
+					== submapIdxsToUpdate.end()) {
+				/* parent is in the pose graph */
+				const auto &update = transformIncrements.at(currentNode);
+				submaps_.at(update.submapId_).transform(update.dT_);
+				break;
+			}
+			if (currentNode == submaps_.at(currentNode).getParentId()) {
+				throw std::runtime_error("Stuck in a loop, this should not happen");
+			}
 		}
 	}
 
+}
 
+std::vector<size_t> SubmapCollection::getAllSubmapIdxs() const {
+	std::vector<size_t> idxs(submaps_.size());
+	std::iota(idxs.begin(), idxs.end(), 0);
+	return idxs;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -255,24 +298,24 @@ void computeInformationMatrixOdometryConstraints(const SubmapCollection &submaps
 				const auto target = submaps.getSubmaps().at(targetIdx).getMap();
 				std::cout << "computing the information matrix for the edge between submaps: " << sourceIdx << " and "
 						<< targetIdx << "\n";
-								std::shared_ptr<open3d::geometry::PointCloud> sourceOverlap, targetOverlap;
+				std::shared_ptr<open3d::geometry::PointCloud> sourceOverlap, targetOverlap;
 				{
-					Timer("compute_overlap");
-				// at this voxel size about half a points are dropped
-				// the compute intersection function is quite fast
-				const double voxelSize = 0.25;
-				const size_t minNumPointsVoxel = 3;
-				std::vector<size_t> idxsSource, idxsTarget;
-				computeIndicesOfOverlappingPoints(source, target, Transform::Identity(), voxelSize, minNumPointsVoxel,
-						&idxsSource, &idxsTarget);
-					std::cout << "in total there is " << idxsSource.size() << "/"<< source.points_.size() << " points in source and "
-							<< idxsTarget.size() << "/"<<target.points_.size() << " points in target that overlap \n";
-				sourceOverlap = source.SelectByIndex(idxsSource);
-				targetOverlap = target.SelectByIndex(idxsTarget);
+					Timer("information_matrix");
+					// at this voxel size about half a points are dropped
+					// the compute intersection function is quite fast less than 0.1 msec
+					const double voxelSize = 0.25;
+					const size_t minNumPointsVoxel = 3;
+					std::vector<size_t> idxsSource, idxsTarget;
+					computeIndicesOfOverlappingPoints(source, target, Transform::Identity(), voxelSize,
+							minNumPointsVoxel, &idxsSource, &idxsTarget);
+//					std::cout << "in total there is " << idxsSource.size() << "/"<< source.points_.size() << " points in source and "
+//							<< idxsTarget.size() << "/"<<target.points_.size() << " points in target that overlap \n";
+					sourceOverlap = source.SelectByIndex(idxsSource);
+					targetOverlap = target.SelectByIndex(idxsTarget);
+					c.informationMatrix_ = open3d::pipelines::registration::GetInformationMatrixFromPointClouds(
+							*sourceOverlap, *targetOverlap, maxCorrespondenceDistance, Eigen::Matrix4d::Identity());
+					c.isInformationMatrixValid_ = true;
 				}
-				c.informationMatrix_ = open3d::pipelines::registration::GetInformationMatrixFromPointClouds(
-						*sourceOverlap, *targetOverlap, maxCorrespondenceDistance, Eigen::Matrix4d::Identity());
-				c.isInformationMatrixValid_ = true;
 			}
 		}
 	}

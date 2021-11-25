@@ -76,6 +76,10 @@ public:
 
 } //namespace
 
+double informationMatrixMaxCorrespondenceDistance(double mappingVoxelSize){
+	return isClose(mappingVoxelSize, 0.0, 1e-3) ? 0.02 : mappingVoxelSize;
+}
+
 void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::PointCloud *pcl) {
 	auto croppedCloud = pcl->Crop(bbox);
 	*pcl = std::move(*croppedCloud);

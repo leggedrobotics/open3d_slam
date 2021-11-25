@@ -17,6 +17,7 @@
 #include "m545_volumetric_mapping/math.hpp"
 #include "m545_volumetric_mapping/croppers.hpp"
 #include "m545_volumetric_mapping/Mapper.hpp"
+#include "m545_volumetric_mapping/assert.hpp"
 #include "m545_volumetric_mapping/Mesher.hpp"
 #include "m545_volumetric_mapping/OptimizationProblem.hpp"
 
@@ -29,6 +30,7 @@ namespace m545_mapping {
 namespace {
 using namespace m545_mapping::frames;
 const double visualizationUpdatePeriodMsec = 400.0; // msec
+const double timingStatsEveryNsec = 15.0;
 }
 
 WrapperRos::WrapperRos(ros::NodeHandlePtr nh) :
@@ -45,6 +47,10 @@ WrapperRos::~WrapperRos() {
 	if (mappingWorker_.joinable()) {
 		mappingWorker_.join();
 		std::cout << "Joined mapping worker \n";
+	}
+	if (loopClosureWorker_.joinable()) {
+		loopClosureWorker_.join();
+		std::cout << "Joined the loop closure worker \n";
 	}
 }
 
@@ -79,7 +85,7 @@ void WrapperRos::initialize() {
 	odometry_->setParameters(odometryParams);
 
 	optimizationProblem_ = std::make_shared<m545_mapping::OptimizationProblem>();
-	submaps_ = std::make_shared<m545_mapping::SubmapCollection>(optimizationProblem_);
+	submaps_ = std::make_shared<m545_mapping::SubmapCollection>();
 	mapper_ = std::make_shared<m545_mapping::Mapper>(odometry_->getBuffer(), submaps_);
 	m545_mapping::loadParameters(paramFile, &mapperParams_);
 	mapper_->setParameters(mapperParams_);
@@ -95,6 +101,9 @@ void WrapperRos::start() {
 	});
 	mappingWorker_ = std::thread([this]() {
 		mappingWorker();
+	});
+	loopClosureWorker_ = std::thread([this]() {
+		loopClosureWorker();
 	});
 }
 
@@ -128,7 +137,7 @@ void WrapperRos::odometryWorker() {
 		}
 		const double timeMeasurement = odometryStatisticsTimer_.elapsedMsecSinceStopwatchStart();
 		odometryStatisticsTimer_.addMeasurementMsec(timeMeasurement);
-		if (odometryStatisticsTimer_.elapsedSec() > 10.0) {
+		if (odometryStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {
 			std::cout << "Odometry timing stats: Avg execution time: "
 					<< odometryStatisticsTimer_.getAvgMeasurementMsec() << " msec , frequency: "
 					<< 1e3 / odometryStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
@@ -156,15 +165,25 @@ void WrapperRos::mappingWorker() {
 			std::cout << "latest: " << readable(b.latest_time()) << std::endl;
 			std::cout << "requested: " << readable(measurement.time_) << std::endl;
 		}
-
 		mapper_->addRangeMeasurement(measurement.cloud_, measurement.time_);
-
-//		mesherBufffer_.push(measurement.time_);
 		publishMapToOdomTf(measurement.time_);
+		//mesherBufffer_.push(measurement.time_);
+
+		computeFeaturesIfReady();
+		attemptLoopClosuresIfReady();
+
+		if (isOptimizedGraphAvailable_) {
+			isOptimizedGraphAvailable_ = false;
+			updateSubmapsAndTrajectory();
+		}
+
+		// publish visualizatinos
 		publishMaps(measurement.time_);
+
+		//just get the stats
 		const double timeMeasurement = mappingStatisticsTimer_.elapsedMsecSinceStopwatchStart();
 		mappingStatisticsTimer_.addMeasurementMsec(timeMeasurement);
-		if (mappingStatisticsTimer_.elapsedSec() > 10.0) {
+		if (mappingStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {
 			std::cout << "Mapper timing stats: Avg execution time: " << mappingStatisticsTimer_.getAvgMeasurementMsec()
 					<< " msec , frequency: " << 1e3 / mappingStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
 			mappingStatisticsTimer_.reset();
@@ -179,16 +198,92 @@ void WrapperRos::publishMapToOdomTf(const Time &time) {
 			tfBroadcaster_.get());
 }
 
-void WrapperRos::featureComputationWorker() {
-	if (!submaps_->getFinishedSubmapIds().empty() && !submaps_->isComputingFeatures()) {
-		submaps_->computeFeatures();
+void WrapperRos::computeFeaturesIfReady() {
+	if (submaps_->numFinishedSubmaps() > 0 && !submaps_->isComputingFeatures()) {
+		computeFeaturesResult_ = std::async(std::launch::async, [this]() {
+			const auto finishedSubmapIds = submaps_->popFinishedSubmapIds();
+			submaps_->computeFeatures(finishedSubmapIds);
+		});
+	}
+}
+void WrapperRos::attemptLoopClosuresIfReady() {
+	const auto timeout = std::chrono::milliseconds(0);
+	if (computeFeaturesResult_.valid() && computeFeaturesResult_.wait_for(timeout) == std::future_status::ready) {
+		computeFeaturesResult_.get(); // consume the future
+		if (submaps_->numLoopClosureCandidates() > 0) {
+			const auto lcc = submaps_->popLoopClosureCandidates();
+			loopClosureCandidates_.insert(lcc.begin(), lcc.end());
+		}
 	}
 }
 void WrapperRos::loopClosureWorker() {
-	if (!submaps_->getLoopClosureCandidateIds().empty() && !submaps_->isBuildingLoopClosureConstraints()) {
-		submaps_->buildLoopClosureConstraints();
-	}
+
+	while (ros::ok()) {
+		if (loopClosureCandidates_.empty() || isOptimizedGraphAvailable_) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+			continue;
+		}
+
+		Constraints loopClosureConstraints;
+		{
+			Timer t("loop_closing_attempt");
+			const auto lcc = loopClosureCandidates_.popAllElements();
+			loopClosureConstraints = submaps_->buildLoopClosureConstraints(lcc);
+			submaps_->addLoopClosureConstraints(loopClosureConstraints);
+		}
+
+		if (loopClosureConstraints.empty()){
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+			continue;
+		}
+
+		{
+			Timer t("optimization_problem");
+			auto odometryConstraints = submaps_->getOdometryConstraints();
+			const double d = informationMatrixMaxCorrespondenceDistance(mapperParams_.mapBuilder_.mapVoxelSize_);
+			computeInformationMatrixOdometryConstraints(*submaps_, d, &odometryConstraints);
+
+			optimizationProblem_->clearLoopClosureConstraints();
+			optimizationProblem_->clearOdometryConstraints();
+			optimizationProblem_->insertLoopClosureConstraints(loopClosureConstraints);
+			optimizationProblem_->insertOdometryConstraints(odometryConstraints);
+			optimizationProblem_->buildOptimizationProblem(*submaps_);
+
+			//			optimizationProblem_->print();
+			submaps_->dumpToFile(folderPath_, "before");
+			optimizationProblem_->dumpToFile(folderPath_ + "/poseGraph.json");
+			optimizationProblem_->solve();
+			lastLoopClosureConstraints_ = loopClosureConstraints;
+			isOptimizedGraphAvailable_ = true;
+		}
+
+	} // end while
+
 }
+
+void WrapperRos::updateSubmapsAndTrajectory() {
+
+	std::cout << "Updating the maps: \n";
+	const Timer t("submaps_update");
+	const auto optimizedTransformations = optimizationProblem_->getOptimizedTransformIncrements();
+	submaps_->transform(optimizedTransformations);
+
+	//get The correct time
+	const Constraint latestLoopClosureConstraint = *std::max_element(lastLoopClosureConstraints_.begin(),
+			lastLoopClosureConstraints_.end(), [](const Constraint &c1, const Constraint &c2) {
+				return c1.timestamp_ < c2.timestamp_;
+			});
+
+	// loop closing constraints are built such that the source node is always the ne being transformed
+	// hence the source node should be the one whose transform we should apply
+	assert_gt(latestLoopClosureConstraint.sourceSubmapIdx_, latestLoopClosureConstraint.targetSubmapIdx_);
+	const auto dT = optimizedTransformations.at(latestLoopClosureConstraint.sourceSubmapIdx_);
+	const Time latestTime = mapper_->getMapToRangeSensorBuffer().latest_time();
+	const Time lastLoopClosureTime = latestLoopClosureConstraint.timestamp_;
+	mapper_->getMapToRangeSensorBufferPtr()->applyToAllElementsInTimeInterval(dT.dT_,lastLoopClosureTime , latestTime);
+
+}
+
 void WrapperRos::mesherWorker() {
 	if (mesherParams_.isComputeMesh_ && !mesherBufffer_.empty() && !mapper_->getMap().points_.empty()) {
 		auto map = mapper_->getMap();
@@ -204,31 +299,15 @@ void WrapperRos::mesherWorker() {
 	}
 
 }
-void WrapperRos::globalOptimizationWorker() {
-	if (optimizationProblem_->isReadyToOptimize() && !optimizationProblem_->isRunningOptimization()) {
-		std::cout << "before optimization: \n";
-		computeInformationMatrixOdometryConstraints(*submaps_, mapperParams_.placeRecognition_.featureVoxelSize_ * 3.0,
-				optimizationProblem_->getOdometryConstraintsPtr());
-		optimizationProblem_->buildOptimizationProblem(*submaps_);
-		optimizationProblem_->print();
-		submaps_->dumpToFile(folderPath_, "before");
-		optimizationProblem_->dumpToFile(folderPath_ + "/poseGraph.json");
-		optimizationProblem_->solve();
-		//			submaps_->dumpToFile(folderPath, "after");
-		optimizationProblem_->print();
-		//now here update the submaps
-	}
-}
 
 void WrapperRos::publishMaps(const Time &time) {
-
 	if (visualizationUpdateTimer_.elapsedMsec() < visualizationUpdatePeriodMsec && !isVisualizationFirstTime_) {
 		return;
 	}
 
 	const auto timestamp = toRos(time);
 	std::thread t(
-			[this,timestamp]() {
+			[this, timestamp]() {
 				m545_mapping::publishCloud(mapper_->getAssembledMap(), m545_mapping::frames::mapFrame, timestamp,
 						assembledMapPub_);
 
@@ -239,7 +318,7 @@ void WrapperRos::publishMaps(const Time &time) {
 				if (submapsPub_.getNumSubscribers() > 0) {
 					open3d::geometry::PointCloud cloud;
 					m545_mapping::assembleColoredPointCloud(mapper_->getSubmaps(), &cloud);
-					auto decimated = *(cloud.VoxelDownSample(0.2));
+					auto decimated = *(cloud.VoxelDownSample(0.5));
 					m545_mapping::publishCloud(decimated, m545_mapping::frames::mapFrame, timestamp, submapsPub_);
 				}
 			});

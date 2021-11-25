@@ -16,12 +16,17 @@
 #include <nav_msgs/Odometry.h>
 
 #include <thread>
+#include <future>
 #include <Eigen/Dense>
 #include "m545_volumetric_mapping/Parameters.hpp"
+#include "m545_volumetric_mapping/Submap.hpp"
 #include "m545_volumetric_mapping/typedefs.hpp"
 #include "m545_volumetric_mapping/croppers.hpp"
 #include "m545_volumetric_mapping/TransformInterpolationBuffer.hpp"
 #include "m545_volumetric_mapping/CircularBuffer.hpp"
+#include "m545_volumetric_mapping/ThreadSafeBuffer.hpp"
+#include "m545_volumetric_mapping/Constraint.hpp"
+
 
 namespace m545_mapping {
 
@@ -52,12 +57,14 @@ private:
 
 	void odometryWorker();
 	void mappingWorker();
-	void featureComputationWorker();
 	void loopClosureWorker();
+	void computeFeaturesIfReady();
+	void attemptLoopClosuresIfReady();
+	void updateSubmapsAndTrajectory();
 	void mesherWorker();
-	void globalOptimizationWorker();
 	void publishMaps(const Time &time);
 	void publishMapToOdomTf(const Time &time);
+
 
 	ros::NodeHandlePtr nh_;
 	std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster_;
@@ -67,6 +74,7 @@ private:
 	// non ros types
 	CircularBuffer<TimestampedPointCloud> odometryBuffer_, mappingBuffer_;
 	CircularBuffer<Time> mesherBufffer_;
+	ThreadSafeBuffer<TimestampedSubmapId> loopClosureCandidates_;
 	m545_mapping::MapperParameters mapperParams_;
 	m545_mapping::LocalMapParameters localMapParams_;
 	m545_mapping::MesherParameters mesherParams_;
@@ -77,9 +85,12 @@ private:
 	std::shared_ptr<SubmapCollection> submaps_;
 	std::shared_ptr<OptimizationProblem> optimizationProblem_;
 	std::string folderPath_;
-	std::thread odometryWorker_, mappingWorker_;
+	std::thread odometryWorker_, mappingWorker_, loopClosureWorker_;
 	Timer mappingStatisticsTimer_,odometryStatisticsTimer_, visualizationUpdateTimer_;
 	bool isVisualizationFirstTime_ = true;
+	std::future<void> computeFeaturesResult_;
+	bool isOptimizedGraphAvailable_ = false;
+	Constraints lastLoopClosureConstraints_;
 
 };
 

@@ -30,7 +30,7 @@ void PlaceRecognition::setParameters(const MapperParameters &p) {
 }
 Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapToRangeSensor,
 		const SubmapCollection &submapCollection, const AdjacencyMatrix &adjMatrix, size_t lastFinishedSubmapIdx,
-		size_t activeSubmapIdx) const {
+		size_t activeSubmapIdx, const Time &timestamp) const {
 
 	using namespace open3d::pipelines::registration;
 	Constraints constraints;
@@ -95,6 +95,7 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 				target, cfg.featureVoxelSize_ * 3.0 , icpResult.transformation_);
 		c.isInformationMatrixValid_ = true;
 		c.isOdometryConstraint_ = false;
+		c.timestamp_ = timestamp;
 		constraints.emplace_back(std::move(c));
 	} // end for loop
 	return constraints;

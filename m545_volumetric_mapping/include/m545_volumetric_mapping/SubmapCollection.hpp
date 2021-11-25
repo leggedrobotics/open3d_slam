@@ -24,11 +24,13 @@
 namespace m545_mapping {
 
 class SubmapCollection {
+
 public:
 	using Submaps = std::vector<Submap>;
 	using SubmapId = Submap::SubmapId;
+	using TimestampedSubmapIds = std::vector<TimestampedSubmapId>;
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-	SubmapCollection(std::shared_ptr<OptimizationProblem> optimization);
+	SubmapCollection();
 	~SubmapCollection() = default;
 
 	using PointCloud = open3d::geometry::PointCloud;
@@ -41,43 +43,46 @@ public:
 	const Submaps& getSubmaps() const;
 	size_t getTotalNumPoints() const;
 
-	void computeFeatures();
+	void computeFeatures(const TimestampedSubmapIds &ids);
 	bool isComputingFeatures() const;
-	const ThreadSafeBuffer<SubmapId> & getFinishedSubmapIds() const;
+	TimestampedSubmapIds popFinishedSubmapIds();
+	size_t numFinishedSubmaps() const;
 
 
-	const ThreadSafeBuffer<SubmapId> & getLoopClosureCandidateIds() const;
-	void buildLoopClosureConstraints();
-	bool isBuildingLoopClosureConstraints() const;
+	Constraints buildLoopClosureConstraints(const TimestampedSubmapIds &ids) const;
+	size_t numLoopClosureCandidates() const;
+	TimestampedSubmapIds popLoopClosureCandidates();
+
 
 	void dumpToFile(const std::string &folderPath, const std::string &filename) const;
 	void transform(const OptimizedTransforms &transformIncrements);
+
+	const Constraints &getOdometryConstraints() const;
+	const Constraints &getLoopClosureConstraints() const;
+	void addLoopClosureConstraints(const Constraints &lccs);
+
 private:
 
 	void updateActiveSubmap(const Transform &mapToRangeSensor);
 	void createNewSubmap(const Transform &mapToSubmap);
 	size_t findClosestSubmap(const Transform &mapToRangesensor) const;
 	Constraint buildOdometryConstraint(size_t sourceSubmapIdx, size_t targetSubmapIdx) const;
-
+	std::vector<size_t> getAllSubmapIdxs() const;
 
 	Transform mapToRangeSensor_ = Transform::Identity();
 	std::vector<Submap> submaps_;
 	size_t activeSubmapIdx_ = 0;
 	MapperParameters params_;
 	size_t numScansMergedInActiveSubmap_ = 0;
-	bool isBuildingLoopClosureConstraints_ = false;
 	size_t lastFinishedSubmapIdx_ = 0;
 	std::mutex featureComputationMutex_;
 	bool isComputingFeatures_ = false;
-	std::mutex loopClosureConstraintMutex_;
 	std::mutex constraintBuildMutex_;
 	AdjacencyMatrix adjacencyMatrix_;
 	size_t submapId_=0;
 	PlaceRecognition placeRecognition_;
-	std::shared_ptr<OptimizationProblem> optimization_;
-	ThreadSafeBuffer<SubmapId> finishedSubmapsIdxs_;
-	ThreadSafeBuffer<SubmapId> loopClosureCandidatesIdxs_;
-	bool isBlockUpdatingActiveSubmap_ = false;
+	ThreadSafeBuffer<TimestampedSubmapId> loopClosureCandidatesIdxs_, finishedSubmapsIdxs_;
+	Constraints odometryConstraints_, loopClosureConstraints_;
 
 };
 

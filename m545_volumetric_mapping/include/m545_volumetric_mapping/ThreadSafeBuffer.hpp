@@ -20,32 +20,42 @@ class ThreadSafeBuffer {
 public:
 	void push(const T &val) {
 		std::lock_guard<std::mutex> lck(modifierMutex_);
-		buffer_.push_back(val);
+		data_.push_back(val);
+	}
+
+	template <typename InputIt>
+	void insert(InputIt first, InputIt last) {
+		std::lock_guard<std::mutex> lck(modifierMutex_);
+		data_.insert(data_.end(),first, last);
 	}
 
 	const std::vector<T> &peek () const {
-		return buffer_;
+		return data_;
 	}
 
 	void clear() {
 		std::lock_guard<std::mutex> lck(modifierMutex_);
-		buffer_.clear();
+		data_.clear();
 	}
 
-	const std::vector<T> popAllElements(){
+	const std::vector<T> popAllElements() {
 		std::lock_guard<std::mutex> lck(modifierMutex_);
-		auto copy = buffer_;
-		buffer_.clear();
+		auto copy = data_;
+		data_.clear();
 		return copy;
 	}
 
 	bool empty() const {
-		return buffer_.empty();
+		return data_.empty();
+	}
+
+	size_t size() const {
+		return data_.size();
 	}
 
 
 private:
-	std::vector<T> buffer_;
+	std::vector<T> data_;
 	std::mutex modifierMutex_;
 };
 

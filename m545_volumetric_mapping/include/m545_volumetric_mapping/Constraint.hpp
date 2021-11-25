@@ -18,6 +18,7 @@ struct Constraint{
 	Matrix6d informationMatrix_ = Matrix6d::Identity();
 	bool isInformationMatrixValid_ = false;
 	bool isOdometryConstraint_ = true;
+	Time timestamp_;
 };
 
 using Constraints = std::vector<Constraint>;

@@ -19,6 +19,12 @@
 
 namespace m545_mapping {
 
+
+struct TimestampedSubmapId {
+	int64 submapId_;
+	Time time_;
+};
+
 class Submap {
 
 public:
@@ -27,7 +33,7 @@ public:
 	using SubmapId = int64;
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
-	Submap(size_t id);
+	Submap(size_t id, size_t parentId);
 	~Submap() = default;
 
 	void setParameters(const MapperParameters &mapperParams);
@@ -46,6 +52,7 @@ public:
 	Feature *getFeaturePtr() const;
 	Time getCreationTime() const;
 	SubmapId getId() const;
+	size_t getParentId() const;
 	void transform(const Transform &T);
 	mutable PointCloud toRemove_;
 	mutable PointCloud scanRef_;
@@ -70,6 +77,7 @@ private:
 	Time creationTime_;
 	size_t id_=0;
 	bool isCenterComputed_ = false;
+	size_t parentId_=0;
 
 };
 

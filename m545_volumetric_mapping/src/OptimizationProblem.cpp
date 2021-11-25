@@ -72,6 +72,8 @@ void OptimizationProblem::buildOptimizationProblem(const SubmapCollection &subma
 		assert_true(c.isInformationMatrixValid_,
 				"Invalid information matrix between: " + std::to_string(c.sourceSubmapIdx_) + " and "
 						+ std::to_string(c.targetSubmapIdx_));
+		assert_gt(c.sourceSubmapIdx_, c.targetSubmapIdx_);
+
 		edge.uncertain_ = true;
 		poseGraph_.edges_.push_back(std::move(edge));
 	}
@@ -102,10 +104,6 @@ void OptimizationProblem::print() const {
 
 void OptimizationProblem::dumpToFile(const std::string &filename) const {
 	open3d::io::WritePoseGraph(filename, poseGraph_);
-}
-
-Constraints* OptimizationProblem::getOdometryConstraintsPtr() {
-	return &odometryConstraints_;
 }
 
 OptimizedSubmapPoses OptimizationProblem::getOptimizedNodeValues() const {
@@ -144,6 +142,17 @@ void OptimizationProblem::addLoopClosureConstraint(const Constraint &c) {
 	std::lock_guard<std::mutex> lck(constraintMutex_);
 	loopClosureConstraints_.push_back(c);
 }
+
+void OptimizationProblem::insertOdometryConstraints(const Constraints &c) {
+	std::lock_guard<std::mutex> lck(constraintMutex_);
+	odometryConstraints_.insert(odometryConstraints_.end(),c.begin(),c.end());
+}
+
+void OptimizationProblem::insertLoopClosureConstraints(const Constraints &c) {
+	std::lock_guard<std::mutex> lck(constraintMutex_);
+	loopClosureConstraints_.insert(loopClosureConstraints_.end(),c.begin(),c.end());
+}
+
 
 OptimizedTransforms OptimizationProblem::getOptimizedTransformIncrements() const {
 	OptimizedTransforms retVal;

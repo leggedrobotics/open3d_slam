@@ -24,7 +24,7 @@ public:
 	PlaceRecognition();
 	void setParameters(const MapperParameters &p);
 	Constraints buildLoopClosureConstraints(const Transform &mapToRangeSensor, const SubmapCollection &submapCollection,
-			const AdjacencyMatrix &adjMatrix, size_t lastFinishedSubmapIdx, size_t activeSubmapIdx) const;
+			const AdjacencyMatrix &adjMatrix, size_t lastFinishedSubmapIdx, size_t activeSubmapIdx, const Time &timestamp) const;
 	std::vector<size_t> getLoopClosureCandidatesIdxs(const Transform &mapToRangeSensor,
 			const SubmapCollection &submapCollection, const AdjacencyMatrix &adjMatrix, size_t lastFinishedSubmapIdx,
 			size_t activeSubmapIdx) const;

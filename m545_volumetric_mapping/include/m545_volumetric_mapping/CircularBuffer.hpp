@@ -50,6 +50,10 @@ public:
 		return data_.size();
 	}
 
+	const std::deque<T> &getImplementation() const {
+		return data_;
+	}
+
 private:
 
 	void removeOldMeasurementsIfNeeded() {

@@ -26,6 +26,8 @@ public:
 	void clearLoopClosureConstraints();
 	void addOdometryConstraint(const Constraint &c);
 	void addLoopClosureConstraint(const Constraint &c);
+	void insertOdometryConstraints(const Constraints &c);
+	void insertLoopClosureConstraints(const Constraints &c);
 	void solve();
 	void buildOptimizationProblem(const SubmapCollection &submaps);
 	void setIsReadyToOptimize(bool val);
@@ -35,7 +37,6 @@ public:
 	OptimizedSubmapPoses getOptimizedNodeValues() const;
 	OptimizedTransforms getOptimizedTransformIncrements() const;
 	void dumpToFile(const std::string &filename) const;
-	Constraints *getOdometryConstraintsPtr();
 
 private:
 

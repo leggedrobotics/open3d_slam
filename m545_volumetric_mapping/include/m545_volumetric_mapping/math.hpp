@@ -40,4 +40,9 @@ inline T getYawFromQuat(T w, T x, T y, T z)
   return std::atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z));
 }
 
+template<typename T>
+inline bool isClose(T a, T b, T threshold){
+	return std::abs(a-b) < threshold;
+}
+
 } /* namespace m545_mapping */

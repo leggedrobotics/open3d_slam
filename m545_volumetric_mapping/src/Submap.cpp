@@ -19,8 +19,8 @@ namespace {
 namespace registration = open3d::pipelines::registration;
 } // namespace
 
-Submap::Submap(size_t id) :
-		id_(id) {
+Submap::Submap(size_t id, size_t parentId) :
+		id_(id), parentId_(parentId) {
 	update(params_);
 
 }
@@ -32,6 +32,10 @@ int64 Submap::getId() const {
 
 Time Submap::getCreationTime() const {
 	return creationTime_;
+}
+
+size_t Submap::getParentId() const{
+	return parentId_;
 }
 
 bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan,
