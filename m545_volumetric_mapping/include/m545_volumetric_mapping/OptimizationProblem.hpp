@@ -31,7 +31,6 @@ public:
 	void solve();
 	void buildOptimizationProblem(const SubmapCollection &submaps);
 	void setIsReadyToOptimize(bool val);
-	bool isReadyToOptimize() const;
 	bool isRunningOptimization() const;
 	void print() const;
 	OptimizedSubmapPoses getOptimizedNodeValues() const;

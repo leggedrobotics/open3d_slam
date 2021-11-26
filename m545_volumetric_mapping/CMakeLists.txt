@@ -93,6 +93,13 @@ target_link_libraries(mapping_node
     ${PROJECT_NAME}
 )
 
+add_executable(toy_example_node
+  src/toy_example_node.cpp)
+target_link_libraries(toy_example_node
+    ${catkin_LIBRARIES}
+    ${PROJECT_NAME}
+)
+
 add_executable(graph_node
   src/graph_node.cpp)
 target_link_libraries(graph_node

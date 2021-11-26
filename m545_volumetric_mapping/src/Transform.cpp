@@ -59,7 +59,11 @@ TimestampedTransform interpolate(const TimestampedTransform& start,
   return TimestampedTransform{time,transform};
 }
 
-
+Transform makeTransform(const Eigen::Vector3d &p, const Eigen::Quaterniond &q){
+	  Transform transform(q);
+	  transform.translation() = p;
+	  return transform;
+}
 
 
 

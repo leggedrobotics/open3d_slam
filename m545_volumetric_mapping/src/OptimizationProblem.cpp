@@ -30,10 +30,10 @@ void OptimizationProblem::solve() {
 	registration::GlobalOptimizationLevenbergMarquardt method;
 	registration::GlobalOptimizationConvergenceCriteria criteria;
 	registration::GlobalOptimizationOption option;
-	option.max_correspondence_distance_ = 0.5;
+	option.max_correspondence_distance_ = 20.0;
 	option.reference_node_ = 0;
-	option.edge_prune_threshold_ = 0.1;
-	option.preference_loop_closure_ = 1.0;
+	option.edge_prune_threshold_ = 0.0;
+	option.preference_loop_closure_ = 2.0;
 	GlobalOptimization(poseGraph_, method, criteria, option);
 	isRunningOptimization_ = false;
 }
@@ -81,25 +81,25 @@ void OptimizationProblem::buildOptimizationProblem(const SubmapCollection &subma
 	isRunningOptimization_ = false;
 }
 
-bool OptimizationProblem::isReadyToOptimize() const {
-	assert_ge(loopClosureConstraints_.size(), numLoopClosuresPrev_);
-	return numLoopClosuresPrev_ < loopClosureConstraints_.size();
-}
 
 void OptimizationProblem::print() const {
 	const auto graph = poseGraph_; // copy
 	const size_t nNodes = graph.nodes_.size();
 	const size_t nEdges = graph.edges_.size();
 	std::cout << "The problem contains: " << nNodes << " nodes and " << nEdges << " edges \n";
-	for (int i = 0; i < nEdges; ++i) {
-		const auto &e = graph.edges_.at(i);
-		std::cout << " edge " << i << " from " << e.source_node_id_ << " to " << e.target_node_id_ << std::endl;
-	}
+
 	for (int i = 0; i < nNodes; ++i) {
 		const auto &n = graph.nodes_.at(i);
 		const Transform T(n.pose_);
 		std::cout << " node " << i << " pose: " << asString(T) << " \n ";
 	}
+
+	for (int i = 0; i < nEdges; ++i) {
+		const auto &e = graph.edges_.at(i);
+		const Transform T(e.transformation_);
+		std::cout << " edge " << i << " from " << e.source_node_id_ << " to " << e.target_node_id_ << " with " << asString(T) << std::endl;
+	}
+
 }
 
 void OptimizationProblem::dumpToFile(const std::string &filename) const {

@@ -61,6 +61,10 @@ const SubmapCollection& Mapper::getSubmaps() const {
 	return *submaps_;
 }
 
+void Mapper::setMapToRangeSensor(const Transform &t){
+	mapToRangeSensor_ = t;
+}
+
 void Mapper::estimateNormalsIfNeeded(PointCloud *pcl) const {
 	if (!pcl->HasNormals() && params_.scanMatcher_.icpObjective_ == m545_mapping::IcpObjective::PointToPlane) {
 		estimateNormals(params_.scanMatcher_.kNNnormalEstimation_, pcl);

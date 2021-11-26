@@ -61,7 +61,7 @@ public:
 	const Constraints &getLoopClosureConstraints() const;
 	void addLoopClosureConstraints(const Constraints &lccs);
 
-private:
+//private:
 
 	void updateActiveSubmap(const Transform &mapToRangeSensor);
 	void createNewSubmap(const Transform &mapToSubmap);

@@ -28,6 +28,7 @@ public:
 	Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer, std::shared_ptr<SubmapCollection> submaps);
 	~Mapper() = default;
 
+	void setMapToRangeSensor(const Transform &t);
 	const PointCloud& getMap() const;
 	const PointCloud& getDenseMap() const;
 	const Submap& getActiveSubmap() const;

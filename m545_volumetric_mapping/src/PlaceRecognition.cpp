@@ -45,7 +45,9 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 	std::cout << "considering submap " << lastFinishedSubmapIdx << " for loop closure, num candidate submaps: "
 			<< closeSubmapsIdxs.size() << std::endl;
 	using namespace open3d::pipelines::registration;
-
+	if (closeSubmapsIdxs.empty()){
+		return constraints;
+	}
 	const auto sourceSparse = sourceSubmap.getSparseMap();
 	const auto source = sourceSubmap.getMap();
 	const auto sourceFeature = sourceSubmap.getFeatures();
@@ -93,7 +95,7 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 
 		const Transform sourceToTarget(icpResult.transformation_);
 		Constraint c;
-		c.sourceToTarget_ = computeLoopClosingTransform(sourceSubmap, targetSubmap, sourceToTarget);
+		computeLoopClosingTransform(sourceSubmap, targetSubmap, sourceToTarget, &(c.sourceToTarget_), &(c.sourceToTargetPreMultiply_));
 		c.sourceSubmapIdx_ = lastFinishedSubmapIdx;
 		c.targetSubmapIdx_ = id;
 		c.informationMatrix_ = open3d::pipelines::registration::GetInformationMatrixFromPointClouds(source, target,
@@ -107,24 +109,18 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 	return constraints;
 }
 
-Transform PlaceRecognition::computeLoopClosingTransform(const Submap &sourceSubmap, const Submap &targetSubmap,
-		const Transform &sourceToTarget) const {
+void PlaceRecognition::computeLoopClosingTransform(const Submap &sourceSubmap, const Submap &targetSubmap,
+		const Transform &sourceToTarget, Transform *postMultiply,Transform *preMultiply) const {
 
-//	std::vector<size_t> sourceIdxs, targetIdxs;
-//	{
-//		Timer t("overlap compute");
-//	computeIndicesOfOverlappingPoints(source, target, sourceToTarget,
-//			params_.placeRecognition_.featureVoxelSize_, &sourceIdxs, &targetIdxs);
-//	}
-//
-//	Transform mapToSource = sourceSubmap.getMapToSubmapOrigin();
-//	mapToSource.translation() = computeCenter(source, sourceIdxs);
-//	Transform mapTotarget = targetSubmap.getMapToSubmapOrigin();
-//	mapTotarget.translation() = computeCenter(target, targetIdxs);
+	const auto mapToSourcePre = sourceToTarget * sourceSubmap.getMapToSubmapOrigin().inverse() ;
+	const auto mapToTargetPre = targetSubmap.getMapToSubmapOrigin().inverse();
+	const Transform Tpre = mapToTargetPre * mapToSourcePre.inverse() ;
+	*preMultiply = Tpre;
 
 	const auto mapToSource = sourceSubmap.getMapToSubmapOrigin() * sourceToTarget;
 	const auto mapToTarget = targetSubmap.getMapToSubmapOrigin();
-	const Transform T = mapToSource.inverse() * mapToTarget;
+	const Transform Tpost = mapToSource.inverse() * mapToTarget;
+	*postMultiply = Tpost;
 
 //	std::cout << "loop closing constraints: \n";
 //	std::cout << " source: " << asString(mapToSource) << std::endl;
@@ -133,7 +129,6 @@ Transform PlaceRecognition::computeLoopClosingTransform(const Submap &sourceSubm
 //	std::cout << " source transformed into target: \n";
 //	std::cout << asString(mapToSource * T) << "\n \n";
 
-	return std::move(T);
 
 }
 

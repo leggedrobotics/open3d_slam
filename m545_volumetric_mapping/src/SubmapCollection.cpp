@@ -212,18 +212,36 @@ Constraints SubmapCollection::buildLoopClosureConstraints(const TimestampedSubma
 }
 
 Constraint SubmapCollection::buildOdometryConstraint(size_t sourceSubmapIdx, size_t targetSubmapIdx) const {
+	//by convention the source is map k and target k+1
 	Constraint c;
 	c.sourceSubmapIdx_ = sourceSubmapIdx;
 	c.targetSubmapIdx_ = targetSubmapIdx;
 	const Transform &mapToSource = submaps_.at(sourceSubmapIdx).getMapToSubmapOrigin();
 	const Transform &mapToTarget = submaps_.at(targetSubmapIdx).getMapToSubmapOrigin();
 	c.sourceToTarget_ = mapToSource.inverse() * mapToTarget;
+	c.isOdometryConstraint_ = true;
+	c.isInformationMatrixValid_ = false;
 //	std::cout << "odom constraints: \n";
 //	std::cout << " source: " << asString(mapToSource) << std::endl;
 //	std::cout << " target: " << asString(mapToTarget) << std::endl;
 //	std::cout << " source to target: " << asString(c.sourceToTarget_) << std::endl;
 //	std::cout << " source transformed into target: \n";
-//	std::cout << asString(mapToSource * c.sourceToTarget_) << "\n \n";
+//	std::cout << asString(mapToSource * c.sourceToTarget_) << "\n\n";
+
+
+	{
+		const Transform mapToSourcePre = submaps_.at(sourceSubmapIdx).getMapToSubmapOrigin().inverse();
+		const Transform mapToTargetPre = submaps_.at(targetSubmapIdx).getMapToSubmapOrigin().inverse();
+		c.sourceToTargetPreMultiply_ = mapToTargetPre*mapToSourcePre.inverse();
+//		std::cout << "Weird shit \n";
+//		std::cout << " source: " << asString(mapToSourcePre) << std::endl;
+//		std::cout << " target: " << asString(mapToTargetPre) << std::endl;
+//		std::cout << " source to target: " << asString(c.sourceToTargetPreMultiply_) << std::endl;
+//		std::cout << " source transformed into target: \n";
+//		std::cout << asString(c.sourceToTargetPreMultiply_*mapToSourcePre) << "\n \n";
+	}
+
+
 	return std::move(c);
 }
 
@@ -238,10 +256,12 @@ void SubmapCollection::dumpToFile(const std::string &folderPath, const std::stri
 void SubmapCollection::transform(const OptimizedTransforms &transformIncrements) {
 	const size_t nTransforms = transformIncrements.size();
 	std::vector<size_t> optimizedIdxs;
+	std::cout << "Maps that have been optimized,: \n";
 	for (size_t i = 0; i < nTransforms; ++i) {
 		const auto &update = transformIncrements.at(i);
 		submaps_.at(update.submapId_).transform(update.dT_);
 		optimizedIdxs.push_back(update.submapId_);
+		std::cout << update.submapId_ << ", ";
 	}
 	std::sort(optimizedIdxs.begin(), optimizedIdxs.end());
 	std::vector<size_t> allIdxs = getAllSubmapIdxs();
@@ -249,7 +269,8 @@ void SubmapCollection::transform(const OptimizedTransforms &transformIncrements)
 	std::vector<size_t> submapIdxsToUpdate;
 	std::set_difference(allIdxs.begin(), allIdxs.end(), optimizedIdxs.begin(), optimizedIdxs.end(),
 			std::inserter(submapIdxsToUpdate, submapIdxsToUpdate.begin()));
-
+	std::cout <<"\n num maps: " << submaps_.size() << "\n";
+	std::cout << " maps that are missing: \n";
 	for (auto idx : submapIdxsToUpdate) {
 		//look at the node parent
 		// if the parent is not in the list of nodes to update
@@ -257,6 +278,7 @@ void SubmapCollection::transform(const OptimizedTransforms &transformIncrements)
 		// otherwise, set the current node to be the parent node
 		size_t currentNode;
 		currentNode = idx;
+		std::cout << currentNode << " with parent: ";
 		while (true) {
 			currentNode = submaps_.at(currentNode).getParentId();
 			if (std::find(submapIdxsToUpdate.begin(), submapIdxsToUpdate.end(), currentNode)
@@ -264,6 +286,7 @@ void SubmapCollection::transform(const OptimizedTransforms &transformIncrements)
 				/* parent is in the pose graph */
 				const auto &update = transformIncrements.at(currentNode);
 				submaps_.at(update.submapId_).transform(update.dT_);
+				std::cout << update.submapId_ << "\n";
 				break;
 			}
 			if (currentNode == submaps_.at(currentNode).getParentId()) {

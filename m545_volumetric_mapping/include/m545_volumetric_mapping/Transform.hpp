@@ -23,6 +23,8 @@ TimestampedTransform interpolate(const TimestampedTransform& start,
                                  const TimestampedTransform& end,
                                  const Time &time);
 
+Transform makeTransform(const Eigen::Vector3d &p, const Eigen::Quaterniond &q);
+
 } //namespace m545_mapping
 
 

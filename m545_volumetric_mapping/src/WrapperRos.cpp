@@ -174,7 +174,14 @@ void WrapperRos::mappingWorker() {
 
 		if (isOptimizedGraphAvailable_) {
 			isOptimizedGraphAvailable_ = false;
+			const auto poseBeforeUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
+			std::cout << "latest pose before update: \n " << asString(poseBeforeUpdate.transform_) << "\n";
 			updateSubmapsAndTrajectory();
+			const auto poseAfterUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
+			std::cout << "latest pose after update: \n " << asString(poseAfterUpdate.transform_) << "\n";
+			publishMaps(measurement.time_);
+//			ros::spinOnce();
+//			throw "killz";
 		}
 
 		// publish visualizatinos
@@ -217,7 +224,7 @@ void WrapperRos::attemptLoopClosuresIfReady() {
 	}
 }
 void WrapperRos::loopClosureWorker() {
-
+	static bool isFirstTime = true;
 	while (ros::ok()) {
 		if (loopClosureCandidates_.empty() || isOptimizedGraphAvailable_) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -231,11 +238,11 @@ void WrapperRos::loopClosureWorker() {
 			loopClosureConstraints = submaps_->buildLoopClosureConstraints(lcc);
 		}
 
-		if (loopClosureConstraints.empty()){
+		if (!isFirstTime || loopClosureConstraints.empty()){
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 			continue;
 		}
-
+		isFirstTime = false;
 		{
 			Timer t("optimization_problem");
 			auto odometryConstraints = submaps_->getOdometryConstraints();
@@ -249,10 +256,11 @@ void WrapperRos::loopClosureWorker() {
 			optimizationProblem_->insertOdometryConstraints(odometryConstraints);
 			optimizationProblem_->buildOptimizationProblem(*submaps_);
 
-			//			optimizationProblem_->print();
+			optimizationProblem_->print();
 			submaps_->dumpToFile(folderPath_, "before");
 			optimizationProblem_->dumpToFile(folderPath_ + "/poseGraph.json");
 			optimizationProblem_->solve();
+			optimizationProblem_->print();
 			lastLoopClosureConstraints_ = loopClosureConstraints;
 			isOptimizedGraphAvailable_ = true;
 		}
@@ -279,13 +287,15 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 	assert_gt(latestLoopClosureConstraint.sourceSubmapIdx_, latestLoopClosureConstraint.targetSubmapIdx_);
 	const auto dT = optimizedTransformations.at(latestLoopClosureConstraint.sourceSubmapIdx_);
 	const Time latestTime = mapper_->getMapToRangeSensorBuffer().latest_time();
-//	const Time lastLoopClosureTime = latestLoopClosureConstraint.timestamp_;
-	const Time lastLoopClosureTime = mapper_->getMapToRangeSensorBuffer().earliest_time();
+	const Time lastLoopClosureTime = latestLoopClosureConstraint.timestamp_;
+//	const Time lastLoopClosureTime = mapper_->getMapToRangeSensorBuffer().earliest_time();
 
 	std::cout << "Applying the delta T from submap " << latestLoopClosureConstraint.sourceSubmapIdx_ << "\n";
 	std::cout << "the transform is: " << asString(dT.dT_) << std::endl;
 
 	mapper_->getMapToRangeSensorBufferPtr()->applyToAllElementsInTimeInterval(dT.dT_,lastLoopClosureTime , latestTime);
+	mapper_->setMapToRangeSensor(	mapper_->getMapToRangeSensor(latestTime));
+	submaps_->setMapToRangeSensor(mapper_->getMapToRangeSensorBuffer().lookup(latestTime));
 
 }
 
@@ -323,7 +333,7 @@ void WrapperRos::publishMaps(const Time &time) {
 				if (submapsPub_.getNumSubscribers() > 0) {
 					open3d::geometry::PointCloud cloud;
 					m545_mapping::assembleColoredPointCloud(mapper_->getSubmaps(), &cloud);
-					auto decimated = *(cloud.VoxelDownSample(0.5));
+					auto decimated = *(cloud.VoxelDownSample(0.4));
 					m545_mapping::publishCloud(decimated, m545_mapping::frames::mapFrame, timestamp, submapsPub_);
 				}
 			});
