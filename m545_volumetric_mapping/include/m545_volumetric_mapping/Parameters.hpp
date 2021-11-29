@@ -106,6 +106,7 @@ struct MapperParameters {
 	double minRefinementFitness_ = 0.7;
 	MapBuilderParameters mapBuilder_;
 	MapBuilderParameters denseMapBuilder_;
+	size_t numScansOverlap_ = 3;
 	bool isBuildDenseMap_ = true;
 	SubmapParameters submaps_;
 	PlaceRecognitionParameters placeRecognition_;

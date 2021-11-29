@@ -88,6 +88,7 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	p->isBuildDenseMap_ = node["is_build_dense_map"].as<bool>();
 	p->minMovementBetweenMappingSteps_ = node["min_movement_between_mapping_steps"].as<double>();
 	p->minRefinementFitness_ = node["scan_to_map_refinement"]["min_refinement_fitness"].as<double>();
+	p->numScansOverlap_ = node["submaps_num_scan_overlap"].as<int>();
 	loadParameters(node["scan_to_map_refinement"]["scan_matching"],&(p->scanMatcher_));
 	loadParameters(node["scan_to_map_refinement"]["scan_processing"],&(p->scanProcessing_));
 	if(p->isBuildDenseMap_){

@@ -24,6 +24,7 @@ namespace m545_mapping {
 SubmapCollection::SubmapCollection() {
 	submaps_.reserve(100);
 	createNewSubmap(mapToRangeSensor_);
+	overlapScansBuffer_.set_size_limit(5);
 }
 
 void SubmapCollection::setMapToRangeSensor(const Transform &T) {
@@ -46,11 +47,11 @@ SubmapCollection::TimestampedSubmapIds SubmapCollection::popLoopClosureCandidate
 	return loopClosureCandidatesIdxs_.popAllElements();
 }
 
-size_t SubmapCollection::numFinishedSubmaps() const{
+size_t SubmapCollection::numFinishedSubmaps() const {
 	return finishedSubmapsIdxs_.size();
 }
 
-size_t SubmapCollection::numLoopClosureCandidates() const{
+size_t SubmapCollection::numLoopClosureCandidates() const {
 	return loopClosureCandidatesIdxs_.size();
 }
 
@@ -59,6 +60,18 @@ size_t SubmapCollection::getTotalNumPoints() const {
 	return std::accumulate(submaps_.begin(), submaps_.end(), 0, [](size_t sum, const Submap &s) {
 		return sum + s.getMap().points_.size();
 	});
+}
+
+void SubmapCollection::addScanToBuffer(const PointCloud &scan, const Transform &mapToRangeSensor,
+		const Time &timestamp) {
+	overlapScansBuffer_.push(ScanTimeTransform { scan, timestamp, mapToRangeSensor });
+}
+
+void SubmapCollection::insertBufferedScans(Submap *submap) {
+	while (!overlapScansBuffer_.empty()) {
+		auto scan = overlapScansBuffer_.pop();
+		submap->insertScan(scan.cloud_, scan.cloud_, scan.mapToRangeSensor_, scan.timestamp_, false);
+	}
 }
 
 void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor) {
@@ -132,6 +145,7 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 		++numScansMergedInActiveSubmap_;
 		return true;
 	}
+	addScanToBuffer(preProcessedScan, mapToRangeSensor, timestamp);
 	const size_t prevActiveSubmapIdx = activeSubmapIdx_;
 	updateActiveSubmap(mapToRangeSensor);
 	// either different one is active or new one is created
@@ -149,11 +163,10 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 		const auto id2 = submaps_.at(activeSubmapIdx_).getId();
 		adjacencyMatrix_.addEdge(id1, id2);
 		std::cout << "Adding edge between " << id1 << " and " << id2 << std::endl;
+		insertBufferedScans(&submaps_.at(activeSubmapIdx_));
+	} else {
+		submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, true);
 	}
-	submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, true);
-	// todo possibly here we need to update the active map
-	// that update needs to be thread safe
-
 	++numScansMergedInActiveSubmap_;
 	return true;
 }
@@ -164,6 +177,8 @@ void SubmapCollection::setParameters(const MapperParameters &p) {
 		submap.setParameters(p);
 	}
 	placeRecognition_.setParameters(p);
+	assert_gt<size_t>(params_.numScansOverlap_, 0, "Num scan overlap has to be > 0");
+	overlapScansBuffer_.set_size_limit(params_.numScansOverlap_);
 }
 
 void SubmapCollection::computeFeatures(const TimestampedSubmapIds &finishedSubmapIds) {
@@ -221,26 +236,17 @@ Constraint SubmapCollection::buildOdometryConstraint(size_t sourceSubmapIdx, siz
 	c.sourceToTarget_ = mapToSource.inverse() * mapToTarget;
 	c.isOdometryConstraint_ = true;
 	c.isInformationMatrixValid_ = false;
-//	std::cout << "odom constraints: \n";
-//	std::cout << " source: " << asString(mapToSource) << std::endl;
-//	std::cout << " target: " << asString(mapToTarget) << std::endl;
-//	std::cout << " source to target: " << asString(c.sourceToTarget_) << std::endl;
-//	std::cout << " source transformed into target: \n";
-//	std::cout << asString(mapToSource * c.sourceToTarget_) << "\n\n";
+	std::cout << "added an odom constraint: \n";
+	std::cout << " map " << sourceSubmapIdx << " to " << targetSubmapIdx << ": " << asString(c.sourceToTarget_)
+			<< std::endl;
 
+	c.sourceToTargetPreMultiply_ = mapToTarget * mapToSource.inverse();
 
-	{
-		const Transform mapToSourcePre = submaps_.at(sourceSubmapIdx).getMapToSubmapOrigin().inverse();
-		const Transform mapToTargetPre = submaps_.at(targetSubmapIdx).getMapToSubmapOrigin().inverse();
-		c.sourceToTargetPreMultiply_ = mapToTargetPre*mapToSourcePre.inverse();
-//		std::cout << "Weird shit \n";
-//		std::cout << " source: " << asString(mapToSourcePre) << std::endl;
-//		std::cout << " target: " << asString(mapToTargetPre) << std::endl;
-//		std::cout << " source to target: " << asString(c.sourceToTargetPreMultiply_) << std::endl;
-//		std::cout << " source transformed into target: \n";
-//		std::cout << asString(c.sourceToTargetPreMultiply_*mapToSourcePre) << "\n \n";
-	}
-
+//    std::cout << " source: " << asString(mapToSource) << std::endl;
+//    	std::cout << " target: " << asString(mapToTarget) << std::endl;
+//    	std::cout << " source transformed into target: \n";
+//    	std::cout << asString(mapToSource * c.sourceToTarget_) << "\n";
+	//	//		std::cout << asString(c.sourceToTargetPreMultiply_ * mapToSource) << "\n\n";
 
 	return std::move(c);
 }
@@ -261,7 +267,7 @@ void SubmapCollection::transform(const OptimizedTransforms &transformIncrements)
 		const auto &update = transformIncrements.at(i);
 		submaps_.at(update.submapId_).transform(update.dT_);
 		optimizedIdxs.push_back(update.submapId_);
-		std::cout << update.submapId_ << ", ";
+		std::cout << "Submap " << update.submapId_ << " updated with: " << asString(update.dT_) << "\n";
 	}
 	std::sort(optimizedIdxs.begin(), optimizedIdxs.end());
 	std::vector<size_t> allIdxs = getAllSubmapIdxs();
@@ -269,7 +275,7 @@ void SubmapCollection::transform(const OptimizedTransforms &transformIncrements)
 	std::vector<size_t> submapIdxsToUpdate;
 	std::set_difference(allIdxs.begin(), allIdxs.end(), optimizedIdxs.begin(), optimizedIdxs.end(),
 			std::inserter(submapIdxsToUpdate, submapIdxsToUpdate.begin()));
-	std::cout <<"\n num maps: " << submaps_.size() << "\n";
+	std::cout << "\n num maps: " << submaps_.size() << "\n";
 	std::cout << " maps that are missing: \n";
 	for (auto idx : submapIdxsToUpdate) {
 		//look at the node parent
@@ -335,8 +341,8 @@ void computeInformationMatrixOdometryConstraints(const SubmapCollection &submaps
 //							<< idxsTarget.size() << "/"<<target.points_.size() << " points in target that overlap \n";
 					sourceOverlap = source.SelectByIndex(idxsSource);
 					targetOverlap = target.SelectByIndex(idxsTarget);
-					c.informationMatrix_ = open3d::pipelines::registration::GetInformationMatrixFromPointClouds(
-							source, target, maxCorrespondenceDistance, Eigen::Matrix4d::Identity());
+					c.informationMatrix_ = open3d::pipelines::registration::GetInformationMatrixFromPointClouds(source,
+							target, maxCorrespondenceDistance, Eigen::Matrix4d::Identity());
 //					std::cout << "information mat: \n" << c.informationMatrix_  << "\n";
 					c.isInformationMatrixValid_ = true;
 				}

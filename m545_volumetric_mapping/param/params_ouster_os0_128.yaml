@@ -12,6 +12,7 @@ odometry:
 mapping:
   min_movement_between_mapping_steps: 0.0
   is_build_dense_map: false
+  submaps_num_scan_overlap: 5
   scan_to_map_refinement:
     min_refinement_fitness: 0.7
     scan_matching:
@@ -35,7 +36,7 @@ mapping:
       voxel_size: 0.1
       max_raytracing_length: 25.0
       truncation_distance: 0.1
-      carve_space_every_n_sec: 2.0
+      carve_space_every_n_sec: 2000000.0
       min_dot_product_with_normal: 0.3
       
   dense_map_builder:
@@ -45,7 +46,7 @@ mapping:
       voxel_size: 0.1
       max_raytracing_length: 15.0
       truncation_distance: 0.1
-      carve_space_every_n_sec: 2.0
+      carve_space_every_n_sec: 200000.0
       min_dot_product_with_normal: 0.3
     
 local_map:

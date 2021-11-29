@@ -20,10 +20,18 @@
 #include "m545_volumetric_mapping/PlaceRecognition.hpp"
 #include "m545_volumetric_mapping/OptimizationProblem.hpp"
 #include "m545_volumetric_mapping/ThreadSafeBuffer.hpp"
+#include "m545_volumetric_mapping/CircularBuffer.hpp"
+
 
 namespace m545_mapping {
 
 class SubmapCollection {
+
+	struct ScanTimeTransform{
+		PointCloud cloud_;
+		Time timestamp_;
+		Transform mapToRangeSensor_;
+	};
 
 public:
 	using Submaps = std::vector<Submap>;
@@ -62,7 +70,8 @@ public:
 	void addLoopClosureConstraints(const Constraints &lccs);
 
 //private:
-
+	void insertBufferedScans(Submap *submap);
+	void addScanToBuffer(const PointCloud &scan, const Transform &mapToRangeSensor, const Time &timestamp);
 	void updateActiveSubmap(const Transform &mapToRangeSensor);
 	void createNewSubmap(const Transform &mapToSubmap);
 	size_t findClosestSubmap(const Transform &mapToRangesensor) const;
@@ -83,6 +92,7 @@ public:
 	PlaceRecognition placeRecognition_;
 	ThreadSafeBuffer<TimestampedSubmapId> loopClosureCandidatesIdxs_, finishedSubmapsIdxs_;
 	Constraints odometryConstraints_, loopClosureConstraints_;
+	CircularBuffer<ScanTimeTransform> overlapScansBuffer_;
 
 };
 
