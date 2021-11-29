@@ -7,7 +7,11 @@ odometry:
   scan_processing:
     voxel_size: 0.15
     downsampling_ratio: 0.5
-    cropping_radius: 35.0
+    scan_cropping:
+      cropping_radius: 35.0
+      min_z: -35.0
+      max_z: 35.0
+      cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius
   
 mapping:
   min_movement_between_mapping_steps: 0.0
@@ -23,14 +27,22 @@ mapping:
     scan_processing:
       voxel_size: 0.2
       downsampling_ratio: 0.5
-      cropping_radius: 30.0
+      scan_cropping:
+        cropping_radius: 30.0
+        min_z: -30.0
+        max_z: 30.0
+        cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius
 
   submaps:
     size: 30
     min_num_range_data: 10
 
   map_builder:
-    scan_cropping_radius: 40.0
+    scan_cropping:
+      cropping_radius: 40.0
+      min_z: -40.0
+      max_z: 40.0
+      cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius
     map_voxel_size: 0.2
     space_carving:
       voxel_size: 0.1
@@ -40,6 +52,11 @@ mapping:
       min_dot_product_with_normal: 0.3
       
   dense_map_builder:
+    scan_cropping:
+      cropping_radius: 12.0
+      min_z: -12.0
+      max_z: 12.0
+      cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius
     scan_cropping_radius: 12.0
     map_voxel_size: 0.08
     space_carving:

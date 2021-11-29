@@ -12,6 +12,28 @@
 
 namespace m545_mapping {
 
+std::unique_ptr<CroppingVolume> croppingVolumeFactory(const std::string &type, double radius, double minZ, double maxZ){
+	return croppingVolumeFactory(cropperNames.at(type), radius, minZ, maxZ);
+}
+std::unique_ptr<CroppingVolume> croppingVolumeFactory(CroppingVolumeEnum type, double radius, double minZ, double maxZ){
+	switch(type){
+	case CroppingVolumeEnum::Cylinder: {
+		auto cropper = std::make_unique<CylinderCroppingVolume>(radius,minZ,maxZ);
+		return std::move(cropper);
+	}
+	case CroppingVolumeEnum::MinRadius: {
+		auto cropper = std::make_unique<MinRadiusCroppingVolume>(radius);
+		return std::move(cropper);
+	}
+	case CroppingVolumeEnum::MaxRadius: {
+		auto cropper = std::make_unique<MaxRadiusCroppingVolume>(radius);
+		return std::move(cropper);
+	}
+	default:
+		throw std::runtime_error("Unknown cropper type");
+	}
+}
+
 bool CroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const {
 	return true;
 }
@@ -53,6 +75,9 @@ MaxRadiusCroppingVolume::MaxRadiusCroppingVolume(double radius) :
 bool MaxRadiusCroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const {
 	return (p - pose_.translation()).norm() <= radius_;
 }
+void MaxRadiusCroppingVolume::setParameters(double radius){
+	radius_ = radius;
+}
 
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
@@ -66,6 +91,10 @@ bool MinRadiusCroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const {
 	return (p - pose_.translation()).norm() >= radius_;
 }
 
+void MinRadiusCroppingVolume::setParameters(double radius){
+	radius_ = radius;
+}
+
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
@@ -76,10 +105,14 @@ CylinderCroppingVolume::CylinderCroppingVolume(double radius, double minZ, doubl
 }
 
 bool CylinderCroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const {
-
 	return p.z() >= minZ_ && p.z() <= maxZ_ && (p - pose_.translation()).head<2>().norm() <= radius_;
-
-
 }
+
+void CylinderCroppingVolume::setParameters(double radius, double minZ, double maxZ){
+	radius_ = radius;
+	minZ_ =minZ;
+	maxZ_ = maxZ;
+}
+
 
 } // namespace m545_mapping

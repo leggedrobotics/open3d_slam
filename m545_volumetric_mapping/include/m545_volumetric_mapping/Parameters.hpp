@@ -37,10 +37,17 @@ static const std::map<std::string, IcpObjective> IcpObjectiveNames {
 	{"PointToPlane",IcpObjective::PointToPlane}
 };
 
-struct ScanProcessingParameters{
+struct ScanCroppingParameters {
 	double croppingRadius_=20.0;
+	double croppingMinZ_ = -10.0;
+	double croppingMaxZ_ = 10.0;
+	std::string cropperName_ = "MaxRadius";
+};
+
+struct ScanProcessingParameters{
 	double downSamplingRatio_ = 1.0;
 	double voxelSize_ = 0.03;
+	ScanCroppingParameters cropper_;
 };
 
 struct IcpParameters {
@@ -72,7 +79,7 @@ struct SpaceCarvingParameters{
 
 struct MapBuilderParameters{
 	double mapVoxelSize_ = 0.03;
-	double scanCroppingRadius_=40.0;
+	ScanCroppingParameters cropper_;
 	SpaceCarvingParameters carving_;
 };
 
@@ -149,6 +156,7 @@ void loadParameters(const YAML::Node &n, MesherParameters *p);
 void loadParameters(const std::string &filename, MesherParameters *p);
 void loadParameters(const YAML::Node &n, SpaceCarvingParameters *p);
 void loadParameters(const std::string &filename, SpaceCarvingParameters *p);
-
+void loadParameters(const std::string &filename, ScanCroppingParameters *p);
+void loadParameters(const YAML::Node &node, ScanCroppingParameters *p);
 
 } // namespace m545_mapping

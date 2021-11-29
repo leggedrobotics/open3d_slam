@@ -145,8 +145,17 @@ void Submap::setMapToSubmapOrigin(const Transform &T) {
 }
 
 void Submap::update(const MapperParameters &p) {
-	mapBuilderCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.mapBuilder_.scanCroppingRadius_);
-	denseMapCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.denseMapBuilder_.scanCroppingRadius_);
+//	mapBuilderCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.mapBuilder_.scanCroppingRadius_);
+//	denseMapCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.denseMapBuilder_.scanCroppingRadius_);
+	{
+		const auto &par = p.mapBuilder_.cropper_;
+		mapBuilderCropper_ = croppingVolumeFactory(par.cropperName_, par.croppingRadius_, par.croppingMinZ_, par.croppingMaxZ_);
+	}
+	{
+		const auto &par = p.denseMapBuilder_.cropper_;
+		denseMapCropper_ = croppingVolumeFactory(par.cropperName_, par.croppingRadius_, par.croppingMinZ_, par.croppingMaxZ_);
+	}
+
 }
 
 bool Submap::isEmpty() const {

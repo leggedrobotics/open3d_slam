@@ -25,7 +25,7 @@ namespace registration = open3d::pipelines::registration;
 std::shared_ptr<registration::TransformationEstimation> icpObjective;
 } // namespace
 
-Mapper::Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer,std::shared_ptr<SubmapCollection> submaps) :
+Mapper::Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer, std::shared_ptr<SubmapCollection> submaps) :
 		odomToRangeSensorBuffer_(odomToRangeSensorBuffer), submaps_(submaps) {
 	update(params_);
 }
@@ -38,10 +38,20 @@ void Mapper::setParameters(const MapperParameters &p) {
 void Mapper::update(const MapperParameters &p) {
 	icpCriteria_.max_iteration_ = p.scanMatcher_.maxNumIter_;
 	icpObjective = icpObjectiveFactory(p.scanMatcher_.icpObjective_);
-	scanMatcherCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.scanProcessing_.croppingRadius_);
-	mapBuilderCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.mapBuilder_.scanCroppingRadius_);
-//	mapBuilderCropper_ = std::make_shared<CylinderCroppingVolume>(p.mapBuilder_.scanCroppingRadius_,-3.0,1.5);
-//	scanMatcherCropper_ = std::make_shared<CylinderCroppingVolume>(p.scanProcessing_.croppingRadius_,-3.0,1.0);
+//	scanMatcherCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.scanProcessing_.croppingRadius_);
+//	mapBuilderCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.mapBuilder_.scanCroppingRadius_);
+//	mapBuilderCropper_ = std::make_shared<CylinderCroppingVolume>(p.mapBuilder_.scanCroppingRadius_, -3.0, 1.5);
+//	scanMatcherCropper_ = std::make_shared<CylinderCroppingVolume>(p.scanProcessing_.croppingRadius_, -3.0, 1.0);
+	{
+		const auto &par = params_.mapBuilder_.cropper_;
+		mapBuilderCropper_ = croppingVolumeFactory(par.cropperName_, par.croppingRadius_, par.croppingMinZ_,
+				par.croppingMaxZ_);
+	}
+	{
+		const auto &par = params_.scanProcessing_.cropper_;
+		scanMatcherCropper_ = croppingVolumeFactory(par.cropperName_, par.croppingRadius_, par.croppingMinZ_,
+				par.croppingMaxZ_);
+	}
 	submaps_->setParameters(p);
 }
 
@@ -63,7 +73,7 @@ const SubmapCollection& Mapper::getSubmaps() const {
 	return *submaps_;
 }
 
-void Mapper::setMapToRangeSensor(const Transform &t){
+void Mapper::setMapToRangeSensor(const Transform &t) {
 	mapToRangeSensor_ = t;
 }
 
@@ -74,7 +84,7 @@ void Mapper::estimateNormalsIfNeeded(PointCloud *pcl) const {
 	}
 }
 
-const PointCloud &Mapper::getPreprocessedScan() const{
+const PointCloud& Mapper::getPreprocessedScan() const {
 	return preProcessedScan_;
 }
 
@@ -206,9 +216,8 @@ bool Mapper::isManipulatingMap() const {
 const TransformInterpolationBuffer& Mapper::getMapToRangeSensorBuffer() const {
 	return mapToRangeSensorBuffer_;
 }
-TransformInterpolationBuffer *Mapper::getMapToRangeSensorBufferPtr(){
+TransformInterpolationBuffer* Mapper::getMapToRangeSensorBufferPtr() {
 	return &mapToRangeSensorBuffer_;
 }
-
 
 } /* namespace m545_mapping */

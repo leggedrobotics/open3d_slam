@@ -44,9 +44,23 @@ void loadParameters(const std::string &filename, ScanProcessingParameters *p){
 	loadParameters(basenode["scan_processing"], p);
 }
 void loadParameters(const YAML::Node &node, ScanProcessingParameters *p){
-	p->croppingRadius_ = node["cropping_radius"].as<double>();
 	p->voxelSize_ = node["voxel_size"].as<double>();
 	p->downSamplingRatio_ = node["downsampling_ratio"].as<double>();
+	loadParameters(node["scan_cropping"], &(p->cropper_));
+}
+
+void loadParameters(const std::string &filename, ScanCroppingParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+	if (basenode.IsNull()) {
+		throw std::runtime_error("ScanCroppingParameters::loadParameters loading failed");
+	}
+	loadParameters(basenode["scan_cropping"], p);
+}
+void loadParameters(const YAML::Node &node, ScanCroppingParameters *p){
+	p->croppingRadius_ = node["cropping_radius"].as<double>();
+	p->croppingMinZ_ = node["min_z"].as<double>();
+	p->croppingMaxZ_ = node["max_z"].as<double>();
+	p->cropperName_ = node["cropper_type"].as<std::string>();
 }
 
 void loadParameters(const std::string &filename, SubmapParameters *p){
@@ -70,8 +84,8 @@ void loadParameters(const std::string &filename, MapBuilderParameters *p) {
 }
 void loadParameters(const YAML::Node &node, MapBuilderParameters *p) {
 	p->mapVoxelSize_ = node["map_voxel_size"].as<double>();
-	p->scanCroppingRadius_ = node["scan_cropping_radius"].as<double>();
 	loadParameters(node["space_carving"], &(p->carving_));
+	loadParameters(node["scan_cropping"], &(p->cropper_));
 }
 
 

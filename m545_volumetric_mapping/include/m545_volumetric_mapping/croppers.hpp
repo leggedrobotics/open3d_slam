@@ -10,8 +10,23 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <open3d/geometry/PointCloud.h>
+#include <map>
 
 namespace m545_mapping {
+
+enum class CroppingVolumeEnum : int{
+	MaxRadius,
+	MinRadius,
+	Cylinder
+};
+
+static const std::map<std::string, CroppingVolumeEnum> cropperNames{
+	{"MaxRadius",CroppingVolumeEnum::MaxRadius},
+	{"MinRadius",CroppingVolumeEnum::MinRadius},
+	{"Cylinder",CroppingVolumeEnum::Cylinder}
+};
+
+
 
 class CroppingVolume {
 
@@ -38,9 +53,11 @@ protected:
 
 class MaxRadiusCroppingVolume : public CroppingVolume{
 public:
+	MaxRadiusCroppingVolume() = default;
+	~MaxRadiusCroppingVolume() override= default;
 	MaxRadiusCroppingVolume(double radius);
-	virtual ~MaxRadiusCroppingVolume() = default;
 	bool isWithinVolume(const Eigen::Vector3d &p) const final;
+	void setParameters(double radius);
 private:
 	double radius_=1e6;
 
@@ -48,11 +65,12 @@ private:
 
 class MinRadiusCroppingVolume : public CroppingVolume{
 public:
+	MinRadiusCroppingVolume() = default;
 	MinRadiusCroppingVolume(double radius);
-	virtual ~MinRadiusCroppingVolume() = default;
+	~MinRadiusCroppingVolume() override = default;
 
 	bool isWithinVolume(const Eigen::Vector3d &p) const final;
-
+	void setParameters(double radius);
 
 private:
 	double radius_=0.0;
@@ -61,9 +79,10 @@ private:
 
 class CylinderCroppingVolume : public CroppingVolume{
 public:
+	CylinderCroppingVolume();
 	CylinderCroppingVolume(double radius, double minZ, double maxZ);
 	~CylinderCroppingVolume() override = default;
-
+	void setParameters(double radius, double minZ, double maxZ);
 	bool isWithinVolume(const Eigen::Vector3d &p) const final;
 
 
@@ -74,5 +93,7 @@ private:
 
 };
 
+std::unique_ptr<CroppingVolume> croppingVolumeFactory(const std::string &type, double radius, double minZ, double maxZ);
+std::unique_ptr<CroppingVolume> croppingVolumeFactory(CroppingVolumeEnum type, double radius, double minZ, double maxZ);
 
 } // namespace m545_mapping

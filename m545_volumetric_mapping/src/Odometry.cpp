@@ -34,7 +34,8 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 		downSampledCloud->NormalizeNormals();
 	}
 	auto result = open3d::pipelines::registration::RegistrationICP(cloudPrev_, *downSampledCloud,
-			params_.scanMatcher_.maxCorrespondenceDistance_, Eigen::Matrix4d::Identity(), *icpObjective_, icpConvergenceCriteria_);
+			params_.scanMatcher_.maxCorrespondenceDistance_, Eigen::Matrix4d::Identity(), *icpObjective_,
+			icpConvergenceCriteria_);
 
 	//	std::cout << "Scan to scan matching finished \n";
 	//	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
@@ -60,7 +61,7 @@ const open3d::geometry::PointCloud& LidarOdometry::getPreProcessedCloud() const 
 	return cloudPrev_;
 }
 
-const TransformInterpolationBuffer &LidarOdometry::getBuffer() const{
+const TransformInterpolationBuffer& LidarOdometry::getBuffer() const {
 	return odomToRangeSensorBuffer_;
 }
 
@@ -68,9 +69,10 @@ void LidarOdometry::setParameters(const OdometryParameters &p) {
 	params_ = p;
 	icpConvergenceCriteria_.max_iteration_ = p.scanMatcher_.maxNumIter_;
 	icpObjective_ = icpObjectiveFactory(params_.scanMatcher_.icpObjective_);
-	cropper_ = std::make_shared<MaxRadiusCroppingVolume>(params_.scanProcessing_.croppingRadius_);
-	//cropper_ = std::make_shared<CylinderCroppingVolume>(params_.scanProcessing_.croppingRadius_,-3.0,3.0);
-
+//	cropper_ = std::make_shared<MaxRadiusCroppingVolume>(params_.scanProcessing_.croppingRadius_);
+//	cropper_ = std::make_shared<CylinderCroppingVolume>(params_.scanProcessing_.croppingRadius_,-3.0,3.0);
+	const auto &par = params_.scanProcessing_.cropper_;
+	cropper_ = croppingVolumeFactory(par.cropperName_, par.croppingRadius_, par.croppingMinZ_, par.croppingMaxZ_);
 }
 
 } // namespace m545_mapping
