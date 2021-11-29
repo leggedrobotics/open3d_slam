@@ -22,12 +22,12 @@ mapping:
     min_refinement_fitness: 0.7
     scan_matching:
       icp_objective: PointToPlane
-      max_correspondence_dist: 0.5
+      max_correspondence_dist: 0.8
       knn_normal_estimation: 4
       max_n_iter: 30
     scan_processing:
-      voxel_size: 0.1
-      downsampling_ratio: 0.2
+      voxel_size: 0.05
+      downsampling_ratio: 0.1
       scan_cropping:
         cropping_radius: 10.0
         min_z: -3.0
@@ -45,7 +45,7 @@ mapping:
       min_z: -3.0
       max_z: 3.0
       cropper_type: "Cylinder" #otions are Cylinder, MaxRadius, MinRadius
-    map_voxel_size: 0.2
+    map_voxel_size: 0.1
     space_carving:
       voxel_size: 0.1
       max_raytracing_length: 25.0
