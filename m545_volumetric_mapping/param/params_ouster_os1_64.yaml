@@ -1,0 +1,69 @@
+odometry:
+  scan_matching:
+    icp_objective: PointToPlane
+    max_correspondence_dist: 0.5
+    knn_normal_estimation: 4
+    max_n_iter: 25
+  scan_processing:
+    voxel_size: 0.1
+    downsampling_ratio: 0.4
+    cropping_radius: 15.0
+  
+mapping:
+  min_movement_between_mapping_steps: 0.0
+  is_build_dense_map: false
+  scan_to_map_refinement:
+    min_refinement_fitness: 0.7
+    scan_matching:
+      icp_objective: PointToPlane
+      max_correspondence_dist: 0.5
+      knn_normal_estimation: 4
+      max_n_iter: 30
+    scan_processing:
+      voxel_size: 0.1
+      downsampling_ratio: 0.3
+      cropping_radius: 10.0
+
+  submaps:
+    size: 10
+    min_num_range_data: 10
+
+  map_builder:
+    scan_cropping_radius: 20.0
+    map_voxel_size: 0.2
+    space_carving:
+      voxel_size: 0.1
+      max_raytracing_length: 25.0
+      truncation_distance: 0.1
+      carve_space_every_n_sec: 2000000.0
+      min_dot_product_with_normal: 0.3
+      
+  dense_map_builder:
+    scan_cropping_radius: 12.0
+    map_voxel_size: 0.08
+    space_carving:
+      voxel_size: 0.1
+      max_raytracing_length: 15.0
+      truncation_distance: 0.1
+      carve_space_every_n_sec: 200000.0
+      min_dot_product_with_normal: 0.3
+    
+local_map:
+  voxel_size: 0.08
+  cropping_radius: 10.0
+
+mesher:
+  is_compute_mesh: false
+  voxel_size: 0.2
+  knn_normal_estimation: 4
+  strategy: Poisson # options: AlphaShape, Poisson, BallPivot
+  alpha_shape_alpha: 0.5
+  poisson_depth: 8
+  poisson_min_density: -2.0
+  poisson_scale: 0.8
+  ball_pivot_radii: [0.5] 
+
+
+  
+
+    
