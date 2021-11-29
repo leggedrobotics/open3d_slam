@@ -69,6 +69,8 @@ void LidarOdometry::setParameters(const OdometryParameters &p) {
 	icpConvergenceCriteria_.max_iteration_ = p.scanMatcher_.maxNumIter_;
 	icpObjective_ = icpObjectiveFactory(params_.scanMatcher_.icpObjective_);
 	cropper_ = std::make_shared<MaxRadiusCroppingVolume>(params_.scanProcessing_.croppingRadius_);
+	//cropper_ = std::make_shared<CylinderCroppingVolume>(params_.scanProcessing_.croppingRadius_,-3.0,3.0);
+
 }
 
 } // namespace m545_mapping

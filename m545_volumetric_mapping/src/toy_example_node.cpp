@@ -124,6 +124,13 @@ int main(int argc, char **argv) {
 	optimization.insertLoopClosureConstraints(loopClosureConstraints);
 	optimization.insertOdometryConstraints(odometryConstraints);
 	optimization.buildOptimizationProblem(submaps);
+	optimization.loadFromFile("/home/jelavice/git/m545_volumetric_mapping/m545_volumetric_mapping/data/poseGraph.json");
+//	optimization.poseGraph_.edges_.erase(--optimization.poseGraph_.edges_.end());
+//	for (auto &edge : optimization.poseGraph_.edges_){
+//		edge.information_.setIdentity();
+//		edge.uncertain_ = true;
+//	}
+
 	optimization.print();
 	optimization.solve();
 	optimization.print();

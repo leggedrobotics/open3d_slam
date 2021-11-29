@@ -68,7 +68,7 @@ private:
 
 	ros::NodeHandlePtr nh_;
 	std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster_;
-	ros::Publisher odometryInputPub_,submapOriginsPub_, assembledMapPub_, denseMapPub_, submapsPub_, meshPub_;
+	ros::Publisher odometryInputPub_,mappingInputPub_,submapOriginsPub_, assembledMapPub_, denseMapPub_, submapsPub_, meshPub_;
 
 
 	// non ros types

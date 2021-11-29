@@ -62,6 +62,7 @@ void WrapperRos::addRangeScan(const open3d::geometry::PointCloud cloud, const Ti
 void WrapperRos::initialize() {
 
 	odometryInputPub_ = nh_->advertise<sensor_msgs::PointCloud2>("odom_input", 1, true);
+	mappingInputPub_ = nh_->advertise<sensor_msgs::PointCloud2>("mapping_input", 1, true);
 	assembledMapPub_ = nh_->advertise<sensor_msgs::PointCloud2>("assembled_map", 1, true);
 	denseMapPub_ = nh_->advertise<sensor_msgs::PointCloud2>("dense_map", 1, true);
 	meshPub_ = nh_->advertise<m545_volumetric_mapping_msgs::PolygonMesh>("mesh", 1, true);
@@ -180,8 +181,7 @@ void WrapperRos::mappingWorker() {
 			const auto poseAfterUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
 			std::cout << "latest pose after update: \n " << asString(poseAfterUpdate.transform_) << "\n";
 			publishMaps(measurement.time_);
-//			ros::spinOnce();
-//			throw "killz";
+			submaps_->dumpToFile(folderPath_, "after");
 		}
 
 		// publish visualizatinos
@@ -256,11 +256,11 @@ void WrapperRos::loopClosureWorker() {
 			optimizationProblem_->insertOdometryConstraints(odometryConstraints);
 			optimizationProblem_->buildOptimizationProblem(*submaps_);
 
-			optimizationProblem_->print();
+//			optimizationProblem_->print();
 			submaps_->dumpToFile(folderPath_, "before");
 			optimizationProblem_->dumpToFile(folderPath_ + "/poseGraph.json");
 			optimizationProblem_->solve();
-			optimizationProblem_->print();
+//			optimizationProblem_->print();
 			lastLoopClosureConstraints_ = loopClosureConstraints;
 			isOptimizedGraphAvailable_ = true;
 		}
@@ -325,7 +325,8 @@ void WrapperRos::publishMaps(const Time &time) {
 			[this, timestamp]() {
 				m545_mapping::publishCloud(mapper_->getAssembledMap(), m545_mapping::frames::mapFrame, timestamp,
 						assembledMapPub_);
-
+				m545_mapping::publishCloud(mapper_->getPreprocessedScan(), m545_mapping::frames::rangeSensorFrame, timestamp,
+						mappingInputPub_);
 				m545_mapping::publishCloud(mapper_->getDenseMap(), m545_mapping::frames::mapFrame, timestamp,
 						denseMapPub_);
 				m545_mapping::publishSubmapCoordinateAxes(mapper_->getSubmaps(), m545_mapping::frames::mapFrame,

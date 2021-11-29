@@ -112,15 +112,15 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 void PlaceRecognition::computeLoopClosingTransform(const Submap &sourceSubmap, const Submap &targetSubmap,
 		const Transform &sourceToTarget, Transform *postMultiply,Transform *preMultiply) const {
 
-	const auto mapToSourcePre = sourceToTarget * sourceSubmap.getMapToSubmapOrigin().inverse() ;
-	const auto mapToTargetPre = targetSubmap.getMapToSubmapOrigin().inverse();
-	const Transform Tpre = mapToTargetPre * mapToSourcePre.inverse() ;
-	*preMultiply = Tpre;
+
 
 	const auto mapToSource = sourceSubmap.getMapToSubmapOrigin() * sourceToTarget;
 	const auto mapToTarget = targetSubmap.getMapToSubmapOrigin();
 	const Transform Tpost = mapToSource.inverse() * mapToTarget;
 	*postMultiply = Tpost;
+
+	const Transform Tpre = mapToTarget * mapToSource.inverse() ;
+	*preMultiply = Tpre;
 
 //	std::cout << "loop closing constraints: \n";
 //	std::cout << " source: " << asString(mapToSource) << std::endl;

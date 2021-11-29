@@ -14,7 +14,6 @@
 #include "m545_volumetric_mapping/Parameters.hpp"
 #include "m545_volumetric_mapping/Transform.hpp"
 
-
 namespace m545_mapping {
 
 class CroppingVolume;
@@ -52,8 +51,8 @@ std::vector<size_t> getIdxsOfCarvedPoints(const open3d::geometry::PointCloud &sc
 		const std::vector<size_t> &cloudIdxsSubset, const SpaceCarvingParameters &param);
 
 void computeIndicesOfOverlappingPoints(const open3d::geometry::PointCloud &source,
-		const open3d::geometry::PointCloud &target, const Transform &sourceToTarget, double voxelSize,size_t minNumPointsPerVoxel,
-		std::vector<size_t> *idxsSource, std::vector<size_t> *idxsTarget);
+		const open3d::geometry::PointCloud &target, const Transform &sourceToTarget, double voxelSize,
+		size_t minNumPointsPerVoxel, std::vector<size_t> *idxsSource, std::vector<size_t> *idxsTarget);
 
 Eigen::Vector3d computeCenter(const open3d::geometry::PointCloud &cloud, const std::vector<size_t> &idxs);
 double informationMatrixMaxCorrespondenceDistance(double mappingVoxelSize);

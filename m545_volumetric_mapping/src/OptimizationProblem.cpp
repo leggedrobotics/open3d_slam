@@ -58,6 +58,7 @@ void OptimizationProblem::buildOptimizationProblem(const SubmapCollection &subma
 		edge.source_node_id_ = c.sourceSubmapIdx_;
 		edge.target_node_id_ = c.targetSubmapIdx_;
 		edge.transformation_ = c.sourceToTarget_.inverse().matrix();
+//		edge.transformation_ = c.sourceToTargetPreMultiply_.inverse().matrix();
 		edge.information_ = c.informationMatrix_;
 		edge.uncertain_ = false;
 		poseGraph_.edges_.push_back(std::move(edge));
@@ -68,6 +69,8 @@ void OptimizationProblem::buildOptimizationProblem(const SubmapCollection &subma
 		edge.source_node_id_ = c.sourceSubmapIdx_;
 		edge.target_node_id_ = c.targetSubmapIdx_;
 		edge.transformation_ = c.sourceToTarget_.inverse().matrix();
+//		edge.transformation_ = c.sourceToTargetPreMultiply_.inverse().matrix();
+
 		edge.information_ = c.informationMatrix_;
 		assert_true(c.isInformationMatrixValid_,
 				"Invalid information matrix between: " + std::to_string(c.sourceSubmapIdx_) + " and "
@@ -104,6 +107,11 @@ void OptimizationProblem::print() const {
 
 void OptimizationProblem::dumpToFile(const std::string &filename) const {
 	open3d::io::WritePoseGraph(filename, poseGraph_);
+}
+
+void OptimizationProblem::loadFromFile(const std::string &filename) {
+	open3d::io::ReadPoseGraph(filename, poseGraph_);
+	poseGraphPrev_ = poseGraph_;
 }
 
 OptimizedSubmapPoses OptimizationProblem::getOptimizedNodeValues() const {
