@@ -6,6 +6,8 @@
 	<arg name="launch_rviz" default="false" />
 	<arg name="cloud_topic" default="/rslidar_points" />
 	<arg name="parameter_file_path" default="$(find m545_volumetric_mapping)/param/params_velodyne_puck16.yaml"/>
+	<arg name="num_accumulated_range_data" default="1"/>
+	
 
 	<node name="mapping_node" pkg="m545_volumetric_mapping"
 		type="mapping_node" output="screen" launch-prefix="$(arg launch_prefix)">
@@ -16,6 +18,7 @@
 		<param name="parameter_file_path" type="string"
 			value="$(arg parameter_file_path)" />
 			
+		<param name="num_accumulated_range_data" value="$(arg num_accumulated_range_data)"/>
 	</node>
 
 

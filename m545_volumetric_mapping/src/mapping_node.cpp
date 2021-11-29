@@ -15,30 +15,43 @@
 #include "open3d_conversions/open3d_conversions.h"
 #include <ros/ros.h>
 
+namespace {
 using namespace m545_mapping;
-
 ros::NodeHandlePtr nh;
 std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
 ros::Publisher rawCloudPub;
 std::shared_ptr<WrapperRos> mapping;
+size_t numAccumulatedRangeDataCount = 0;
+size_t numAccumulatedRangeDataDesired = 1;
+open3d::geometry::PointCloud accumulatedCloud;
+
+
 
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	open3d::geometry::PointCloud cloud;
 	open3d_conversions::rosToOpen3d(msg, cloud, true);
+	accumulatedCloud += cloud;
+	++numAccumulatedRangeDataCount;
+	if (numAccumulatedRangeDataCount < numAccumulatedRangeDataDesired){
+		return;
+	}
 	const ros::Time timestamp = msg->header.stamp;
-	mapping->addRangeScan(cloud, fromRos(timestamp));
+	mapping->addRangeScan(accumulatedCloud, fromRos(timestamp));
 	m545_mapping::publishTfTransform(Eigen::Matrix4d::Identity(), timestamp, frames::rangeSensorFrame,
 			msg->header.frame_id, tfBroadcaster.get());
-	m545_mapping::publishCloud(cloud, m545_mapping::frames::rangeSensorFrame, timestamp, rawCloudPub);
+	m545_mapping::publishCloud(accumulatedCloud, m545_mapping::frames::rangeSensorFrame, timestamp, rawCloudPub);
+	numAccumulatedRangeDataCount = 0;
+	accumulatedCloud.Clear();
 }
 
+} // namespace
 int main(int argc, char **argv) {
 	ros::init(argc, argv, "lidar_odometry_mapping_node");
 	nh.reset(new ros::NodeHandle("~"));
 	tfBroadcaster.reset(new tf2_ros::TransformBroadcaster());
 	const std::string cloudTopic = nh->param<std::string>("cloud_topic", "");
 	ros::Subscriber cloudSub = nh->subscribe(cloudTopic, 100, &cloudCallback);
-
+	numAccumulatedRangeDataDesired = nh->param<int>("num_accumulated_range_data", 1);
 	rawCloudPub = nh->advertise<sensor_msgs::PointCloud2>("raw_cloud", 1, true);
 
 	mapping = std::make_shared<WrapperRos>(nh);
