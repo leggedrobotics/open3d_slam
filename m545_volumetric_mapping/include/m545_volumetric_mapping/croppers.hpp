@@ -59,5 +59,20 @@ private:
 
 };
 
+class CylinderCroppingVolume : public CroppingVolume{
+public:
+	CylinderCroppingVolume(double radius, double minZ, double maxZ);
+	~CylinderCroppingVolume() override = default;
+
+	bool isWithinVolume(const Eigen::Vector3d &p) const final;
+
+
+private:
+	double radius_=1e6;
+	double minZ_ = -1e3;
+	double maxZ_ = 1e3;
+
+};
+
 
 } // namespace m545_mapping

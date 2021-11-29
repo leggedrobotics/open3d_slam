@@ -16,27 +16,27 @@ bool CroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const {
 	return true;
 }
 
-void CroppingVolume::setPose(const Eigen::Isometry3d &pose){
+void CroppingVolume::setPose(const Eigen::Isometry3d &pose) {
 	pose_ = pose;
 }
 
-CroppingVolume::Indices CroppingVolume::getIndicesWithinVolume(const PointCloud &cloud) const{
+CroppingVolume::Indices CroppingVolume::getIndicesWithinVolume(const PointCloud &cloud) const {
 	Indices idxs;
 	idxs.reserve(cloud.points_.size());
-	for(size_t i =0; i < cloud.points_.size(); ++i){
-		if(isWithinVolume(cloud.points_[i])){
+	for (size_t i = 0; i < cloud.points_.size(); ++i) {
+		if (isWithinVolume(cloud.points_[i])) {
 			idxs.push_back(i);
 		}
 	}
 	return idxs;
 }
 
-std::shared_ptr<CroppingVolume::PointCloud> CroppingVolume::crop(const PointCloud &cloud) const{
+std::shared_ptr<CroppingVolume::PointCloud> CroppingVolume::crop(const PointCloud &cloud) const {
 	const auto idxsInside = getIndicesWithinVolume(cloud);
 	return cloud.SelectByIndex(idxsInside);
 }
 
-void CroppingVolume::crop(PointCloud *cloud) const{
+void CroppingVolume::crop(PointCloud *cloud) const {
 	//todo improve and speed up
 	auto cropped = crop(*cloud);
 	*cloud = std::move(*cropped);
@@ -46,23 +46,40 @@ void CroppingVolume::crop(PointCloud *cloud) const{
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
 
-MaxRadiusCroppingVolume::MaxRadiusCroppingVolume(double radius):radius_(radius){
+MaxRadiusCroppingVolume::MaxRadiusCroppingVolume(double radius) :
+		radius_(radius) {
 }
 
-bool MaxRadiusCroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const{
-	return (p-pose_.translation()).norm() <= radius_;
+bool MaxRadiusCroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const {
+	return (p - pose_.translation()).norm() <= radius_;
 }
-
 
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
 
-MinRadiusCroppingVolume::MinRadiusCroppingVolume(double radius):radius_(radius){
+MinRadiusCroppingVolume::MinRadiusCroppingVolume(double radius) :
+		radius_(radius) {
 }
 
-bool MinRadiusCroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const{
-	return (p-pose_.translation()).norm() >= radius_;
+bool MinRadiusCroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const {
+	return (p - pose_.translation()).norm() >= radius_;
+}
+
+///////////////////////////////////////////////
+///////////////////////////////////////////////
+///////////////////////////////////////////////
+
+CylinderCroppingVolume::CylinderCroppingVolume(double radius, double minZ, double maxZ) :
+		radius_(radius), minZ_(minZ), maxZ_(maxZ) {
+
+}
+
+bool CylinderCroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const {
+
+	return p.z() >= minZ_ && p.z() <= maxZ_ && (p - pose_.translation()).head<2>().norm() <= radius_;
+
+
 }
 
 } // namespace m545_mapping
