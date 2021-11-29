@@ -42,7 +42,7 @@ public:
 	Transform getMapToRangeSensor( const Time &timestamp) const;
 	const TransformInterpolationBuffer &getMapToRangeSensorBuffer() const;
 	TransformInterpolationBuffer *getMapToRangeSensorBufferPtr();
-
+	const PointCloud &getPreprocessedScan() const;
 private:
 	std::shared_ptr<PointCloud> preProcessScan(const PointCloud &scan) const;
 	void update(const MapperParameters &p);
@@ -63,6 +63,7 @@ private:
 	std::shared_ptr<SubmapCollection> submaps_;
 	const TransformInterpolationBuffer &odomToRangeSensorBuffer_;
 	TransformInterpolationBuffer mapToRangeSensorBuffer_;
+	open3d::geometry::PointCloud preProcessedScan_;
 
 };
 

@@ -40,6 +40,8 @@ void Mapper::update(const MapperParameters &p) {
 	icpObjective = icpObjectiveFactory(p.scanMatcher_.icpObjective_);
 	scanMatcherCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.scanProcessing_.croppingRadius_);
 	mapBuilderCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.mapBuilder_.scanCroppingRadius_);
+//	mapBuilderCropper_ = std::make_shared<CylinderCroppingVolume>(p.mapBuilder_.scanCroppingRadius_,-3.0,1.5);
+//	scanMatcherCropper_ = std::make_shared<CylinderCroppingVolume>(p.scanProcessing_.croppingRadius_,-3.0,1.0);
 	submaps_->setParameters(p);
 }
 
@@ -72,6 +74,10 @@ void Mapper::estimateNormalsIfNeeded(PointCloud *pcl) const {
 	}
 }
 
+const PointCloud &Mapper::getPreprocessedScan() const{
+	return preProcessedScan_;
+}
+
 void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &timestamp) {
 	isMatchingInProgress_ = true;
 	lastMeasurementTimestamp_ = timestamp;
@@ -94,9 +100,13 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		return;
 	}
 
-	Transform odomToRangeSensor = getTransform(timestamp, odomToRangeSensorBuffer_);
+	const Transform odomToRangeSensor = getTransform(timestamp, odomToRangeSensorBuffer_);
 	const auto odometryMotion = odomToRangeSensorPrev_.inverse() * odomToRangeSensor;
-	const auto mapToRangeSensorEstimate = getMapToOdom(timestamp) * odomToRangeSensor;
+	const auto mapToOdom = getMapToOdom(timestamp);
+	const auto mapToRangeSensorEstimate = mapToOdom * odomToRangeSensor;
+//	const auto mapToRangeSensorEstimate1 = mapToRangeSensor_ * mapToOdom.inverse() * odometryMotion * mapToOdom;
+//	std::cout << "estimate1: " << asString(mapToRangeSensorEstimate) << "\n";
+//	std::cout << "estimate2: " << asString(mapToRangeSensorEstimate1) << "\n\n";
 	const auto &activeSubmap = submaps_->getActiveSubmap().getMap();
 	std::shared_ptr<PointCloud> narrowCropped, wideCroppedCloud, mapPatch;
 	{
@@ -105,6 +115,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		Timer timer;
 		wideCroppedCloud = preProcessScan(rawScan);
 		narrowCropped = scanMatcherCropper_->crop(*wideCroppedCloud);
+		preProcessedScan_ = *narrowCropped;
 		scanMatcherCropper_->setPose(mapToRangeSensor_);
 		mapPatch = scanMatcherCropper_->crop(activeSubmap);
 //		avgTime += timer.elapsedMsec();
