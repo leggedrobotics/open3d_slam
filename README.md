@@ -45,6 +45,8 @@ Create a build directory and build from source:
 `make -j8`   
 `make install`   
 
+If you want to compute with cuda support add the following flag when configuring the cmake `-DBUILD_CUDA_MODULE=ON`
+
 If any of the steps fail and you are missing the dependencies, you can try to resolve them with the following instructions:  
 
 http://www.open3d.org/docs/release/compilation.html#install-dependencies  
