@@ -45,7 +45,8 @@ Create a build directory and build from source:
 `make -j8`   
 `make install`   
 
-If you want to compute with cuda support add the following flag when configuring the cmake `-DBUILD_CUDA_MODULE=ON`
+If you want to compute with cuda support add the following flag when configuring the cmake `-DBUILD_CUDA_MODULE=ON`. In this case you might have to manually specify the path to your nvcc compiler.
+This can be done by adding the `CMAKE_CUDA_COMPILER:PATH` flag when invoking the cmake; e.g. `-DCMAKE_CUDA_COMPILER:PATH=/usr/local/cuda-11.5/bin/nvcc`
 
 If any of the steps fail and you are missing the dependencies, you can try to resolve them with the following instructions:  
 
