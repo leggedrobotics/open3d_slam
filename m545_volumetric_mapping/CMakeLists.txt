@@ -107,3 +107,10 @@ target_link_libraries(graph_node
     ${PROJECT_NAME}
 )
 
+add_executable(icp_benchmark_node
+  src/icp_benchmark_node.cpp)
+target_link_libraries(icp_benchmark_node
+    ${catkin_LIBRARIES}
+    ${PROJECT_NAME}
+)
+

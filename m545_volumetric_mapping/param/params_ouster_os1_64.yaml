@@ -1,12 +1,12 @@
 odometry:
   scan_matching:
     icp_objective: PointToPlane
-    max_correspondence_dist: 0.5
+    max_correspondence_dist: 1.0
     knn_normal_estimation: 4
     max_n_iter: 25
   scan_processing:
     voxel_size: 0.1
-    downsampling_ratio: 0.4
+    downsampling_ratio: 0.5
     scan_cropping:
       cropping_radius: 15.0
       min_z: -3.0
@@ -19,29 +19,29 @@ mapping:
   is_build_dense_map: false
   submaps_num_scan_overlap: 10
   scan_to_map_refinement:
-    min_refinement_fitness: 0.7
+    min_refinement_fitness: 0.6
     scan_matching:
       icp_objective: PointToPlane
       max_correspondence_dist: 0.8
       knn_normal_estimation: 4
-      max_n_iter: 30
+      max_n_iter: 40
     scan_processing:
       voxel_size: 0.05
-      downsampling_ratio: 0.1
+      downsampling_ratio: 0.2
       scan_cropping:
-        cropping_radius: 10.0
+        cropping_radius: 15.0
         min_z: -3.0
         max_z: 1.0
         cropper_type: "Cylinder" #otions are Cylinder, MaxRadius, MinRadius
       
 
   submaps:
-    size: 10
+    size: 12
     min_num_range_data: 10
 
   map_builder:
     scan_cropping:
-      cropping_radius: 15.0
+      cropping_radius: 20.0
       min_z: -3.0
       max_z: 3.0
       cropper_type: "Cylinder" #otions are Cylinder, MaxRadius, MinRadius

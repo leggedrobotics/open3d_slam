@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+
+	
+
+	<node name="toy_example_node" pkg="m545_volumetric_mapping"
+		type="toy_example_node" output="screen" launch-prefix="">		
+			
+	</node>
+
+
+	
+
+</launch>

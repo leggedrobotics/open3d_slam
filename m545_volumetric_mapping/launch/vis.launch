@@ -4,7 +4,7 @@
 	<arg name="rviz_config" default="$(find  m545_volumetric_mapping)/rviz/default.rviz" />
 	<arg name="launch_rviz" default="true" />
 
-	<node name="rviz_icp" pkg="rviz" type="rviz"
+	<node name="rviz_mapping" pkg="rviz" type="rviz"
 		args="-d $(arg rviz_config)"
 		if="$(arg launch_rviz)">
 	</node>
