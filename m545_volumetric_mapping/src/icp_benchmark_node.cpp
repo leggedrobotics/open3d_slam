@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
 	icpConvergenceCriteria.max_iteration_ = 50;
 
 	m545_mapping::Timer tCPU, tGPU;
-	const size_t numTests = 1;
+	const size_t numTests = 100;
 	for (size_t i = 0; i < numTests; ++i) {
 		const auto pertrubation = getPerturbation();
 		auto source = target; // copy
