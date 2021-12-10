@@ -41,6 +41,7 @@ m545_mapping::MapperParameters mapperParams;
 m545_mapping::LocalMapParameters localMapParams;
 m545_mapping::MesherParameters mesherParams;
 m545_mapping::ProjectionParameters projectionParams;
+m545_mapping::MesherParamsInMesher mesherParamsInMesher;
 
 bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
     odometry->addRangeScan(cloud, timestamp);
@@ -62,12 +63,19 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
     m545_mapping::publishTfTransform(mapper->getMapToOdom().matrix(), timestamp, mapFrame, odomFrame,
                                      tfBroadcaster.get());
 
-    open3d::geometry::PointCloud map = mapper->getMap();
-    Eigen::Matrix<double, 3, 1> white = {1.0, 1.0, 1.0};
-    m545_mapping::publishCloud(map.PaintUniformColor(white), m545_mapping::frames::mapFrame, timestamp, mapPub);
+    open3d::geometry::PointCloud map = mapper->getDenseMap();
+//    Eigen::Matrix<double, 3, 1> white = {1.0, 1.0, 1.0};
+    auto bbox = m545_mapping::boundingBoxAroundPosition(localMapParams.cropBoxLowBound_,
+                                                        localMapParams.cropBoxHighBound_, mapper->getMapToRangeSensor().translation());
+    m545_mapping::cropPointcloud(bbox, &map);
+    auto downSampledMap = map.VoxelDownSample(localMapParams.voxelSize_);
+//    m545_mapping::publishCloud(map.PaintUniformColor(white), m545_mapping::frames::mapFrame, timestamp, mapPub);
+    m545_mapping::publishCloud(*downSampledMap, m545_mapping::frames::mapFrame, timestamp, mapPub);
 
     if (localMapPub.getNumSubscribers() > 0) {
-        open3d::geometry::PointCloud map = mapper->getDenseMap();
+//        open3d::geometry::PointCloud map = mapper->getDenseMap();
+        open3d::geometry::PointCloud map = mesher->getMeshMap();
+//        std::cout << "point size in main cpp  " << map.points_.size() << std::endl;
         auto bbox = m545_mapping::boundingBoxAroundPosition(localMapParams.cropBoxLowBound_,
                                                             localMapParams.cropBoxHighBound_, mapper->getMapToRangeSensor().translation());
         m545_mapping::cropPointcloud(bbox, &map);
@@ -87,12 +95,15 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
     if (mesherParams.isComputeMesh_ && !mesher->isMeshingInProgress() && !mapper->getMap().points_.empty()) {
         std::thread t([timestamp]() {
             auto map = mapper->getDenseMap();
+//            auto map = mesher->getMeshMap();
             auto bbox = m545_mapping::boundingBoxAroundPosition(localMapParams.cropBoxLowBound_, localMapParams.cropBoxHighBound_, mapper->getMapToRangeSensor().translation());
             m545_mapping::cropPointcloud(bbox, &map);
             auto downSampledMap = map.VoxelDownSample(mesherParams.voxelSize_);
             mesher->setCurrentPose(mapper->getMapToRangeSensor());
             mesher->buildMeshFromCloud(*downSampledMap);
-            m545_mapping::publishMesh(mesher->getMesh(), mapFrame,timestamp,meshPub);
+            auto mesh = mesher->getMesh();
+//            m545_mapping::cropMesh(bbox, &mesh);
+            m545_mapping::publishMesh(mesh, mapFrame,timestamp,meshPub);
 //            std::cout << mesher->getMesh().vertex_colors_.at(20) << std::endl;
         });
         t.detach();
@@ -195,8 +206,8 @@ int main(int argc, char **argv) {
     m545_mapping::loadParameters(paramFile, &localMapParams);
 
     mesher = std::make_shared<m545_mapping::Mesher>();
-    m545_mapping::loadParameters(paramFile, &mesherParams);
-    mesher->setParameters(mesherParams);
+    m545_mapping::loadParameters(paramFile, &mesherParams, &mesherParamsInMesher);
+    mesher->setParameters(mesherParams, mesherParamsInMesher);
 
     color = std::make_shared<m545_mapping::Color>();
     m545_mapping::loadParameters(paramFile, &projectionParams);

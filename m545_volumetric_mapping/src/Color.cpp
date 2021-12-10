@@ -3,6 +3,7 @@
 //
 #include "m545_volumetric_mapping/Color.hpp"
 #include <open3d/geometry/PointCloud.h>
+#include <open3d/geometry/RGBDImage.h>
 #include "m545_volumetric_mapping/helpers.hpp"
 #include <Eigen/Geometry>
 
@@ -22,6 +23,7 @@ namespace m545_mapping {
         std::vector<Eigen::Vector3d> pos_udimage_aux(pos_lidar.size());     //[u,v,1]
         std::vector<Eigen::Vector2i> pos_dimage(pos_lidar.size());          //with distortion
         std::vector<Eigen::Vector3d> pos_lidar_aux(pos_lidar.size());
+        std::vector<double> depth(pos_lidar.size());
         Eigen::Quaterniond quaternion = m545_mapping::fromRPY(rpy);
         const Eigen::Matrix3d rotation = quaternion.toRotationMatrix();
         Eigen::MatrixXd RT(3, 4);           //[R|T]
@@ -31,6 +33,7 @@ namespace m545_mapping {
             pos_lidar_aux[i].topRows(3) = pos_lidar[i];
             pos_lidar_aux[i](3) = 1.0;
             pos_udimage_aux[i] = RT * pos_lidar_aux[i];         //[K*[R|T]*[x_l,y_l,z_l,1] = lamda*[u.v.1]
+            depth[i] = pos_lidar[i].z();
             if(pos_udimage_aux[i].z() < 0) {
                 pos_dimage[i].x() = -1.0;
                 pos_dimage[i].y() = -1.0;          //get rid of the points with z<0 and color them later with white
@@ -39,6 +42,7 @@ namespace m545_mapping {
                 pos_lidar[i] = rotation.inverse() * pos_lidar[i] + translation;
                 pos_lidar[i].x() /= pos_lidar[i].z();
                 pos_lidar[i].y() /= pos_lidar[i].z();
+
                 //the distortion part
                 double r_square = pow(pos_lidar[i].x(), 2) + pow(pos_lidar[i].y(), 2);
                 double x = pos_lidar[i].x() * (1 + D(0) * r_square + D(1) * pow(r_square, 2)) + 2 * D(2) * pos_lidar[i].x() * pos_lidar[i].y() + D(3);
@@ -48,9 +52,39 @@ namespace m545_mapping {
             }
         }
         cloud.colors_ = imageConversion(msg, pos_dimage);
+        depthInfo = getDepth(pos_dimage, depth);
 
         return cloud;
 
+    }
+
+    std::vector<Eigen::Vector3d> Color::getDepth(const std::vector<Eigen::Vector2i> &pixels,
+                                                 const std::vector<double> &depth) {
+        std::vector<Eigen::Vector3d> colorAndDepth;
+        for (int i = 0; i < pixels.size(); i++) {
+            Eigen::Vector3d addDepth;
+            addDepth.x() = pixels[i].x();
+            addDepth.y() = pixels[i].y();
+            addDepth.z() = depth[i];
+            colorAndDepth.push_back(addDepth);
+        }
+        return colorAndDepth;
+    }
+
+    open3d::geometry::RGBDImage Color::getRGBDImage(const std::vector<double>& depth, const sensor_msgs::ImageConstPtr &msg) {
+        open3d::geometry::Image image_color;
+        open3d::geometry::Image image_depth;
+        open3d::geometry::RGBDImage image_rgbd;
+        image_color.data_ = msg->data;
+        //std::vector to cv
+        cv::Mat m = cv::Mat(msg->height, msg->width, CV_8UC1);
+        std::memcpy(m.data, depth.data(), depth.size() * sizeof(double));
+        //cv to o3d
+        int bytes_per_channel = (m.depth() / 2 + 1);
+        image_depth.Prepare(m.cols, m.rows, m.channels(), bytes_per_channel);
+        std::memcpy(image_depth.data_.data(), m.data, m.total() * m.channels() * bytes_per_channel);
+        image_rgbd = *open3d::geometry::RGBDImage::CreateFromColorAndDepth(image_color, image_depth, 1000, 0, false);
+        return image_rgbd;
     }
 
     open3d::geometry::PointCloud Color::filterColor(open3d::geometry::PointCloud &cloud) {
@@ -90,5 +124,13 @@ namespace m545_mapping {
         }
         return pixelColors;
     }
+
+    std::vector<double> Color::getDepthInfo() {
+        std::vector<double> onlyDepth;
+        for(int i = 0; i < depthInfo.size(); i++)
+            onlyDepth.push_back(depthInfo[i].z());
+        return onlyDepth;
+    }
+
 
 }

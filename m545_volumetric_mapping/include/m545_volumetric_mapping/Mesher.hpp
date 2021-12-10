@@ -12,36 +12,48 @@
 #include <open3d/geometry/TriangleMesh.h>
 #include "m545_volumetric_mapping/Parameters.hpp"
 #include <sensor_msgs/PointCloud2.h>
+#include "m545_volumetric_mapping/Mapper.hpp"
 
 
 namespace m545_mapping {
 
 
-class Mesher {
+    class Mesher {
 
-public:
+    public:
 
-	using PointCloud = open3d::geometry::PointCloud;
-	using TriangleMesh = open3d::geometry::TriangleMesh;
+        using PointCloud = open3d::geometry::PointCloud;
+        using TriangleMesh = open3d::geometry::TriangleMesh;
 
-	Mesher();
-	~Mesher() = default;
-	void buildMeshFromCloud(const PointCloud &cloud);
-	bool isMeshingInProgress() const;
-	void setParameters(const MesherParameters &p);
-	const TriangleMesh &getMesh() const;
-	void setCurrentPose(const Eigen::Isometry3d &pose);
+        Mesher();
+        ~Mesher() = default;
+        void buildMeshFromCloud(const PointCloud &cloud);
+        bool isMeshingInProgress() const;
+        void setParameters(const MesherParameters &p, const MesherParamsInMesher &p2);
+        const TriangleMesh &getMesh() const;
+        void setCurrentPose(const Eigen::Isometry3d &pose);
 //    const sensor_msgs::PointCloud2 getCloud(sensor_msgs::PointCloud2 &cloud);
-private:
-	bool isMeshingInProgress_ = false;
-	std::mutex meshingMutex_;
-	mutable std::mutex meshingAccessMutex_;
-	std::shared_ptr<TriangleMesh> mesh_;
-	MesherParameters params_;
-	Eigen::Isometry3d currentPose_ = Eigen::Isometry3d::Identity();
+        const PointCloud &getMeshMap() const;
 
 
-};
+    private:
+        bool isMeshingInProgress_ = false;
+        std::mutex meshingMutex_;
+        mutable std::mutex meshingAccessMutex_;
+        std::shared_ptr<TriangleMesh> mesh_;
+        MesherParameters params_;
+        MesherParamsInMesher paramsInMesher_;
+        Eigen::Isometry3d currentPose_ = Eigen::Isometry3d::Identity();
+        open3d::geometry::PointCloud prevMeshMap_;
+        std::shared_ptr<open3d::geometry::PointCloud> differenceMapPtr_;
+        void computeIndicesOfOverlappingPoints(const open3d::geometry::PointCloud &source,
+                                               const open3d::geometry::PointCloud &target, const Eigen::Isometry3d &sourceToTarget, double voxelSize,
+                                               size_t minNumPointsPerVoxel,
+                                               std::vector<size_t> *idxsSource, std::vector<size_t> *idxsTarget);
+        PointCloud cloud_;
+
+
+    };
 
 
 

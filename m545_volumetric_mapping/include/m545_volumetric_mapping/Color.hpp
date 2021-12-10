@@ -31,11 +31,17 @@ namespace m545_mapping {
                                                         const bool &cropFlag);
 
         open3d::geometry::PointCloud filterColor(open3d::geometry::PointCloud &cloud);
+        open3d::geometry::RGBDImage getRGBDImage(const std::vector<double>& depth, const sensor_msgs::ImageConstPtr &msg);
+        std::vector<double> getDepthInfo();
+
+
 
     private:
         std::vector<Eigen::Matrix<double, 3, 1>> imageConversion(const sensor_msgs::ImageConstPtr& msg, const std::vector<Eigen::Vector2i> pixels);
         const Eigen::Matrix<double, 3, 1> noColor = {-1.0, -1.0, -1.0};
         std::vector<Eigen::Matrix<double, 3, 1>> pos_lidar;
+        std::vector<Eigen::Vector3d> getDepth(const std::vector<Eigen::Vector2i>& pixels, const std::vector<double>& depth);
+        std::vector<Eigen::Vector3d> depthInfo;
     };
 
 }

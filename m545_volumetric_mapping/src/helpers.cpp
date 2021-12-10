@@ -107,6 +107,7 @@ namespace m545_mapping {
             //recolor here
             pointcloud.points_ = mesh.vertices_;
             pointcloud.colors_ = mesh.vertex_colors_;
+            std::cout << "points in final cloud" << pointcloud.points_.size() << std::endl;
             open3d_conversions::open3dToRos(pointcloud, meshMsg.cloud, frame_id);
 //            auto color_it = std::find_if(meshMsg.cloud.fields.begin(), meshMsg.cloud.fields.end(), [](const sensor_msgs::PointField &field) {
 //                return field.name == "rgb";});
@@ -157,6 +158,11 @@ namespace m545_mapping {
     void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::PointCloud *pcl) {
         auto croppedCloud = pcl->Crop(bbox);
         *pcl = *croppedCloud;
+    }
+
+    void cropMesh(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::TriangleMesh *mesh) {
+        auto croppedMesh = mesh->Crop(bbox);
+        *mesh = *croppedMesh;
     }
 
     std::string asString(const Eigen::Isometry3d &T) {

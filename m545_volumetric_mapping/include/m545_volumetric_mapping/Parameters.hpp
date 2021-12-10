@@ -88,6 +88,17 @@ struct MesherParameters{
 	int knnNormalEstimation_ = 4;
 };
 
+struct MesherParamsInMesher{
+    double overlapVoxelSize = 0.5;
+    double overlapMinPoints = 10;
+    double radiusOutlierNbPoints = 15;
+    double radiusOutlierRadius = 0.5;
+    double statisticalOutlierNbPoints = 15;
+    double statisticalOutlierRatio = 1.0;
+    double densityThreshold = 2.0;
+    double computeOverlappingThreshold = 2.0;
+};
+
 
 void loadParameters(const std::string &filename, IcpParameters *p);
 void loadParameters(const YAML::Node &node, IcpParameters *p);
@@ -99,8 +110,7 @@ void loadParameters(const std::string &filename, OdometryParameters *p);
 void loadParameters(const YAML::Node &node, OdometryParameters *p);
 void loadParameters(const std::string &filename, ProjectionParameters *p);
 void loadParameters(const YAML::Node &node, ProjectionParameters *p);
-void loadParameters(const YAML::Node &n, MesherParameters *p);
-void loadParameters(const std::string &filename, MesherParameters *p);
-
+void loadParameters(const YAML::Node &n, MesherParameters *p, MesherParamsInMesher *p2);
+void loadParameters(const std::string &filename, MesherParameters *p, MesherParamsInMesher *p2);
 
 } // namespace m545_mapping

@@ -13,6 +13,7 @@ set(SRC_FILES
   src/Mesher.cpp
   src/Odometry.cpp
   src/Color.cpp
+  src/Voxel.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES

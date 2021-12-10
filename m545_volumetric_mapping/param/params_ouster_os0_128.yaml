@@ -41,7 +41,7 @@ icp_mapping:
     crop_box_max_z: 100.0
     
 local_map:
-  voxel_size: 0.01
+  voxel_size: 0.1
   crop_box_min_x: -12.0
   crop_box_min_y: -12.0
   crop_box_min_z: -100.0
@@ -53,16 +53,28 @@ Projection:
   K: [767.239452, 0, 814.414996, 0, 767.168172, 597.978256, 0, 0, 1.0]
   D: [-0.044303, 0.006917, -0.000472, -0.000009, 0.000000]
   translation: [0.207, -0.025, 0.213]
-  rpy: [-3.088, -1.362, -1.52]
+  rpy: [-3.11, -1.36, -1.5]
 
 mesher:
   is_compute_mesh: true
-  voxel_size: 0.2
+  voxel_size: 0.05
   knn_normal_estimation: 4
   strategy: Poisson # options: AlphaShape, Poisson, BallPivot
   alpha_shape_alpha: 0.5
-  poisson_depth: 10
+  poisson_depth: 9
   poisson_min_density: -2.0
   poisson_scale: 0.8
-  ball_pivot_radii: [0.5] 
+  ball_pivot_radii: [0.5]
+
+mesherParamsInMesher:
+  computeOverlappingThreshold: 2.0
+  densityThreshold: 5.0
+  overlapVoxelSize: 0.5
+  overlapMinPoints: 10
+  radiusOutlierNbPoints: 50
+  radiusOutlierRadius: 1.0
+  statisticalOutlierNbPoints: 20
+  statisticalOutlierRatio: 2.0
+
+
 

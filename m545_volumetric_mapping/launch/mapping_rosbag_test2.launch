@@ -9,8 +9,8 @@
 	<arg name="use_sim_time" default="true" />
 
 	<arg name="parameter_file_path" default="$(find m545_volumetric_mapping)/param/params_ouster_os0_128.yaml"/>
-	<arg name="bag_filename_1" default="4_heap_pc2__2021-10-22-16-04-25" />
-	<arg name="bag_filename_2" default="4_heap_camera_2021-10-22-16-04-25" />
+	<arg name="bag_filename_1" default="5_heap_pc2_2021-10-22-16-10-07_digging" />
+	<arg name="bag_filename_2" default="5_heap_camera_2021-10-22-16-10-07_digging" />
 	<arg name="bag_filepath" 
 		default="$(find m545_volumetric_mapping)/data/" />
 
@@ -22,7 +22,7 @@
 	</include>
 
 	<node pkg="rosbag" type="play" name="rosbag"
-		args="$(arg bag_filepath)$(arg bag_filename_1).bag $(arg bag_filepath)$(arg bag_filename_2).bag --delay '$(arg play_delay)' --rate '$(arg play_rate)' --clock -s 60" />
+		args="$(arg bag_filepath)$(arg bag_filename_1).bag $(arg bag_filepath)$(arg bag_filename_2).bag --delay '$(arg play_delay)' --rate '$(arg play_rate)' --clock -s 0" />
 	<!-- append - -loop for looping -->
 
 <!--

@@ -24,6 +24,7 @@ namespace m545_mapping {
 
 std::shared_ptr<open3d::geometry::PointCloud> voxelizeAroundPosition(double voxelSize, const open3d::geometry::AxisAlignedBoundingBox &bbox, const open3d::geometry::PointCloud &cloud);
 void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::PointCloud *pcl);
+void cropMesh(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::TriangleMesh *mesh);
 void randomDownSample(double downSamplingRatio, open3d::geometry::PointCloud *pcl);
 void voxelize(double voxelSize, open3d::geometry::PointCloud *pcl);
 

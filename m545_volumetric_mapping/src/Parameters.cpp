@@ -153,17 +153,38 @@ void loadParameters(const YAML::Node &n, MesherParameters *p) {
 	p->poissonScale_ = n["poisson_scale"].as<double>();
 	p->ballPivotRadii_ = n["ball_pivot_radii"].as<std::vector<double>>();
 	p->isComputeMesh_ = n["is_compute_mesh"].as<bool>();
-
 }
 
-void loadParameters(const std::string &filename, MesherParameters *p) {
-	YAML::Node basenode = YAML::LoadFile(filename);
+void loadParameters(const YAML::Node &n, MesherParamsInMesher *p2) {
+    p2->computeOverlappingThreshold = n["computeOverlappingThreshold"].as<double>();
+    p2->densityThreshold = n["densityThreshold"].as<double>();
+    p2->overlapVoxelSize = n["overlapVoxelSize"].as<double>();
+    p2->overlapMinPoints = n["overlapMinPoints"].as<double>();
+    p2->radiusOutlierNbPoints = n["radiusOutlierNbPoints"].as<double>();
+    p2->radiusOutlierRadius = n["radiusOutlierRadius"].as<double>();
+    p2->statisticalOutlierNbPoints = n["statisticalOutlierNbPoints"].as<double>();
+    p2->statisticalOutlierRatio = n["statisticalOutlierRatio"].as<double>();
+}
 
-	if (basenode.IsNull()) {
-		throw std::runtime_error("MesherParameters::loadParameters loading failed");
-	}
+//void loadParameters(const std::string &filename, MesherParameters *p) {
+//	YAML::Node basenode = YAML::LoadFile(filename);
+//
+//	if (basenode.IsNull()) {
+//		throw std::runtime_error("MesherParameters::loadParameters loading failed");
+//	}
+//
+//	loadParameters(basenode["mesher"], p);
+//}
 
-	loadParameters(basenode["mesher"], p);
+void loadParameters(const std::string &filename, MesherParameters *p, MesherParamsInMesher *p2) {
+    YAML::Node basenode = YAML::LoadFile(filename);
+
+    if (basenode.IsNull()) {
+        throw std::runtime_error("MesherParameters::loadParameters loading failed");
+    }
+
+    loadParameters(basenode["mesher"], p);
+    loadParameters(basenode["mesherParamsInMesher"], p2);
 }
 
 
