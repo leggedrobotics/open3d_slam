@@ -75,9 +75,10 @@ private:
 	CircularBuffer<TimestampedPointCloud> odometryBuffer_, mappingBuffer_;
 	CircularBuffer<Time> mesherBufffer_;
 	ThreadSafeBuffer<TimestampedSubmapId> loopClosureCandidates_;
-	m545_mapping::MapperParameters mapperParams_;
-	m545_mapping::LocalMapParameters localMapParams_;
-	m545_mapping::MesherParameters mesherParams_;
+	MapperParameters mapperParams_;
+	LocalMapParameters localMapParams_;
+	MesherParameters mesherParams_;
+	VisualizationParameters visualizationParameters_;
 	PointCloud rawCloudPrev_;
 	std::shared_ptr<Mesher> mesher_;
 	std::shared_ptr<LidarOdometry> odometry_;

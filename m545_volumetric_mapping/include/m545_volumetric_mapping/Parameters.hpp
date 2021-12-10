@@ -137,7 +137,14 @@ struct MesherParameters{
 	int knnNormalEstimation_ = 4;
 };
 
+struct VisualizationParameters {
+	double assembledMapVoxelSize_ = 0.1;
+	double submapVoxelSize_ = 0.1;
+	double visualizeEveryNmsec_ = 250.0;
+};
 
+void loadParameters(const std::string &filename, VisualizationParameters *p);
+void loadParameters(const YAML::Node &node, VisualizationParameters *p);
 void loadParameters(const std::string &filename, SubmapParameters *p);
 void loadParameters(const YAML::Node &node, SubmapParameters *p);
 void loadParameters(const std::string &filename, ScanProcessingParameters *p);

@@ -81,7 +81,11 @@ mesher:
   poisson_scale: 0.8
   ball_pivot_radii: [0.5] 
 
-
+visualization:
+  assembled_map_voxel_size: 0.1
+  submaps_voxel_size: 0.1
+  visualize_every_n_msec: 300.0
+  
   
 
     

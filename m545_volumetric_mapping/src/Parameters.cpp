@@ -9,6 +9,21 @@
 
 namespace m545_mapping {
 
+
+void loadParameters(const std::string &filename, VisualizationParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+	if (basenode.IsNull()) {
+		throw std::runtime_error("VisualizationParameters::loadParameters loading failed");
+	}
+	loadParameters(basenode["visualization"], p);
+}
+void loadParameters(const YAML::Node &node, VisualizationParameters *p){
+	p->assembledMapVoxelSize_ = node["assembled_map_voxel_size"].as<double>();
+	p->submapVoxelSize_ = node["submaps_voxel_size"].as<double>();
+	p->visualizeEveryNmsec_ = node["visualize_every_n_msec"].as<double>();
+}
+
+
 void loadParameters(const std::string &filename, IcpParameters *p) {
 	YAML::Node basenode = YAML::LoadFile(filename);
 	if (basenode.IsNull()) {

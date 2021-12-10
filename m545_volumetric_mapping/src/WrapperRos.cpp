@@ -29,7 +29,6 @@ namespace m545_mapping {
 
 namespace {
 using namespace m545_mapping::frames;
-const double visualizationUpdatePeriodMsec = 400.0; // msec
 const double timingStatsEveryNsec = 15.0;
 }
 
@@ -94,6 +93,9 @@ void WrapperRos::initialize() {
 	mesher_ = std::make_shared<m545_mapping::Mesher>();
 	m545_mapping::loadParameters(paramFile, &mesherParams_);
 	mesher_->setParameters(mesherParams_);
+
+	loadParameters(paramFile, &visualizationParameters_);
+
 }
 
 void WrapperRos::start() {
@@ -124,8 +126,8 @@ void WrapperRos::odometryWorker() {
 		// so then we can look stuff up in the interpolation buffer
 		mappingBuffer_.push(measurement);
 		const auto timestamp = toRos(measurement.time_);
-		m545_mapping::publishTfTransform(odometry_->getOdomToRangeSensor(measurement.time_).matrix(), timestamp,
-				odomFrame, rangeSensorFrame, tfBroadcaster_.get());
+		m545_mapping::publishTfTransform(odometry_->getOdomToRangeSensor(measurement.time_).matrix(),
+				timestamp, odomFrame, rangeSensorFrame, tfBroadcaster_.get());
 
 		if (odometryInputPub_.getNumSubscribers() > 0) {
 			auto odomInput = odometry_->getPreProcessedCloud();
@@ -176,7 +178,8 @@ void WrapperRos::mappingWorker() {
 		if (isOptimizedGraphAvailable_) {
 			isOptimizedGraphAvailable_ = false;
 			const auto poseBeforeUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
-			std::cout << "latest pose before update: \n " << asString(poseBeforeUpdate.transform_) << "\n";
+			std::cout << "latest pose before update: \n " << asString(poseBeforeUpdate.transform_)
+					<< "\n";
 			updateSubmapsAndTrajectory();
 			const auto poseAfterUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
 			std::cout << "latest pose after update: \n " << asString(poseAfterUpdate.transform_) << "\n";
@@ -191,8 +194,9 @@ void WrapperRos::mappingWorker() {
 		const double timeMeasurement = mappingStatisticsTimer_.elapsedMsecSinceStopwatchStart();
 		mappingStatisticsTimer_.addMeasurementMsec(timeMeasurement);
 		if (mappingStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {
-			std::cout << "Mapper timing stats: Avg execution time: " << mappingStatisticsTimer_.getAvgMeasurementMsec()
-					<< " msec , frequency: " << 1e3 / mappingStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
+			std::cout << "Mapper timing stats: Avg execution time: "
+					<< mappingStatisticsTimer_.getAvgMeasurementMsec() << " msec , frequency: "
+					<< 1e3 / mappingStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
 			mappingStatisticsTimer_.reset();
 		}
 
@@ -201,8 +205,8 @@ void WrapperRos::mappingWorker() {
 
 void WrapperRos::publishMapToOdomTf(const Time &time) {
 	const auto timestamp = toRos(time);
-	m545_mapping::publishTfTransform(mapper_->getMapToOdom(time).matrix(), timestamp, mapFrame, odomFrame,
-			tfBroadcaster_.get());
+	m545_mapping::publishTfTransform(mapper_->getMapToOdom(time).matrix(), timestamp, mapFrame,
+			odomFrame, tfBroadcaster_.get());
 }
 
 void WrapperRos::computeFeaturesIfReady() {
@@ -215,7 +219,8 @@ void WrapperRos::computeFeaturesIfReady() {
 }
 void WrapperRos::attemptLoopClosuresIfReady() {
 	const auto timeout = std::chrono::milliseconds(0);
-	if (computeFeaturesResult_.valid() && computeFeaturesResult_.wait_for(timeout) == std::future_status::ready) {
+	if (computeFeaturesResult_.valid()
+			&& computeFeaturesResult_.wait_for(timeout) == std::future_status::ready) {
 		computeFeaturesResult_.get(); // consume the future
 		if (submaps_->numLoopClosureCandidates() > 0) {
 			const auto lcc = submaps_->popLoopClosureCandidates();
@@ -238,7 +243,7 @@ void WrapperRos::loopClosureWorker() {
 			loopClosureConstraints = submaps_->buildLoopClosureConstraints(lcc);
 		}
 
-		if (!isFirstTime || loopClosureConstraints.empty()){
+		if (!isFirstTime || loopClosureConstraints.empty()) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 			continue;
 		}
@@ -246,7 +251,8 @@ void WrapperRos::loopClosureWorker() {
 		{
 			Timer t("optimization_problem");
 			auto odometryConstraints = submaps_->getOdometryConstraints();
-			const double d = informationMatrixMaxCorrespondenceDistance(mapperParams_.mapBuilder_.mapVoxelSize_);
+			const double d = informationMatrixMaxCorrespondenceDistance(
+					mapperParams_.mapBuilder_.mapVoxelSize_);
 			computeInformationMatrixOdometryConstraints(*submaps_, d, &odometryConstraints);
 			submaps_->addLoopClosureConstraints(loopClosureConstraints);
 
@@ -277,30 +283,35 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 	submaps_->transform(optimizedTransformations);
 
 	//get The correct time
-	const Constraint latestLoopClosureConstraint = *std::max_element(lastLoopClosureConstraints_.begin(),
-			lastLoopClosureConstraints_.end(), [](const Constraint &c1, const Constraint &c2) {
+	const Constraint latestLoopClosureConstraint = *std::max_element(
+			lastLoopClosureConstraints_.begin(), lastLoopClosureConstraints_.end(),
+			[](const Constraint &c1, const Constraint &c2) {
 				return c1.timestamp_ < c2.timestamp_;
 			});
 
 	// loop closing constraints are built such that the source node is always the ne being transformed
 	// hence the source node should be the one whose transform we should apply
-	assert_gt(latestLoopClosureConstraint.sourceSubmapIdx_, latestLoopClosureConstraint.targetSubmapIdx_);
+	assert_gt(latestLoopClosureConstraint.sourceSubmapIdx_,
+			latestLoopClosureConstraint.targetSubmapIdx_);
 	const auto dT = optimizedTransformations.at(latestLoopClosureConstraint.sourceSubmapIdx_);
 	const Time latestTime = mapper_->getMapToRangeSensorBuffer().latest_time();
 	const Time lastLoopClosureTime = latestLoopClosureConstraint.timestamp_;
 //	const Time lastLoopClosureTime = mapper_->getMapToRangeSensorBuffer().earliest_time();
 
-	std::cout << "Applying the delta T from submap " << latestLoopClosureConstraint.sourceSubmapIdx_ << "\n";
+	std::cout << "Applying the delta T from submap " << latestLoopClosureConstraint.sourceSubmapIdx_
+			<< "\n";
 	std::cout << "the transform is: " << asString(dT.dT_) << std::endl;
 
-	mapper_->getMapToRangeSensorBufferPtr()->applyToAllElementsInTimeInterval(dT.dT_,lastLoopClosureTime , latestTime);
-	mapper_->setMapToRangeSensor(	mapper_->getMapToRangeSensor(latestTime));
+	mapper_->getMapToRangeSensorBufferPtr()->applyToAllElementsInTimeInterval(dT.dT_,
+			lastLoopClosureTime, latestTime);
+	mapper_->setMapToRangeSensor(mapper_->getMapToRangeSensor(latestTime));
 	submaps_->setMapToRangeSensor(mapper_->getMapToRangeSensorBuffer().lookup(latestTime));
 
 }
 
 void WrapperRos::mesherWorker() {
-	if (mesherParams_.isComputeMesh_ && !mesherBufffer_.empty() && !mapper_->getMap().points_.empty()) {
+	if (mesherParams_.isComputeMesh_ && !mesherBufffer_.empty()
+			&& !mapper_->getMap().points_.empty()) {
 		auto map = mapper_->getMap();
 		m545_mapping::MaxRadiusCroppingVolume cropper(localMapParams_.croppingRadius_);
 		const auto time = mesherBufffer_.pop();
@@ -316,28 +327,29 @@ void WrapperRos::mesherWorker() {
 }
 
 void WrapperRos::publishMaps(const Time &time) {
-	if (visualizationUpdateTimer_.elapsedMsec() < visualizationUpdatePeriodMsec && !isVisualizationFirstTime_) {
+	if (visualizationUpdateTimer_.elapsedMsec() < visualizationParameters_.visualizeEveryNmsec_
+			&& !isVisualizationFirstTime_) {
 		return;
 	}
 
 	const auto timestamp = toRos(time);
-	std::thread t(
-			[this, timestamp]() {
-				m545_mapping::publishCloud(mapper_->getAssembledMap(), m545_mapping::frames::mapFrame, timestamp,
-						assembledMapPub_);
-				m545_mapping::publishCloud(mapper_->getPreprocessedScan(), m545_mapping::frames::rangeSensorFrame, timestamp,
-						mappingInputPub_);
-				m545_mapping::publishCloud(mapper_->getDenseMap(), m545_mapping::frames::mapFrame, timestamp,
-						denseMapPub_);
-				m545_mapping::publishSubmapCoordinateAxes(mapper_->getSubmaps(), m545_mapping::frames::mapFrame,
-						timestamp, submapOriginsPub_);
-				if (submapsPub_.getNumSubscribers() > 0) {
-					open3d::geometry::PointCloud cloud;
-					m545_mapping::assembleColoredPointCloud(mapper_->getSubmaps(), &cloud);
-					auto decimated = *(cloud.VoxelDownSample(0.4));
-					m545_mapping::publishCloud(decimated, m545_mapping::frames::mapFrame, timestamp, submapsPub_);
-				}
-			});
+	std::thread t([this, timestamp]() {
+		auto map = mapper_->getAssembledMap();
+		voxelize(visualizationParameters_.assembledMapVoxelSize_, &map);
+		m545_mapping::publishCloud(map, m545_mapping::frames::mapFrame, timestamp, assembledMapPub_);
+		m545_mapping::publishCloud(mapper_->getPreprocessedScan(), m545_mapping::frames::rangeSensorFrame, timestamp,
+	mappingInputPub_);
+		m545_mapping::publishCloud(mapper_->getDenseMap(), m545_mapping::frames::mapFrame, timestamp,
+				denseMapPub_);
+		m545_mapping::publishSubmapCoordinateAxes(mapper_->getSubmaps(), m545_mapping::frames::mapFrame,
+				timestamp, submapOriginsPub_);
+		if (submapsPub_.getNumSubscribers() > 0) {
+			open3d::geometry::PointCloud cloud;
+			m545_mapping::assembleColoredPointCloud(mapper_->getSubmaps(), &cloud);
+			voxelize(visualizationParameters_.submapVoxelSize_, &cloud);
+			m545_mapping::publishCloud(cloud, m545_mapping::frames::mapFrame, timestamp, submapsPub_);
+		}
+	});
 	t.detach();
 	visualizationUpdateTimer_.reset();
 	isVisualizationFirstTime_ = false;

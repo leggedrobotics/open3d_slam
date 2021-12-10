@@ -1,7 +1,7 @@
 odometry:
   scan_matching:
     icp_objective: PointToPlane
-    max_correspondence_dist: 0.25
+    max_correspondence_dist: 0.5
     knn_normal_estimation: 4
     max_n_iter: 25
   scan_processing:
@@ -16,17 +16,17 @@ odometry:
 mapping:
   min_movement_between_mapping_steps: 0.0
   is_build_dense_map: false
-  submaps_num_scan_overlap: 30
+  submaps_num_scan_overlap: 15
   scan_to_map_refinement:
     min_refinement_fitness: 0.7
     scan_matching:
       icp_objective: PointToPlane
-      max_correspondence_dist: 1.0
+      max_correspondence_dist: 0.5
       knn_normal_estimation: 5
       max_n_iter: 50
     scan_processing:
-      voxel_size: 0.0
-      downsampling_ratio: 0.1
+      voxel_size: 0.05
+      downsampling_ratio: 0.3
       scan_cropping:
         cropping_radius: 30.0
         min_z: -30.0
@@ -34,7 +34,7 @@ mapping:
         cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius
 
   submaps:
-    size: 23
+    size: 20
     min_num_range_data: 10
     
   map_builder:
@@ -43,7 +43,7 @@ mapping:
       min_z: -50.0
       max_z: 50.0
       cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius
-    map_voxel_size: 0.0
+    map_voxel_size: 0.1
     space_carving:
       voxel_size: 0.1
       max_raytracing_length: 25.0
@@ -79,6 +79,13 @@ mesher:
   poisson_min_density: -2.0
   poisson_scale: 0.8
   ball_pivot_radii: [0.5] 
+  
+visualization:
+  assembled_map_voxel_size: 0.0
+  submaps_voxel_size: 0.1
+  visualize_every_n_msec: 300.0
+  
+  
 
 
   
