@@ -21,7 +21,7 @@ mapping:
     min_refinement_fitness: 0.7
     scan_matching:
       icp_objective: PointToPlane
-      max_correspondence_dist: 0.5
+      max_correspondence_dist: 1.0
       knn_normal_estimation: 5
       max_n_iter: 50
     scan_processing:
