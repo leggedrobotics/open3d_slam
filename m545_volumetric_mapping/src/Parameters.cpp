@@ -155,7 +155,7 @@ void loadParameters(const YAML::Node &n, MesherParameters *p) {
 	p->isComputeMesh_ = n["is_compute_mesh"].as<bool>();
 }
 
-void loadParameters(const YAML::Node &n, MesherParamsInMesher *p2) {
+void loadParameters(const YAML::Node &n, MesherNewParams *p2) {
     p2->computeOverlappingThreshold = n["computeOverlappingThreshold"].as<double>();
     p2->densityThreshold = n["densityThreshold"].as<double>();
     p2->overlapVoxelSize = n["overlapVoxelSize"].as<double>();
@@ -166,17 +166,7 @@ void loadParameters(const YAML::Node &n, MesherParamsInMesher *p2) {
     p2->statisticalOutlierRatio = n["statisticalOutlierRatio"].as<double>();
 }
 
-//void loadParameters(const std::string &filename, MesherParameters *p) {
-//	YAML::Node basenode = YAML::LoadFile(filename);
-//
-//	if (basenode.IsNull()) {
-//		throw std::runtime_error("MesherParameters::loadParameters loading failed");
-//	}
-//
-//	loadParameters(basenode["mesher"], p);
-//}
-
-void loadParameters(const std::string &filename, MesherParameters *p, MesherParamsInMesher *p2) {
+void loadParameters(const std::string &filename, MesherParameters *p, MesherNewParams*p2) {
     YAML::Node basenode = YAML::LoadFile(filename);
 
     if (basenode.IsNull()) {
@@ -184,7 +174,7 @@ void loadParameters(const std::string &filename, MesherParameters *p, MesherPara
     }
 
     loadParameters(basenode["mesher"], p);
-    loadParameters(basenode["mesherParamsInMesher"], p2);
+    loadParameters(basenode["mesherNewParams"], p2);
 }
 
 

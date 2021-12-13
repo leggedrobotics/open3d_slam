@@ -41,7 +41,7 @@ icp_mapping:
     crop_box_max_z: 100.0
     
 local_map:
-  voxel_size: 0.1
+  voxel_size: 0.05
   crop_box_min_x: -12.0
   crop_box_min_y: -12.0
   crop_box_min_z: -100.0
@@ -61,20 +61,19 @@ mesher:
   knn_normal_estimation: 4
   strategy: Poisson # options: AlphaShape, Poisson, BallPivot
   alpha_shape_alpha: 0.5
-  poisson_depth: 9
+  poisson_depth: 8
   poisson_min_density: -2.0
   poisson_scale: 0.8
   ball_pivot_radii: [0.5]
 
-mesherParamsInMesher:
-  computeOverlappingThreshold: 2.0
-  densityThreshold: 5.0
+mesherNewParams:
+  computeOverlappingThreshold: 1.0
+  densityThreshold: 6.0
   overlapVoxelSize: 0.5
   overlapMinPoints: 10
-  radiusOutlierNbPoints: 50
-  radiusOutlierRadius: 1.0
+  radiusOutlierNbPoints: 20
+  radiusOutlierRadius: 0.2
   statisticalOutlierNbPoints: 20
-  statisticalOutlierRatio: 2.0
-
+  statisticalOutlierRatio: 1.0
 
 

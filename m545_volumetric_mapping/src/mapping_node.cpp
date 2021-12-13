@@ -41,7 +41,7 @@ m545_mapping::MapperParameters mapperParams;
 m545_mapping::LocalMapParameters localMapParams;
 m545_mapping::MesherParameters mesherParams;
 m545_mapping::ProjectionParameters projectionParams;
-m545_mapping::MesherParamsInMesher mesherParamsInMesher;
+m545_mapping::MesherNewParams mesherNewParams;
 
 bool computeAndPublishOdometry(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp) {
     odometry->addRangeScan(cloud, timestamp);
@@ -63,19 +63,13 @@ void mappingUpdate(const open3d::geometry::PointCloud &cloud, const ros::Time &t
     m545_mapping::publishTfTransform(mapper->getMapToOdom().matrix(), timestamp, mapFrame, odomFrame,
                                      tfBroadcaster.get());
 
-    open3d::geometry::PointCloud map = mapper->getDenseMap();
-//    Eigen::Matrix<double, 3, 1> white = {1.0, 1.0, 1.0};
-    auto bbox = m545_mapping::boundingBoxAroundPosition(localMapParams.cropBoxLowBound_,
-                                                        localMapParams.cropBoxHighBound_, mapper->getMapToRangeSensor().translation());
-    m545_mapping::cropPointcloud(bbox, &map);
-    auto downSampledMap = map.VoxelDownSample(localMapParams.voxelSize_);
-//    m545_mapping::publishCloud(map.PaintUniformColor(white), m545_mapping::frames::mapFrame, timestamp, mapPub);
-    m545_mapping::publishCloud(*downSampledMap, m545_mapping::frames::mapFrame, timestamp, mapPub);
+    open3d::geometry::PointCloud map = mapper->getMap();
+    Eigen::Vector3d white = {1.0, 1.0, 1.0};
+    m545_mapping::publishCloud(map.PaintUniformColor(white), m545_mapping::frames::mapFrame, timestamp, mapPub);
 
     if (localMapPub.getNumSubscribers() > 0) {
-//        open3d::geometry::PointCloud map = mapper->getDenseMap();
-        open3d::geometry::PointCloud map = mesher->getMeshMap();
-//        std::cout << "point size in main cpp  " << map.points_.size() << std::endl;
+        open3d::geometry::PointCloud map = mapper->getDenseMap();
+
         auto bbox = m545_mapping::boundingBoxAroundPosition(localMapParams.cropBoxLowBound_,
                                                             localMapParams.cropBoxHighBound_, mapper->getMapToRangeSensor().translation());
         m545_mapping::cropPointcloud(bbox, &map);
@@ -95,16 +89,13 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
     if (mesherParams.isComputeMesh_ && !mesher->isMeshingInProgress() && !mapper->getMap().points_.empty()) {
         std::thread t([timestamp]() {
             auto map = mapper->getDenseMap();
-//            auto map = mesher->getMeshMap();
             auto bbox = m545_mapping::boundingBoxAroundPosition(localMapParams.cropBoxLowBound_, localMapParams.cropBoxHighBound_, mapper->getMapToRangeSensor().translation());
             m545_mapping::cropPointcloud(bbox, &map);
             auto downSampledMap = map.VoxelDownSample(mesherParams.voxelSize_);
             mesher->setCurrentPose(mapper->getMapToRangeSensor());
             mesher->buildMeshFromCloud(*downSampledMap);
             auto mesh = mesher->getMesh();
-//            m545_mapping::cropMesh(bbox, &mesh);
             m545_mapping::publishMesh(mesh, mapFrame,timestamp,meshPub);
-//            std::cout << mesher->getMesh().vertex_colors_.at(20) << std::endl;
         });
         t.detach();
     }
@@ -134,7 +125,6 @@ void mappingUpdateIfMapperNotBusy(const open3d::geometry::PointCloud &cloud, con
 //
 //}
 
-//yidan
 void synchronizeCallback(const sensor_msgs::PointCloud2ConstPtr& cloudmsg, const sensor_msgs::ImageConstPtr& imagemsg) {
 
     open3d::geometry::PointCloud pointCloud;
@@ -160,23 +150,12 @@ void synchronizeCallback(const sensor_msgs::PointCloud2ConstPtr& cloudmsg, const
 
 }
 
-void meshCallback(const m545_volumetric_mapping_msgs::PolygonMesh& msg) {
-    open3d::geometry::PointCloud colorCloud;
-    open3d_conversions::rosToOpen3d(msg.cloud, colorCloud, false);
-//    if(colorCloud.HasColors())
-//        std::cout << colorCloud.colors_[10] <<std::endl;
-//    else
-//        std::cout << "there's no color" << std::endl;
-}
-
 int main(int argc, char **argv) {
     ros::init(argc, argv, "lidar_odometry_mapping_node");
     nh.reset(new ros::NodeHandle("~"));
     tfBroadcaster.reset(new tf2_ros::TransformBroadcaster());
     const std::string cloudTopic = nh->param<std::string>("cloud_topic", "");
 //	ros::Subscriber cloudSub = nh->subscribe(cloudTopic, 100, &cloudCallback);
-
-    //yidan
     const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
 //    std::cout << "loading params from: " << paramFile << "\n";
 
@@ -206,12 +185,11 @@ int main(int argc, char **argv) {
     m545_mapping::loadParameters(paramFile, &localMapParams);
 
     mesher = std::make_shared<m545_mapping::Mesher>();
-    m545_mapping::loadParameters(paramFile, &mesherParams, &mesherParamsInMesher);
-    mesher->setParameters(mesherParams, mesherParamsInMesher);
+    m545_mapping::loadParameters(paramFile, &mesherParams, &mesherNewParams);
+    mesher->setParameters(mesherParams, mesherNewParams);
 
     color = std::make_shared<m545_mapping::Color>();
     m545_mapping::loadParameters(paramFile, &projectionParams);
-
 
 //	ros::AsyncSpinner spinner(4); // Use 4 threads
 //	spinner.start();

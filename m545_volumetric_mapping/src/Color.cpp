@@ -52,7 +52,7 @@ namespace m545_mapping {
             }
         }
         cloud.colors_ = imageConversion(msg, pos_dimage);
-        depthInfo = getDepth(pos_dimage, depth);
+//        depthInfo = getDepth(pos_dimage, depth);
 
         return cloud;
 
@@ -123,13 +123,6 @@ namespace m545_mapping {
             }
         }
         return pixelColors;
-    }
-
-    std::vector<double> Color::getDepthInfo() {
-        std::vector<double> onlyDepth;
-        for(int i = 0; i < depthInfo.size(); i++)
-            onlyDepth.push_back(depthInfo[i].z());
-        return onlyDepth;
     }
 
 

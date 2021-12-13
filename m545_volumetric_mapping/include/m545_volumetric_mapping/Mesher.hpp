@@ -29,10 +29,9 @@ namespace m545_mapping {
         ~Mesher() = default;
         void buildMeshFromCloud(const PointCloud &cloud);
         bool isMeshingInProgress() const;
-        void setParameters(const MesherParameters &p, const MesherParamsInMesher &p2);
+        void setParameters(const MesherParameters &p, const MesherNewParams &p2);
         const TriangleMesh &getMesh() const;
         void setCurrentPose(const Eigen::Isometry3d &pose);
-//    const sensor_msgs::PointCloud2 getCloud(sensor_msgs::PointCloud2 &cloud);
         const PointCloud &getMeshMap() const;
 
 
@@ -42,9 +41,11 @@ namespace m545_mapping {
         mutable std::mutex meshingAccessMutex_;
         std::shared_ptr<TriangleMesh> mesh_;
         MesherParameters params_;
-        MesherParamsInMesher paramsInMesher_;
+        MesherNewParams mesherNewParams_;
         Eigen::Isometry3d currentPose_ = Eigen::Isometry3d::Identity();
         open3d::geometry::PointCloud prevMeshMap_;
+        open3d::geometry::PointCloud prevMap_1;
+        open3d::geometry::PointCloud prevMap_2;
         std::shared_ptr<open3d::geometry::PointCloud> differenceMapPtr_;
         void computeIndicesOfOverlappingPoints(const open3d::geometry::PointCloud &source,
                                                const open3d::geometry::PointCloud &target, const Eigen::Isometry3d &sourceToTarget, double voxelSize,

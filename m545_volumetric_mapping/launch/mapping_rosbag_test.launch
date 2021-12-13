@@ -25,23 +25,4 @@
 		args="$(arg bag_filepath)$(arg bag_filename_1).bag $(arg bag_filepath)$(arg bag_filename_2).bag --delay '$(arg play_delay)' --rate '$(arg play_rate)' --clock -s 60" />
 	<!-- append - -loop for looping -->
 
-<!--
-  <node name="voxblox_node" pkg="voxblox_ros" type="tsdf_server" output="screen" args="-alsologtostderr" clear_params="true">
-    <remap from="pointcloud" to="/odometry_node/subsampled"/>
-    <param name="tsdf_voxel_size" value="0.1" />
-    <param name="truncation_distance" value="0.5" />
-    <param name="color_mode" value="normals" />
-    <param name="enable_icp" value="true" />
-    <param name="icp_refine_roll_pitch" value="false" />
-    <param name="update_mesh_every_n_sec" value="1.0" />
-    <param name="mesh_min_weight" value="2" />
-    <param name="method" value="fast" />
-    <param name="max_ray_length_m" value="15.0" />
-    <param name="use_const_weight" value="true" />
-    <param name="world_frame" value="map"/>
-    <param name="verbose" value="false" />
-    <param name="mesh_filename" value="$(find voxblox_ros)/mesh_results/$(anon basement).ply" />
-  </node>
--->
-
 </launch>
