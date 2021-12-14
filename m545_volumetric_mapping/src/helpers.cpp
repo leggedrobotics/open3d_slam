@@ -76,15 +76,16 @@ public:
 
 } //namespace
 
-double informationMatrixMaxCorrespondenceDistance(double mappingVoxelSize){
-	return isClose(mappingVoxelSize, 0.0, 1e-3) ? 0.05 : (2.0*mappingVoxelSize);
+double informationMatrixMaxCorrespondenceDistance(double mappingVoxelSize) {
+	return isClose(mappingVoxelSize, 0.0, 1e-3) ? 0.05 : (2.0 * mappingVoxelSize);
 }
 
-double icpMaxCorrespondenceDistance(double mappingVoxelSize){
-	return isClose(mappingVoxelSize, 0.0, 1e-3) ? 0.05 : (2.0*mappingVoxelSize);
+double icpMaxCorrespondenceDistance(double mappingVoxelSize) {
+	return isClose(mappingVoxelSize, 0.0, 1e-3) ? 0.05 : (2.0 * mappingVoxelSize);
 }
 
-void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::PointCloud *pcl) {
+void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox,
+		open3d::geometry::PointCloud *pcl) {
 	auto croppedCloud = pcl->Crop(bbox);
 	*pcl = std::move(*croppedCloud);
 }
@@ -106,7 +107,8 @@ void estimateNormals(int numNearestNeighbours, open3d::geometry::PointCloud *pcl
 	pcl->EstimateNormals(param);
 }
 
-std::shared_ptr<registration::TransformationEstimation> icpObjectiveFactory(const m545_mapping::IcpObjective &obj) {
+std::shared_ptr<registration::TransformationEstimation> icpObjectiveFactory(
+		const m545_mapping::IcpObjective &obj) {
 
 	switch (obj) {
 	case m545_mapping::IcpObjective::PointToPoint: {
@@ -149,8 +151,9 @@ void voxelize(double voxelSize, open3d::geometry::PointCloud *pcl) {
 }
 
 bool isInside(const open3d::geometry::AxisAlignedBoundingBox &bbox, const Eigen::Vector3d &p) {
-	return p.x() <= bbox.max_bound_.x() && p.y() <= bbox.max_bound_.y() && p.z() <= bbox.max_bound_.z()
-			&& p.x() >= bbox.min_bound_.x() && p.y() >= bbox.min_bound_.y() && p.z() >= bbox.min_bound_.z();
+	return p.x() <= bbox.max_bound_.x() && p.y() <= bbox.max_bound_.y()
+			&& p.z() <= bbox.max_bound_.z() && p.x() >= bbox.min_bound_.x()
+			&& p.y() >= bbox.min_bound_.y() && p.z() >= bbox.min_bound_.z();
 }
 
 std::shared_ptr<open3d::geometry::PointCloud> voxelizeWithinCroppingVolume(double voxel_size,
@@ -339,113 +342,44 @@ std::shared_ptr<open3d::geometry::PointCloud> transform(const Eigen::Matrix4d &T
 
 void computeIndicesOfOverlappingPoints(const open3d::geometry::PointCloud &source,
 		const open3d::geometry::PointCloud &target, const Transform &sourceToTarget, double voxelSize,
-		size_t minNumPointsPerVoxel,
-		std::vector<size_t> *idxsSource, std::vector<size_t> *idxsTarget) {
-	assert_ge<size_t>(minNumPointsPerVoxel,1);
-	VoxelMap targetMap(Eigen::Vector3d::Constant(voxelSize));
-	targetMap.buildFromCloud(target);
+		size_t minNumPointsPerVoxel, std::vector<size_t> *idxsSource, std::vector<size_t> *idxsTarget) {
+	assert_ge<size_t>(minNumPointsPerVoxel, 1);
+	const std::string targetLayer = "target";
+	const std::string sourceLayer = "source";
+	MultiLayerVoxelMap voxelMap(Eigen::Vector3d::Constant(voxelSize));
+	voxelMap.insertCloud(targetLayer, target);
+	voxelMap.insertCloud(sourceLayer, source);
 	idxsSource->clear();
 	idxsSource->reserve(source.points_.size());
 	idxsTarget->clear();
 	idxsTarget->reserve(target.points_.size());
-	std::set<size_t> setTargetIdxs;
-	for (size_t i = 0; i < source.points_.size(); ++i) {
-		const auto p = sourceToTarget * source.points_.at(i);
-		const auto targetIdxsInVoxel = targetMap.getIndicesInVoxel(p);
-		if (targetIdxsInVoxel.size() >= minNumPointsPerVoxel) {
-			setTargetIdxs.insert(targetIdxsInVoxel.begin(), targetIdxsInVoxel.end());
-			idxsSource->push_back(i);
+	const auto &voxels = voxelMap.voxels_;
+	for (auto it = voxels.cbegin(); it != voxels.cend(); ++it) {
+		const auto voxelKey = it->first;
+		const auto sourceIdxs = voxelMap.getIndicesInVoxel(sourceLayer, voxelKey);
+		const auto targetIdxs = voxelMap.getIndicesInVoxel(targetLayer, voxelKey);
+		if (sourceIdxs.size() >= minNumPointsPerVoxel && targetIdxs.size() >= minNumPointsPerVoxel) {
+			idxsTarget->insert(idxsTarget->end(), targetIdxs.begin(), targetIdxs.end());
+			idxsSource->insert(idxsSource->end(), sourceIdxs.begin(), sourceIdxs.end());
 		}
 	}
-	idxsTarget->insert(idxsTarget->end(), setTargetIdxs.begin(), setTargetIdxs.end());
 }
 
-Eigen::Vector3d computeCenter(const open3d::geometry::PointCloud &cloud, const std::vector<size_t> &idxs){
+Eigen::Vector3d computeCenter(const open3d::geometry::PointCloud &cloud,
+		const std::vector<size_t> &idxs) {
 
-	assert_gt<size_t>(idxs.size(),0);
-	Eigen::Vector3d center(0.0,0.0,0.0);
-	for(const auto idx : idxs){
+	assert_gt<size_t>(idxs.size(), 0);
+	Eigen::Vector3d center(0.0, 0.0, 0.0);
+	for (const auto idx : idxs) {
 		center += cloud.points_.at(idx);
 	}
 	return center / static_cast<double>(idxs.size());
 
 }
 
-//void removeInconsistencies(const PointCloud &scan, double icpRMSE, PointCloud *map) const {
-//
-//	if (map->IsEmpty()) {
-//		return;
-//	}
-//
-////
-////	open3d::geometry::OrientedBoundingBox bbox;
-////	const auto extent = Eigen::Vector3d(30.0, 30.0, 100.0);
-////	bbox.R_ = mapToRangeSensor_.rotation();
-////	bbox.center_ = mapToRangeSensor_.translation() + bbox.R_.inverse() * Eigen::Vector3d(10.0, -15.0, 0.0);
-////	bbox.extent_ = extent;
-//	Timer timer;
-//	const Eigen::Vector3d voxelSize = Eigen::Vector3d(0.5, 0.5, 0.5);
-//	std::unordered_map<Eigen::Vector3i, Voxel, EigenVec3iHash> scanToVoxel;
-//	scanToVoxel.reserve(scan.points_.size());
-//	for (size_t i = 0; i < scan.points_.size(); i++) {
-//		const Eigen::Vector3i voxelIdx = getVoxelIdx(scan.points_[i], voxelSize);
-//		scanToVoxel[voxelIdx].idxs_.emplace_back(i);
-//	}
-//
-//	const int minNumPointsPerVoxel = 4;
-//	std::vector<size_t> idsCoveredByScan;
-//	idsCoveredByScan.reserve(map->points_.size());
-//#pragma omp parallel for schedule(static)
-//	for (size_t i = 0; i < map->points_.size(); i++) {
-//		const Eigen::Vector3i voxelIdx = getVoxelIdx(map->points_[i], voxelSize);
-//		const auto search = scanToVoxel.find(voxelIdx);
-//		if (search != scanToVoxel.end()) {
-//			if (search->second.idxs_.size() >= minNumPointsPerVoxel) {
-//#pragma omp critical
-//				{
-//					idsCoveredByScan.emplace_back(i);
-//				}
-//			}
-//		}
-//	}
-////		std::cout << "finding scan overlap: " << timer.elapsedMsec() << " msec \n";
-////	std::cout << "num points overlapping with scan: " << idsCoveredByScan.size() << std::endl;
-//
-////	mapRef_ = *(map->SelectByIndex(idsCoveredByScan));
-////	scanRef_ = scan;
-//
-//	std::vector<std::pair<double, size_t>> distsAndIds;
-//	{
-////		Timer timer("bulk_computation");
-//		mapRef_ = *map;
-//		auto ret = computePointCloudDistance(*map, scan, idsCoveredByScan);
-//		distsAndIds.reserve(ret.first.size());
-//		for (int i = 0; i < (int) ret.first.size(); ++i) {
-//			distsAndIds.emplace_back( std::make_pair(ret.first[i], ret.second[i] ));
-//		}
-//	}
-//	{
-////		Timer timer("sort");
-//		std::sort(distsAndIds.begin(), distsAndIds.end(),
-//				[](const std::pair<double, size_t> &a, const std::pair<double, size_t> &b) {
-//					return a.first > b.first;
-//				});
-//	}
-////	std::cout << "max element: " << distsAndIds.front().first << std::endl;
-////	std::cout << "min element: " << distsAndIds.back().first << std::endl;
-////	std::cout << "icp rmse: " << icpRMSE << std::endl;
-//	std::vector<size_t> idsToRemove;
-//	idsToRemove.reserve(distsAndIds.size());
-//	for (size_t i = 0; i < distsAndIds.size() && i < 100; ++i) {
-//		if (distsAndIds[i].first > icpRMSE) {
-//			idsToRemove.emplace_back(distsAndIds[i].second);
-//		}
-//	}
-//
-////	std::cout << "Would remove: " << idsToRemove.size() << "\n";
-////	toRemove_ = *(map->SelectByIndex(idsToRemove));
-//	removeByIds(idsToRemove, map);
-//}
+double getMapVoxelSize(const MapBuilderParameters &p, double valueIfZero) {
+	return std::abs(p.mapVoxelSize_) <= 1e-3 ? valueIfZero : p.mapVoxelSize_;
+}
 
 } /* namespace m545_mapping */
 

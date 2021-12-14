@@ -43,7 +43,7 @@ mapping:
       min_z: -50.0
       max_z: 50.0
       cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius
-    map_voxel_size: 0.1
+    map_voxel_size: 0.05
     space_carving:
       voxel_size: 0.1
       max_raytracing_length: 25.0
@@ -81,8 +81,8 @@ mesher:
   ball_pivot_radii: [0.5] 
   
 visualization:
-  assembled_map_voxel_size: 0.0
-  submaps_voxel_size: 0.1
+  assembled_map_voxel_size: 0.2
+  submaps_voxel_size: 0.2
   visualize_every_n_msec: 300.0
   
   

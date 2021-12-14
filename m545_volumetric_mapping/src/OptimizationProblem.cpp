@@ -45,20 +45,23 @@ void OptimizationProblem::buildOptimizationProblem(const SubmapCollection &subma
 	isReadyToOptimize_ = false;
 
 	poseGraph_.nodes_.clear();
-	for (const auto &submap : submaps.getSubmaps()) {
-		registration::PoseGraphNode node;
-		node.pose_ = submap.getMapToSubmapOrigin().matrix();
-		poseGraph_.nodes_.emplace_back(std::move(node));
-	}
-
 	poseGraph_.edges_.clear();
+	registration::PoseGraphNode prototypeNode;
+	prototypeNode.pose_ = Eigen::Matrix4d::Identity();
+	poseGraph_.nodes_.push_back(prototypeNode);
+
+	//ensure that odometry constraint sources are in increasing order
+	std::sort(odometryConstraints_.begin(), odometryConstraints_.end(),
+			[](const Constraint &c1, const Constraint &c2) {
+			return c1.sourceSubmapIdx_ < c2.targetSubmapIdx_;});
 
 	for (const auto &c : odometryConstraints_) {
+		prototypeNode.pose_ *= c.sourceToTarget_.matrix();
+		poseGraph_.nodes_.push_back(prototypeNode);
 		registration::PoseGraphEdge edge;
 		edge.source_node_id_ = c.sourceSubmapIdx_;
 		edge.target_node_id_ = c.targetSubmapIdx_;
-		edge.transformation_ = c.sourceToTarget_.inverse().matrix();
-//		edge.transformation_ = c.sourceToTargetPreMultiply_.inverse().matrix();
+		edge.transformation_ = c.sourceToTarget_.matrix();
 		edge.information_ = c.informationMatrix_;
 		edge.uncertain_ = false;
 		poseGraph_.edges_.push_back(std::move(edge));
@@ -68,22 +71,18 @@ void OptimizationProblem::buildOptimizationProblem(const SubmapCollection &subma
 		registration::PoseGraphEdge edge;
 		edge.source_node_id_ = c.sourceSubmapIdx_;
 		edge.target_node_id_ = c.targetSubmapIdx_;
-		edge.transformation_ = c.sourceToTarget_.inverse().matrix();
-//		edge.transformation_ = c.sourceToTargetPreMultiply_.inverse().matrix();
-
+		edge.transformation_ = c.sourceToTarget_.matrix();
 		edge.information_ = c.informationMatrix_;
 		assert_true(c.isInformationMatrixValid_,
 				"Invalid information matrix between: " + std::to_string(c.sourceSubmapIdx_) + " and "
 						+ std::to_string(c.targetSubmapIdx_));
 		assert_gt(c.sourceSubmapIdx_, c.targetSubmapIdx_);
-
 		edge.uncertain_ = true;
 		poseGraph_.edges_.push_back(std::move(edge));
 	}
 	poseGraphPrev_ = poseGraph_;
 	isRunningOptimization_ = false;
 }
-
 
 void OptimizationProblem::print() const {
 	const auto graph = poseGraph_; // copy
@@ -100,7 +99,8 @@ void OptimizationProblem::print() const {
 	for (int i = 0; i < nEdges; ++i) {
 		const auto &e = graph.edges_.at(i);
 		const Transform T(e.transformation_);
-		std::cout << " edge " << i << " from " << e.source_node_id_ << " to " << e.target_node_id_ << " with " << asString(T) << std::endl;
+		std::cout << " edge " << i << " from " << e.source_node_id_ << " to " << e.target_node_id_
+				<< " with " << asString(T) << std::endl;
 	}
 
 }
@@ -112,22 +112,6 @@ void OptimizationProblem::dumpToFile(const std::string &filename) const {
 void OptimizationProblem::loadFromFile(const std::string &filename) {
 	open3d::io::ReadPoseGraph(filename, poseGraph_);
 	poseGraphPrev_ = poseGraph_;
-}
-
-OptimizedSubmapPoses OptimizationProblem::getOptimizedNodeValues() const {
-	return getNodeValues(poseGraph_);
-}
-
-OptimizedSubmapPoses OptimizationProblem::getNodeValues(const registration::PoseGraph &poseGraph) const {
-	OptimizedSubmapPoses retVal;
-	retVal.reserve(poseGraph.nodes_.size());
-	for (size_t i = 0; i < poseGraph.nodes_.size(); ++i) {
-		OptimizedSubmapPose p;
-		p.mapToSubmap_ = Transform(poseGraph.nodes_.at(i).pose_);
-		p.submapId_ = i;
-		retVal.emplace_back(std::move(p));
-	}
-	return retVal;
 }
 
 void OptimizationProblem::clearOdometryConstraints() {
@@ -153,26 +137,21 @@ void OptimizationProblem::addLoopClosureConstraint(const Constraint &c) {
 
 void OptimizationProblem::insertOdometryConstraints(const Constraints &c) {
 	std::lock_guard<std::mutex> lck(constraintMutex_);
-	odometryConstraints_.insert(odometryConstraints_.end(),c.begin(),c.end());
+	odometryConstraints_.insert(odometryConstraints_.end(), c.begin(), c.end());
 }
 
 void OptimizationProblem::insertLoopClosureConstraints(const Constraints &c) {
 	std::lock_guard<std::mutex> lck(constraintMutex_);
-	loopClosureConstraints_.insert(loopClosureConstraints_.end(),c.begin(),c.end());
+	loopClosureConstraints_.insert(loopClosureConstraints_.end(), c.begin(), c.end());
 }
-
 
 OptimizedTransforms OptimizationProblem::getOptimizedTransformIncrements() const {
 	OptimizedTransforms retVal;
-	const auto nonOptimizedPoses = getNodeValues(poseGraphPrev_);
-	const auto optimizedPoses = getNodeValues(poseGraph_);
-	assert_eq(nonOptimizedPoses.size(), optimizedPoses.size(),
+	assert_eq(poseGraphPrev_.nodes_.size(), poseGraph_.nodes_.size(),
 			"Graphs are not of same size, did you run the optimization?");
-	for (size_t i = 0; i < optimizedPoses.size(); ++i) {
-		const auto mapToOld = nonOptimizedPoses.at(i).mapToSubmap_;
-		const auto mapToNew = optimizedPoses.at(i).mapToSubmap_;
-		const auto deltaT = mapToOld.inverse() * mapToNew;
-		retVal.emplace_back(OptimizedTransform{ deltaT, nonOptimizedPoses.at(i).submapId_ });
+	for (size_t i = 0; i < poseGraph_.nodes_.size(); ++i) {
+		const auto deltaT = Transform(poseGraph_.nodes_.at(i).pose_);
+		retVal.emplace_back(OptimizedTransform { deltaT, i });
 	}
 
 	return retVal;

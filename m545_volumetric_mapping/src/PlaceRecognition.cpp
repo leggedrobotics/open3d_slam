@@ -29,23 +29,25 @@ void PlaceRecognition::setParameters(const MapperParameters &p) {
 
 }
 Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapToRangeSensor,
-		const SubmapCollection &submapCollection, const AdjacencyMatrix &adjMatrix, size_t lastFinishedSubmapIdx,
-		size_t activeSubmapIdx, const Time &timestamp) const {
+		const SubmapCollection &submapCollection, const AdjacencyMatrix &adjMatrix,
+		size_t lastFinishedSubmapIdx, size_t activeSubmapIdx, const Time &timestamp) const {
 
 	using namespace open3d::pipelines::registration;
 	Constraints constraints;
 	const auto &cfg = params_.placeRecognition_;
-	const auto edgeLengthChecker = CorrespondenceCheckerBasedOnEdgeLength(cfg.correspondenceCheckerEdgeLength_);
-	const auto distanceChecker = CorrespondenceCheckerBasedOnDistance(cfg.correspondenceCheckerDistance_);
+	const auto edgeLengthChecker = CorrespondenceCheckerBasedOnEdgeLength(
+			cfg.correspondenceCheckerEdgeLength_);
+	const auto distanceChecker = CorrespondenceCheckerBasedOnDistance(
+			cfg.correspondenceCheckerDistance_);
 	const auto &submaps = submapCollection.getSubmaps();
 	const auto &sourceSubmap = submaps.at(lastFinishedSubmapIdx);
 	const auto closeSubmapsIdxs = std::move(
-			getLoopClosureCandidatesIdxs(mapToRangeSensor, submapCollection, adjMatrix, lastFinishedSubmapIdx,
-					activeSubmapIdx));
-	std::cout << "considering submap " << lastFinishedSubmapIdx << " for loop closure, num candidate submaps: "
-			<< closeSubmapsIdxs.size() << std::endl;
+			getLoopClosureCandidatesIdxs(mapToRangeSensor, submapCollection, adjMatrix,
+					lastFinishedSubmapIdx, activeSubmapIdx));
+	std::cout << "considering submap " << lastFinishedSubmapIdx
+			<< " for loop closure, num candidate submaps: " << closeSubmapsIdxs.size() << std::endl;
 	using namespace open3d::pipelines::registration;
-	if (closeSubmapsIdxs.empty()){
+	if (closeSubmapsIdxs.empty()) {
 		return constraints;
 	}
 	const auto sourceSparse = sourceSubmap.getSparseMap();
@@ -56,10 +58,10 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		const auto &targetSubmap = submaps.at(id);
 		const auto targetSparse = targetSubmap.getSparseMap();
 		const auto targetFeature = targetSubmap.getFeatures();
-		RegistrationResult ransacResult = RegistrationRANSACBasedOnFeatureMatching(sourceSparse, targetSparse,
-				sourceFeature, targetFeature, true, cfg.ransacMaxCorrespondenceDistance_,
-				TransformationEstimationPointToPoint(false), cfg.ransacModelSize_,
-				{ distanceChecker, edgeLengthChecker },
+		RegistrationResult ransacResult = RegistrationRANSACBasedOnFeatureMatching(sourceSparse,
+				targetSparse, sourceFeature, targetFeature, true, cfg.ransacMaxCorrespondenceDistance_,
+				TransformationEstimationPointToPoint(false), cfg.ransacModelSize_, { distanceChecker,
+						edgeLengthChecker },
 				RANSACConvergenceCriteria(cfg.ransacNumIter_, cfg.ransacProbability_));
 
 		if (ransacResult.correspondence_set_.size() < cfg.ransacMinCorrespondenceSetSize_) {
@@ -73,10 +75,12 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		const auto target = targetSubmap.getMap();
 //		const double icpCorrespondenceDistance = icpMaxCorrespondenceDistance(params_.mapBuilder_.mapVoxelSize_);
 		const double icpCorrespondenceDistance = icpMaxCorrespondenceDistance(cfg.featureVoxelSize_);
-		const auto icpResult = open3d::pipelines::registration::RegistrationICP(sourceSparse, targetSparse,
-				icpCorrespondenceDistance, ransacResult.transformation_, *icpObjective, icpCriteria);
+		const auto icpResult = open3d::pipelines::registration::RegistrationICP(sourceSparse,
+				targetSparse, icpCorrespondenceDistance, ransacResult.transformation_, *icpObjective,
+				icpCriteria);
 		if (icpResult.fitness_ < cfg.minRefinementFitness_) {
-			std::cout << "skipping place recognition with refinement score: " << icpResult.fitness_ << " \n";
+			std::cout << "skipping place recognition with refinement score: " << icpResult.fitness_
+					<< " \n";
 			continue;
 		}
 
@@ -84,21 +88,26 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		std::cout << "target features num: " << targetFeature.Num() << "\n";
 		std::cout << "num points source: " << source.points_.size() << "\n";
 		std::cout << "num points target: " << target.points_.size() << "\n";
-		std::cout << "registered num correspondences: " << ransacResult.correspondence_set_.size() << std::endl;
+		std::cout << "registered num correspondences: " << ransacResult.correspondence_set_.size()
+				<< std::endl;
 		std::cout << "registered with fitness: " << ransacResult.fitness_ << std::endl;
 		std::cout << "registered with rmse: " << ransacResult.inlier_rmse_ << std::endl;
-		std::cout << "registered with transformation: \n" << asString(Transform(ransacResult.transformation_))
-				<< std::endl;
+		std::cout << "registered with transformation: \n"
+				<< asString(Transform(ransacResult.transformation_)) << std::endl;
 		std::cout << "refined with fitness: " << icpResult.fitness_ << std::endl;
 		std::cout << "refined with rmse: " << icpResult.inlier_rmse_ << std::endl;
-		std::cout << "refined with transformation: \n" << asString(Transform(icpResult.transformation_)) << std::endl;
+		std::cout << "refined with transformation: \n" << asString(Transform(icpResult.transformation_))
+				<< std::endl;
 
 		const Transform sourceToTarget(icpResult.transformation_);
 		Constraint c;
-		computeLoopClosingTransform(sourceSubmap, targetSubmap, sourceToTarget, &(c.sourceToTarget_), &(c.sourceToTargetPreMultiply_));
+		computeLoopClosingTransform(sourceSubmap, targetSubmap, sourceToTarget, &(c.sourceToTarget_),
+				&(c.sourceToTargetPreMultiply_));
+		c.sourceToTarget_ = Transform(icpResult.transformation_);
 		c.sourceSubmapIdx_ = lastFinishedSubmapIdx;
 		c.targetSubmapIdx_ = id;
-		c.informationMatrix_ = open3d::pipelines::registration::GetInformationMatrixFromPointClouds(source, target,
+		c.informationMatrix_ = open3d::pipelines::registration::GetInformationMatrixFromPointClouds(
+				source, target,
 				informationMatrixMaxCorrespondenceDistance(params_.mapBuilder_.mapVoxelSize_),
 				icpResult.transformation_);
 		c.isInformationMatrixValid_ = true;
@@ -109,17 +118,16 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 	return constraints;
 }
 
-void PlaceRecognition::computeLoopClosingTransform(const Submap &sourceSubmap, const Submap &targetSubmap,
-		const Transform &sourceToTarget, Transform *postMultiply,Transform *preMultiply) const {
-
-
+void PlaceRecognition::computeLoopClosingTransform(const Submap &sourceSubmap,
+		const Submap &targetSubmap, const Transform &sourceToTarget, Transform *postMultiply,
+		Transform *preMultiply) const {
 
 	const auto mapToSource = sourceSubmap.getMapToSubmapOrigin() * sourceToTarget;
 	const auto mapToTarget = targetSubmap.getMapToSubmapOrigin();
 	const Transform Tpost = mapToSource.inverse() * mapToTarget;
 	*postMultiply = Tpost;
 
-	const Transform Tpre = mapToTarget * mapToSource.inverse() ;
+	const Transform Tpre = mapToTarget * mapToSource.inverse();
 	*preMultiply = Tpre;
 
 //	std::cout << "loop closing constraints: \n";
@@ -129,12 +137,11 @@ void PlaceRecognition::computeLoopClosingTransform(const Submap &sourceSubmap, c
 //	std::cout << " source transformed into target: \n";
 //	std::cout << asString(mapToSource * T) << "\n \n";
 
-
 }
 
-std::vector<size_t> PlaceRecognition::getLoopClosureCandidatesIdxs(const Transform &mapToRangeSensor,
-		const SubmapCollection &submapCollection, const AdjacencyMatrix &adjMatrix, size_t lastFinishedSubmapIdx,
-		size_t activeSubmapIdx) const {
+std::vector<size_t> PlaceRecognition::getLoopClosureCandidatesIdxs(
+		const Transform &mapToRangeSensor, const SubmapCollection &submapCollection,
+		const AdjacencyMatrix &adjMatrix, size_t lastFinishedSubmapIdx, size_t activeSubmapIdx) const {
 	std::vector<size_t> idxs;
 	const auto &submaps = submapCollection.getSubmaps();
 	const size_t nSubmaps = submaps.size();
@@ -149,7 +156,8 @@ std::vector<size_t> PlaceRecognition::getLoopClosureCandidatesIdxs(const Transfo
 			continue;
 		}
 
-		const double distance = (mapToRangeSensor.translation() - submaps.at(i).getMapToSubmapCenter()).norm();
+		const double distance =
+				(mapToRangeSensor.translation() - submaps.at(i).getMapToSubmapCenter()).norm();
 		const bool isTooFar = distance > params_.submaps_.radius_;
 //		std::cout << "distance submap to submap " << i << " : " << distance << std::endl;
 		if (isTooFar) {

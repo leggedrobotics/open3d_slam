@@ -35,7 +35,9 @@ const double timingStatsEveryNsec = 15.0;
 WrapperRos::WrapperRos(ros::NodeHandlePtr nh) :
 		nh_(nh) {
 	tfBroadcaster_.reset(new tf2_ros::TransformBroadcaster());
-	odometryBuffer_.set_size_limit(20);
+	odometryBuffer_.set_size_limit(30);
+	mappingBuffer_.set_size_limit(40);
+
 }
 
 WrapperRos::~WrapperRos() {
@@ -251,9 +253,7 @@ void WrapperRos::loopClosureWorker() {
 		{
 			Timer t("optimization_problem");
 			auto odometryConstraints = submaps_->getOdometryConstraints();
-			const double d = informationMatrixMaxCorrespondenceDistance(
-					mapperParams_.mapBuilder_.mapVoxelSize_);
-			computeInformationMatrixOdometryConstraints(*submaps_, d, &odometryConstraints);
+			computeOdometryConstraints(*submaps_, &odometryConstraints);
 			submaps_->addLoopClosureConstraints(loopClosureConstraints);
 
 			optimizationProblem_->clearLoopClosureConstraints();
@@ -266,7 +266,7 @@ void WrapperRos::loopClosureWorker() {
 			submaps_->dumpToFile(folderPath_, "before");
 			optimizationProblem_->dumpToFile(folderPath_ + "/poseGraph.json");
 			optimizationProblem_->solve();
-//			optimizationProblem_->print();
+			//optimizationProblem_->print();
 			lastLoopClosureConstraints_ = loopClosureConstraints;
 			isOptimizedGraphAvailable_ = true;
 		}
@@ -280,6 +280,7 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 	std::cout << "Updating the maps: \n";
 	const Timer t("submaps_update");
 	const auto optimizedTransformations = optimizationProblem_->getOptimizedTransformIncrements();
+	//todo this segfault!!!!
 	submaps_->transform(optimizedTransformations);
 
 	//get The correct time

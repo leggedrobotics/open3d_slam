@@ -33,14 +33,13 @@ public:
 	void setIsReadyToOptimize(bool val);
 	bool isRunningOptimization() const;
 	void print() const;
-	OptimizedSubmapPoses getOptimizedNodeValues() const;
+
 	OptimizedTransforms getOptimizedTransformIncrements() const;
 	void dumpToFile(const std::string &filename) const;
 	void loadFromFile(const std::string &filename);
 
+private:
 
-
-	OptimizedSubmapPoses getNodeValues(const open3d::pipelines::registration::PoseGraph &poseGraph) const;
 
 	bool isRunningOptimization_ = false;
 	bool isReadyToOptimize_ = false;

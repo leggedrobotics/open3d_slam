@@ -57,5 +57,6 @@ void computeIndicesOfOverlappingPoints(const open3d::geometry::PointCloud &sourc
 Eigen::Vector3d computeCenter(const open3d::geometry::PointCloud &cloud, const std::vector<size_t> &idxs);
 double informationMatrixMaxCorrespondenceDistance(double mappingVoxelSize);
 double icpMaxCorrespondenceDistance(double mappingVoxelSize);
+double getMapVoxelSize(const MapBuilderParameters &p, double valueIfZero);
 
 } /* namespace m545_mapping */

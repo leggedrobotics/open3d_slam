@@ -69,7 +69,9 @@ public:
 	const Constraints &getLoopClosureConstraints() const;
 	void addLoopClosureConstraints(const Constraints &lccs);
 
-//private:
+	const MapperParameters &getParameters() const;
+
+private:
 	void insertBufferedScans(Submap *submap);
 	void addScanToBuffer(const PointCloud &scan, const Transform &mapToRangeSensor, const Time &timestamp);
 	void updateActiveSubmap(const Transform &mapToRangeSensor);
@@ -96,6 +98,12 @@ public:
 
 };
 
-void computeInformationMatrixOdometryConstraints(const SubmapCollection &submaps,double maxCorrespondenceDistance, Constraints *constraints);
+void computeOdometryConstraints(const SubmapCollection &submaps,
+		Constraints *constraints);
+void computeOdometryConstraints(const SubmapCollection &submaps, const SubmapCollection::TimestampedSubmapIds &candidates,
+		Constraints *constraints);
+
+Constraint buildOdometryConstraint(size_t sourceIdx, size_t targetIdx,
+		const SubmapCollection &submaps);
 
 } // namespace m545_mapping
