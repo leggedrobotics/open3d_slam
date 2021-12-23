@@ -8,6 +8,8 @@
 #include "m545_volumetric_mapping/PlaceRecognition.hpp"
 #include "m545_volumetric_mapping/Parameters.hpp"
 #include "m545_volumetric_mapping/SubmapCollection.hpp"
+#include "m545_volumetric_mapping/magic.hpp"
+
 #include <open3d/pipelines/registration/FastGlobalRegistration.h>
 #include <open3d/pipelines/registration/Registration.h>
 #include <open3d/io/PointCloudIO.h>
@@ -70,74 +72,63 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 			continue;
 		}
 
-		ICPConvergenceCriteria icpCriteria;
-		icpCriteria.max_iteration_ = cfg.icp_.maxNumIter_;
 		const auto target = targetSubmap.getMap();
-//		const double icpCorrespondenceDistance = icpMaxCorrespondenceDistance(params_.mapBuilder_.mapVoxelSize_);
-		const double icpCorrespondenceDistance = icpMaxCorrespondenceDistance(cfg.featureVoxelSize_);
-		const auto icpResult = open3d::pipelines::registration::RegistrationICP(sourceSparse,
-				targetSparse, icpCorrespondenceDistance, ransacResult.transformation_, *icpObjective,
-				icpCriteria);
+		const double mapVoxelSize = getMapVoxelSize(params_.mapBuilder_,
+				voxelSizeCorrespondenceSearchMapVoxelSizeIsZero);
+		const double voxelSizeForOverlap = 3.0 * mapVoxelSize;
+		const size_t minNumPointsPerVoxel = 1;
+		std::vector<size_t> sourceIdxs, targetIdxs;
+		computeIndicesOfOverlappingPoints(source, target, Transform(ransacResult.transformation_),
+				voxelSizeForOverlap, minNumPointsPerVoxel, &sourceIdxs, &targetIdxs);
+		const auto sourceOverlap = *source.SelectByIndex(sourceIdxs);
+		const auto targetOverlap = *target.SelectByIndex(targetIdxs);
+
+		open3d::pipelines::registration::ICPConvergenceCriteria criteria;
+		criteria.max_iteration_ = icpRunUntilConvergenceNumberOfIterations; // i.e. run until convergence
+		const auto icpResult = open3d::pipelines::registration::RegistrationICP(sourceOverlap,
+				targetOverlap, mapVoxelSize * 1.5, ransacResult.transformation_,
+				open3d::pipelines::registration::TransformationEstimationPointToPlane(), criteria);
+//		printf("submap %ld size: %ld \n", id, source.points_.size());
+//			printf("submap %ld overlap size: %ld \n", id, source.points_.size());
+//			printf("submap %ld size: %ld \n", lastFinishedSubmapIdx, target.points_.size());
+//			printf("submap %ld overlap size: %ld \n", lastFinishedSubmapIdx, target.points_.size());
+
+		const auto &cfg = params_.placeRecognition_;
 		if (icpResult.fitness_ < cfg.minRefinementFitness_) {
 			std::cout << "skipping place recognition with refinement score: " << icpResult.fitness_
 					<< " \n";
 			continue;
 		}
 
-		std::cout << "source features num: " << sourceFeature.Num() << "\n";
-		std::cout << "target features num: " << targetFeature.Num() << "\n";
-		std::cout << "num points source: " << source.points_.size() << "\n";
-		std::cout << "num points target: " << target.points_.size() << "\n";
+		std::cout << "source features num: " << sourceSubmap.getFeatures().Num() << "\n";
+		std::cout << "target features num: " << sourceSubmap.getFeatures().Num() << "\n";
 		std::cout << "registered num correspondences: " << ransacResult.correspondence_set_.size()
 				<< std::endl;
 		std::cout << "registered with fitness: " << ransacResult.fitness_ << std::endl;
 		std::cout << "registered with rmse: " << ransacResult.inlier_rmse_ << std::endl;
 		std::cout << "registered with transformation: \n"
 				<< asString(Transform(ransacResult.transformation_)) << std::endl;
+
 		std::cout << "refined with fitness: " << icpResult.fitness_ << std::endl;
 		std::cout << "refined with rmse: " << icpResult.inlier_rmse_ << std::endl;
 		std::cout << "refined with transformation: \n" << asString(Transform(icpResult.transformation_))
 				<< std::endl;
 
-		const Transform sourceToTarget(icpResult.transformation_);
 		Constraint c;
-		computeLoopClosingTransform(sourceSubmap, targetSubmap, sourceToTarget, &(c.sourceToTarget_),
-				&(c.sourceToTargetPreMultiply_));
 		c.sourceToTarget_ = Transform(icpResult.transformation_);
 		c.sourceSubmapIdx_ = lastFinishedSubmapIdx;
 		c.targetSubmapIdx_ = id;
 		c.informationMatrix_ = open3d::pipelines::registration::GetInformationMatrixFromPointClouds(
-				source, target,
-				informationMatrixMaxCorrespondenceDistance(params_.mapBuilder_.mapVoxelSize_),
-				icpResult.transformation_);
+				sourceOverlap, targetOverlap, mapVoxelSize * 1.5, icpResult.transformation_);
 		c.isInformationMatrixValid_ = true;
 		c.isOdometryConstraint_ = false;
 		c.timestamp_ = timestamp;
 		constraints.emplace_back(std::move(c));
+
 	} // end for loop
 	return constraints;
 }
 
-void PlaceRecognition::computeLoopClosingTransform(const Submap &sourceSubmap,
-		const Submap &targetSubmap, const Transform &sourceToTarget, Transform *postMultiply,
-		Transform *preMultiply) const {
-
-	const auto mapToSource = sourceSubmap.getMapToSubmapOrigin() * sourceToTarget;
-	const auto mapToTarget = targetSubmap.getMapToSubmapOrigin();
-	const Transform Tpost = mapToSource.inverse() * mapToTarget;
-	*postMultiply = Tpost;
-
-	const Transform Tpre = mapToTarget * mapToSource.inverse();
-	*preMultiply = Tpre;
-
-//	std::cout << "loop closing constraints: \n";
-//	std::cout << " source: " << asString(mapToSource) << std::endl;
-//	std::cout << " target: " << asString(mapToTarget) << std::endl;
-//	std::cout << " source to target: " << asString(T) << std::endl;
-//	std::cout << " source transformed into target: \n";
-//	std::cout << asString(mapToSource * T) << "\n \n";
-
-}
 
 std::vector<size_t> PlaceRecognition::getLoopClosureCandidatesIdxs(
 		const Transform &mapToRangeSensor, const SubmapCollection &submapCollection,

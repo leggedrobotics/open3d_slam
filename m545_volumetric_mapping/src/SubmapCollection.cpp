@@ -10,7 +10,7 @@
 #include "m545_volumetric_mapping/assert.hpp"
 #include "m545_volumetric_mapping/typedefs.hpp"
 #include "m545_volumetric_mapping/math.hpp"
-
+#include "m545_volumetric_mapping/magic.hpp"
 #include <open3d/io/PointCloudIO.h>
 #include <open3d/pipelines/registration/Registration.h>
 
@@ -310,7 +310,7 @@ void SubmapCollection::transform(const OptimizedTransforms &transformIncrements)
 					== submapIdxsToUpdate.end()) {
 				/* parent is in the pose graph */
 				const auto &update = transformIncrements.at(currentNode);
-//				submaps_.at(update.submapId_).transform(update.dT_);
+				submaps_.at(update.submapId_).transform(update.dT_);
 				std::cout << update.submapId_ << "\n";
 				break;
 			}
@@ -352,7 +352,7 @@ Constraint buildOdometryConstraint(size_t sourceIdx, size_t targetIdx,
 	const auto sourceFull = submaps.getSubmaps().at(sourceIdx).getMap();
 	const auto targetFull = submaps.getSubmaps().at(targetIdx).getMap();
 	std::vector<size_t> sourceIdxs, targetIdxs;
-	const double mapVoxelSize = getMapVoxelSize(submaps.getParameters().mapBuilder_, 0.04); //todo magic
+	const double mapVoxelSize = getMapVoxelSize(submaps.getParameters().mapBuilder_, voxelSizeCorrespondenceSearchMapVoxelSizeIsZero);
 	const double voxelSize = 3.0 * mapVoxelSize;
 	const size_t minNumPointsPerVoxel = 1;
 	computeIndicesOfOverlappingPoints(sourceFull, targetFull, Transform::Identity(), voxelSize,
@@ -360,7 +360,7 @@ Constraint buildOdometryConstraint(size_t sourceIdx, size_t targetIdx,
 	const auto source = *sourceFull.SelectByIndex(sourceIdxs);
 	const auto target = *targetFull.SelectByIndex(targetIdxs);
 	open3d::pipelines::registration::ICPConvergenceCriteria criteria;
-	criteria.max_iteration_ = 100; // i.e. run until convergence
+	criteria.max_iteration_ = icpRunUntilConvergenceNumberOfIterations; // i.e. run until convergence
 	const auto icpResult = open3d::pipelines::registration::RegistrationICP(source, target,
 			mapVoxelSize * 1.5, Eigen::Matrix4d::Identity(),
 			open3d::pipelines::registration::TransformationEstimationPointToPlane(), criteria);
@@ -377,11 +377,11 @@ Constraint buildOdometryConstraint(size_t sourceIdx, size_t targetIdx,
 	c.sourceToTarget_ = Transform(icpResult.transformation_);
 	c.informationMatrix_ = informationMatrix;
 
-	printf("submap %d size: %d \n", sourceIdx, sourceFull.points_.size());
-	printf("submap %d overlap size: %d \n", sourceIdx, source.points_.size());
-	printf("submap %d size: %d \n", targetIdx, targetFull.points_.size());
-	printf("submap %d overlap size: %d \n", targetIdx, target.points_.size());
-	printf("Adding odometry constraint from submap %d to submap %d with transformation \n: ",
+	printf("submap %ld size: %ld \n", sourceIdx, sourceFull.points_.size());
+	printf("submap %ld overlap size: %ld \n", sourceIdx, source.points_.size());
+	printf("submap %ld size: %ld \n", targetIdx, targetFull.points_.size());
+	printf("submap %ld overlap size: %ld \n", targetIdx, target.points_.size());
+	printf("Adding odometry constraint from submap %ld to submap %ld with transformation \n: ",
 			sourceIdx, targetIdx);
 	std::cout << asString(c.sourceToTarget_) << std::endl;
 	return c;

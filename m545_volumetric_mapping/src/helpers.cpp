@@ -77,7 +77,7 @@ public:
 } //namespace
 
 double informationMatrixMaxCorrespondenceDistance(double mappingVoxelSize) {
-	return isClose(mappingVoxelSize, 0.0, 1e-3) ? 0.05 : (2.0 * mappingVoxelSize);
+	return isClose(mappingVoxelSize, 0.0, 1e-3) ? 0.05 : (1.5 * mappingVoxelSize);
 }
 
 double icpMaxCorrespondenceDistance(double mappingVoxelSize) {
@@ -348,7 +348,9 @@ void computeIndicesOfOverlappingPoints(const open3d::geometry::PointCloud &sourc
 	const std::string sourceLayer = "source";
 	MultiLayerVoxelMap voxelMap(Eigen::Vector3d::Constant(voxelSize));
 	voxelMap.insertCloud(targetLayer, target);
-	voxelMap.insertCloud(sourceLayer, source);
+	auto sourceTransformed = source;
+	sourceTransformed.Transform(sourceToTarget.matrix());
+	voxelMap.insertCloud(sourceLayer, sourceTransformed);
 	idxsSource->clear();
 	idxsSource->reserve(source.points_.size());
 	idxsTarget->clear();

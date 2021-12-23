@@ -127,7 +127,8 @@ void publishCloud(const open3d::geometry::PointCloud &cloud, const std::string &
 		ros::Publisher &pub) {
 	if (pub.getNumSubscribers() > 0) {
 		sensor_msgs::PointCloud2 msg;
-		open3d_conversions::open3dToRos(cloud, msg, frame_id);
+		const PointCloud copy = cloud;
+		open3d_conversions::open3dToRos(copy, msg, frame_id);
 		msg.header.stamp = timestamp;
 		pub.publish(msg);
 	}

@@ -186,15 +186,15 @@ Mapper::PointCloud Mapper::getAssembledMap() const {
 	}
 
 	for (size_t j = 0; j < submaps_->getSubmaps().size(); ++j) {
-		const auto &submap = submaps_->getSubmaps().at(j);
+		const PointCloud submap = submaps_->getSubmaps().at(j).getMap();
 		const auto color = Color::getColor(j % (Color::numColors_ - 2) + 2);
-		for (size_t i = 0; i < submap.getMap().points_.size(); ++i) {
-			cloud.points_.push_back(submap.getMap().points_.at(i));
-			if (getMap().HasColors()) {
-				cloud.colors_.push_back(submap.getMap().colors_.at(i));
+		for (size_t i = 0; i < submap.points_.size(); ++i) {
+			cloud.points_.push_back(submap.points_.at(i));
+			if (submap.HasColors()) {
+				cloud.colors_.push_back(submap.colors_.at(i));
 			}
-			if (getMap().HasNormals()) {
-				cloud.normals_.push_back(submap.getMap().normals_.at(i));
+			if (submap.HasNormals()) {
+				cloud.normals_.push_back(submap.normals_.at(i));
 			}
 		}
 	}

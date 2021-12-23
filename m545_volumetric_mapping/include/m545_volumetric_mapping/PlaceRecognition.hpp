@@ -31,8 +31,7 @@ public:
 
 private:
 
-	void computeLoopClosingTransform(const Submap &sourceSubmap, const Submap &targetSubmap,
-			const Transform &sourceToTarget, Transform *postMultiply,Transform *preMultiply) const;
+
 	MapperParameters params_;
 
 };
