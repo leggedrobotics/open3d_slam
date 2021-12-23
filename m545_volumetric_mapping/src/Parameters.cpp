@@ -10,6 +10,22 @@
 namespace m545_mapping {
 
 
+
+void loadParameters(const std::string &filename, GlobalOptimizationParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+	if (basenode.IsNull()) {
+		throw std::runtime_error("GlobalOptimizationParameters::loadParameters loading failed");
+	}
+	loadParameters(basenode["global_optimization"], p);
+}
+void loadParameters(const YAML::Node &node, GlobalOptimizationParameters *p){
+	p->edgePruneThreshold_ = node["edge_prune_threshold"].as<double>();
+	p->loopClosurePreference_ = node["loop_closure_preference"].as<double>();
+	p->maxCorrespondenceDistance_ = node["max_correspondence_distance"].as<double>();
+	p->referenceNode_ = node["reference_node"].as<int>();
+}
+
+
 void loadParameters(const std::string &filename, VisualizationParameters *p){
 	YAML::Node basenode = YAML::LoadFile(filename);
 	if (basenode.IsNull()) {
@@ -125,6 +141,7 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	}
 	loadParameters(node["map_builder"], &(p->mapBuilder_));
 	loadParameters(node["submaps"], &(p->submaps_));
+	loadParameters(node["global_optimization"], &(p->globalOptimization_));
 }
 
 void loadParameters(const std::string &filename, LocalMapParameters *p){

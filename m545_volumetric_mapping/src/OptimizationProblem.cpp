@@ -30,12 +30,17 @@ void OptimizationProblem::solve() {
 	registration::GlobalOptimizationLevenbergMarquardt method;
 	registration::GlobalOptimizationConvergenceCriteria criteria;
 	registration::GlobalOptimizationOption option;
-	option.max_correspondence_distance_ = 20.0;
-	option.reference_node_ = 0;
-	option.edge_prune_threshold_ = 0.0;
-	option.preference_loop_closure_ = 2.0;
+	const auto &p = params_.globalOptimization_;
+	option.max_correspondence_distance_ = p.maxCorrespondenceDistance_;
+	option.reference_node_ = p.referenceNode_;
+	option.edge_prune_threshold_ = p.edgePruneThreshold_;
+	option.preference_loop_closure_ = p.loopClosurePreference_;
 	GlobalOptimization(poseGraph_, method, criteria, option);
 	isRunningOptimization_ = false;
+}
+
+void OptimizationProblem::setParameters(const MapperParameters &p){
+	params_=p;
 }
 
 void OptimizationProblem::buildOptimizationProblem(const SubmapCollection &submaps) {

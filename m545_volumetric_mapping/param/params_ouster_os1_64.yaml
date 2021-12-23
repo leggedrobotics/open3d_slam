@@ -66,6 +66,13 @@ mapping:
       truncation_distance: 0.1
       carve_space_every_n_sec: 200000.0
       min_dot_product_with_normal: 0.3
+
+
+  global_optimization:
+    edge_prune_threshold: 0.2
+    loop_closure_preference: 2.0
+    max_correspondence_distance: 10.0
+    reference_node: 0
     
 local_map:
   voxel_size: 0.08

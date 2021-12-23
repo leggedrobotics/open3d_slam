@@ -37,10 +37,11 @@ public:
 	OptimizedTransforms getOptimizedTransformIncrements() const;
 	void dumpToFile(const std::string &filename) const;
 	void loadFromFile(const std::string &filename);
+	void setParameters(const MapperParameters &p);
 
 private:
 
-
+	MapperParameters params_;
 	bool isRunningOptimization_ = false;
 	bool isReadyToOptimize_ = false;
 	std::mutex constraintMutex_, optimizationMutex_;

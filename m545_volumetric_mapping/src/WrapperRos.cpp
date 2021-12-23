@@ -86,11 +86,13 @@ void WrapperRos::initialize() {
 	odometry_ = std::make_shared<m545_mapping::LidarOdometry>();
 	odometry_->setParameters(odometryParams);
 
-	optimizationProblem_ = std::make_shared<m545_mapping::OptimizationProblem>();
 	submaps_ = std::make_shared<m545_mapping::SubmapCollection>();
 	mapper_ = std::make_shared<m545_mapping::Mapper>(odometry_->getBuffer(), submaps_);
 	m545_mapping::loadParameters(paramFile, &mapperParams_);
 	mapper_->setParameters(mapperParams_);
+
+	optimizationProblem_ = std::make_shared<m545_mapping::OptimizationProblem>();
+	optimizationProblem_->setParameters(mapperParams_);
 
 	mesher_ = std::make_shared<m545_mapping::Mesher>();
 	m545_mapping::loadParameters(paramFile, &mesherParams_);

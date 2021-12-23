@@ -106,6 +106,14 @@ struct PlaceRecognitionParameters{
 	double minRefinementFitness_ = 0.7;
 };
 
+struct GlobalOptimizationParameters {
+	double maxCorrespondenceDistance_ = 10.0;
+	double loopClosurePreference_ = 2.0;
+	double edgePruneThreshold_ = 0.2;
+	int referenceNode_ = 0;
+};
+
+
 struct MapperParameters {
 	IcpParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
@@ -117,7 +125,7 @@ struct MapperParameters {
 	bool isBuildDenseMap_ = true;
 	SubmapParameters submaps_;
 	PlaceRecognitionParameters placeRecognition_;
-
+	GlobalOptimizationParameters globalOptimization_;
 };
 
 struct LocalMapParameters {
@@ -143,6 +151,8 @@ struct VisualizationParameters {
 	double visualizeEveryNmsec_ = 250.0;
 };
 
+void loadParameters(const std::string &filename, GlobalOptimizationParameters *p);
+void loadParameters(const YAML::Node &node, GlobalOptimizationParameters *p);
 void loadParameters(const std::string &filename, VisualizationParameters *p);
 void loadParameters(const YAML::Node &node, VisualizationParameters *p);
 void loadParameters(const std::string &filename, SubmapParameters *p);
