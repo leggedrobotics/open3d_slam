@@ -310,7 +310,7 @@ void SubmapCollection::transform(const OptimizedTransforms &transformIncrements)
 					== submapIdxsToUpdate.end()) {
 				/* parent is in the pose graph */
 				const auto &update = transformIncrements.at(currentNode);
-				submaps_.at(update.submapId_).transform(update.dT_);
+				submaps_.at(idx).transform(update.dT_);
 				std::cout << update.submapId_ << "\n";
 				break;
 			}
