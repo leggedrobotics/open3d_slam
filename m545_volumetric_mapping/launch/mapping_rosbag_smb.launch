@@ -21,7 +21,7 @@
 	</include>
 
 	<node pkg="rosbag" type="play" name="rosbag"
-		args="'$(arg bag_filepath)' --delay '$(arg play_delay)' --rate '$(arg play_rate)' --clock -s 170" />
+		args="'$(arg bag_filepath)' --delay '$(arg play_delay)' --rate '$(arg play_rate)' --clock -s 120" />
 	<!-- append - -loop for looping -->
 
 <!-- 

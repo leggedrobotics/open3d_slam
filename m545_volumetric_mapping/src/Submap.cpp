@@ -48,7 +48,16 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 	auto transformedCloud = m545_mapping::transform(mapToRangeSensor.matrix(), preProcessedScan);
 	estimateNormalsIfNeeded(params_.scanMatcher_.kNNnormalEstimation_, transformedCloud.get());
 	if (isPerformCarving) {
+		carvingStatisticsTimer_.startStopwatch();
 		carve(rawScan, mapToRangeSensor, *mapBuilderCropper_, params_.mapBuilder_.carving_, &map_, &carvingTimer_);
+		const double timeMeasurement = carvingStatisticsTimer_.elapsedMsecSinceStopwatchStart();
+		carvingStatisticsTimer_.addMeasurementMsec(timeMeasurement);
+		if (carvingStatisticsTimer_.elapsedSec() > 20.0) {
+			std::cout << "Space carving timing stats: Avg execution time: "
+					<< carvingStatisticsTimer_.getAvgMeasurementMsec() << " msec , frequency: "
+					<< 1e3 / carvingStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
+			carvingStatisticsTimer_.reset();
+		}
 	}
 	map_ += *transformedCloud;
 	mapBuilderCropper_->setPose(mapToRangeSensor);

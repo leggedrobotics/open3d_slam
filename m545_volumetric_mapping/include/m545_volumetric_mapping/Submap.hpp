@@ -56,7 +56,6 @@ public:
 	void transform(const Transform &T);
 	mutable PointCloud toRemove_;
 	mutable PointCloud scanRef_;
-	mutable PointCloud mapRef_;
 
 private:
 	void update(const MapperParameters &mapperParams);
@@ -78,6 +77,7 @@ private:
 	size_t id_=0;
 	bool isCenterComputed_ = false;
 	size_t parentId_=0;
+	Timer carvingStatisticsTimer_;
 
 };
 
