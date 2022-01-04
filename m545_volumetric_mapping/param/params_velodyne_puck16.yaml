@@ -3,7 +3,7 @@ odometry:
     icp_objective: PointToPlane
     max_correspondence_dist: 0.5
     knn_normal_estimation: 4
-    max_n_iter: 25
+    max_n_iter: 35
   scan_processing:
     voxel_size: -1.0
     downsampling_ratio: 0.4
