@@ -55,6 +55,20 @@ WrapperRos::~WrapperRos() {
 	}
 }
 
+size_t WrapperRos::getOdometryBufferSize() const{
+	return odometryBuffer_.size();
+}
+size_t WrapperRos::getMappingBufferSize() const{
+	return mappingBuffer_.size();
+}
+
+size_t WrapperRos::getOdometryBufferSizeLimit() const{
+	return odometryBuffer_.size_limit();
+}
+size_t WrapperRos::getMappingBufferSizeLimit() const{
+	return mappingBuffer_.size_limit();
+}
+
 void WrapperRos::addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp) {
 	const TimestampedPointCloud timestampedCloud { timestamp, cloud };
 	odometryBuffer_.push(timestampedCloud);

@@ -7,6 +7,8 @@
 	<arg name="cloud_topic" default="/rslidar_points" />
 	<arg name="parameter_file_path" default="$(find m545_volumetric_mapping)/param/params_velodyne_puck16.yaml"/>
 	<arg name="num_accumulated_range_data" default="1"/>
+	<arg name="is_read_from_rosbag" default="false"/>
+	<arg name="rosbag_filepath" default=""/>
 	
 
 	<node name="mapping_node" pkg="m545_volumetric_mapping"
@@ -19,6 +21,9 @@
 			value="$(arg parameter_file_path)" />
 			
 		<param name="num_accumulated_range_data" value="$(arg num_accumulated_range_data)"/>
+		<param name="is_read_from_rosbag" value="$(arg is_read_from_rosbag)"/>
+		<param name="rosbag_filepath" value="$(arg rosbag_filepath)"/>
+
 	</node>
 
 

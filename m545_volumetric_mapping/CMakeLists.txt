@@ -36,6 +36,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   tf2
   tf2_ros
   tf2_geometry_msgs
+  rosbag
 )
    
 

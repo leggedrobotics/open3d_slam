@@ -52,6 +52,10 @@ public:
 	void addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp);
 	void initialize();
 	void start();
+	size_t getOdometryBufferSize() const;
+	size_t getMappingBufferSize() const;
+	size_t getOdometryBufferSizeLimit() const;
+	size_t getMappingBufferSizeLimit() const;
 
 private:
 
