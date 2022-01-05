@@ -1,6 +1,47 @@
+# Open3D SLAM
 
+This package contains the code for a open3D SLAM framework.
+
+## Docker
+
+### Build docker Image
+
+For building the docker image go to the [m545 docker repo](https://github.com/leggedrobotics/m545_docker) into projects/open3D and execute:
+```bash
+
+docker build -t rslethz/m545-gpu:open3d -f open3d.Dockerfile .
+```
+.
+
+### Pulling the Image from Docker Hub
+
+The image can also be pulled from docker hub using
+```bash
+git clone --recursive git@bitbucket.org:leggedrobotics/open3d.git
+docker pull rslethz/m545-gpu:open3d
+```
+.
+
+### Running the Docker Image
+
+For running the docker image we recommend the usage of the run.sh script from this [repository](https://github.com/leggedrobotics/m545_docker).
+
+After building the image (or pulling it from docker hub), this can be done by typing
+```bash
+./bin/run.sh --type=gpu --tag=open3d
+```
+
+## Compiling the Repo
+
+This can be done using 
+```bash
+catkin build m545_volumetric_mapping
+```
+
+## Running the Repo
+
+----------------------------------------------
 ## Open3D Installation instructions
-
 
 ### For the python API:
 
