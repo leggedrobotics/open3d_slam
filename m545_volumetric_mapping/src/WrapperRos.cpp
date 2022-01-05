@@ -55,17 +55,17 @@ WrapperRos::~WrapperRos() {
 	}
 }
 
-size_t WrapperRos::getOdometryBufferSize() const{
+size_t WrapperRos::getOdometryBufferSize() const {
 	return odometryBuffer_.size();
 }
-size_t WrapperRos::getMappingBufferSize() const{
+size_t WrapperRos::getMappingBufferSize() const {
 	return mappingBuffer_.size();
 }
 
-size_t WrapperRos::getOdometryBufferSizeLimit() const{
+size_t WrapperRos::getOdometryBufferSizeLimit() const {
 	return odometryBuffer_.size_limit();
 }
-size_t WrapperRos::getMappingBufferSizeLimit() const{
+size_t WrapperRos::getMappingBufferSizeLimit() const {
 	return mappingBuffer_.size_limit();
 }
 
@@ -144,8 +144,8 @@ void WrapperRos::odometryWorker() {
 		// so then we can look stuff up in the interpolation buffer
 		mappingBuffer_.push(measurement);
 		const auto timestamp = toRos(measurement.time_);
-		m545_mapping::publishTfTransform(odometry_->getOdomToRangeSensor(measurement.time_).matrix(),
-				timestamp, odomFrame, rangeSensorFrame, tfBroadcaster_.get());
+		m545_mapping::publishTfTransform(odometry_->getOdomToRangeSensor(measurement.time_).matrix(), timestamp,
+				odomFrame, rangeSensorFrame, tfBroadcaster_.get());
 
 		if (odometryInputPub_.getNumSubscribers() > 0) {
 			auto odomInput = odometry_->getPreProcessedCloud();
@@ -196,8 +196,7 @@ void WrapperRos::mappingWorker() {
 		if (isOptimizedGraphAvailable_) {
 			isOptimizedGraphAvailable_ = false;
 			const auto poseBeforeUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
-			std::cout << "latest pose before update: \n " << asString(poseBeforeUpdate.transform_)
-					<< "\n";
+			std::cout << "latest pose before update: \n " << asString(poseBeforeUpdate.transform_) << "\n";
 			updateSubmapsAndTrajectory();
 			const auto poseAfterUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
 			std::cout << "latest pose after update: \n " << asString(poseAfterUpdate.transform_) << "\n";
@@ -223,8 +222,8 @@ void WrapperRos::mappingWorker() {
 
 void WrapperRos::publishMapToOdomTf(const Time &time) {
 	const auto timestamp = toRos(time);
-	m545_mapping::publishTfTransform(mapper_->getMapToOdom(time).matrix(), timestamp, mapFrame,
-			odomFrame, tfBroadcaster_.get());
+	m545_mapping::publishTfTransform(mapper_->getMapToOdom(time).matrix(), timestamp, mapFrame, odomFrame,
+			tfBroadcaster_.get());
 }
 
 void WrapperRos::computeFeaturesIfReady() {
@@ -300,35 +299,32 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 	submaps_->transform(optimizedTransformations);
 
 	//get The correct time
-	const Constraint latestLoopClosureConstraint = *std::max_element(
-			lastLoopClosureConstraints_.begin(), lastLoopClosureConstraints_.end(),
-			[](const Constraint &c1, const Constraint &c2) {
+	const Constraint latestLoopClosureConstraint = *std::max_element(lastLoopClosureConstraints_.begin(),
+			lastLoopClosureConstraints_.end(), [](const Constraint &c1, const Constraint &c2) {
 				return c1.timestamp_ < c2.timestamp_;
 			});
 
 	// loop closing constraints are built such that the source node is always the ne being transformed
 	// hence the source node should be the one whose transform we should apply
-	assert_gt(latestLoopClosureConstraint.sourceSubmapIdx_,
-			latestLoopClosureConstraint.targetSubmapIdx_);
+	assert_gt(latestLoopClosureConstraint.sourceSubmapIdx_, latestLoopClosureConstraint.targetSubmapIdx_);
 	const auto dT = optimizedTransformations.at(latestLoopClosureConstraint.sourceSubmapIdx_);
 	const Time latestTime = mapper_->getMapToRangeSensorBuffer().latest_time();
-	const Time lastLoopClosureTime = latestLoopClosureConstraint.timestamp_;
-//	const Time lastLoopClosureTime = mapper_->getMapToRangeSensorBuffer().earliest_time();
+//	const Time lastLoopClosureTime = latestLoopClosureConstraint.timestamp_;
+	const Time lastLoopClosureTime = mapper_->getMapToRangeSensorBuffer().earliest_time();
 
-	std::cout << "Applying the delta T from submap " << latestLoopClosureConstraint.sourceSubmapIdx_
-			<< "\n";
-	std::cout << "the transform is: " << asString(dT.dT_) << std::endl;
+	std::cout << "Transforming the pose buffer with the delta T from submap "
+			<< latestLoopClosureConstraint.sourceSubmapIdx_ << "the transform is: \n" << asString(dT.dT_)
+			<< std::endl;
 
-	mapper_->getMapToRangeSensorBufferPtr()->applyToAllElementsInTimeInterval(dT.dT_,
-			lastLoopClosureTime, latestTime);
+	mapper_->getMapToRangeSensorBufferPtr()->applyToAllElementsInTimeInterval(dT.dT_, lastLoopClosureTime,
+			latestTime);
 	mapper_->setMapToRangeSensor(mapper_->getMapToRangeSensor(latestTime));
 	submaps_->setMapToRangeSensor(mapper_->getMapToRangeSensorBuffer().lookup(latestTime));
 
 }
 
 void WrapperRos::mesherWorker() {
-	if (mesherParams_.isComputeMesh_ && !mesherBufffer_.empty()
-			&& !mapper_->getMap().points_.empty()) {
+	if (mesherParams_.isComputeMesh_ && !mesherBufffer_.empty() && !mapper_->getMap().points_.empty()) {
 		auto map = mapper_->getMap();
 		m545_mapping::MaxRadiusCroppingVolume cropper(localMapParams_.croppingRadius_);
 		const auto time = mesherBufffer_.pop();

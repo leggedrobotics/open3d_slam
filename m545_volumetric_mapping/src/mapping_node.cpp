@@ -72,7 +72,7 @@ void readRosbag(const rosbag::Bag &bag, const std::string &cloudTopic) {
 						cloudCallback(cloud);
 						break;
 					} else {
-						std::this_thread::sleep_for(std::chrono::milliseconds(10));
+						std::this_thread::sleep_for(std::chrono::milliseconds(20));
 					}
 					ros::spinOnce();
 				} // end while

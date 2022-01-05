@@ -9,7 +9,32 @@
 
 namespace m545_mapping {
 
+void loadParameters(const std::string &filename, PlaceRecognitionParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+	if (basenode.IsNull()) {
+		throw std::runtime_error("PlaceRecognitionParams::loadParameters loading failed");
+	}
+	loadParameters(basenode["place_recognition"], p);
+}
+void loadParameters(const YAML::Node &node, PlaceRecognitionParameters *p){
 
+
+//  feature_map_normal_estimation_radius: 1.0
+//  feature_voxel_size: 0.5
+//  feature_radius: 2.5
+//  feature_knn: 100
+//  normal_knn: 10
+//  ransac_num_iter: 1000000
+//  ransac_probability: 0.99
+//  ransac_model_size: 3
+//  ransac_max_correspondence_dist: 0.75
+//  ransac_correspondence_checker_distance: 0.75
+//  ransac_correspondence_checker_edge_lenght: 0.5
+//  ransac_min_corresondence_set_size: 25
+//  max_icp_correspondence_distance: 0.3
+//  min_icp_refinement_fitness: 0.7
+
+}
 
 void loadParameters(const std::string &filename, GlobalOptimizationParameters *p){
 	YAML::Node basenode = YAML::LoadFile(filename);

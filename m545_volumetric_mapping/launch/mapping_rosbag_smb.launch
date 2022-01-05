@@ -11,7 +11,7 @@
 
 	<arg name="parameter_file_path"
 		default="$(find m545_volumetric_mapping)/param/params_velodyne_puck16.yaml" />
-	<arg name="bag_filename" default="first_mission_wangen.bag" />
+	<arg name="bag_filename" default="test120.bag" />
 	<arg name="bag_filepath"
 		default="$(find m545_volumetric_mapping)/data/$(arg bag_filename)" />
 
@@ -25,7 +25,7 @@
 	</include>
 
 	<node pkg="rosbag" type="play" name="rosbag"
-		args="'$(arg bag_filepath)' --delay '$(arg play_delay)' --rate '$(arg play_rate)' --clock -s 120"
+		args="'$(arg bag_filepath)' --delay '$(arg play_delay)' --rate '$(arg play_rate)' --clock -s 0"
 		unless="$(arg is_read_from_rosbag)" />
 
 	<!-- append - -loop for looping -->
