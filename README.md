@@ -40,6 +40,12 @@ catkin build m545_volumetric_mapping
 
 ## Running the Repo
 
+Add the required config to the launch file `mapping.launch`.
+Then do
+```bash
+roslaunch m545_volumetric_mapping mapping.launch
+```
+
 ----------------------------------------------
 ## Open3D Installation instructions
 
