@@ -16,6 +16,7 @@
 #include "m545_volumetric_mapping/time.hpp"
 #include "m545_volumetric_mapping/Transform.hpp"
 #include <open3d/pipelines/registration/Feature.h>
+#include "m545_volumetric_mapping/ColorProjection.hpp"
 
 namespace m545_mapping {
 
@@ -78,6 +79,7 @@ private:
 	bool isCenterComputed_ = false;
 	size_t parentId_=0;
 	Timer carvingStatisticsTimer_;
+	std::shared_ptr<m545_mapping::ColorProjection> colorProjectionPtr_;
 
 };
 

@@ -26,13 +26,13 @@ namespace m545_mapping {
         std::vector<double> depth(pos_lidar.size());
         Eigen::Quaterniond quaternion = m545_mapping::fromRPY(rpy);
         const Eigen::Matrix3d rotation = quaternion.toRotationMatrix();
-        Eigen::MatrixXd RT(3, 4);           //[R|T]
-        RT.leftCols(3) = rotation.inverse();
-        RT.col(3) = translation;
+        Eigen::MatrixXd T(3, 4);           //[R|T]
+        T.leftCols(3) = rotation.inverse();
+        T.col(3) = translation;
         for (int i = 0; i < pos_lidar.size(); i++) {
             pos_lidar_aux[i].topRows(3) = pos_lidar[i];
             pos_lidar_aux[i](3) = 1.0;
-            pos_udimage_aux[i] = RT * pos_lidar_aux[i];         //[K*[R|T]*[x_l,y_l,z_l,1] = lamda*[u.v.1]
+            pos_udimage_aux[i] = T * pos_lidar_aux[i];         //[K*[R|T]*[x_l,y_l,z_l,1] = lamda*[u.v.1]
             depth[i] = pos_lidar[i].z();
             if(pos_udimage_aux[i].z() < 0) {
                 pos_dimage[i].x() = -1.0;
@@ -95,6 +95,10 @@ namespace m545_mapping {
         }
         for (int i = 0; i < cloud.points_.size(); i++) {
             if (cloud.colors_[i] != noColor_) {
+                // if (cloud.colors_[i][0] >= 1.0 || cloud.colors_[i][1] >= 1.0 || cloud.colors_[i][2] >= 1.0) {
+                //     std::cout << "Color value larger than 1.0 detected. " << cloud.colors_[i] << std::endl;
+                //     continue;
+                // }
                 posArray.push_back(cloud.points_[i]);
                 colorArray.push_back(cloud.colors_[i]);
             }

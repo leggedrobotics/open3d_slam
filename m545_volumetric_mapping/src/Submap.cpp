@@ -22,7 +22,7 @@ namespace registration = open3d::pipelines::registration;
 Submap::Submap(size_t id, size_t parentId) :
 		id_(id), parentId_(parentId) {
 	update(params_);
-
+	colorProjectionPtr_ = std::make_shared<ColorProjection>();
 }
 
 int64 Submap::getId() const {
@@ -40,6 +40,7 @@ size_t Submap::getParentId() const{
 
 bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan,
 		const Transform &mapToRangeSensor, const Time &time, bool isPerformCarving) {
+	static bool firstScan__ = true;
 
 	if (map_.points_.empty()) {
 		creationTime_ = time;
@@ -63,10 +64,11 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 	mapBuilderCropper_->setPose(mapToRangeSensor);
 	voxelizeInsideCroppingVolume(*mapBuilderCropper_, params_.mapBuilder_, &map_);
 
-	if (params_.isBuildDenseMap_) {
+	if (params_.isBuildDenseMap_ && !firstScan__) {
 //		Timer timer("merge_dense_map");
 		denseMapCropper_->setPose(mapToRangeSensor);
 		auto denseCropped = denseMapCropper_->crop(*transformedCloud);
+		*denseCropped = colorProjectionPtr_->filterColor(*denseCropped);
 		if (isPerformCarving) {
 			carve(rawScan, mapToRangeSensor, *denseMapCropper_, params_.denseMapBuilder_.carving_, &denseMap_,
 					&carveDenseMapTimer_);
@@ -75,6 +77,10 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 		auto voxelizedDense = voxelizeWithinCroppingVolume(params_.denseMapBuilder_.mapVoxelSize_, *denseMapCropper_,
 				denseMap_);
 		denseMap_ = *voxelizedDense;
+	}
+	else if (firstScan__) {
+		firstScan__ = false;
+		std::cout << "First scan, not adding to dense map." << std::endl;
 	}
 
 	return true;

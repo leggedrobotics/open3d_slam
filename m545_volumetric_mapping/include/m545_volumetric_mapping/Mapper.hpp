@@ -15,7 +15,6 @@
 #include "m545_volumetric_mapping/croppers.hpp"
 #include "m545_volumetric_mapping/SubmapCollection.hpp"
 #include "m545_volumetric_mapping/TransformInterpolationBuffer.hpp"
-#include "m545_volumetric_mapping/ColorProjection.hpp"
 
 
 namespace m545_mapping {
@@ -65,8 +64,6 @@ private:
 	const TransformInterpolationBuffer &odomToRangeSensorBuffer_;
 	TransformInterpolationBuffer mapToRangeSensorBuffer_;
 	open3d::geometry::PointCloud preProcessedScan_;
-	std::shared_ptr<m545_mapping::ColorProjection> colorProjectionPtr_;
-	bool useCameraRgbFlag_ = false;
 
 };
 

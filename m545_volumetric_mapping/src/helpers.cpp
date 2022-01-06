@@ -322,6 +322,7 @@ std::shared_ptr<open3d::geometry::PointCloud> transform(const Eigen::Matrix4d &T
 	}
 
 	out->points_.reserve(cloud.points_.size());
+	out->colors_ = cloud.colors_;
 	if (cloud.HasNormals()) {
 		out->normals_.reserve(cloud.points_.size());
 	}

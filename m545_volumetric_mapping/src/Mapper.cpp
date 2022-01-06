@@ -93,14 +93,11 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	lastMeasurementTimestamp_ = timestamp;
 	scanMatcherCropper_->setPose(Transform::Identity());
 	submaps_->setMapToRangeSensor(mapToRangeSensor_);
-	colorProjectionPtr_ = std::make_shared<ColorProjection>();
-
-	auto coloredCloud = colorProjectionPtr_->filterColor(rawScan);
 
 	//insert first scan
 	if (submaps_->getActiveSubmap().isEmpty()) {
-		auto wideCroppedCloud = preProcessScan(coloredCloud);
-		submaps_->insertScan(coloredCloud, *wideCroppedCloud, Transform::Identity(), timestamp);
+		auto wideCroppedCloud = preProcessScan(rawScan);
+		submaps_->insertScan(rawScan, *wideCroppedCloud, Transform::Identity(), timestamp);
 		mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
 //		mapToOdomBuffer_.push(timestamp,mapToOdom_);
 		isMatchingInProgress_ = false;
@@ -126,7 +123,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		static double avgTime = 0;
 		static int count = 0;
 		Timer timer;
-		wideCroppedCloud = preProcessScan(coloredCloud);
+		wideCroppedCloud = preProcessScan(rawScan);
 		narrowCropped = scanMatcherCropper_->crop(*wideCroppedCloud);
 		preProcessedScan_ = *narrowCropped;
 		scanMatcherCropper_->setPose(mapToRangeSensor_);
@@ -156,16 +153,16 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	const bool isMovedTooLittle = odometryMotion.translation().norm() < params_.minMovementBetweenMappingSteps_;
 	if (!isMovedTooLittle) {
 		//Timer t("scan_insertion_and_bookeeping");
-		submaps_->insertScan(coloredCloud, *wideCroppedCloud, mapToRangeSensor_, timestamp);
+		submaps_->insertScan(rawScan, *wideCroppedCloud, mapToRangeSensor_, timestamp);
 		odomToRangeSensorPrev_ = odomToRangeSensor;
 	}
 
 	isMatchingInProgress_ = false;
 }
 
-std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud &scan) const {
+std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud &rawScan) const {
 	mapBuilderCropper_->setPose(Transform::Identity());
-	auto wideCroppedCloud = mapBuilderCropper_->crop(scan);
+	auto wideCroppedCloud = mapBuilderCropper_->crop(rawScan);
 	m545_mapping::voxelize(params_.scanProcessing_.voxelSize_, wideCroppedCloud.get());
 	m545_mapping::randomDownSample(params_.scanProcessing_.downSamplingRatio_, wideCroppedCloud.get());
 	estimateNormalsIfNeeded(wideCroppedCloud.get());
