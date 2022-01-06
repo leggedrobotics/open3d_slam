@@ -59,4 +59,16 @@ double informationMatrixMaxCorrespondenceDistance(double mappingVoxelSize);
 double icpMaxCorrespondenceDistance(double mappingVoxelSize);
 double getMapVoxelSize(const MapBuilderParameters &p, double valueIfZero);
 
+inline Eigen::Quaterniond fromRPY(const double roll, const double pitch, const double yaw) {
+
+	const Eigen::AngleAxisd roll_angle(roll, Eigen::Vector3d::UnitX());
+	const Eigen::AngleAxisd pitch_angle(pitch, Eigen::Vector3d::UnitY());
+	const Eigen::AngleAxisd yaw_angle(yaw, Eigen::Vector3d::UnitZ());
+	return yaw_angle * pitch_angle * roll_angle;
+}
+
+inline Eigen::Quaterniond fromRPY(const Eigen::Vector3d &rpy) {
+	return fromRPY(rpy.x(), rpy.y(), rpy.z());
+}
+
 } /* namespace m545_mapping */

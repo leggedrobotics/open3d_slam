@@ -11,7 +11,7 @@ odometry:
       cropping_radius: 35.0
       min_z: -35.0
       max_z: 35.0
-      cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius
+      cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius
   
 mapping:
   min_movement_between_mapping_steps: 0.0
@@ -31,7 +31,7 @@ mapping:
         cropping_radius: 30.0
         min_z: -30.0
         max_z: 30.0
-        cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius
+        cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius
 
   submaps:
     size: 30
@@ -42,7 +42,7 @@ mapping:
       cropping_radius: 40.0
       min_z: -40.0
       max_z: 40.0
-      cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius
+      cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius
     map_voxel_size: 0.2
     space_carving:
       voxel_size: 0.1
@@ -56,7 +56,7 @@ mapping:
       cropping_radius: 12.0
       min_z: -12.0
       max_z: 12.0
-      cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius
+      cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius
     scan_cropping_radius: 12.0
     map_voxel_size: 0.08
     space_carving:
@@ -77,11 +77,17 @@ local_map:
   voxel_size: 0.08
   cropping_radius: 10.0
 
+Projection:
+  K: [767.239452, 0, 814.414996, 0, 767.168172, 597.978256, 0, 0, 1.0]
+  D: [-0.044303, 0.006917, -0.000472, -0.000009, 0.000000]
+  translation: [0.207, -0.025, 0.213]
+  rpy: [-3.11, -1.36, -1.5]
+
 mesher:
   is_compute_mesh: false
   voxel_size: 0.2
   knn_normal_estimation: 4
-  strategy: Poisson # options: AlphaShape, Poisson, BallPivot
+  strategy: Poisson # options are AlphaShape, Poisson, BallPivot
   alpha_shape_alpha: 0.5
   poisson_depth: 8
   poisson_min_density: -2.0

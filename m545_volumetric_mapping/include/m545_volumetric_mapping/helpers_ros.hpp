@@ -9,6 +9,7 @@
 #include <open3d/geometry/PointCloud.h>
 #include <open3d/geometry/MeshBase.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/Image.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <ros/publisher.h>

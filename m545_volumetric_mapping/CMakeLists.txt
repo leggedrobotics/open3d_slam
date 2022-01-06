@@ -25,6 +25,7 @@ set(SRC_FILES
   src/PlaceRecognition.cpp
   src/OptimizationProblem.cpp
   src/WrapperRos.cpp
+  src/ColorProjection.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES
@@ -36,6 +37,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   tf2
   tf2_ros
   tf2_geometry_msgs
+  cv_bridge
 )
    
 

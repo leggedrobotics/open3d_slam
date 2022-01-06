@@ -67,6 +67,52 @@ void loadParameters(const YAML::Node &node, OdometryParameters *p){
 	loadParameters(node["scan_processing"], &(p->scanProcessing_) );
 }
 
+void loadParameters(const std::string &filename, ProjectionParameters *p){
+
+	YAML::Node basenode = YAML::LoadFile(filename);
+
+	if (basenode.IsNull()) {
+			throw std::runtime_error("Projection::loadParameters loading failed");
+	}
+
+	loadParameters(basenode["Projection"], p);
+}
+
+void loadParameters(const YAML::Node &nProj, ProjectionParameters *p){
+	const std::vector<double> vK = nProj["K"].as<std::vector<double> >();
+	p->K(0, 0) = vK[0];
+	p->K(0, 1) = vK[1];
+	p->K(0, 2) = vK[2];
+	p->K(1, 0) = vK[3];
+	p->K(1, 1) = vK[4];
+	p->K(1, 2) = vK[5];
+	p->K(2, 0) = vK[6];
+	p->K(2, 1) = vK[7];
+	p->K(2, 2) = vK[8];
+	const std::vector<double> vD = nProj["D"].as<std::vector<double> >();
+	//      Eigen::Matrix<double, 5, 1> D(vD.data());
+	p->D(0, 0) = vD[0];
+	p->D(1, 0) = vD[1];
+	p->D(2, 0) = vD[2];
+	p->D(3, 0) = vD[3];
+	p->D(4, 0) = vD[4];
+	//    const std::vector<double> vqua = nProj["quaternion"].as<std::vector<double> >();
+	////    Eigen::Quaternion<double> quaternion(vqua.data());
+	//    p->quaternion.w() = vqua[3];
+	//    p->quaternion.x() = vqua[0];
+	//    p->quaternion.y() = vqua[1];
+	//    p->quaternion.z() = vqua[2];
+	const std::vector<double> vtran = nProj["translation"].as<std::vector<double> >();
+	//    Eigen::Vector3d translation(vtran.data());
+	p->translation.x() = vtran[0];
+	p->translation.y() = vtran[1];
+	p->translation.z() = vtran[2];
+	const std::vector<double> vRPY = nProj["rpy"].as<std::vector<double> >();
+	p->rpy.x() = vRPY[0];
+	p->rpy.y() = vRPY[1];
+	p->rpy.z() = vRPY[2];
+}
+
 void loadParameters(const std::string &filename, ScanProcessingParameters *p){
 	YAML::Node basenode = YAML::LoadFile(filename);
 	if (basenode.IsNull()) {
