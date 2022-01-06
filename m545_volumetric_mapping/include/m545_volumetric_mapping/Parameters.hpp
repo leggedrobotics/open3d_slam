@@ -126,6 +126,7 @@ struct MapperParameters {
 	SubmapParameters submaps_;
 	PlaceRecognitionParameters placeRecognition_;
 	GlobalOptimizationParameters globalOptimization_;
+	bool isAttemptLoopClosures_ = true;
 };
 
 struct LocalMapParameters {

@@ -14,8 +14,9 @@ odometry:
       cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius
   
 mapping:
+  is_build_dense_map: true
+  is_attempt_loop_closures: true
   min_movement_between_mapping_steps: 0.0
-  is_build_dense_map: false
   submaps_num_scan_overlap: 5
   scan_to_map_refinement:
     min_refinement_fitness: 0.7
@@ -65,6 +66,23 @@ mapping:
       truncation_distance: 0.1
       carve_space_every_n_sec: 200000.0
       min_dot_product_with_normal: 0.3
+
+  place_recognition:
+    feature_map_normal_estimation_radius: 1.0
+    feature_voxel_size: 0.5
+    feature_radius: 2.5
+    feature_knn: 100
+    normal_knn: 10
+    ransac_num_iter: 1000000
+    ransac_probability: 0.99
+    ransac_model_size: 3
+    ransac_max_correspondence_dist: 0.75
+    ransac_correspondence_checker_distance: 0.75
+    ransac_correspondence_checker_edge_length: 0.5
+    ransac_min_corresondence_set_size: 25
+    max_icp_correspondence_distance: 0.3
+    min_icp_refinement_fitness: 0.5   
+
 
 
   global_optimization:

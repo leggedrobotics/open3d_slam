@@ -49,7 +49,7 @@ WrapperRos::~WrapperRos() {
 		mappingWorker_.join();
 		std::cout << "Joined mapping worker \n";
 	}
-	if (loopClosureWorker_.joinable()) {
+	if (mapperParams_.isAttemptLoopClosures_ && loopClosureWorker_.joinable()) {
 		loopClosureWorker_.join();
 		std::cout << "Joined the loop closure worker \n";
 	}
@@ -123,9 +123,12 @@ void WrapperRos::start() {
 	mappingWorker_ = std::thread([this]() {
 		mappingWorker();
 	});
-	loopClosureWorker_ = std::thread([this]() {
-		loopClosureWorker();
-	});
+
+	if (mapperParams_.isAttemptLoopClosures_) {
+		loopClosureWorker_ = std::thread([this]() {
+			loopClosureWorker();
+		});
+	}
 }
 
 void WrapperRos::odometryWorker() {
@@ -190,8 +193,10 @@ void WrapperRos::mappingWorker() {
 		publishMapToOdomTf(measurement.time_);
 		//mesherBufffer_.push(measurement.time_);
 
-		computeFeaturesIfReady();
-		attemptLoopClosuresIfReady();
+		if (mapperParams_.isAttemptLoopClosures_) {
+			computeFeaturesIfReady();
+			attemptLoopClosuresIfReady();
+		}
 
 		if (isOptimizedGraphAvailable_) {
 			isOptimizedGraphAvailable_ = false;
@@ -315,11 +320,11 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 	std::cout << "Transforming the pose buffer with the delta T from submap "
 			<< latestLoopClosureConstraint.sourceSubmapIdx_ << "the transform is: \n" << asString(dT.dT_)
 			<< std::endl;
-
-	mapper_->getMapToRangeSensorBufferPtr()->applyToAllElementsInTimeInterval(dT.dT_, lastLoopClosureTime,
-			latestTime);
-	mapper_->setMapToRangeSensor(mapper_->getMapToRangeSensor(latestTime));
-	submaps_->setMapToRangeSensor(mapper_->getMapToRangeSensorBuffer().lookup(latestTime));
+	auto mapToRangeSensorBufferPtr = mapper_->getMapToRangeSensorBufferPtr();
+	mapToRangeSensorBufferPtr->applyToAllElementsInTimeInterval(dT.dT_, lastLoopClosureTime, latestTime);
+	const auto updatedMapToRangeSensor = mapper_->getMapToRangeSensorBuffer().lookup(latestTime);
+	mapper_->setMapToRangeSensor(updatedMapToRangeSensor);
+	submaps_->setMapToRangeSensor(updatedMapToRangeSensor);
 
 }
 
