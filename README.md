@@ -8,7 +8,7 @@ This package contains the code for a open3D SLAM framework.
 
 For building the docker image go to the [m545 docker repo](https://github.com/leggedrobotics/m545_docker) into projects/open3D and execute:
 ```bash
-
+git clone --recursive git@bitbucket.org:leggedrobotics/open3d.git
 docker build -t rslethz/m545-gpu:open3d -f open3d.Dockerfile .
 ```
 .
@@ -17,7 +17,6 @@ docker build -t rslethz/m545-gpu:open3d -f open3d.Dockerfile .
 
 The image can also be pulled from docker hub using
 ```bash
-git clone --recursive git@bitbucket.org:leggedrobotics/open3d.git
 docker pull rslethz/m545-gpu:open3d
 ```
 .
