@@ -43,7 +43,7 @@ public:
 			}
 		}
 		if (cloud.HasColors()) {
-			color_ += cloud.colors_[index];
+			color_ = cloud.colors_[index];//+= cloud.colors_[index];
 		}
 		num_of_points_++;
 	}
@@ -58,7 +58,7 @@ public:
 	}
 
 	Eigen::Vector3d GetAverageColor() const {
-		return color_ / double(num_of_points_);
+		return color_; // / double(num_of_points_);
 	}
 
 public:
