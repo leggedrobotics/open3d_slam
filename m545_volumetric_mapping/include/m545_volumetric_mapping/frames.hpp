@@ -10,9 +10,9 @@
 
 namespace m545_mapping {
 namespace frames {
-static const std::string odomFrame = "odom";
+static const std::string odomFrame = "odom_open3d";
 static const std::string rangeSensorFrame = "range_sensor";
-static const std::string mapFrame = "map";
+static const std::string mapFrame = "map_open3d";
 static const std::string imageFrame = "imageFrame";
 
 } /* namespace frames */

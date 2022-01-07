@@ -21,11 +21,11 @@ mapping:
     min_refinement_fitness: 0.7
     scan_matching:
       icp_objective: PointToPlane
-      max_correspondence_dist: 0.3
+      max_correspondence_dist: 0.8
       knn_normal_estimation: 5
       max_n_iter: 50
     scan_processing:
-      voxel_size: 0.15
+      voxel_size: 0.4
       downsampling_ratio: 0.5
       scan_cropping:
         cropping_radius: 40.0
@@ -43,7 +43,7 @@ mapping:
       min_z: -40.0
       max_z: 40.0
       cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius
-    map_voxel_size: 0.2
+    map_voxel_size: 0.4
     space_carving:
       voxel_size: 0.3
       max_raytracing_length: 30.0
@@ -57,12 +57,12 @@ mapping:
       min_z: -12.0
       max_z: 12.0
       cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius
-    map_voxel_size: 0.02
+    map_voxel_size: 0.2
     space_carving:
       voxel_size: 0.2
       max_raytracing_length: 15.0
       truncation_distance: 0.4
-      carve_space_every_n_sec: 2.0
+      carve_space_every_n_sec: 1000.0
       min_dot_product_with_normal: 0.3
 
 

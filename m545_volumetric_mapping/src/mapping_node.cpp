@@ -32,6 +32,8 @@ m545_mapping::ProjectionParameters projectionParams;
 std::shared_ptr<m545_mapping::ColorProjection> colorProjectionPtr_;
 
 void processCloud(const open3d::geometry::PointCloud& cloud, const ros::Time& timestamp, const std::string& frame) {
+	//std::cout << "received" << std::endl;
+	
 	accumulatedCloud += cloud;
 	++numAccumulatedRangeDataCount;
 	if (numAccumulatedRangeDataCount < numAccumulatedRangeDataDesired){
