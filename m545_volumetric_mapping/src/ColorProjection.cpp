@@ -93,12 +93,31 @@ namespace m545_mapping {
         if (cloud.colors_.size() <= 0) {
             return cloud;
         }
+
+
+        auto isClose = [](double val, double refValue, double tolerance){
+        	return std::fabs(val - refValue) <= tolerance;
+        };
+
         for (int i = 0; i < cloud.points_.size(); i++) {
             if (cloud.colors_[i] != noColor_) {
                 // if (cloud.colors_[i][0] >= 1.0 || cloud.colors_[i][1] >= 1.0 || cloud.colors_[i][2] >= 1.0) {
                 //     std::cout << "Color value larger than 1.0 detected. " << cloud.colors_[i] << std::endl;
                 //     continue;
                 // }
+
+            	const auto &c = cloud.colors_[i];
+            	//hack to deal with white points
+            	const double eps = 0.1;
+						if (c[0] <= eps && c[1] <= eps && c[2] <= eps) {
+							continue;
+						}
+
+
+						//hack to deal with yellow points
+						if (isClose(c[0],1.0,0.2) && isClose(c[1],1.0,0.2) && isClose(c[2],0.0,0.3)){
+							continue;
+						}
                 posArray.push_back(cloud.points_[i]);
                 colorArray.push_back(cloud.colors_[i]);
             }
