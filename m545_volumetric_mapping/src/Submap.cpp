@@ -40,7 +40,6 @@ size_t Submap::getParentId() const{
 
 bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan,
 		const Transform &mapToRangeSensor, const Time &time, bool isPerformCarving) {
-	static bool firstScan__ = true;
 
 	if (map_.points_.empty()) {
 		creationTime_ = time;
@@ -64,7 +63,7 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 	mapBuilderCropper_->setPose(mapToRangeSensor);
 	voxelizeInsideCroppingVolume(*mapBuilderCropper_, params_.mapBuilder_, &map_);
 
-	if (params_.isBuildDenseMap_ && !firstScan__) {
+	if (params_.isBuildDenseMap_ && !isFirstScan_) {
 //		Timer timer("merge_dense_map");
 		denseMapCropper_->setPose(mapToRangeSensor);
 		auto denseCropped = denseMapCropper_->crop(*transformedCloud);
@@ -78,11 +77,10 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 				denseMap_);
 		denseMap_ = *voxelizedDense;
 	}
-	else if (firstScan__) {
-		firstScan__ = false;
+	else if (isFirstScan_) {
 		std::cout << "First scan, not adding to dense map." << std::endl;
 	}
-
+	isFirstScan_ = false;
 	return true;
 }
 
