@@ -149,6 +149,8 @@ void WrapperRos::odometryWorker() {
 		const auto timestamp = toRos(measurement.time_);
 		m545_mapping::publishTfTransform(odometry_->getOdomToRangeSensor(measurement.time_).matrix(), timestamp,
 				odomFrame, rangeSensorFrame, tfBroadcaster_.get());
+		m545_mapping::publishTfTransform(odometry_->getOdomToRangeSensor(measurement.time_).matrix(), timestamp,
+				mapFrame, "raw_odom", tfBroadcaster_.get());
 
 		if (odometryInputPub_.getNumSubscribers() > 0) {
 			auto odomInput = odometry_->getPreProcessedCloud();
