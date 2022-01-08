@@ -9,16 +9,22 @@
 #include <vector>
 #include "m545_volumetric_mapping/croppers.hpp"
 #include <utility>
+#include <iostream>
+#ifdef M545_VOLUMETRIC_MAPPING_OPENMP_FOUND
+#include <omp.h>
+#endif
 
 namespace m545_mapping {
 
-std::unique_ptr<CroppingVolume> croppingVolumeFactory(const std::string &type, double radius, double minZ, double maxZ){
+std::unique_ptr<CroppingVolume> croppingVolumeFactory(const std::string &type, double radius, double minZ,
+		double maxZ) {
 	return croppingVolumeFactory(cropperNames.at(type), radius, minZ, maxZ);
 }
-std::unique_ptr<CroppingVolume> croppingVolumeFactory(CroppingVolumeEnum type, double radius, double minZ, double maxZ){
-	switch(type){
+std::unique_ptr<CroppingVolume> croppingVolumeFactory(CroppingVolumeEnum type, double radius, double minZ,
+		double maxZ) {
+	switch (type) {
 	case CroppingVolumeEnum::Cylinder: {
-		auto cropper = std::make_unique<CylinderCroppingVolume>(radius,minZ,maxZ);
+		auto cropper = std::make_unique<CylinderCroppingVolume>(radius, minZ, maxZ);
 		return std::move(cropper);
 	}
 	case CroppingVolumeEnum::MinRadius: {
@@ -53,6 +59,44 @@ CroppingVolume::Indices CroppingVolume::getIndicesWithinVolume(const PointCloud 
 	return idxs;
 }
 
+std::shared_ptr<CroppingVolume::PointCloud> CroppingVolume::cropMultiThreaded(const PointCloud &cloud) const {
+
+	std::shared_ptr<CroppingVolume::PointCloud> cropped(new PointCloud());
+
+	const int nPoints = cloud.points_.size();
+	cropped->points_.reserve(nPoints);
+	if (cloud.HasColors()) {
+		cropped->colors_.reserve(nPoints);
+	}
+	if (cloud.HasNormals()) {
+		cropped->normals_.reserve(nPoints);
+	}
+
+#ifndef M545_VOLUMETRIC_MAPPING_OPENMP_FOUND
+	std::cerr << "OpemMP not found, defaulting to single threaded implementation\n";
+#else
+#pragma omp parallel for
+#endif
+	for (size_t i = 0; i < nPoints; ++i) {
+		if (isWithinVolume(cloud.points_[i])) {
+#ifdef M545_VOLUMETRIC_MAPPING_OPENMP_FOUND
+#pragma omp critical
+#endif
+			{
+				cropped->points_.push_back(cloud.points_[i]);
+				if (cloud.HasColors()) {
+					cropped->colors_.push_back(cloud.colors_[i]);
+				}
+				if (cloud.HasNormals()) {
+					cropped->normals_.push_back(cloud.normals_[i]);
+				}
+			} // end pragma
+		} // end if
+	}
+
+	return cropped;
+}
+
 std::shared_ptr<CroppingVolume::PointCloud> CroppingVolume::crop(const PointCloud &cloud) const {
 	const auto idxsInside = getIndicesWithinVolume(cloud);
 	return cloud.SelectByIndex(idxsInside);
@@ -75,7 +119,7 @@ MaxRadiusCroppingVolume::MaxRadiusCroppingVolume(double radius) :
 bool MaxRadiusCroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const {
 	return (p - pose_.translation()).norm() <= radius_;
 }
-void MaxRadiusCroppingVolume::setParameters(double radius){
+void MaxRadiusCroppingVolume::setParameters(double radius) {
 	radius_ = radius;
 }
 
@@ -91,7 +135,7 @@ bool MinRadiusCroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const {
 	return (p - pose_.translation()).norm() >= radius_;
 }
 
-void MinRadiusCroppingVolume::setParameters(double radius){
+void MinRadiusCroppingVolume::setParameters(double radius) {
 	radius_ = radius;
 }
 
@@ -108,11 +152,10 @@ bool CylinderCroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const {
 	return p.z() >= minZ_ && p.z() <= maxZ_ && (p - pose_.translation()).head<2>().norm() <= radius_;
 }
 
-void CylinderCroppingVolume::setParameters(double radius, double minZ, double maxZ){
+void CylinderCroppingVolume::setParameters(double radius, double minZ, double maxZ) {
 	radius_ = radius;
-	minZ_ =minZ;
+	minZ_ = minZ;
 	maxZ_ = maxZ;
 }
-
 
 } // namespace m545_mapping

@@ -44,7 +44,7 @@ mapping:
       max_z: 40.0
       cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius
     map_voxel_size: 0.4
-    voxelize_every_n_scans: 1
+    voxelize_every_n_scans: 1 # unused since it doesn't bring anything
     space_carving:
       voxel_size: 0.3
       max_raytracing_length: 30.0
