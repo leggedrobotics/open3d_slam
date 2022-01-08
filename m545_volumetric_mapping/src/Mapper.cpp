@@ -73,6 +73,10 @@ const SubmapCollection& Mapper::getSubmaps() const {
 	return *submaps_;
 }
 
+SubmapCollection* Mapper::getSubmapsPtr() {
+	return submaps_.get();
+}
+
 void Mapper::setMapToRangeSensor(const Transform &t) {
 	mapToRangeSensor_ = t;
 }
@@ -88,7 +92,7 @@ const PointCloud& Mapper::getPreprocessedScan() const {
 	return preProcessedScan_;
 }
 
-void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &timestamp) {
+bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &timestamp) {
 	isMatchingInProgress_ = true;
 	lastMeasurementTimestamp_ = timestamp;
 	scanMatcherCropper_->setPose(Transform::Identity());
@@ -101,13 +105,13 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
 //		mapToOdomBuffer_.push(timestamp,mapToOdom_);
 		isMatchingInProgress_ = false;
-		return;
+		return true;
 	}
 
 	if (!odomToRangeSensorBuffer_.has(timestamp)) {
 		std::cerr << "WARNING: odomToRangeSensorBuffer_ DOES NOT HAVE THE DESIRED TRANSFORM! \n";
 		isMatchingInProgress_ = false;
-		return;
+		return false;
 	}
 
 	const Transform odomToRangeSensor = getTransform(timestamp, odomToRangeSensorBuffer_);
@@ -140,7 +144,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	if (result.fitness_ < params_.minRefinementFitness_) {
 		std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
 		isMatchingInProgress_ = false;
-		return;
+		return false;
 	}
 
 	// update transforms
@@ -158,6 +162,7 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	}
 
 	isMatchingInProgress_ = false;
+	return true;
 }
 
 std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud &rawScan) const {

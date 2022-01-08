@@ -39,6 +39,10 @@ const SubmapCollection::Submaps& SubmapCollection::getSubmaps() const {
 	return submaps_;
 }
 
+Submap* SubmapCollection::getSubmapPtr(size_t idx){
+	return &(submaps_.at(idx));
+}
+
 SubmapCollection::TimestampedSubmapIds SubmapCollection::popFinishedSubmapIds() {
 	return finishedSubmapsIdxs_.popAllElements();
 }

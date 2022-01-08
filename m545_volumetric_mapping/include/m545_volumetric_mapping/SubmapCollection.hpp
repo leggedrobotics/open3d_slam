@@ -49,6 +49,7 @@ public:
 	void setParameters(const MapperParameters &p);
 	bool isEmpty() const;
 	const Submaps& getSubmaps() const;
+	Submap* getSubmapPtr(size_t idx);
 	size_t getTotalNumPoints() const;
 
 	void computeFeatures(const TimestampedSubmapIds &ids);

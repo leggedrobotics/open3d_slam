@@ -39,6 +39,7 @@ public:
 
 	void setParameters(const MapperParameters &mapperParams);
 	bool insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan, const Transform &transform, const Time &time, bool isPerformCarving);
+	bool insertScanDenseMap(const PointCloud &rawScan, const Transform &transform, const Time &time, bool isPerformCarving);
 
 	const Transform& getMapToSubmapOrigin() const;
 	Eigen::Vector3d getMapToSubmapCenter() const;

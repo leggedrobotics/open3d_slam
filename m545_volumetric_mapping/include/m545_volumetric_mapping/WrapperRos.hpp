@@ -43,6 +43,13 @@ class WrapperRos {
 		PointCloud cloud_;
 	};
 
+	struct RegisteredPointCloud{
+		TimestampedPointCloud raw_;
+		Transform transform_;
+		std::string sourceFrame_, targetFrame_;
+		size_t submapId_;
+	};
+
 public:
 	WrapperRos(ros::NodeHandlePtr nh);
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -62,6 +69,7 @@ private:
 	void attemptLoopClosuresIfReady();
 	void updateSubmapsAndTrajectory();
 	void mesherWorker();
+	void denseMapWorker();
 	void publishMaps(const Time &time);
 	void publishMapToOdomTf(const Time &time);
 
@@ -72,6 +80,7 @@ private:
 
 
 	// non ros types
+	CircularBuffer<RegisteredPointCloud> registeredCloudBuffer_;
 	CircularBuffer<TimestampedPointCloud> odometryBuffer_, mappingBuffer_;
 	CircularBuffer<Time> mesherBufffer_;
 	ThreadSafeBuffer<TimestampedSubmapId> loopClosureCandidates_;
@@ -86,8 +95,8 @@ private:
 	std::shared_ptr<SubmapCollection> submaps_;
 	std::shared_ptr<OptimizationProblem> optimizationProblem_;
 	std::string folderPath_;
-	std::thread odometryWorker_, mappingWorker_, loopClosureWorker_;
-	Timer mappingStatisticsTimer_,odometryStatisticsTimer_, visualizationUpdateTimer_;
+	std::thread odometryWorker_, mappingWorker_, loopClosureWorker_, denseMapWorker_;
+	Timer mappingStatisticsTimer_,odometryStatisticsTimer_, visualizationUpdateTimer_, denseMapStatiscticsTimer_;
 	bool isVisualizationFirstTime_ = true;
 	std::future<void> computeFeaturesResult_;
 	bool isOptimizedGraphAvailable_ = false;

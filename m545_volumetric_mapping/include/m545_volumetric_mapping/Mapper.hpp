@@ -33,8 +33,9 @@ public:
 	const PointCloud& getDenseMap() const;
 	const Submap& getActiveSubmap() const;
 	const SubmapCollection &getSubmaps() const;
+	SubmapCollection* getSubmapsPtr();
 	PointCloud getAssembledMap() const;
-	void addRangeMeasurement(const PointCloud &cloud, const Time &timestamp);
+	bool addRangeMeasurement(const PointCloud &cloud, const Time &timestamp);
 	void setParameters(const MapperParameters &p);
 	bool isMatchingInProgress() const;
 	bool isManipulatingMap() const;
