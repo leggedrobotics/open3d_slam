@@ -167,12 +167,12 @@ std::shared_ptr<open3d::geometry::PointCloud> voxelizeWithinCroppingVolume(doubl
 	}
 
 	const Eigen::Vector3d voxelSize = Eigen::Vector3d(voxel_size, voxel_size, voxel_size);
-	const auto voxelBounds = computeVoxelBounds(cloud, voxelSize);
-	const Eigen::Vector3d voxelMinBound = voxelBounds.first;
-	const Eigen::Vector3d voxelMaxBound = voxelBounds.second;
-	if (voxel_size * std::numeric_limits<int>::max() < (voxelMaxBound - voxelMinBound).maxCoeff()) {
-		throw std::runtime_error("[VoxelDownSample] voxel_size is too small.");
-	}
+//	const auto voxelBounds = computeVoxelBounds(cloud, voxelSize);
+//	const Eigen::Vector3d voxelMinBound = voxelBounds.first;
+//	const Eigen::Vector3d voxelMaxBound = voxelBounds.second;
+//	if (voxel_size * std::numeric_limits<int>::max() < (voxelMaxBound - voxelMinBound).maxCoeff()) {
+//		throw std::runtime_error("[VoxelDownSample] voxel_size is too small.");
+//	}
 	std::unordered_map<Eigen::Vector3i, AccumulatedPoint, EigenVec3iHash> voxelindex_to_accpoint;
 
 	const bool has_normals = cloud.HasNormals();
@@ -204,7 +204,7 @@ std::shared_ptr<open3d::geometry::PointCloud> voxelizeWithinCroppingVolume(doubl
 	for (auto accpoint : voxelindex_to_accpoint) {
 		output->points_.emplace_back(std::move(accpoint.second.GetAveragePoint()));
 		if (has_normals) {
-			output->normals_.emplace_back(std::move(accpoint.second.GetAverageNormal()));
+			output->normals_.emplace_back(std::move(accpoint.second.GetAverageNormal().normalized()));
 		}
 		if (has_colors) {
 			output->colors_.emplace_back(std::move(accpoint.second.GetAverageColor()));
