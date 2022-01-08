@@ -162,11 +162,28 @@ void Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 
 std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud &rawScan) const {
 	mapBuilderCropper_->setPose(Transform::Identity());
-	auto wideCroppedCloud = mapBuilderCropper_->crop(rawScan);
-	m545_mapping::voxelize(params_.scanProcessing_.voxelSize_, wideCroppedCloud.get());
-	m545_mapping::randomDownSample(params_.scanProcessing_.downSamplingRatio_, wideCroppedCloud.get());
-	estimateNormalsIfNeeded(wideCroppedCloud.get());
-	return wideCroppedCloud;
+//	auto wideCroppedCloud = mapBuilderCropper_->crop(rawScan);
+//	m545_mapping::voxelize(params_.scanProcessing_.voxelSize_, wideCroppedCloud.get());
+//	m545_mapping::randomDownSample(params_.scanProcessing_.downSamplingRatio_, wideCroppedCloud.get());
+//	estimateNormalsIfNeeded(wideCroppedCloud.get());
+//	return wideCroppedCloud;
+
+	std::shared_ptr<PointCloud> wideCroppedCloud,voxelized,downsampled;
+	wideCroppedCloud = mapBuilderCropper_->crop(rawScan);
+	if (params_.scanProcessing_.voxelSize_ <= 0.0) {
+		voxelized = wideCroppedCloud;
+		} else {
+			voxelized = wideCroppedCloud->VoxelDownSample(params_.scanProcessing_.voxelSize_);
+		}
+
+		if (params_.scanProcessing_.downSamplingRatio_ >= 1.0) {
+			downsampled = voxelized;
+		} else {
+			downsampled = voxelized->RandomDownSample(params_.scanProcessing_.downSamplingRatio_);
+		}
+	estimateNormalsIfNeeded(downsampled.get());
+	return downsampled;
+
 }
 
 const Mapper::PointCloud& Mapper::getMap() const {
