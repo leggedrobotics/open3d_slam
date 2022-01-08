@@ -34,7 +34,7 @@ Time Submap::getCreationTime() const {
 	return creationTime_;
 }
 
-size_t Submap::getParentId() const{
+size_t Submap::getParentId() const {
 	return parentId_;
 }
 
@@ -49,7 +49,8 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 	estimateNormalsIfNeeded(params_.scanMatcher_.kNNnormalEstimation_, transformedCloud.get());
 	if (isPerformCarving) {
 		carvingStatisticsTimer_.startStopwatch();
-		carve(rawScan, mapToRangeSensor, *mapBuilderCropper_, params_.mapBuilder_.carving_, &map_, &carvingTimer_);
+		carve(rawScan, mapToRangeSensor, *mapBuilderCropper_, params_.mapBuilder_.carving_, &map_,
+				&carvingTimer_);
 		const double timeMeasurement = carvingStatisticsTimer_.elapsedMsecSinceStopwatchStart();
 		carvingStatisticsTimer_.addMeasurementMsec(timeMeasurement);
 		if (carvingStatisticsTimer_.elapsedSec() > 20.0) {
@@ -63,7 +64,7 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 	mapBuilderCropper_->setPose(mapToRangeSensor);
 	voxelizeInsideCroppingVolume(*mapBuilderCropper_, params_.mapBuilder_, &map_);
 
-	if (params_.isBuildDenseMap_ && !isFirstScan_) {
+	if (params_.isBuildDenseMap_) {
 //		Timer timer("merge_dense_map");
 		denseMapCropper_->setPose(mapToRangeSensor);
 		auto denseCropped = denseMapCropper_->crop(*transformedCloud);
@@ -73,18 +74,18 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 					&carveDenseMapTimer_);
 		}
 		denseMap_ += *denseCropped;
-		auto voxelizedDense = voxelizeWithinCroppingVolume(params_.denseMapBuilder_.mapVoxelSize_, *denseMapCropper_,
-				denseMap_);
-		denseMap_ = *voxelizedDense;
+		if (++scanCounter_ >= params_.denseMapBuilder_.voxelizeEveryNscans_) {
+			auto voxelizedDense = voxelizeWithinCroppingVolume(params_.denseMapBuilder_.mapVoxelSize_,
+					*denseMapCropper_, denseMap_);
+			denseMap_ = *voxelizedDense;
+			scanCounter_ = 0;
+		}
 	}
-	else if (isFirstScan_) {
-		std::cout << "First scan, not adding to dense map." << std::endl;
-	}
-	isFirstScan_ = false;
+
 	return true;
 }
 
-void Submap::transform(const Transform &T){
+void Submap::transform(const Transform &T) {
 	const Eigen::Matrix4d mat(T.matrix());
 	sparseMap_.Transform(mat);
 	map_.Transform(mat);
@@ -96,8 +97,9 @@ void Submap::transform(const Transform &T){
 	submapCenter_ = T * submapCenter_;
 }
 
-void Submap::carve(const PointCloud &rawScan, const Transform &mapToRangeSensor, const CroppingVolume &cropper,
-		const SpaceCarvingParameters &params, PointCloud *map, Timer *timer) const {
+void Submap::carve(const PointCloud &rawScan, const Transform &mapToRangeSensor,
+		const CroppingVolume &cropper, const SpaceCarvingParameters &params, PointCloud *map,
+		Timer *timer) const {
 	if (map->points_.empty() || timer->elapsedSec() < params.carveSpaceEveryNsec_) {
 		return;
 	}
@@ -162,11 +164,14 @@ void Submap::update(const MapperParameters &p) {
 //	denseMapCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.denseMapBuilder_.scanCroppingRadius_);
 	{
 		const auto &par = p.mapBuilder_.cropper_;
-		mapBuilderCropper_ = croppingVolumeFactory(par.cropperName_, par.croppingRadius_, par.croppingMinZ_, par.croppingMaxZ_);
+		mapBuilderCropper_ = croppingVolumeFactory(par.cropperName_, par.croppingRadius_, par.croppingMinZ_,
+				par.croppingMaxZ_);
 	}
 	{
+		//todo remove magic
 		const auto &par = p.denseMapBuilder_.cropper_;
-		denseMapCropper_ = croppingVolumeFactory(par.cropperName_, par.croppingRadius_, par.croppingMinZ_, par.croppingMaxZ_);
+		denseMapCropper_ = croppingVolumeFactory(par.cropperName_, 1.2*par.croppingRadius_, par.croppingMinZ_,
+				par.croppingMaxZ_);
 	}
 
 }
@@ -181,7 +186,8 @@ void Submap::computeFeatures() {
 	}
 	const auto &p = params_.placeRecognition_;
 	sparseMap_ = *(map_.VoxelDownSample(p.featureVoxelSize_));
-	sparseMap_.EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(p.normalEstimationRadius_, p.normalKnn_));
+	sparseMap_.EstimateNormals(
+			open3d::geometry::KDTreeSearchParamHybrid(p.normalEstimationRadius_, p.normalKnn_));
 	sparseMap_.NormalizeNormals();
 	sparseMap_.OrientNormalsTowardsCameraLocation(Eigen::Vector3d::Zero());
 	feature_ = registration::ComputeFPFHFeature(sparseMap_,
@@ -195,13 +201,13 @@ const Submap::Feature& Submap::getFeatures() const {
 	return *feature_;
 }
 
-Submap::Feature *Submap::getFeaturePtr() const {
+Submap::Feature* Submap::getFeaturePtr() const {
 	return feature_.get();
 }
 
 void Submap::computeSubmapCenter() {
 	submapCenter_ = map_.GetCenter();
-	isCenterComputed_=true;
+	isCenterComputed_ = true;
 }
 
 } // namespace m545_mapping

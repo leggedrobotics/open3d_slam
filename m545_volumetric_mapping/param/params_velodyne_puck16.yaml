@@ -44,6 +44,7 @@ mapping:
       max_z: 50.0
       cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius
     map_voxel_size: 0.1
+    voxelize_every_n_scans: 5
     space_carving:
       voxel_size: 0.5
       max_raytracing_length: 25.0
@@ -58,6 +59,7 @@ mapping:
       max_z: 50.0
       cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius
     map_voxel_size: 0.0
+    voxelize_every_n_scans: 5
     space_carving:
       voxel_size: 0.1
       max_raytracing_length: 25.0

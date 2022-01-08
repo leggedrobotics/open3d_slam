@@ -102,25 +102,13 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        camera_accel_frame:
+        map_open3d:
           Value: true
-        camera_accel_optical_frame:
+        odom_open3d:
           Value: true
-        camera_gyro_frame:
-          Value: true
-        camera_imu_optical_frame:
-          Value: true
-        camera_link:
-          Value: true
-        camera_pose_frame:
-          Value: true
-        map:
-          Value: true
-        odom:
+        os_sensor:
           Value: true
         range_sensor:
-          Value: true
-        rslidar:
           Value: true
       Marker Alpha: 1
       Marker Scale: 1
@@ -129,10 +117,10 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        map:
-          odom:
+        map_open3d:
+          odom_open3d:
             range_sensor:
-              rslidar:
+              os_sensor:
                 {}
       Update Interval: 0
       Value: true
@@ -146,8 +134,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 8.03593635559082
-        Min Value: -0.80631422996521
+        Max Value: 8.268543243408203
+        Min Value: -7.262460708618164
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -249,7 +237,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: map
+    Fixed Frame: map_open3d
     Frame Rate: 30
   Name: root
   Tools:
@@ -273,7 +261,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 147.64739990234375
+      Distance: 129.92971801757812
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -281,9 +269,9 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -14.378170013427734
-        Y: -22.09653091430664
-        Z: -22.454429626464844
+        X: 4.5280256271362305
+        Y: -4.040750503540039
+        Z: -21.748952865600586
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

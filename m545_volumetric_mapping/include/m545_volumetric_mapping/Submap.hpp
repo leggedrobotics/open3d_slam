@@ -80,8 +80,7 @@ private:
 	size_t parentId_=0;
 	Timer carvingStatisticsTimer_;
 	std::shared_ptr<m545_mapping::ColorProjection> colorProjectionPtr_;
-	bool isFirstScan_ = true;
-
+	int scanCounter_ = 0;
 
 };
 
