@@ -7,9 +7,8 @@ Panels:
         - /Global Options1
         - /Status1
         - /TFTrajectory1
-        - /PointCloud21
-        - /PointCloud22
         - /Axes1
+        - /TFTrajectory2
       Splitter Ratio: 0.5
     Tree Height: 1520
   - Class: rviz/Selection
@@ -106,9 +105,11 @@ Visualization Manager:
           Value: true
         odom_open3d:
           Value: true
-        os_sensor:
-          Value: true
         range_sensor:
+          Value: true
+        raw_odom:
+          Value: true
+        rslidar:
           Value: true
       Marker Alpha: 1
       Marker Scale: 1
@@ -120,8 +121,10 @@ Visualization Manager:
         map_open3d:
           odom_open3d:
             range_sensor:
-              os_sensor:
+              rslidar:
                 {}
+          raw_odom:
+            {}
       Update Interval: 0
       Value: true
     - Class: m545_volumetric_mapping_rviz_plugin/Mesh
@@ -134,8 +137,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 8.268543243408203
-        Min Value: -7.262460708618164
+        Max Value: 10.14903450012207
+        Min Value: -1.5582693815231323
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -221,7 +224,11 @@ Visualization Manager:
       Name: MarkerArray
       Namespaces:
         submap_0: true
+        submap_1: true
+        submap_2: true
         submap_id_0: true
+        submap_id_1: true
+        submap_id_2: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -233,6 +240,14 @@ Visualization Manager:
       Reference Frame: <Fixed Frame>
       Show Trail: false
       Value: true
+    - Class: jsk_rviz_plugin/TFTrajectory
+      Enabled: true
+      Name: TFTrajectory
+      Value: true
+      color: 173; 127; 168
+      duration: 500
+      frame: raw_odom
+      line_width: 0.15000000596046448
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -261,7 +276,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 129.92971801757812
+      Distance: 77.91824340820312
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -269,9 +284,9 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 4.5280256271362305
-        Y: -4.040750503540039
-        Z: -21.748952865600586
+        X: 17.069232940673828
+        Y: -16.29465103149414
+        Z: -21.07909393310547
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
