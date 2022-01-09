@@ -67,26 +67,31 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 	return true;
 }
 
-bool Submap::insertScanDenseMap(const PointCloud &rawScan, const Transform &mapToRangeSensor, const Time &time, bool isPerformCarving){
-	//		Timer timer("merge_dense_map");
-			denseMapCropper_->setPose(Transform::Identity());
-			auto cropped = denseMapCropper_->crop(rawScan);
-			m545_mapping::voxelize(params_.denseMapBuilder_.mapVoxelSize_, cropped.get());
-			auto transformedCloud = m545_mapping::transform(mapToRangeSensor.matrix(), *cropped);
-			denseMapCropper_->setPose(mapToRangeSensor);
-			auto colored = colorProjectionPtr_->filterColor(*transformedCloud);
-			if (isPerformCarving) {
-				carve(rawScan, mapToRangeSensor, *denseMapCropper_, params_.denseMapBuilder_.carving_, &denseMap_,
-						&carveDenseMapTimer_);
-			}
-			denseMap_ += colored;
-			if (++scanCounter_ >= params_.denseMapBuilder_.voxelizeEveryNscans_) {
-				auto voxelizedDense = voxelizeWithinCroppingVolume(params_.denseMapBuilder_.mapVoxelSize_,
-						*denseMapCropper_, denseMap_);
-				denseMap_ = *voxelizedDense;
-				scanCounter_ = 0;
-			}
-		return true;
+bool Submap::insertScanDenseMap(const PointCloud &rawScan, const Transform &mapToRangeSensor,
+		const Time &time, bool isPerformCarving) {
+	if (isFirstDenseScan_) {
+		isFirstDenseScan_ = false;
+		return false;
+	}
+
+	denseMapCropper_->setPose(Transform::Identity());
+	auto cropped = denseMapCropper_->crop(rawScan);
+	m545_mapping::voxelize(params_.denseMapBuilder_.mapVoxelSize_, cropped.get());
+	auto transformedCloud = m545_mapping::transform(mapToRangeSensor.matrix(), *cropped);
+	denseMapCropper_->setPose(mapToRangeSensor);
+	auto colored = colorProjectionPtr_->filterColor(*transformedCloud);
+	if (isPerformCarving) {
+		carve(rawScan, mapToRangeSensor, *denseMapCropper_, params_.denseMapBuilder_.carving_, &denseMap_,
+				&carveDenseMapTimer_);
+	}
+	denseMap_ += colored;
+	if (++scanCounter_ >= params_.denseMapBuilder_.voxelizeEveryNscans_) {
+		auto voxelizedDense = voxelizeWithinCroppingVolume(params_.denseMapBuilder_.mapVoxelSize_,
+				*denseMapCropper_, denseMap_);
+		denseMap_ = *voxelizedDense;
+		scanCounter_ = 0;
+	}
+	return true;
 }
 
 void Submap::transform(const Transform &T) {
@@ -174,7 +179,7 @@ void Submap::update(const MapperParameters &p) {
 	{
 		//todo remove magic
 		const auto &par = p.denseMapBuilder_.cropper_;
-		denseMapCropper_ = croppingVolumeFactory(par.cropperName_, 1.2*par.croppingRadius_, par.croppingMinZ_,
+		denseMapCropper_ = croppingVolumeFactory(par.cropperName_, 1.2 * par.croppingRadius_, par.croppingMinZ_,
 				par.croppingMaxZ_);
 	}
 

@@ -82,6 +82,7 @@ private:
 	Timer carvingStatisticsTimer_;
 	std::shared_ptr<m545_mapping::ColorProjection> colorProjectionPtr_;
 	int scanCounter_ = 0;
+	bool isFirstDenseScan_ = true;
 
 };
 
