@@ -9,7 +9,31 @@
 
 namespace m545_mapping {
 
+void loadParameters(const std::string &filename, PlaceRecognitionParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+	if (basenode.IsNull()) {
+		throw std::runtime_error("PlaceRecognitionParams::loadParameters loading failed");
+	}
+	loadParameters(basenode["place_recognition"], p);
+}
+void loadParameters(const YAML::Node &node, PlaceRecognitionParameters *p){
 
+	p->normalEstimationRadius_ = node["feature_map_normal_estimation_radius"].as<double>();
+	p->featureVoxelSize_ = node["feature_voxel_size"].as<double>();
+	p->featureRadius_ = node["feature_radius"].as<double>();
+	p->featureKnn_ = node["feature_knn"].as<int>();
+	p->normalKnn_ = node["normal_knn"].as<int>();
+	p->ransacNumIter_ = node["ransac_num_iter"].as<int>();
+	p->ransacProbability_ = node["ransac_probability"].as<double>();
+	p->ransacModelSize_ = node["ransac_model_size"].as<int>();
+	p->ransacMaxCorrespondenceDistance_ = node["ransac_max_correspondence_dist"].as<double>();
+	p->correspondenceCheckerDistance_ = node["ransac_correspondence_checker_distance"].as<double>();
+	p->correspondenceCheckerEdgeLength_ = node["ransac_correspondence_checker_edge_length"].as<double>();
+	p->ransacMinCorrespondenceSetSize_ = node["ransac_min_corresondence_set_size"].as<int>();
+	p->maxIcpCorrespondenceDistance_ = node["max_icp_correspondence_distance"].as<double>();
+	p->minRefinementFitness_ = node["min_icp_refinement_fitness"].as<double>();
+
+}
 
 void loadParameters(const std::string &filename, GlobalOptimizationParameters *p){
 	YAML::Node basenode = YAML::LoadFile(filename);
@@ -178,6 +202,7 @@ void loadParameters(const std::string &filename, MapperParameters *p) {
 }
 void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	p->isBuildDenseMap_ = node["is_build_dense_map"].as<bool>();
+	p->isAttemptLoopClosures_ = node["is_attempt_loop_closures"].as<bool>();
 	p->minMovementBetweenMappingSteps_ = node["min_movement_between_mapping_steps"].as<double>();
 	p->minRefinementFitness_ = node["scan_to_map_refinement"]["min_refinement_fitness"].as<double>();
 	p->numScansOverlap_ = node["submaps_num_scan_overlap"].as<int>();
@@ -189,6 +214,7 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	loadParameters(node["map_builder"], &(p->mapBuilder_));
 	loadParameters(node["submaps"], &(p->submaps_));
 	loadParameters(node["global_optimization"], &(p->globalOptimization_));
+	loadParameters(node["place_recognition"], &(p->placeRecognition_));
 }
 
 void loadParameters(const std::string &filename, LocalMapParameters *p){

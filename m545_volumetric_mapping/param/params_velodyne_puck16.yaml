@@ -1,9 +1,9 @@
 odometry:
   scan_matching:
     icp_objective: PointToPlane
-    max_correspondence_dist: 0.5
+    max_correspondence_dist: 1.0
     knn_normal_estimation: 4
-    max_n_iter: 25
+    max_n_iter: 35
   scan_processing:
     voxel_size: -1.0
     downsampling_ratio: 0.4
@@ -14,9 +14,10 @@ odometry:
       cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius
   
 mapping:
-  min_movement_between_mapping_steps: 0.0
   is_build_dense_map: false
-  submaps_num_scan_overlap: 1
+  is_attempt_loop_closures: true
+  min_movement_between_mapping_steps: 0.0
+  submaps_num_scan_overlap: 20
   scan_to_map_refinement:
     min_refinement_fitness: 0.7
     scan_matching:
@@ -46,10 +47,10 @@ mapping:
     map_voxel_size: 0.1
     voxelize_every_n_scans: 5
     space_carving:
-      voxel_size: 0.5
-      max_raytracing_length: 25.0
-      truncation_distance: 0.1
-      carve_space_every_n_sec: 2.0
+      voxel_size: 0.2
+      max_raytracing_length: 30.0
+      truncation_distance: 0.3
+      carve_space_every_n_sec: 1.0
       min_dot_product_with_normal: 0.3
       
   dense_map_builder:
@@ -67,7 +68,24 @@ mapping:
       carve_space_every_n_sec: 3.0
       min_dot_product_with_normal: 0.1
 
-
+  place_recognition:
+    feature_map_normal_estimation_radius: 1.0
+    feature_voxel_size: 0.5
+    feature_radius: 2.5
+    feature_knn: 100
+    normal_knn: 10
+    ransac_num_iter: 1000000
+    ransac_probability: 0.99
+    ransac_model_size: 3
+    ransac_max_correspondence_dist: 0.75
+    ransac_correspondence_checker_distance: 0.75
+    ransac_correspondence_checker_edge_length: 0.5
+    ransac_min_corresondence_set_size: 25
+    max_icp_correspondence_distance: 1.0
+    min_icp_refinement_fitness: 0.5   
+    
+    
+    
   global_optimization:
     edge_prune_threshold: 0.2
     loop_closure_preference: 2.0

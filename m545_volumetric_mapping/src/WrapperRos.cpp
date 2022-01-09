@@ -51,7 +51,7 @@ WrapperRos::~WrapperRos() {
 		mappingWorker_.join();
 		std::cout << "Joined mapping worker \n";
 	}
-	if (loopClosureWorker_.joinable()) {
+	if (mapperParams_.isAttemptLoopClosures_ && loopClosureWorker_.joinable()) {
 		loopClosureWorker_.join();
 		std::cout << "Joined the loop closure worker \n";
 	}
@@ -60,6 +60,21 @@ WrapperRos::~WrapperRos() {
 		denseMapWorker_.join();
 		std::cout << "Joined the dense map worker! \n";
 	}
+}
+
+
+size_t WrapperRos::getOdometryBufferSize() const {
+	return odometryBuffer_.size();
+}
+size_t WrapperRos::getMappingBufferSize() const {
+	return mappingBuffer_.size();
+}
+
+size_t WrapperRos::getOdometryBufferSizeLimit() const {
+	return odometryBuffer_.size_limit();
+}
+size_t WrapperRos::getMappingBufferSizeLimit() const {
+	return mappingBuffer_.size_limit();
 }
 
 void WrapperRos::addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp) {
@@ -123,9 +138,10 @@ void WrapperRos::start() {
 	mappingWorker_ = std::thread([this]() {
 		mappingWorker();
 	});
-	loopClosureWorker_ = std::thread([this]() {
+	if (mapperParams_.isAttemptLoopClosures_) {
+		loopClosureWorker_ = std::thread([this]() {
 		loopClosureWorker();
-	});
+		});
 
 	if (mapperParams_.isBuildDenseMap_) {
 		denseMapWorker_ = std::thread([this]() {
@@ -152,6 +168,8 @@ void WrapperRos::odometryWorker() {
 		const auto timestamp = toRos(measurement.time_);
 		m545_mapping::publishTfTransform(odometry_->getOdomToRangeSensor(measurement.time_).matrix(), timestamp,
 				odomFrame, rangeSensorFrame, tfBroadcaster_.get());
+		m545_mapping::publishTfTransform(odometry_->getOdomToRangeSensor(measurement.time_).matrix(), timestamp,
+				mapFrame, "raw_odom", tfBroadcaster_.get());
 
 		if (odometryInputPub_.getNumSubscribers() > 0) {
 			auto odomInput = odometry_->getPreProcessedCloud();
@@ -207,8 +225,10 @@ void WrapperRos::mappingWorker() {
 			registeredCloudBuffer_.push(registeredCloud);
 		}
 
-		computeFeaturesIfReady();
-		attemptLoopClosuresIfReady();
+		if (mapperParams_.isAttemptLoopClosures_) {
+			computeFeaturesIfReady();
+			attemptLoopClosuresIfReady();
+		}
 
 		if (isOptimizedGraphAvailable_) {
 			isOptimizedGraphAvailable_ = false;
@@ -351,16 +371,17 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 	assert_gt(latestLoopClosureConstraint.sourceSubmapIdx_, latestLoopClosureConstraint.targetSubmapIdx_);
 	const auto dT = optimizedTransformations.at(latestLoopClosureConstraint.sourceSubmapIdx_);
 	const Time latestTime = mapper_->getMapToRangeSensorBuffer().latest_time();
-	const Time lastLoopClosureTime = latestLoopClosureConstraint.timestamp_;
-//	const Time lastLoopClosureTime = mapper_->getMapToRangeSensorBuffer().earliest_time();
+//	const Time lastLoopClosureTime = latestLoopClosureConstraint.timestamp_;
+	const Time lastLoopClosureTime = mapper_->getMapToRangeSensorBuffer().earliest_time();
 
-	std::cout << "Applying the delta T from submap " << latestLoopClosureConstraint.sourceSubmapIdx_ << "\n";
-	std::cout << "the transform is: " << asString(dT.dT_) << std::endl;
-
-	mapper_->getMapToRangeSensorBufferPtr()->applyToAllElementsInTimeInterval(dT.dT_, lastLoopClosureTime,
-			latestTime);
-	mapper_->setMapToRangeSensor(mapper_->getMapToRangeSensor(latestTime));
-	submaps_->setMapToRangeSensor(mapper_->getMapToRangeSensorBuffer().lookup(latestTime));
+	std::cout << "Transforming the pose buffer with the delta T from submap "
+			<< latestLoopClosureConstraint.sourceSubmapIdx_ << "the transform is: \n" << asString(dT.dT_)
+			<< std::endl;
+	auto mapToRangeSensorBufferPtr = mapper_->getMapToRangeSensorBufferPtr();
+	mapToRangeSensorBufferPtr->applyToAllElementsInTimeInterval(dT.dT_, lastLoopClosureTime, latestTime);
+	const auto updatedMapToRangeSensor = mapper_->getMapToRangeSensorBuffer().lookup(latestTime);
+	mapper_->setMapToRangeSensor(updatedMapToRangeSensor);
+	submaps_->setMapToRangeSensor(updatedMapToRangeSensor);
 
 }
 

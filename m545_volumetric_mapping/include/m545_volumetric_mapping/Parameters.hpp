@@ -103,7 +103,7 @@ struct PlaceRecognitionParameters{
 	double correspondenceCheckerDistance_=0.75;
 	double correspondenceCheckerEdgeLength_=0.5;
 	size_t ransacMinCorrespondenceSetSize_ = 25;
-	IcpParameters icp_;
+	double maxIcpCorrespondenceDistance_ = 0.3;
 	double minRefinementFitness_ = 0.7;
 };
 
@@ -127,6 +127,7 @@ struct MapperParameters {
 	SubmapParameters submaps_;
 	PlaceRecognitionParameters placeRecognition_;
 	GlobalOptimizationParameters globalOptimization_;
+	bool isAttemptLoopClosures_ = true;
 };
 
 struct LocalMapParameters {
@@ -159,6 +160,8 @@ struct VisualizationParameters {
 	double visualizeEveryNmsec_ = 250.0;
 };
 
+void loadParameters(const std::string &filename, PlaceRecognitionParameters *p);
+void loadParameters(const YAML::Node &node, PlaceRecognitionParameters *p);
 void loadParameters(const std::string &filename, GlobalOptimizationParameters *p);
 void loadParameters(const YAML::Node &node, GlobalOptimizationParameters *p);
 void loadParameters(const std::string &filename, VisualizationParameters *p);

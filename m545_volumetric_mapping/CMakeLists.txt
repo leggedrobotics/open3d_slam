@@ -37,6 +37,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   tf2
   tf2_ros
   tf2_geometry_msgs
+  rosbag
   cv_bridge
 )
    
@@ -91,20 +92,6 @@ target_link_libraries(${PROJECT_NAME}
 add_executable(mapping_node
   src/mapping_node.cpp)
 target_link_libraries(mapping_node
-    ${catkin_LIBRARIES}
-    ${PROJECT_NAME}
-)
-
-#add_executable(toy_example_node
-#  src/toy_example_node.cpp)
-#target_link_libraries(toy_example_node
-#    ${catkin_LIBRARIES}
-#    ${PROJECT_NAME}
-#)
-
-add_executable(graph_node
-  src/graph_node.cpp)
-target_link_libraries(graph_node
     ${catkin_LIBRARIES}
     ${PROJECT_NAME}
 )

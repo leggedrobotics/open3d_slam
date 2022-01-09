@@ -56,6 +56,7 @@ private:
 	Transform mapToOdom_ = Transform::Identity();
 	Transform odomToRangeSensorPrev_ = Transform::Identity();
 	Transform mapToRangeSensor_ = Transform::Identity();
+	Transform mapToRangeSensorPrev_ = Transform::Identity();
 	MapperParameters params_;
 	open3d::pipelines::registration::ICPConvergenceCriteria icpCriteria_;
 	std::mutex mapManipulationMutex_;

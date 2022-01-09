@@ -86,7 +86,7 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		open3d::pipelines::registration::ICPConvergenceCriteria criteria;
 		criteria.max_iteration_ = icpRunUntilConvergenceNumberOfIterations; // i.e. run until convergence
 		const auto icpResult = open3d::pipelines::registration::RegistrationICP(sourceOverlap,
-				targetOverlap, mapVoxelSize * 1.5, ransacResult.transformation_,
+				targetOverlap, cfg.maxIcpCorrespondenceDistance_, ransacResult.transformation_,
 				open3d::pipelines::registration::TransformationEstimationPointToPlane(), criteria);
 //		printf("submap %ld size: %ld \n", id, source.points_.size());
 //			printf("submap %ld overlap size: %ld \n", id, source.points_.size());

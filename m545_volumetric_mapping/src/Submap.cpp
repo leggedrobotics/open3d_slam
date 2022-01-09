@@ -185,7 +185,8 @@ bool Submap::isEmpty() const {
 }
 
 void Submap::computeFeatures() {
-	if (featureTimer_.elapsedSec() < params_.submaps_.minSecondsBetweenFeatureComputation_) {
+	if (feature_ != nullptr
+			&& featureTimer_.elapsedSec() < params_.submaps_.minSecondsBetweenFeatureComputation_) {
 		return;
 	}
 	const auto &p = params_.placeRecognition_;

@@ -381,13 +381,13 @@ Constraint buildOdometryConstraint(size_t sourceIdx, size_t targetIdx,
 	c.sourceToTarget_ = Transform(icpResult.transformation_);
 	c.informationMatrix_ = informationMatrix;
 
-	printf("submap %ld size: %ld \n", sourceIdx, sourceFull.points_.size());
-	printf("submap %ld overlap size: %ld \n", sourceIdx, source.points_.size());
-	printf("submap %ld size: %ld \n", targetIdx, targetFull.points_.size());
-	printf("submap %ld overlap size: %ld \n", targetIdx, target.points_.size());
-	printf("Adding odometry constraint from submap %ld to submap %ld with transformation \n: ",
-			sourceIdx, targetIdx);
-	std::cout << asString(c.sourceToTarget_) << std::endl;
+//	printf("submap %ld size: %ld \n", sourceIdx, sourceFull.points_.size());
+//	printf("submap %ld overlap size: %ld \n", sourceIdx, source.points_.size());
+//	printf("submap %ld size: %ld \n", targetIdx, targetFull.points_.size());
+//	printf("submap %ld overlap size: %ld \n", targetIdx, target.points_.size());
+//	printf("Adding odometry constraint from submap %ld to submap %ld with transformation \n: ",
+//			sourceIdx, targetIdx);
+//	std::cout << asString(c.sourceToTarget_) << std::endl;
 	return c;
 
 }
