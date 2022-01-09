@@ -15,7 +15,7 @@ odometry:
   
 mapping:
   is_build_dense_map: true
-  is_attempt_loop_closures: true
+  is_attempt_loop_closures: false
   min_movement_between_mapping_steps: 0.0
   is_build_dense_map: true
   submaps_num_scan_overlap: 5

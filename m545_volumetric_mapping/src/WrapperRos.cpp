@@ -62,7 +62,6 @@ WrapperRos::~WrapperRos() {
 	}
 }
 
-
 size_t WrapperRos::getOdometryBufferSize() const {
 	return odometryBuffer_.size();
 }
@@ -140,14 +139,15 @@ void WrapperRos::start() {
 	});
 	if (mapperParams_.isAttemptLoopClosures_) {
 		loopClosureWorker_ = std::thread([this]() {
-		loopClosureWorker();
+			loopClosureWorker();
 		});
-
+	}
 	if (mapperParams_.isBuildDenseMap_) {
 		denseMapWorker_ = std::thread([this]() {
 			denseMapWorker();
 		});
 	}
+
 }
 
 void WrapperRos::odometryWorker() {
