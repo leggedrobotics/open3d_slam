@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
 		const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
 		m545_mapping::loadParameters(paramFile, &projectionParams);
 		colorProjectionPtr_ = std::make_shared<m545_mapping::ColorProjection>();
-		syncPtr = std::make_unique<message_filters::Synchronizer<MySyncPolicy>>(MySyncPolicy(10), cloud_sub, image_sub);
+		syncPtr = std::make_unique<message_filters::Synchronizer<MySyncPolicy>>(MySyncPolicy(50), cloud_sub, image_sub);
 		syncPtr->registerCallback(boost::bind(&synchronizeCallback, _1, _2));
 	}
 	else {

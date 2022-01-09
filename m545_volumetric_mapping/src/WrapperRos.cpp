@@ -64,6 +64,13 @@ WrapperRos::~WrapperRos() {
 
 void WrapperRos::addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp) {
 	const TimestampedPointCloud timestampedCloud { timestamp, cloud };
+	if (!odometryBuffer_.empty()) {
+		const auto latestTime = odometryBuffer_.peek_back().time_;
+		if (timestamp < latestTime) {
+			std::cerr << "you are trying to add a range scan out of order! Dropping the measurement! \n";
+			return;
+		}
+	}
 	odometryBuffer_.push(timestampedCloud);
 }
 

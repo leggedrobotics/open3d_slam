@@ -8,27 +8,29 @@
 #pragma once
 #include <deque>
 
-
 namespace m545_mapping {
 
-
-template <typename T>
+template<typename T>
 class CircularBuffer {
 
 public:
 	CircularBuffer() = default;
-	void set_size_limit(size_t size){
+	void set_size_limit(size_t size) {
 		bufferSizeLimit_ = size;
 		removeOldMeasurementsIfNeeded();
 	}
 
-	void push(const T &data){
+	void push(const T &data) {
 		data_.push_back(data);
 		removeOldMeasurementsIfNeeded();
 	}
 
 	const T& peek_front() const {
 		return data_.front();
+	}
+
+	const T& peek_back() const {
+		return data_.back();
 	}
 
 	T pop() {
@@ -50,7 +52,7 @@ public:
 		return data_.size();
 	}
 
-	const std::deque<T> &getImplementation() const {
+	const std::deque<T>& getImplementation() const {
 		return data_;
 	}
 
@@ -67,6 +69,5 @@ private:
 	std::mutex popMutex_;
 	size_t bufferSizeLimit_ = 10;
 };
-
 
 } // namespace m545_mapping
