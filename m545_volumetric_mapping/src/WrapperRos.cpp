@@ -269,7 +269,7 @@ void WrapperRos::denseMapWorker() {
 		mapper_->getSubmapsPtr()->getSubmapPtr(regCloud.submapId_)->insertScanDenseMap(regCloud.raw_.cloud_,
 				regCloud.transform_, regCloud.raw_.time_, true);
 
-		if (mapper_->getDenseMap().HasPoints()
+		if (mapper_->getDenseMap().HasColors()
 				&& denseMapVisualizationUpdateTimer_.elapsedMsec() > visualizationParameters_.visualizeEveryNmsec_) {
 			const auto denseMap = mapper_->getDenseMap(); //copy
 			const auto timestamp = toRos(regCloud.raw_.time_);
