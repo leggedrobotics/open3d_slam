@@ -42,8 +42,9 @@ public:
 				normal_ += cloud.normals_[index];
 			}
 		}
-		if (cloud.HasColors()) {
-			color_ = cloud.colors_[index];//+= cloud.colors_[index];
+
+		if (cloud.HasColors() && isValidColor(cloud.colors_[index])) {
+			color_ = cloud.colors_[index]; //+= cloud.colors_[index];
 		}
 		num_of_points_++;
 	}
@@ -76,6 +77,10 @@ public:
 
 } //namespace
 
+bool isValidColor(const Eigen::Vector3d &c) {
+	return (c.array().all() >= 0.0) && (c.array().all() <= 1.0);
+}
+
 double informationMatrixMaxCorrespondenceDistance(double mappingVoxelSize) {
 	return isClose(mappingVoxelSize, 0.0, 1e-3) ? 0.05 : (1.5 * mappingVoxelSize);
 }
@@ -84,8 +89,7 @@ double icpMaxCorrespondenceDistance(double mappingVoxelSize) {
 	return isClose(mappingVoxelSize, 0.0, 1e-3) ? 0.05 : (2.0 * mappingVoxelSize);
 }
 
-void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox,
-		open3d::geometry::PointCloud *pcl) {
+void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::PointCloud *pcl) {
 	auto croppedCloud = pcl->Crop(bbox);
 	*pcl = std::move(*croppedCloud);
 }
@@ -151,9 +155,8 @@ void voxelize(double voxelSize, open3d::geometry::PointCloud *pcl) {
 }
 
 bool isInside(const open3d::geometry::AxisAlignedBoundingBox &bbox, const Eigen::Vector3d &p) {
-	return p.x() <= bbox.max_bound_.x() && p.y() <= bbox.max_bound_.y()
-			&& p.z() <= bbox.max_bound_.z() && p.x() >= bbox.min_bound_.x()
-			&& p.y() >= bbox.min_bound_.y() && p.z() >= bbox.min_bound_.z();
+	return p.x() <= bbox.max_bound_.x() && p.y() <= bbox.max_bound_.y() && p.z() <= bbox.max_bound_.z()
+			&& p.x() >= bbox.min_bound_.x() && p.y() >= bbox.min_bound_.y() && p.z() >= bbox.min_bound_.z();
 }
 
 std::shared_ptr<open3d::geometry::PointCloud> voxelizeWithinCroppingVolume(double voxel_size,
@@ -368,8 +371,7 @@ void computeIndicesOfOverlappingPoints(const open3d::geometry::PointCloud &sourc
 	}
 }
 
-Eigen::Vector3d computeCenter(const open3d::geometry::PointCloud &cloud,
-		const std::vector<size_t> &idxs) {
+Eigen::Vector3d computeCenter(const open3d::geometry::PointCloud &cloud, const std::vector<size_t> &idxs) {
 
 	assert_gt<size_t>(idxs.size(), 0);
 	Eigen::Vector3d center(0.0, 0.0, 0.0);

@@ -67,6 +67,8 @@ inline Eigen::Quaterniond fromRPY(const double roll, const double pitch, const d
 	return yaw_angle * pitch_angle * roll_angle;
 }
 
+bool isValidColor(const Eigen::Vector3d &c);
+
 inline Eigen::Quaterniond fromRPY(const Eigen::Vector3d &rpy) {
 	return fromRPY(rpy.x(), rpy.y(), rpy.z());
 }

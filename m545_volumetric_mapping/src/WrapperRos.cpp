@@ -269,6 +269,12 @@ void WrapperRos::denseMapWorker() {
 		mapper_->getSubmapsPtr()->getSubmapPtr(regCloud.submapId_)->insertScanDenseMap(regCloud.raw_.cloud_,
 				regCloud.transform_, regCloud.raw_.time_, true);
 
+		const auto denseMap = mapper_->getDenseMap();
+		if (denseMap.HasColors()) {
+			const auto timestamp = toRos(regCloud.raw_.time_);
+			m545_mapping::publishCloud(denseMap, m545_mapping::frames::mapFrame, timestamp, denseMapPub_);
+		}
+
 		const double timeMeasurement = denseMapStatiscticsTimer_.elapsedMsecSinceStopwatchStart();
 		denseMapStatiscticsTimer_.addMeasurementMsec(timeMeasurement);
 		if (denseMapStatiscticsTimer_.elapsedSec() > timingStatsEveryNsec) {
@@ -414,8 +420,8 @@ void WrapperRos::publishMaps(const Time &time) {
 		m545_mapping::publishCloud(map, m545_mapping::frames::mapFrame, timestamp, assembledMapPub_);
 		m545_mapping::publishCloud(mapper_->getPreprocessedScan(), m545_mapping::frames::rangeSensorFrame, timestamp,
 	mappingInputPub_);
-		m545_mapping::publishCloud(mapper_->getDenseMap(), m545_mapping::frames::mapFrame, timestamp,
-				denseMapPub_);
+//		m545_mapping::publishCloud(mapper_->getDenseMap(), m545_mapping::frames::mapFrame, timestamp,
+//				denseMapPub_);
 		m545_mapping::publishSubmapCoordinateAxes(mapper_->getSubmaps(), m545_mapping::frames::mapFrame,
 				timestamp, submapOriginsPub_);
 		if (submapsPub_.getNumSubscribers() > 0) {

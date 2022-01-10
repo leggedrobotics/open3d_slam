@@ -100,7 +100,7 @@ namespace m545_mapping {
         };
 
         for (int i = 0; i < cloud.points_.size(); i++) {
-            if (cloud.colors_[i] != noColor_) {
+            if (cloud.colors_[i].array().all() >= 0.0) {
                 // if (cloud.colors_[i][0] >= 1.0 || cloud.colors_[i][1] >= 1.0 || cloud.colors_[i][2] >= 1.0) {
                 //     std::cout << "Color value larger than 1.0 detected. " << cloud.colors_[i] << std::endl;
                 //     continue;

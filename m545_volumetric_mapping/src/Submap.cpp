@@ -74,17 +74,17 @@ bool Submap::insertScanDenseMap(const PointCloud &rawScan, const Transform &mapT
 		return false;
 	}
 
+	auto colored = colorProjectionPtr_->filterColor(rawScan);
 	denseMapCropper_->setPose(Transform::Identity());
-	auto cropped = denseMapCropper_->crop(rawScan);
+	auto cropped = denseMapCropper_->crop(colored);
 	m545_mapping::voxelize(params_.denseMapBuilder_.mapVoxelSize_, cropped.get());
 	auto transformedCloud = m545_mapping::transform(mapToRangeSensor.matrix(), *cropped);
 	denseMapCropper_->setPose(mapToRangeSensor);
-	auto colored = colorProjectionPtr_->filterColor(*transformedCloud);
 	if (isPerformCarving) {
 		carve(rawScan, mapToRangeSensor, *denseMapCropper_, params_.denseMapBuilder_.carving_, &denseMap_,
 				&carveDenseMapTimer_);
 	}
-	denseMap_ += colored;
+	denseMap_ += *transformedCloud;
 	if (++scanCounter_ >= params_.denseMapBuilder_.voxelizeEveryNscans_) {
 		auto voxelizedDense = voxelizeWithinCroppingVolume(params_.denseMapBuilder_.mapVoxelSize_,
 				*denseMapCropper_, denseMap_);
