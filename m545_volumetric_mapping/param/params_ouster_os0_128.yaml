@@ -64,8 +64,8 @@ mapping:
     voxelize_every_n_scans: 5
     space_carving:
       voxel_size: 0.2
-      max_raytracing_length: 15.0
-      truncation_distance: 0.4
+      max_raytracing_length: 12.0
+      truncation_distance: 0.8
       carve_space_every_n_sec: 2.0
       min_dot_product_with_normal: 0.3
 
