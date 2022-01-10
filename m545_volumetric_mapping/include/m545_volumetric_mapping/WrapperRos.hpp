@@ -100,7 +100,7 @@ private:
 	std::shared_ptr<OptimizationProblem> optimizationProblem_;
 	std::string folderPath_;
 	std::thread odometryWorker_, mappingWorker_, loopClosureWorker_, denseMapWorker_;
-	Timer mappingStatisticsTimer_,odometryStatisticsTimer_, visualizationUpdateTimer_, denseMapStatiscticsTimer_;
+	Timer mappingStatisticsTimer_,odometryStatisticsTimer_, visualizationUpdateTimer_, denseMapVisualizationUpdateTimer_, denseMapStatiscticsTimer_;
 	bool isVisualizationFirstTime_ = true;
 	std::future<void> computeFeaturesResult_;
 	bool isOptimizedGraphAvailable_ = false;

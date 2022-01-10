@@ -269,10 +269,12 @@ void WrapperRos::denseMapWorker() {
 		mapper_->getSubmapsPtr()->getSubmapPtr(regCloud.submapId_)->insertScanDenseMap(regCloud.raw_.cloud_,
 				regCloud.transform_, regCloud.raw_.time_, true);
 
-		const auto denseMap = mapper_->getDenseMap();
-		if (denseMap.HasPoints()) {
+		if (mapper_->getDenseMap().HasPoints()
+				&& denseMapVisualizationUpdateTimer_.elapsedMsec() > visualizationParameters_.visualizeEveryNmsec_) {
+			const auto denseMap = mapper_->getDenseMap(); //copy
 			const auto timestamp = toRos(regCloud.raw_.time_);
 			m545_mapping::publishCloud(denseMap, m545_mapping::frames::mapFrame, timestamp, denseMapPub_);
+			denseMapVisualizationUpdateTimer_.reset();
 		}
 
 		const double timeMeasurement = denseMapStatiscticsTimer_.elapsedMsecSinceStopwatchStart();
