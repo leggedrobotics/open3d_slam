@@ -270,7 +270,7 @@ void WrapperRos::denseMapWorker() {
 				regCloud.transform_, regCloud.raw_.time_, true);
 
 		const auto denseMap = mapper_->getDenseMap();
-		if (denseMap.HasColors()) {
+		if (denseMap.HasPoints()) {
 			const auto timestamp = toRos(regCloud.raw_.time_);
 			m545_mapping::publishCloud(denseMap, m545_mapping::frames::mapFrame, timestamp, denseMapPub_);
 		}
