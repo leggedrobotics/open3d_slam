@@ -25,7 +25,8 @@ namespace registration = open3d::pipelines::registration;
 std::shared_ptr<registration::TransformationEstimation> icpObjective;
 } // namespace
 
-Mapper::Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer, std::shared_ptr<SubmapCollection> submaps) :
+Mapper::Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer,
+		std::shared_ptr<SubmapCollection> submaps) :
 		odomToRangeSensorBuffer_(odomToRangeSensorBuffer), submaps_(submaps) {
 	update(params_);
 }
@@ -94,7 +95,6 @@ const PointCloud& Mapper::getPreprocessedScan() const {
 
 bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &timestamp) {
 	isMatchingInProgress_ = true;
-	lastMeasurementTimestamp_ = timestamp;
 	scanMatcherCropper_->setPose(Transform::Identity());
 	submaps_->setMapToRangeSensor(mapToRangeSensor_);
 
@@ -114,11 +114,17 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		return false;
 	}
 
+	if (timestamp < lastMeasurementTimestamp_) {
+		std::cerr << "\n\n !!!!! MAPER WARNING: Measurements came out of order!!!! \n\n";
+		isMatchingInProgress_ = false;
+		return false;
+	}
+
 	const Transform odomToRangeSensor = getTransform(timestamp, odomToRangeSensorBuffer_);
 	const auto odometryMotion = odomToRangeSensorPrev_.inverse() * odomToRangeSensor;
-	const auto mapToOdom = getMapToOdom(timestamp);
-	const auto mapToRangeSensorEstimate = mapToOdom * odomToRangeSensor;
-//	const auto mapToRangeSensorEstimate1 = mapToRangeSensor_ * mapToOdom.inverse() * odometryMotion * mapToOdom;
+//	const auto mapToOdom = getMapToOdom(timestamp);
+//	const auto mapToRangeSensorEstimate = mapToOdom * odomToRangeSensor;
+	const auto mapToRangeSensorEstimate = mapToRangeSensorPrev_ * odometryMotion;
 //	std::cout << "estimate1: " << asString(mapToRangeSensorEstimate) << "\n";
 //	std::cout << "estimate2: " << asString(mapToRangeSensorEstimate1) << "\n\n";
 	const auto &activeSubmap = submaps_->getActiveSubmap().getMap();
@@ -161,6 +167,8 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		odomToRangeSensorPrev_ = odomToRangeSensor;
 	}
 
+	lastMeasurementTimestamp_ = timestamp;
+	mapToRangeSensorPrev_ = mapToRangeSensor_;
 	isMatchingInProgress_ = false;
 	return true;
 }
@@ -173,19 +181,19 @@ std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud &raw
 //	estimateNormalsIfNeeded(wideCroppedCloud.get());
 //	return wideCroppedCloud;
 
-	std::shared_ptr<PointCloud> wideCroppedCloud,voxelized,downsampled;
+	std::shared_ptr<PointCloud> wideCroppedCloud, voxelized, downsampled;
 	wideCroppedCloud = mapBuilderCropper_->crop(rawScan);
 	if (params_.scanProcessing_.voxelSize_ <= 0.0) {
 		voxelized = wideCroppedCloud;
-		} else {
-			voxelized = wideCroppedCloud->VoxelDownSample(params_.scanProcessing_.voxelSize_);
-		}
+	} else {
+		voxelized = wideCroppedCloud->VoxelDownSample(params_.scanProcessing_.voxelSize_);
+	}
 
-		if (params_.scanProcessing_.downSamplingRatio_ >= 1.0) {
-			downsampled = voxelized;
-		} else {
-			downsampled = voxelized->RandomDownSample(params_.scanProcessing_.downSamplingRatio_);
-		}
+	if (params_.scanProcessing_.downSamplingRatio_ >= 1.0) {
+		downsampled = voxelized;
+	} else {
+		downsampled = voxelized->RandomDownSample(params_.scanProcessing_.downSamplingRatio_);
+	}
 	estimateNormalsIfNeeded(downsampled.get());
 	return downsampled;
 

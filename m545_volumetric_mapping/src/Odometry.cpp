@@ -22,8 +22,15 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 	if (cloudPrev_.IsEmpty()) {
 		cloudPrev_ = cloud;
 		odomToRangeSensorBuffer_.push(timestamp, odomToRangeSensorCumulative_);
+		lastMeasurementTimestamp_ = timestamp;
 		return true;
 	}
+
+	if (timestamp < lastMeasurementTimestamp_) {
+			std::cerr << "\n\n !!!!! LIDAR ODOMETRY WARNING: Measurements came out of order!!!! \n\n";
+			return false;
+	}
+
 //	const m545_mapping::Timer timer("scan_to_scan_odometry");
 	auto croppedCloud = cropper_->crop(cloud);
 	m545_mapping::voxelize(params_.scanProcessing_.voxelSize_, croppedCloud.get());
@@ -51,6 +58,7 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 	odomToRangeSensorCumulative_.matrix() *= result.transformation_.inverse();
 	cloudPrev_ = std::move(*downSampledCloud);
 	odomToRangeSensorBuffer_.push(timestamp, odomToRangeSensorCumulative_);
+	lastMeasurementTimestamp_ = timestamp;
 	return true;
 }
 const Transform LidarOdometry::getOdomToRangeSensor(const Time &t) const {
