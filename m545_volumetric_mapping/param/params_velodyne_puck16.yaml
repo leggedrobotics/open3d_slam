@@ -1,12 +1,12 @@
 odometry:
   scan_matching:
     icp_objective: PointToPlane
-    max_correspondence_dist: 0.5
+    max_correspondence_dist: 1.0
     knn_normal_estimation: 4
     max_n_iter: 35
   scan_processing:
     voxel_size: -1.0
-    downsampling_ratio: 0.4
+    downsampling_ratio: 0.3
     scan_cropping:
       cropping_radius: 40.0
       min_z: -30.0
@@ -17,12 +17,12 @@ mapping:
   is_build_dense_map: false
   is_attempt_loop_closures: true
   min_movement_between_mapping_steps: 0.0
-  submaps_num_scan_overlap: 20
+  submaps_num_scan_overlap: 1
   scan_to_map_refinement:
     min_refinement_fitness: 0.7
     scan_matching:
       icp_objective: PointToPlane
-      max_correspondence_dist: 0.5
+      max_correspondence_dist: 0.8
       knn_normal_estimation: 5
       max_n_iter: 50
     scan_processing:

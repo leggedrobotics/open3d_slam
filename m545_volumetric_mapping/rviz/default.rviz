@@ -93,7 +93,7 @@ Visualization Manager:
       Size (Pixels): 2
       Size (m): 0.009999999776482582
       Style: Points
-      Topic: /mapping_node/raw_cloud
+      Topic: /mapping_node/odom_input
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -107,11 +107,11 @@ Visualization Manager:
           Value: true
         odom_open3d:
           Value: true
-        os_sensor:
-          Value: true
         range_sensor:
           Value: true
         raw_odom:
+          Value: true
+        rslidar:
           Value: true
       Marker Alpha: 1
       Marker Scale: 1
@@ -123,7 +123,7 @@ Visualization Manager:
         map_open3d:
           odom_open3d:
             range_sensor:
-              os_sensor:
+              rslidar:
                 {}
           raw_odom:
             {}
@@ -139,14 +139,14 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: -0.23704230785369873
-        Min Value: -4.056548118591309
+        Max Value: 14.849852561950684
+        Min Value: -1.554776668548584
         Value: true
       Axis: Z
       Channel Name: intensity
       Class: rviz/PointCloud2
       Color: 239; 41; 41
-      Color Transformer: RGB8
+      Color Transformer: AxisColor
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -159,7 +159,7 @@ Visualization Manager:
       Size (Pixels): 2
       Size (m): 0.20000000298023224
       Style: Points
-      Topic: /mapping_node/dense_map
+      Topic: /mapping_node/assembled_map
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -226,7 +226,33 @@ Visualization Manager:
       Name: MarkerArray
       Namespaces:
         submap_0: true
+        submap_1: true
+        submap_10: true
+        submap_11: true
+        submap_12: true
+        submap_13: true
+        submap_2: true
+        submap_3: true
+        submap_4: true
+        submap_5: true
+        submap_6: true
+        submap_7: true
+        submap_8: true
+        submap_9: true
         submap_id_0: true
+        submap_id_1: true
+        submap_id_10: true
+        submap_id_11: true
+        submap_id_12: true
+        submap_id_13: true
+        submap_id_2: true
+        submap_id_3: true
+        submap_id_4: true
+        submap_id_5: true
+        submap_id_6: true
+        submap_id_7: true
+        submap_id_8: true
+        submap_id_9: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -239,9 +265,9 @@ Visualization Manager:
       Show Trail: false
       Value: true
     - Class: jsk_rviz_plugin/TFTrajectory
-      Enabled: false
+      Enabled: true
       Name: TFTrajectory
-      Value: false
+      Value: true
       color: 173; 127; 168
       duration: 500
       frame: raw_odom
@@ -274,7 +300,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 73.3272705078125
+      Distance: 270.9486083984375
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -282,17 +308,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 1.2888394594192505
-        Y: 4.887241840362549
-        Z: -18.294889450073242
+        X: -50.30255126953125
+        Y: -122.88841247558594
+        Z: -1.4836256504058838
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.244796633720398
+      Pitch: 1.1797966957092285
       Target Frame: <Fixed Frame>
-      Yaw: 3.949586868286133
+      Yaw: 6.1645917892456055
     Saved: ~
 Window Geometry:
   Displays:
