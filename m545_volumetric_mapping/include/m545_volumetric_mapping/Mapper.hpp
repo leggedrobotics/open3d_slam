@@ -44,6 +44,7 @@ public:
 	const TransformInterpolationBuffer &getMapToRangeSensorBuffer() const;
 	TransformInterpolationBuffer *getMapToRangeSensorBufferPtr();
 	const PointCloud &getPreprocessedScan() const;
+	void loopClosureUpdate(const Transform &loopClosureCorrection);
 private:
 	std::shared_ptr<PointCloud> preProcessScan(const PointCloud &scan) const;
 	void update(const MapperParameters &p);

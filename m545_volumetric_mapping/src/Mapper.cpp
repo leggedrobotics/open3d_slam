@@ -36,6 +36,11 @@ void Mapper::setParameters(const MapperParameters &p) {
 	update(p);
 }
 
+void Mapper::loopClosureUpdate(const Transform &loopClosureCorrection){
+	mapToRangeSensor_ =mapToRangeSensor_ * loopClosureCorrection;
+	mapToRangeSensorPrev_ = mapToRangeSensorPrev_ * loopClosureCorrection;
+}
+
 void Mapper::update(const MapperParameters &p) {
 	icpCriteria_.max_iteration_ = p.scanMatcher_.maxNumIter_;
 	icpObjective = icpObjectiveFactory(p.scanMatcher_.icpObjective_);
@@ -121,12 +126,9 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	}
 
 	const Transform odomToRangeSensor = getTransform(timestamp, odomToRangeSensorBuffer_);
-	const auto odometryMotion = odomToRangeSensorPrev_.inverse() * odomToRangeSensor;
-//	const auto mapToOdom = getMapToOdom(timestamp);
-//	const auto mapToRangeSensorEstimate = mapToOdom * odomToRangeSensor;
+	const Transform odomToRangeSensorPrev = getTransform(lastMeasurementTimestamp_, odomToRangeSensorBuffer_);
+	const auto odometryMotion = odomToRangeSensorPrev.inverse() * odomToRangeSensor;
 	const auto mapToRangeSensorEstimate = mapToRangeSensorPrev_ * odometryMotion;
-//	std::cout << "estimate1: " << asString(mapToRangeSensorEstimate) << "\n";
-//	std::cout << "estimate2: " << asString(mapToRangeSensorEstimate1) << "\n\n";
 	const auto &activeSubmap = submaps_->getActiveSubmap().getMap();
 	std::shared_ptr<PointCloud> narrowCropped, wideCroppedCloud, mapPatch;
 	{

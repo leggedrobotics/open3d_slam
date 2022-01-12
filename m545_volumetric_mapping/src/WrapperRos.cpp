@@ -316,7 +316,6 @@ void WrapperRos::attemptLoopClosuresIfReady() {
 	}
 }
 void WrapperRos::loopClosureWorker() {
-	static bool isFirstTime = true;
 	while (ros::ok()) {
 		if (loopClosureCandidates_.empty() || isOptimizedGraphAvailable_) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -330,11 +329,10 @@ void WrapperRos::loopClosureWorker() {
 			loopClosureConstraints = submaps_->buildLoopClosureConstraints(lcc);
 		}
 
-		if (!isFirstTime || loopClosureConstraints.empty()) {
+		if (loopClosureConstraints.empty()) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 			continue;
 		}
-		isFirstTime = false;
 		{
 			Timer t("optimization_problem");
 			auto odometryConstraints = submaps_->getOdometryConstraints();
