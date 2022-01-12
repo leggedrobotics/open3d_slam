@@ -98,8 +98,30 @@ std::shared_ptr<CroppingVolume::PointCloud> CroppingVolume::cropMultiThreaded(co
 }
 
 std::shared_ptr<CroppingVolume::PointCloud> CroppingVolume::crop(const PointCloud &cloud) const {
-	const auto idxsInside = getIndicesWithinVolume(cloud);
-	return cloud.SelectByIndex(idxsInside);
+	std::shared_ptr<CroppingVolume::PointCloud> cropped(new PointCloud());
+	const int nPoints = cloud.points_.size();
+	cropped->points_.reserve(nPoints);
+	if (cloud.HasColors()) {
+		cropped->colors_.reserve(nPoints);
+	}
+	if (cloud.HasNormals()) {
+		cropped->normals_.reserve(nPoints);
+	}
+
+	for (size_t i = 0; i < nPoints; ++i) {
+		if (isWithinVolume(cloud.points_[i])) {
+			cropped->points_.push_back(cloud.points_[i]);
+			if (cloud.HasColors()) {
+				cropped->colors_.push_back(cloud.colors_[i]);
+			}
+			if (cloud.HasNormals()) {
+				cropped->normals_.push_back(cloud.normals_[i]);
+			}
+		} // end if
+	}
+
+	return cropped;
+
 }
 
 void CroppingVolume::crop(PointCloud *cloud) const {

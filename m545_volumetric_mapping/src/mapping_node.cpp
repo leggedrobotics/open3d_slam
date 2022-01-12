@@ -34,7 +34,6 @@ m545_mapping::ProjectionParameters projectionParams;
 std::shared_ptr<m545_mapping::ColorProjection> colorProjectionPtr_;
 typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::PointCloud2, sensor_msgs::Image> MySyncPolicy;
 
-
 void processCloud(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp,
 		const std::string &frame) {
 	//std::cout << "received" << std::endl;
@@ -79,7 +78,7 @@ void readRosbag(const rosbag::Bag &bag, const std::string &cloudTopic) {
 	std::vector<std::string> topics;
 	topics.push_back(cloudTopic);
 	rosbag::View view(bag, rosbag::TopicQuery(topics));
-
+	Timer rosbagTimer;
 	ros::Time lastTimestamp;
 	bool isFirstMessage = true;
 	Timer rosbagProcessingTimer;
@@ -121,6 +120,12 @@ void readRosbag(const rosbag::Bag &bag, const std::string &cloudTopic) {
 			}
 		} // end if
 	} // end foreach
+
+	const ros::Time bag_begin_time = view.getBeginTime();
+	const ros::Time bag_end_time = view.getEndTime();
+	std::cout << "Rosbag processing finished. Rosbag duration: " << (bag_end_time - bag_begin_time).toSec()
+			<< " Time elapsed for processing: " << rosbagTimer.elapsedSec() << " sec. \n";
+
 } // end readRosbag
 
 } // namespace
@@ -145,7 +150,6 @@ int main(int argc, char **argv) {
 	std::cout << "Num accumulated range data: " << numAccumulatedRangeDataDesired << std::endl;
 
 	rawCloudPub = nh->advertise<sensor_msgs::PointCloud2>("raw_cloud", 1, true);
-
 
 	mapping = std::make_shared<WrapperRos>(nh);
 	mapping->initialize();

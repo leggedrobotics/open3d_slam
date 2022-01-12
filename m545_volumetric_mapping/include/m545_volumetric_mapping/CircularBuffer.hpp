@@ -56,6 +56,10 @@ public:
 		return data_;
 	}
 
+	std::deque<T>* getImplementationPtr() {
+		return &data_;
+	}
+
 private:
 
 	void removeOldMeasurementsIfNeeded() {
