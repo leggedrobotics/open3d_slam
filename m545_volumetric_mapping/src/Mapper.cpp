@@ -36,12 +36,12 @@ void Mapper::setParameters(const MapperParameters &p) {
 	update(p);
 }
 
-void Mapper::loopClosureUpdate(const Transform &loopClosureCorrection){
+void Mapper::loopClosureUpdate(const Transform &loopClosureCorrection) {
 //	mapToRangeSensor_ =mapToRangeSensor_ * loopClosureCorrection;
 //	mapToRangeSensorPrev_ = mapToRangeSensorPrev_ * loopClosureCorrection;
 
-	mapToRangeSensor_ =loopClosureCorrection*mapToRangeSensor_;
-	mapToRangeSensorPrev_ = loopClosureCorrection*mapToRangeSensorPrev_;
+	mapToRangeSensor_ = loopClosureCorrection * mapToRangeSensor_;
+	mapToRangeSensorPrev_ = loopClosureCorrection * mapToRangeSensorPrev_;
 
 }
 
@@ -156,6 +156,8 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 //	std::cout << "postIcp: " << asString(Transform(result.transformation_)) << "\n\n";
 	if (result.fitness_ < params_.minRefinementFitness_) {
 		std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
+		std::cout << "preeIcp: " << asString(mapToRangeSensor_) << "\n";
+		std::cout << "postIcp: " << asString(Transform(result.transformation_)) << "\n\n";
 		isMatchingInProgress_ = false;
 		return false;
 	}

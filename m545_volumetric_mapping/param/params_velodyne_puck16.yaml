@@ -74,8 +74,8 @@ mapping:
     feature_radius: 2.5
     feature_knn: 100
     normal_knn: 10
-    ransac_num_iter: 1000000
-    ransac_probability: 0.99
+    ransac_num_iter: 3000000
+    ransac_probability: 0.999
     ransac_model_size: 3
     ransac_max_correspondence_dist: 0.75
     ransac_correspondence_checker_distance: 0.75
