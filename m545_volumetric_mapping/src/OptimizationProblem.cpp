@@ -84,7 +84,7 @@ void OptimizationProblem::buildOptimizationProblem(const SubmapCollection &subma
 		assert_true(c.isInformationMatrixValid_,
 				"Invalid information matrix between: " + std::to_string(c.sourceSubmapIdx_) + " and "
 						+ std::to_string(c.targetSubmapIdx_));
-		assert_gt(c.sourceSubmapIdx_, c.targetSubmapIdx_);
+		assert_gt(c.sourceSubmapIdx_, c.targetSubmapIdx_, "Optimization problem, loop closure constraints: ");
 		edge.uncertain_ = true;
 		poseGraph_.edges_.push_back(std::move(edge));
 	}

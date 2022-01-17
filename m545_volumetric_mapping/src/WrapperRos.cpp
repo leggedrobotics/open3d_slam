@@ -374,7 +374,7 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 
 	// loop closing constraints are built such that the source node is always the ne being transformed
 	// hence the source node should be the one whose transform we should apply
-	assert_gt(latestLoopClosureConstraint.sourceSubmapIdx_, latestLoopClosureConstraint.targetSubmapIdx_);
+	assert_gt(latestLoopClosureConstraint.sourceSubmapIdx_, latestLoopClosureConstraint.targetSubmapIdx_, "Wrapper ros, update submaps and trajectory: ");
 	const auto dT = optimizedTransformations.at(latestLoopClosureConstraint.sourceSubmapIdx_);
 	const Time latestTime = mapper_->getMapToRangeSensorBuffer().latest_time();
 //	const Time lastLoopClosureTime = latestLoopClosureConstraint.timestamp_;

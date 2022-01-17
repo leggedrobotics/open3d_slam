@@ -54,7 +54,13 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 	const auto source = sourceSubmap.getMap();
 	const auto sourceFeature = sourceSubmap.getFeatures();
 	for (const auto id : closeSubmapsIdxs) {
-		std::cout << "matching submap: " << lastFinishedSubmapIdx << " with submap: " << id << "\n";
+		const bool isAdjacent = std::abs<int>(id - lastFinishedSubmapIdx) == 1;
+		if (!isAdjacent){
+			std::cout << "matching submap: " << lastFinishedSubmapIdx << " with submap: " << id << "\n";
+		} else {
+			std::cout << "Skipping the loop closure of: " << lastFinishedSubmapIdx << " with submap: " << id << " since they are adjacent \n";
+			continue;
+		}
 		const auto &targetSubmap = submaps.at(id);
 		const auto targetSparse = targetSubmap.getSparseMap();
 		const auto targetFeature = targetSubmap.getFeatures();
