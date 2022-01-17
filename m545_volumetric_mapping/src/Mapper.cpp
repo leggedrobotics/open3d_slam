@@ -131,8 +131,8 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 
 	const Transform odomToRangeSensor = getTransform(timestamp, odomToRangeSensorBuffer_);
 	const Transform odomToRangeSensorPrev = getTransform(lastMeasurementTimestamp_, odomToRangeSensorBuffer_);
-	const auto odometryMotion = odomToRangeSensorPrev.inverse() * odomToRangeSensor;
-	const auto mapToRangeSensorEstimate = mapToRangeSensorPrev_ * odometryMotion;
+	const auto odometryMotion = odomToRangeSensorPrev.inverse()*odomToRangeSensor;
+	const auto mapToRangeSensorEstimate =  mapToRangeSensorPrev_*odometryMotion ;
 	const auto &activeSubmap = submaps_->getActiveSubmap().getMap();
 	std::shared_ptr<PointCloud> narrowCropped, wideCroppedCloud, mapPatch;
 	{
@@ -149,7 +149,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 //		std::cout << "avg preprocess: " << avgTime / count << "\n";
 	}
 
-//	std::cout << "preeIcp: " << asString(mapToRangeSensor_) << "\n";
+//	std::cout << "preeIcp: " << asString(mapToRangeSensorEstimate) << "\n";
 	const auto result = open3d::pipelines::registration::RegistrationICP(*narrowCropped, *mapPatch,
 			params_.scanMatcher_.maxCorrespondenceDistance_, mapToRangeSensorEstimate.matrix(), *icpObjective,
 			icpCriteria_);
