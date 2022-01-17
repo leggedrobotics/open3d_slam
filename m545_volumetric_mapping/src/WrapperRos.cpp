@@ -383,11 +383,12 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 	std::cout << "Transforming the pose buffer with the delta T from submap "
 			<< latestLoopClosureConstraint.sourceSubmapIdx_ << "the transform is: \n" << asString(dT.dT_)
 			<< std::endl;
-	auto mapToRangeSensorBufferPtr = mapper_->getMapToRangeSensorBufferPtr();
-	mapToRangeSensorBufferPtr->applyToAllElementsInTimeInterval(dT.dT_, lastLoopClosureTime, latestTime);
-	const auto updatedMapToRangeSensor = mapper_->getMapToRangeSensorBuffer().lookup(latestTime);
-	mapper_->setMapToRangeSensor(updatedMapToRangeSensor);
-	submaps_->setMapToRangeSensor(updatedMapToRangeSensor);
+	mapper_->loopClosureUpdate(dT.dT_);
+//	auto mapToRangeSensorBufferPtr = mapper_->getMapToRangeSensorBufferPtr();
+//	mapToRangeSensorBufferPtr->applyToAllElementsInTimeInterval(dT.dT_, lastLoopClosureTime, latestTime);
+//	const auto updatedMapToRangeSensor = mapper_->getMapToRangeSensorBuffer().lookup(latestTime);
+//	mapper_->setMapToRangeSensor(updatedMapToRangeSensor);
+//	submaps_->setMapToRangeSensor(updatedMapToRangeSensor);
 
 }
 

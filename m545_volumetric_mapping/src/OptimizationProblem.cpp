@@ -54,6 +54,7 @@ void OptimizationProblem::buildOptimizationProblem(const SubmapCollection &subma
 	registration::PoseGraphNode prototypeNode;
 	prototypeNode.pose_ = Eigen::Matrix4d::Identity();
 	poseGraph_.nodes_.push_back(prototypeNode);
+	Eigen::Matrix4d odometry = Eigen::Matrix4d::Identity();
 
 	//ensure that odometry constraint sources are in increasing order
 	std::sort(odometryConstraints_.begin(), odometryConstraints_.end(),
@@ -61,7 +62,9 @@ void OptimizationProblem::buildOptimizationProblem(const SubmapCollection &subma
 			return c1.sourceSubmapIdx_ < c2.targetSubmapIdx_;});
 
 	for (const auto &c : odometryConstraints_) {
-		prototypeNode.pose_ *= c.sourceToTarget_.matrix();
+		odometry =  odometry*c.sourceToTarget_.matrix();
+		prototypeNode.pose_  = odometry;
+//		std::cout << "odom: " << asString(Transform(prototypeNode.pose_)) << "\n";
 		poseGraph_.nodes_.push_back(prototypeNode);
 		registration::PoseGraphEdge edge;
 		edge.source_node_id_ = c.sourceSubmapIdx_;

@@ -103,7 +103,10 @@ void Submap::transform(const Transform &T) {
 	// that guy is used to compute the odometry
 //	mapToSubmap_ = mapToSubmap_ * T;
 	mapToRangeSensor_ = mapToRangeSensor_ * T;
+//	std::cout << "Submap " << getId() << " center before: " << submapCenter_.transpose() << std::endl;
 	submapCenter_ = T * submapCenter_;
+//	std::cout << "Submap " << getId() << " center after: " << submapCenter_.transpose() << std::endl;
+//	std::cout << "test for submap " << getId() << " " << map_.GetCenter().transpose() << std::endl;
 }
 
 void Submap::carve(const PointCloud &rawScan, const Transform &mapToRangeSensor,

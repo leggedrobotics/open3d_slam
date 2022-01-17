@@ -117,6 +117,7 @@ void SubmapCollection::createNewSubmap(const Transform &mapToSubmap) {
 	numScansMergedInActiveSubmap_ = 0;
 	std::cout << "Created submap: " << activeSubmapIdx_ << " with parent " << submapParentId
 			<< std::endl;
+	std::cout << "Submap " << activeSubmapIdx_ << " pose: " << asString(newSubmap.getMapToSubmapOrigin()) << std::endl;
 //	if (submaps_.size() > 1) {
 //		const auto c = buildOdometryConstraint(activeSubmapIdx_ - 1, activeSubmapIdx_);
 //		odometryConstraints_.push_back(c);
@@ -379,6 +380,7 @@ Constraint buildOdometryConstraint(size_t sourceIdx, size_t targetIdx,
 	c.isOdometryConstraint_ = true;
 	c.isInformationMatrixValid_ = true;
 	c.sourceToTarget_ = Transform(icpResult.transformation_);
+//	c.sourceToTarget_ = Transform::Identity();
 	c.informationMatrix_ = informationMatrix;
 
 //	printf("submap %ld size: %ld \n", sourceIdx, sourceFull.points_.size());

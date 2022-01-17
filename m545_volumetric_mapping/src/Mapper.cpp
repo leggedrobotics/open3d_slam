@@ -37,8 +37,12 @@ void Mapper::setParameters(const MapperParameters &p) {
 }
 
 void Mapper::loopClosureUpdate(const Transform &loopClosureCorrection){
-	mapToRangeSensor_ =mapToRangeSensor_ * loopClosureCorrection;
-	mapToRangeSensorPrev_ = mapToRangeSensorPrev_ * loopClosureCorrection;
+//	mapToRangeSensor_ =mapToRangeSensor_ * loopClosureCorrection;
+//	mapToRangeSensorPrev_ = mapToRangeSensorPrev_ * loopClosureCorrection;
+
+	mapToRangeSensor_ =loopClosureCorrection*mapToRangeSensor_;
+	mapToRangeSensorPrev_ = loopClosureCorrection*mapToRangeSensorPrev_;
+
 }
 
 void Mapper::update(const MapperParameters &p) {
@@ -145,10 +149,11 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 //		std::cout << "avg preprocess: " << avgTime / count << "\n";
 	}
 
+//	std::cout << "preeIcp: " << asString(mapToRangeSensor_) << "\n";
 	const auto result = open3d::pipelines::registration::RegistrationICP(*narrowCropped, *mapPatch,
 			params_.scanMatcher_.maxCorrespondenceDistance_, mapToRangeSensorEstimate.matrix(), *icpObjective,
 			icpCriteria_);
-
+//	std::cout << "postIcp: " << asString(Transform(result.transformation_)) << "\n\n";
 	if (result.fitness_ < params_.minRefinementFitness_) {
 		std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
 		isMatchingInProgress_ = false;
