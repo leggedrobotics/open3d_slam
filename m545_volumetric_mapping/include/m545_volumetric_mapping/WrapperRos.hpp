@@ -63,6 +63,7 @@ public:
 	size_t getMappingBufferSize() const;
 	size_t getOdometryBufferSizeLimit() const;
 	size_t getMappingBufferSizeLimit() const;
+	std::pair<PointCloud,Time> getLatestRegisteredCloud() const;
 
 private:
 

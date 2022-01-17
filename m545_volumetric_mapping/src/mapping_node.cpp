@@ -47,8 +47,12 @@ void processCloud(const open3d::geometry::PointCloud &cloud, const ros::Time &ti
 	mapping->addRangeScan(accumulatedCloud, fromRos(timestamp));
 	m545_mapping::publishTfTransform(Eigen::Matrix4d::Identity(), timestamp, frames::rangeSensorFrame, frame,
 			tfBroadcaster.get());
-	m545_mapping::publishCloud(accumulatedCloud, m545_mapping::frames::rangeSensorFrame, timestamp,
-			rawCloudPub);
+
+	if (rawCloudPub.getNumSubscribers() > 0) {
+		auto registeredCloud = mapping->getLatestRegisteredCloud();
+		m545_mapping::publishCloud(registeredCloud.first, m545_mapping::frames::rangeSensorFrame,
+				toRos(registeredCloud.second), rawCloudPub);
+	}
 	numAccumulatedRangeDataCount = 0;
 	accumulatedCloud.Clear();
 }

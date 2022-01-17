@@ -88,6 +88,15 @@ void WrapperRos::addRangeScan(const open3d::geometry::PointCloud cloud, const Ti
 	odometryBuffer_.push(timestampedCloud);
 }
 
+std::pair<PointCloud,Time> WrapperRos::getLatestRegisteredCloud() const{
+	if (registeredCloudBuffer_.empty()){
+		return {PointCloud(),Time()};
+	}
+	RegisteredPointCloud c = registeredCloudBuffer_.peek_back();
+//	c.raw_.cloud_.Transform(c.transform_.matrix());
+	return {c.raw_.cloud_,c.raw_.time_};
+}
+
 void WrapperRos::initialize() {
 
 	odometryInputPub_ = nh_->advertise<sensor_msgs::PointCloud2>("odom_input", 1, true);
@@ -394,7 +403,7 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 
 void WrapperRos::mesherWorker() {
 	if (mesherParams_.isComputeMesh_ && !mesherBufffer_.empty() && !mapper_->getMap().points_.empty()) {
-		auto map = mapper_->getMap();
+		PointCloud map = mapper_->getMap();
 		m545_mapping::MaxRadiusCroppingVolume cropper(localMapParams_.croppingRadius_);
 		const auto time = mesherBufffer_.pop();
 		const auto timestamp = toRos(time);
@@ -408,6 +417,7 @@ void WrapperRos::mesherWorker() {
 
 }
 
+
 void WrapperRos::publishMaps(const Time &time) {
 	if (visualizationUpdateTimer_.elapsedMsec() < visualizationParameters_.visualizeEveryNmsec_
 			&& !isVisualizationFirstTime_) {
@@ -416,7 +426,7 @@ void WrapperRos::publishMaps(const Time &time) {
 
 	const auto timestamp = toRos(time);
 	std::thread t([this, timestamp]() {
-		auto map = mapper_->getAssembledMap();
+		PointCloud map = mapper_->getAssembledMap();
 		voxelize(visualizationParameters_.assembledMapVoxelSize_, &map);
 		m545_mapping::publishCloud(map, m545_mapping::frames::mapFrame, timestamp, assembledMapPub_);
 		m545_mapping::publishCloud(mapper_->getPreprocessedScan(), m545_mapping::frames::rangeSensorFrame, timestamp,
