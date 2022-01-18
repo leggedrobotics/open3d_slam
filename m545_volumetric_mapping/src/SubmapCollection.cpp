@@ -216,12 +216,12 @@ bool SubmapCollection::isComputingFeatures() const {
 const Constraints& SubmapCollection::getOdometryConstraints() const {
 	return odometryConstraints_;
 }
-const Constraints& SubmapCollection::getLoopClosureConstraints() const {
-	return loopClosureConstraints_;
-}
-void SubmapCollection::addLoopClosureConstraints(const Constraints &lccs) {
-	loopClosureConstraints_.insert(loopClosureConstraints_.end(), lccs.begin(), lccs.end());
-}
+//const Constraints& SubmapCollection::getLoopClosureConstraints() const {
+//	return loopClosureConstraints_;
+//}
+//void SubmapCollection::addLoopClosureConstraints(const Constraints &lccs) {
+//	loopClosureConstraints_.insert(loopClosureConstraints_.end(), lccs.begin(), lccs.end());
+//}
 
 Constraints SubmapCollection::buildLoopClosureConstraints(
 		const TimestampedSubmapIds &loopClosureCandidatesIdxs) const {

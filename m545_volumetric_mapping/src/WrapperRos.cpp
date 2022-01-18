@@ -346,9 +346,8 @@ void WrapperRos::loopClosureWorker() {
 			Timer t("optimization_problem");
 			auto odometryConstraints = submaps_->getOdometryConstraints();
 			computeOdometryConstraints(*submaps_, &odometryConstraints);
-			submaps_->addLoopClosureConstraints(loopClosureConstraints);
 
-			optimizationProblem_->clearLoopClosureConstraints();
+//			optimizationProblem_->clearLoopClosureConstraints();
 			optimizationProblem_->clearOdometryConstraints();
 			optimizationProblem_->insertLoopClosureConstraints(loopClosureConstraints);
 			optimizationProblem_->insertOdometryConstraints(odometryConstraints);

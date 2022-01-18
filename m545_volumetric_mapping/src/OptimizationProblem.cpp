@@ -39,8 +39,8 @@ void OptimizationProblem::solve() {
 	isRunningOptimization_ = false;
 }
 
-void OptimizationProblem::setParameters(const MapperParameters &p){
-	params_=p;
+void OptimizationProblem::setParameters(const MapperParameters &p) {
+	params_ = p;
 }
 
 void OptimizationProblem::buildOptimizationProblem(const SubmapCollection &submaps) {
@@ -59,11 +59,12 @@ void OptimizationProblem::buildOptimizationProblem(const SubmapCollection &subma
 	//ensure that odometry constraint sources are in increasing order
 	std::sort(odometryConstraints_.begin(), odometryConstraints_.end(),
 			[](const Constraint &c1, const Constraint &c2) {
-			return c1.sourceSubmapIdx_ < c2.targetSubmapIdx_;});
+				return c1.sourceSubmapIdx_ < c2.targetSubmapIdx_;
+			});
 
 	for (const auto &c : odometryConstraints_) {
-		odometry =  odometry*c.sourceToTarget_.matrix();
-		prototypeNode.pose_  = odometry;
+		odometry = odometry * c.sourceToTarget_.matrix();
+		prototypeNode.pose_ = odometry;
 //		std::cout << "odom: " << asString(Transform(prototypeNode.pose_)) << "\n";
 		poseGraph_.nodes_.push_back(prototypeNode);
 		registration::PoseGraphEdge edge;
@@ -89,6 +90,21 @@ void OptimizationProblem::buildOptimizationProblem(const SubmapCollection &subma
 		poseGraph_.edges_.push_back(std::move(edge));
 	}
 	poseGraphPrev_ = poseGraph_;
+//	loopClosureConstraints_.clear();
+
+	//this is an approxmiation
+
+	//iterate over the loopClosure constraints and set the transform to identity
+	// this assumes that they are ideally aligned
+	// todo realign with ICP
+	// re - estimate the information matrix
+
+	for (auto &loopClosingConstraint : loopClosureConstraints_) {
+//		loopClosingConstraint.sourceToTarget_.setIdentity();
+		std::cout << " loop closure from submap: " << loopClosingConstraint.sourceSubmapIdx_ << " to submap "
+				<< loopClosingConstraint.targetSubmapIdx_ << "\n";
+	}
+
 	isRunningOptimization_ = false;
 }
 
@@ -107,8 +123,8 @@ void OptimizationProblem::print() const {
 	for (int i = 0; i < nEdges; ++i) {
 		const auto &e = graph.edges_.at(i);
 		const Transform T(e.transformation_);
-		std::cout << " edge " << i << " from " << e.source_node_id_ << " to " << e.target_node_id_
-				<< " with " << asString(T) << std::endl;
+		std::cout << " edge " << i << " from " << e.source_node_id_ << " to " << e.target_node_id_ << " with "
+				<< asString(T) << std::endl;
 	}
 
 }
@@ -148,9 +164,20 @@ void OptimizationProblem::insertOdometryConstraints(const Constraints &c) {
 	odometryConstraints_.insert(odometryConstraints_.end(), c.begin(), c.end());
 }
 
-void OptimizationProblem::insertLoopClosureConstraints(const Constraints &c) {
+void OptimizationProblem::insertLoopClosureConstraints(const Constraints &cs) {
 	std::lock_guard<std::mutex> lck(constraintMutex_);
-	loopClosureConstraints_.insert(loopClosureConstraints_.end(), c.begin(), c.end());
+	for (const auto &c : cs) {
+		auto hasConstraintAlready = [&c](const Constraint &c2) -> bool {
+			return c.sourceSubmapIdx_ == c2.sourceSubmapIdx_ && c.targetSubmapIdx_ == c2.targetSubmapIdx_;
+		};
+		const auto search = std::find_if(loopClosureConstraints_.begin(), loopClosureConstraints_.end(),
+				hasConstraintAlready);
+		const bool isConstraintAlreadyExists = search != loopClosureConstraints_.end();
+		if (!isConstraintAlreadyExists){
+			loopClosureConstraints_.push_back(c);
+		}
+	}
+//	loopClosureConstraints_.insert(loopClosureConstraints_.end(), cs.begin(), cs.end());
 }
 
 OptimizedTransforms OptimizationProblem::getOptimizedTransformIncrements() const {
