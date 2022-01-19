@@ -18,6 +18,7 @@
 #include <numeric>
 #include <utility>
 #include <set>
+#include <thread>
 
 namespace m545_mapping {
 
@@ -194,18 +195,25 @@ void SubmapCollection::setParameters(const MapperParameters &p) {
 void SubmapCollection::computeFeatures(const TimestampedSubmapIds &finishedSubmapIds) {
 	std::lock_guard<std::mutex> lck(featureComputationMutex_);
 	isComputingFeatures_ = true;
-	{
-		Timer t("feature computation");
-		for (const auto &id : finishedSubmapIds) {
-			std::cout << "computing features for submap: " << id.submapId_ << std::endl;
-			submaps_.at(id.submapId_).computeFeatures();
-			loopClosureCandidatesIdxs_.push(id);
+	Timer timer("submap_finishing_total");
+
+		auto featureComputation = [&]() {
+			Timer t("feature computation");
+			for (const auto &id : finishedSubmapIds) {
+				std::cout << "computing features for submap: " << id.submapId_ << std::endl;
+				submaps_.at(id.submapId_).computeFeatures();
+				loopClosureCandidatesIdxs_.push(id);
+			}
+		};
+
+		std::thread t(featureComputation);
+
+		{
+			Timer t("odometry_constraint_computation");
+			computeOdometryConstraints(*this, finishedSubmapIds, &odometryConstraints_);
 		}
-	}
-	{
-		Timer t("odometry_constraint_computation");
-		computeOdometryConstraints(*this, finishedSubmapIds, &odometryConstraints_);
-	}
+
+		t.join();
 	isComputingFeatures_ = false;
 }
 
