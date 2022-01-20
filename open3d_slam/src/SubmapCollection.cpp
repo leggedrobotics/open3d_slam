@@ -286,15 +286,15 @@ void SubmapCollection::dumpToFile(const std::string &folderPath,
 void SubmapCollection::transform(const OptimizedTransforms &transformIncrements) {
 	const size_t nTransforms = transformIncrements.size();
 	std::vector<size_t> optimizedIdxs;
-	std::cout << "Maps that have been optimized,: \n";
 	std::cout << "Num transforms: " << transformIncrements.size() << std::endl;
 	std::cout << "Num submaps: " << submaps_.size() << std::endl;
+	std::cout << "Transforms of updated submaps:: \n";
 	for (size_t i = 0; i < nTransforms; ++i) {
 		const auto &update = transformIncrements.at(i);
 		if (update.submapId_ < submaps_.size()) {
 			submaps_.at(update.submapId_).transform(update.dT_);
 			optimizedIdxs.push_back(update.submapId_);
-			std::cout << "Submap " << update.submapId_ << " updated with: " << asString(update.dT_)
+			std::cout << "Submap " << update.submapId_ << " " << asString(update.dT_)
 					<< "\n";
 		} else {
 			std::cout << "tying to update submap: " << update.submapId_ << " but the there are only: "
@@ -317,7 +317,7 @@ void SubmapCollection::transform(const OptimizedTransforms &transformIncrements)
 		size_t currentNode;
 		currentNode = idx;
 		std::cout << currentNode << " with parent: ";
-		while (true) {
+		while (true && !transformIncrements.empty()) {
 			currentNode = submaps_.at(currentNode).getParentId();
 			if (std::find(submapIdxsToUpdate.begin(), submapIdxsToUpdate.end(), currentNode)
 					== submapIdxsToUpdate.end()) {

@@ -41,14 +41,18 @@ public:
 
 private:
 
+	void setupOdometryEdgesAndPoseGraphNodes();
+	void setupLoopClosureEdges();
+
 	MapperParameters params_;
 	bool isRunningOptimization_ = false;
 	bool isReadyToOptimize_ = false;
 	std::mutex constraintMutex_, optimizationMutex_;
 	Constraints loopClosureConstraints_;
 	Constraints odometryConstraints_;
-	open3d::pipelines::registration::PoseGraph poseGraph_, poseGraphPrev_;
+	open3d::pipelines::registration::PoseGraph poseGraph_, poseGraphOptimized_;
 	size_t numLoopClosuresPrev_ = 0;
+	size_t numOdometryEdgesPrev_ = 0;
 
 };
 
