@@ -395,7 +395,15 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 
 
 	//now here you would update the lc constraints
-//	Constraints loopClosureConstraints = optimizationProblem_->getLoopClosureConstraints();
+	Constraints loopClosureConstraints = optimizationProblem_->getLoopClosureConstraints();
+#pragma omp parallel for
+	for (int i =0; i < loopClosureConstraints.size(); ++i){
+		const Constraint &oldConstraint = loopClosureConstraints.at(i);
+		Constraint c = buildOdometryConstraint(oldConstraint.sourceSubmapIdx_, oldConstraint.targetSubmapIdx_, *submaps_);
+		c.isOdometryConstraint_ = false;
+		optimizationProblem_->updateLoopClosureConstraint(i, c);
+		std::cout << "Loop closure constraint " << i << " new transform: " << asString(c.sourceToTarget_) << std::endl;
+	}
 
 }
 
