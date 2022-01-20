@@ -11,6 +11,9 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   roslib
 )
 
+find_package(catkin REQUIRED COMPONENTS
+  ${CATKIN_PACKAGE_DEPENDENCIES}
+)
 
 if(DEFINED ENV{Open3D_DIR})
   set(Open3D_DIR ENV{Open3D_DIR})
@@ -19,17 +22,16 @@ else()
   find_package(Open3D REQUIRED)
 endif()
 
-message(WARNING "open3d dir: ${Open3D_DIR}")
-message(WARNING "open3d include dir: ${Open3D_INCLUDE_DIRS}")
-message(WARNING "open3d include dir: ${Open3D_LIBRARIES}")
+message("INFO: open3d dir: ${Open3D_DIR}")
+message("INFO: open3d include dir: ${Open3D_INCLUDE_DIRS}")
+message("INFO: open3d include dir: ${Open3D_LIBRARIES}")
 
-find_package(catkin REQUIRED COMPONENTS
-  ${CATKIN_PACKAGE_DEPENDENCIES}
-)
 
 catkin_package(
-  INCLUDE_DIRS ${Open3D_INCLUDE_DIRS}
-  LIBRARIES #${Open3D_LIBRARIES} 
+  INCLUDE_DIRS 
+    ${Open3D_INCLUDE_DIRS}
+  LIBRARIES 
+    ${Open3D_LIBRARIES} 
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS

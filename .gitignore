@@ -48,6 +48,6 @@ Thumbs.db
 *.mov
 *.wmv
 
-/m545_volumetric_mapping/data/*
-!/m545_volumetric_mapping/data/.gitkeep
+/open3d_slam/data/*
+!/open3d_slam/data/.gitkeep
 

@@ -28,7 +28,7 @@
 // C++
 #include <string>
 
-#include "m545_volumetric_mapping_msgs/PolygonMesh.h"
+#include "open3d_slam_msgs/PolygonMesh.h"
 
 namespace open3d_conversions
 {
@@ -77,11 +77,11 @@ void rosToOpen3d(const sensor_msgs::PointCloud2ConstPtr& ros_pc2, open3d::t::geo
                  bool skip_colors = false);
 
 
-void open3dToRos(const open3d::geometry::MeshBase &mesh, const std::string &frameId,  m545_volumetric_mapping_msgs::PolygonMesh &msg);
+void open3dToRos(const open3d::geometry::MeshBase &mesh, const std::string &frameId,  open3d_slam_msgs::PolygonMesh &msg);
 
 
-void rosToOpen3d(const m545_volumetric_mapping_msgs::PolygonMesh &msg, open3d::geometry::TriangleMesh &mesh);
-void rosToOpen3d(const m545_volumetric_mapping_msgs::PolygonMesh::ConstPtr &msg, open3d::geometry::TriangleMesh &mesh);
+void rosToOpen3d(const open3d_slam_msgs::PolygonMesh &msg, open3d::geometry::TriangleMesh &mesh);
+void rosToOpen3d(const open3d_slam_msgs::PolygonMesh::ConstPtr &msg, open3d::geometry::TriangleMesh &mesh);
 
 
 
