@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>open3d_slam_msgs</name>
+  <version>0.0.0</version>
+  <description>Messages for the open3d_slam package</description>
+
+  <author email="ej@ethz.ch">ej</author>
+  <maintainer email="ej@ethz.ch">ej</maintainer>
+  
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>message_generation</depend>
+  <depend>message_runtime</depend>
+  <depend>sensor_msgs</depend>
+</package>
