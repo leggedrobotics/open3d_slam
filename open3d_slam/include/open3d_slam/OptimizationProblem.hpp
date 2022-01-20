@@ -38,6 +38,8 @@ public:
 	void dumpToFile(const std::string &filename) const;
 	void loadFromFile(const std::string &filename);
 	void setParameters(const MapperParameters &p);
+	const Constraints &getLoopClosureConstraints() const;
+	void updateLoopClosureConstraint(size_t idx, const Constraint &c);
 
 private:
 

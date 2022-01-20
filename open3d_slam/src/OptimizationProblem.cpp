@@ -37,6 +37,11 @@ void OptimizationProblem::solve() {
 	option.preference_loop_closure_ = p.loopClosurePreference_;
 	GlobalOptimization(poseGraph_, method, criteria, option);
 	poseGraphOptimized_ = poseGraph_;
+	//todo maybe proper wat to go about this would be to re-estimate the alignment and the information matrix
+//	std::transform(loopClosureConstraints_.begin(), loopClosureConstraints_.end(), loopClosureConstraints_.begin(), [](Constraint c){
+//		c.sourceToTarget_.setIdentity();
+//		return c;
+//	});
 	isRunningOptimization_ = false;
 }
 
@@ -201,6 +206,14 @@ OptimizedTransforms OptimizationProblem::getOptimizedTransformIncrements() const
 	}
 
 	return retVal;
+}
+
+const Constraints &OptimizationProblem::getLoopClosureConstraints() const{
+	return loopClosureConstraints_;
+}
+
+void OptimizationProblem::updateLoopClosureConstraint(size_t idx, const Constraint &c){
+	loopClosureConstraints_.at(idx) = c;
 }
 
 } //namespace o3d_slam

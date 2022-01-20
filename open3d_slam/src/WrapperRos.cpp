@@ -347,7 +347,7 @@ void WrapperRos::loopClosureWorker() {
 			auto odometryConstraints = submaps_->getOdometryConstraints();
 			computeOdometryConstraints(*submaps_, &odometryConstraints);
 
-			optimizationProblem_->clearLoopClosureConstraints();
+//			optimizationProblem_->clearLoopClosureConstraints();
 			optimizationProblem_->clearOdometryConstraints();
 			optimizationProblem_->insertLoopClosureConstraints(loopClosureConstraints);
 			optimizationProblem_->insertOdometryConstraints(odometryConstraints);
@@ -392,11 +392,10 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 			<< latestLoopClosureConstraint.sourceSubmapIdx_ << "the transform is: \n" << asString(dT.dT_)
 			<< std::endl;
 	mapper_->loopClosureUpdate(dT.dT_);
-//	auto mapToRangeSensorBufferPtr = mapper_->getMapToRangeSensorBufferPtr();
-//	mapToRangeSensorBufferPtr->applyToAllElementsInTimeInterval(dT.dT_, lastLoopClosureTime, latestTime);
-//	const auto updatedMapToRangeSensor = mapper_->getMapToRangeSensorBuffer().lookup(latestTime);
-//	mapper_->setMapToRangeSensor(updatedMapToRangeSensor);
-//	submaps_->setMapToRangeSensor(updatedMapToRangeSensor);
+
+
+	//now here you would update the lc constraints
+//	Constraints loopClosureConstraints = optimizationProblem_->getLoopClosureConstraints();
 
 }
 
