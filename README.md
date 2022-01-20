@@ -2,6 +2,9 @@
 
 This package contains the code for a open3D SLAM framework.
 
+DISCLAIMER  
+This package has been devloped as a hobby project and it is under heavy development. Hence we cannot (yet) guarantee any stability.
+
 ## Docker
 
 ### Build docker Image
