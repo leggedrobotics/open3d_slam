@@ -49,9 +49,9 @@ void processCloud(const open3d::geometry::PointCloud &cloud, const ros::Time &ti
 			tfBroadcaster.get());
 
 	if (rawCloudPub.getNumSubscribers() > 0) {
-		auto registeredCloud = mapping->getLatestRegisteredCloud();
-		o3d_slam::publishCloud(registeredCloud.first, o3d_slam::frames::rangeSensorFrame,
-				toRos(registeredCloud.second), rawCloudPub);
+		auto cloudTimePair = mapping->getLatestRegisteredCloudTimestampPair();
+		o3d_slam::publishCloud(cloudTimePair.first, o3d_slam::frames::rangeSensorFrame,
+				toRos(cloudTimePair.second), rawCloudPub);
 	}
 	numAccumulatedRangeDataCount = 0;
 	accumulatedCloud.Clear();

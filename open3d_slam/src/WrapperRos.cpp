@@ -88,7 +88,7 @@ void WrapperRos::addRangeScan(const open3d::geometry::PointCloud cloud, const Ti
 	odometryBuffer_.push(timestampedCloud);
 }
 
-std::pair<PointCloud,Time> WrapperRos::getLatestRegisteredCloud() const{
+std::pair<PointCloud,Time> WrapperRos::getLatestRegisteredCloudTimestampPair() const{
 	if (registeredCloudBuffer_.empty()){
 		return {PointCloud(),Time()};
 	}
