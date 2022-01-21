@@ -69,6 +69,8 @@ inline Eigen::Quaterniond fromRPY(const double roll, const double pitch, const d
 
 bool isValidColor(const Eigen::Vector3d &c);
 
+void saveToFile(const std::string &filename, const PointCloud &cloud);
+
 inline Eigen::Quaterniond fromRPY(const Eigen::Vector3d &rpy) {
 	return fromRPY(rpy.x(), rpy.y(), rpy.z());
 }

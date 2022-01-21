@@ -71,6 +71,7 @@ public:
 //	void addLoopClosureConstraints(const Constraints &lccs);
 
 	const MapperParameters &getParameters() const;
+	void setFolderPath(const std::string &folderPath);
 
 private:
 	void insertBufferedScans(Submap *submap);
@@ -96,6 +97,7 @@ private:
 	ThreadSafeBuffer<TimestampedSubmapId> loopClosureCandidatesIdxs_, finishedSubmapsIdxs_;
 	Constraints odometryConstraints_, loopClosureConstraints_;
 	CircularBuffer<ScanTimeTransform> overlapScansBuffer_;
+	std::string savingDataFolderPath_;
 
 };
 

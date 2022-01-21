@@ -124,6 +124,7 @@ void WrapperRos::initialize() {
 	odometry_->setParameters(odometryParams);
 
 	submaps_ = std::make_shared<o3d_slam::SubmapCollection>();
+	submaps_->setFolderPath(folderPath_);
 	mapper_ = std::make_shared<o3d_slam::Mapper>(odometry_->getBuffer(), submaps_);
 	o3d_slam::loadParameters(paramFile, &mapperParams_);
 	mapper_->setParameters(mapperParams_);

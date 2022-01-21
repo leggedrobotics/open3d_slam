@@ -129,8 +129,17 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		c.timestamp_ = timestamp;
 		constraints.emplace_back(std::move(c));
 
+		PointCloud sourceOverlapCopy = sourceOverlap;
+		sourceOverlapCopy.Transform(icpResult.transformation_);
+		saveToFile(folderPath_ +"/source_"+std::to_string(recognitionCounter_), sourceOverlapCopy);
+		saveToFile(folderPath_ +"/target_"+std::to_string(recognitionCounter_++), targetOverlap);
+
 	} // end for loop
 	return constraints;
+}
+
+void PlaceRecognition::setFolderPath(const std::string &folderPath){
+	folderPath_= folderPath;
 }
 
 std::vector<size_t> PlaceRecognition::getLoopClosureCandidatesIdxs(const Transform &mapToRangeSensor,

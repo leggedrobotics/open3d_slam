@@ -17,6 +17,7 @@
 #include <open3d/pipelines/registration/Registration.h>
 #include <open3d/utility/Eigen.h>
 #include "open3d/geometry/KDTreeFlann.h"
+#include <open3d/io/PointCloudIO.h>
 
 #ifdef open3d_slam_OPENMP_FOUND
 #include <omp.h>
@@ -104,6 +105,16 @@ std::string asString(const Transform &T) {
 	const std::string rpyString = string_format("rpy (deg):[%f, %f, %f]", rpy.x(), rpy.y(), rpy.z());
 	return trans + " ; " + rot + " ; " + rpyString;
 
+}
+
+void saveToFile(const std::string &filename, const PointCloud &cloud) {
+	PointCloud copy = cloud;
+	std::string nameWithCorrectSuffix = filename;
+	size_t found = filename.find(".pcd");
+	if (found == std::string::npos) {
+		nameWithCorrectSuffix = filename + ".pcd";
+	}
+	open3d::io::WritePointCloudToPCD(nameWithCorrectSuffix, copy, open3d::io::WritePointCloudOption());
 }
 
 void estimateNormals(int numNearestNeighbours, open3d::geometry::PointCloud *pcl) {

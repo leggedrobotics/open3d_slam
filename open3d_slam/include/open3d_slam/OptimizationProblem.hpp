@@ -52,7 +52,7 @@ private:
 	std::mutex constraintMutex_, optimizationMutex_;
 	Constraints loopClosureConstraints_;
 	Constraints odometryConstraints_;
-	open3d::pipelines::registration::PoseGraph poseGraph_, poseGraphOptimized_;
+	open3d::pipelines::registration::PoseGraph poseGraph_, poseGraphOptimized_, poseGraphNonOptimized_;
 	size_t numLoopClosuresPrev_ = 0;
 	size_t numOdometryEdgesPrev_ = 0;
 

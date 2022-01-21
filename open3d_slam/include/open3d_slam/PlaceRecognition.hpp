@@ -28,10 +28,10 @@ public:
 	std::vector<size_t> getLoopClosureCandidatesIdxs(const Transform &mapToRangeSensor,
 			const SubmapCollection &submapCollection, const AdjacencyMatrix &adjMatrix, size_t lastFinishedSubmapIdx,
 			size_t activeSubmapIdx) const;
-
+	void setFolderPath(const std::string &folderPath);
 private:
-
-
+	std::string folderPath_ = "";
+	mutable size_t recognitionCounter_ = 0;
 	MapperParameters params_;
 
 };

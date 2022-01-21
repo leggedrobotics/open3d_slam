@@ -35,13 +35,9 @@ void OptimizationProblem::solve() {
 	option.reference_node_ = p.referenceNode_;
 	option.edge_prune_threshold_ = p.edgePruneThreshold_;
 	option.preference_loop_closure_ = p.loopClosurePreference_;
+	poseGraphNonOptimized_ = poseGraph_;
 	GlobalOptimization(poseGraph_, method, criteria, option);
 	poseGraphOptimized_ = poseGraph_;
-	//todo maybe proper wat to go about this would be to re-estimate the alignment and the information matrix
-//	std::transform(loopClosureConstraints_.begin(), loopClosureConstraints_.end(), loopClosureConstraints_.begin(), [](Constraint c){
-//		c.sourceToTarget_.setIdentity();
-//		return c;
-//	});
 	isRunningOptimization_ = false;
 }
 
@@ -93,7 +89,7 @@ void OptimizationProblem::setupOdometryEdgesAndPoseGraphNodes() {
 		odometry = Eigen::Matrix4d::Identity();
 	}
 	for (int i = numOdometryEdgesPrev_; i < odometryConstraints_.size(); ++i) {
-		odometry = odometry * odometryConstraints_.at(i).sourceToTarget_.matrix();
+		odometry = odometry * odometryConstraints_.at(i).sourceToTarget_.inverse().matrix();
 		prototypeNode.pose_ = odometry;
 		poseGraph_.nodes_.push_back(prototypeNode);
 	}
@@ -201,7 +197,9 @@ OptimizedTransforms OptimizationProblem::getOptimizedTransformIncrements() const
 	assert_eq(poseGraphOptimized_.nodes_.size(), poseGraph_.nodes_.size(),
 			"Graphs are not of same size, did you run the optimization?");
 	for (size_t i = 0; i < poseGraph_.nodes_.size(); ++i) {
-		const auto deltaT = Transform(poseGraph_.nodes_.at(i).pose_);
+		const Transform tOld(poseGraphNonOptimized_.nodes_.at(i).pose_);
+		const Transform tNew(poseGraphOptimized_.nodes_.at(i).pose_);
+		const auto deltaT = tNew;
 		retVal.emplace_back(OptimizedTransform { deltaT, i });
 	}
 

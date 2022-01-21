@@ -308,6 +308,7 @@ void SubmapCollection::transform(const OptimizedTransforms &transformIncrements)
 	std::set_difference(allIdxs.begin(), allIdxs.end(), optimizedIdxs.begin(), optimizedIdxs.end(),
 			std::inserter(submapIdxsToUpdate, submapIdxsToUpdate.begin()));
 	std::cout << "\n num maps: " << submaps_.size() << "\n";
+	std::cout << "num maps missing: " << submapIdxsToUpdate.size() << "\n";
 	std::cout << " maps that are missing: \n";
 	for (auto idx : submapIdxsToUpdate) {
 		//look at the node parent
@@ -343,6 +344,11 @@ std::vector<size_t> SubmapCollection::getAllSubmapIdxs() const {
 
 const MapperParameters& SubmapCollection::getParameters() const {
 	return params_;
+}
+
+void SubmapCollection::setFolderPath(const std::string &folderPath){
+	savingDataFolderPath_= folderPath;
+	placeRecognition_.setFolderPath(folderPath);
 }
 
 ////////////////////////////////////////////////////////////////////
