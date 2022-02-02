@@ -81,13 +81,17 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		const auto target = targetSubmap.getMap();
 		const double mapVoxelSize = getMapVoxelSize(params_.mapBuilder_,
 				voxelSizeCorrespondenceSearchMapVoxelSizeIsZero);
-		const double voxelSizeForOverlap = 3.0 * mapVoxelSize;
+
+		const double voxelSizeForOverlap = 20.0 * mapVoxelSize;
 		const size_t minNumPointsPerVoxel = 1;
 		std::vector<size_t> sourceIdxs, targetIdxs;
 		computeIndicesOfOverlappingPoints(source, target, Transform(ransacResult.transformation_),
 				voxelSizeForOverlap, minNumPointsPerVoxel, &sourceIdxs, &targetIdxs);
 		const auto sourceOverlap = *source.SelectByIndex(sourceIdxs);
 		const auto targetOverlap = *target.SelectByIndex(targetIdxs);
+
+//		const auto &sourceOverlap = source;
+//		const auto &targetOverlap = target;
 
 		open3d::pipelines::registration::ICPConvergenceCriteria criteria;
 		criteria.max_iteration_ = icpRunUntilConvergenceNumberOfIterations; // i.e. run until convergence

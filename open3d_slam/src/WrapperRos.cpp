@@ -88,8 +88,8 @@ void WrapperRos::addRangeScan(const open3d::geometry::PointCloud cloud, const Ti
 	odometryBuffer_.push(timestampedCloud);
 }
 
-std::pair<PointCloud,Time> WrapperRos::getLatestRegisteredCloudTimestampPair() const{
-	if (registeredCloudBuffer_.empty()){
+std::pair<PointCloud, Time> WrapperRos::getLatestRegisteredCloudTimestampPair() const {
+	if (registeredCloudBuffer_.empty()) {
 		return {PointCloud(),Time()};
 	}
 	RegisteredPointCloud c = registeredCloudBuffer_.peek_back();
@@ -183,11 +183,9 @@ void WrapperRos::odometryWorker() {
 
 		if (odometryInputPub_.getNumSubscribers() > 0) {
 			auto odomInput = odometry_->getPreProcessedCloud();
-			std::thread t(
-					[this, timestamp, odomInput]() {
-						o3d_slam::publishCloud(odomInput, o3d_slam::frames::rangeSensorFrame, timestamp,
-								odometryInputPub_);
-					});
+			std::thread t([this, timestamp, odomInput]() {
+				o3d_slam::publishCloud(odomInput, o3d_slam::frames::rangeSensorFrame, timestamp, odometryInputPub_);
+			});
 			t.detach();
 		}
 		const double timeMeasurement = odometryStatisticsTimer_.elapsedMsecSinceStopwatchStart();
@@ -383,7 +381,8 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 
 	// loop closing constraints are built such that the source node is always the ne being transformed
 	// hence the source node should be the one whose transform we should apply
-	assert_gt(latestLoopClosureConstraint.sourceSubmapIdx_, latestLoopClosureConstraint.targetSubmapIdx_, "Wrapper ros, update submaps and trajectory: ");
+	assert_gt(latestLoopClosureConstraint.sourceSubmapIdx_, latestLoopClosureConstraint.targetSubmapIdx_,
+			"Wrapper ros, update submaps and trajectory: ");
 	const auto dT = optimizedTransformations.at(latestLoopClosureConstraint.sourceSubmapIdx_);
 	const Time latestTime = mapper_->getMapToRangeSensorBuffer().latest_time();
 //	const Time lastLoopClosureTime = latestLoopClosureConstraint.timestamp_;
@@ -394,16 +393,17 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 			<< std::endl;
 	mapper_->loopClosureUpdate(dT.dT_);
 
-
 	//now here you would update the lc constraints
 	Constraints loopClosureConstraints = optimizationProblem_->getLoopClosureConstraints();
 #pragma omp parallel for
-	for (int i =0; i < loopClosureConstraints.size(); ++i){
+	for (int i = 0; i < loopClosureConstraints.size(); ++i) {
 		const Constraint &oldConstraint = loopClosureConstraints.at(i);
-		Constraint c = buildOdometryConstraint(oldConstraint.sourceSubmapIdx_, oldConstraint.targetSubmapIdx_, *submaps_);
+		Constraint c = buildConstraint(oldConstraint.sourceSubmapIdx_, oldConstraint.targetSubmapIdx_, *submaps_,
+				true, mapperParams_.placeRecognition_.maxIcpCorrespondenceDistance_,2.0);
 		c.isOdometryConstraint_ = false;
 		optimizationProblem_->updateLoopClosureConstraint(i, c);
-		std::cout << "Loop closure constraint " << i << " new transform: " << asString(c.sourceToTarget_) << std::endl;
+		std::cout << "Loop closure constraint " << i << " new transform: " << asString(c.sourceToTarget_)
+				<< std::endl;
 	}
 
 }
@@ -424,7 +424,6 @@ void WrapperRos::mesherWorker() {
 
 }
 
-
 void WrapperRos::publishMaps(const Time &time) {
 	if (visualizationUpdateTimer_.elapsedMsec() < visualizationParameters_.visualizeEveryNmsec_
 			&& !isVisualizationFirstTime_) {
@@ -436,12 +435,11 @@ void WrapperRos::publishMaps(const Time &time) {
 		PointCloud map = mapper_->getAssembledMap();
 		voxelize(visualizationParameters_.assembledMapVoxelSize_, &map);
 		o3d_slam::publishCloud(map, o3d_slam::frames::mapFrame, timestamp, assembledMapPub_);
-		o3d_slam::publishCloud(mapper_->getPreprocessedScan(), o3d_slam::frames::rangeSensorFrame, timestamp,
-	mappingInputPub_);
+		o3d_slam::publishCloud(mapper_->getPreprocessedScan(), o3d_slam::frames::rangeSensorFrame, timestamp, mappingInputPub_);
 //		o3d_slam::publishCloud(mapper_->getDenseMap(), o3d_slam::frames::mapFrame, timestamp,
 //				denseMapPub_);
-		o3d_slam::publishSubmapCoordinateAxes(mapper_->getSubmaps(), o3d_slam::frames::mapFrame,
-				timestamp, submapOriginsPub_);
+		o3d_slam::publishSubmapCoordinateAxes(mapper_->getSubmaps(), o3d_slam::frames::mapFrame, timestamp,
+				submapOriginsPub_);
 		if (submapsPub_.getNumSubscribers() > 0) {
 			open3d::geometry::PointCloud cloud;
 			o3d_slam::assembleColoredPointCloud(mapper_->getSubmaps(), &cloud);

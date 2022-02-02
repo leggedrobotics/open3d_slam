@@ -108,5 +108,7 @@ void computeOdometryConstraints(const SubmapCollection &submaps, const SubmapCol
 
 Constraint buildOdometryConstraint(size_t sourceIdx, size_t targetIdx,
 		const SubmapCollection &submaps);
+Constraint buildConstraint(size_t sourceIdx, size_t targetIdx,
+		const SubmapCollection &submaps, bool isComputeOverlap, double icpMaxCorrespondenceDistance, double voxelSizeOverlapCompute);
 
 } // namespace o3d_slam

@@ -83,14 +83,14 @@ void OptimizationProblem::setupOdometryEdgesAndPoseGraphNodes() {
 	const int nExistingEdges = poseGraphOptimized_.edges_.size();
 	poseGraph_.nodes_.reserve(odometryConstraints_.size()+1);
 	if (nExistingEdges > 0) {
-		odometry = poseGraphOptimized_.nodes_.back().pose_;
+		odometry = poseGraphOptimized_.nodes_.back().pose_.inverse();
 	} else {
 		poseGraph_.nodes_.push_back(prototypeNode);
 		odometry = Eigen::Matrix4d::Identity();
 	}
 	for (int i = numOdometryEdgesPrev_; i < odometryConstraints_.size(); ++i) {
-		odometry = odometry * odometryConstraints_.at(i).sourceToTarget_.inverse().matrix();
-		prototypeNode.pose_ = odometry;
+		odometry = odometryConstraints_.at(i).sourceToTarget_.matrix() * odometry;
+		prototypeNode.pose_ = odometry.inverse();
 		poseGraph_.nodes_.push_back(prototypeNode);
 	}
 	numOdometryEdgesPrev_ = odometryConstraints_.size();
