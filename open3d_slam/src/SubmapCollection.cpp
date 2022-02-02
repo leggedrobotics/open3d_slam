@@ -361,13 +361,15 @@ bool hasConstraint(size_t sourceIdx, size_t targetIdx, const Constraints &constr
 Constraint buildOdometryConstraint(size_t sourceIdx, size_t targetIdx, const SubmapCollection &submaps) {
 	const double mapVoxelSize = getMapVoxelSize(submaps.getParameters().mapBuilder_,
 			voxelSizeCorrespondenceSearchMapVoxelSizeIsZero);
-	Constraint c = buildConstraint(sourceIdx, targetIdx, submaps, true, 1.5 * mapVoxelSize, 20.0 * mapVoxelSize);
+	Constraint c = buildConstraint(sourceIdx, targetIdx, submaps, true, 1.5 * mapVoxelSize,
+			20.0 * mapVoxelSize,true);
 	c.isOdometryConstraint_ = true;
 	return c;
 }
 
 Constraint buildConstraint(size_t sourceIdx, size_t targetIdx, const SubmapCollection &submaps,
-		bool isComputeOverlap, double icpMaxCorrespondenceDistance, double voxelSizeOverlapCompute) {
+		bool isComputeOverlap, double icpMaxCorrespondenceDistance, double voxelSizeOverlapCompute,
+		bool isEstimateInformationMatrix) {
 
 	PointCloud source = submaps.getSubmaps().at(sourceIdx).getMap();
 	PointCloud target = submaps.getSubmaps().at(targetIdx).getMap();
@@ -377,8 +379,8 @@ Constraint buildConstraint(size_t sourceIdx, size_t targetIdx, const SubmapColle
 	if (isComputeOverlap) {
 		std::vector<size_t> sourceIdxs, targetIdxs;
 		const size_t minNumPointsPerVoxel = 1;
-		computeIndicesOfOverlappingPoints(source, target, Transform::Identity(), voxelSizeOverlapCompute, minNumPointsPerVoxel,
-				&sourceIdxs, &targetIdxs);
+		computeIndicesOfOverlappingPoints(source, target, Transform::Identity(), voxelSizeOverlapCompute,
+				minNumPointsPerVoxel, &sourceIdxs, &targetIdxs);
 		source = *source.SelectByIndex(sourceIdxs);
 		target = *target.SelectByIndex(targetIdxs);
 	}
@@ -389,15 +391,17 @@ Constraint buildConstraint(size_t sourceIdx, size_t targetIdx, const SubmapColle
 			icpMaxCorrespondenceDistance, Eigen::Matrix4d::Identity(),
 			open3d::pipelines::registration::TransformationEstimationPointToPlane(), criteria);
 
-	const Eigen::Matrix6d informationMatrix =
-			open3d::pipelines::registration::GetInformationMatrixFromPointClouds(source, target,
-					icpMaxCorrespondenceDistance, icpResult.transformation_);
+	Eigen::Matrix6d informationMatrix = Eigen::Matrix6d::Identity();
+	if (isEstimateInformationMatrix) {
+		informationMatrix = open3d::pipelines::registration::GetInformationMatrixFromPointClouds(source, target,
+				icpMaxCorrespondenceDistance, icpResult.transformation_);
+	}
 
 	Constraint c;
 	c.sourceSubmapIdx_ = sourceIdx;
 	c.targetSubmapIdx_ = targetIdx;
 	c.isOdometryConstraint_ = true;
-	c.isInformationMatrixValid_ = true;
+	c.isInformationMatrixValid_ = isEstimateInformationMatrix;
 	c.sourceToTarget_ = Transform(icpResult.transformation_);
 //	c.sourceToTarget_ = Transform::Identity();
 	c.informationMatrix_ = informationMatrix;
