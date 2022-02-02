@@ -55,10 +55,11 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 	const auto sourceFeature = sourceSubmap.getFeatures();
 	for (const auto id : closeSubmapsIdxs) {
 		const bool isAdjacent = std::abs<int>(id - lastFinishedSubmapIdx) == 1;
-		if (!isAdjacent){
+		if (!isAdjacent) {
 			std::cout << "matching submap: " << lastFinishedSubmapIdx << " with submap: " << id << "\n";
 		} else {
-			std::cout << "Skipping the loop closure of: " << lastFinishedSubmapIdx << " with submap: " << id << " since they are adjacent \n";
+			std::cout << "Skipping the loop closure of: " << lastFinishedSubmapIdx << " with submap: " << id
+					<< " since they are adjacent \n";
 			continue;
 		}
 		const auto &targetSubmap = submaps.at(id);
@@ -127,7 +128,7 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		c.sourceSubmapIdx_ = lastFinishedSubmapIdx;
 		c.targetSubmapIdx_ = id;
 		c.informationMatrix_ = open3d::pipelines::registration::GetInformationMatrixFromPointClouds(sourceOverlap,
-				targetOverlap, mapVoxelSize * 1.5, icpResult.transformation_);
+				targetOverlap, cfg.maxIcpCorrespondenceDistance_, icpResult.transformation_);
 		c.isInformationMatrixValid_ = true;
 		c.isOdometryConstraint_ = false;
 		c.timestamp_ = timestamp;
@@ -135,15 +136,15 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 
 		PointCloud sourceOverlapCopy = sourceOverlap;
 		sourceOverlapCopy.Transform(icpResult.transformation_);
-		saveToFile(folderPath_ +"/source_"+std::to_string(recognitionCounter_), sourceOverlapCopy);
-		saveToFile(folderPath_ +"/target_"+std::to_string(recognitionCounter_++), targetOverlap);
+		saveToFile(folderPath_ + "/source_" + std::to_string(recognitionCounter_), sourceOverlapCopy);
+		saveToFile(folderPath_ + "/target_" + std::to_string(recognitionCounter_++), targetOverlap);
 
 	} // end for loop
 	return constraints;
 }
 
-void PlaceRecognition::setFolderPath(const std::string &folderPath){
-	folderPath_= folderPath;
+void PlaceRecognition::setFolderPath(const std::string &folderPath) {
+	folderPath_ = folderPath;
 }
 
 std::vector<size_t> PlaceRecognition::getLoopClosureCandidatesIdxs(const Transform &mapToRangeSensor,
