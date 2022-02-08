@@ -15,6 +15,10 @@
 #include <open3d/io/PointCloudIO.h>
 #include "open3d_slam/helpers.hpp"
 
+#ifdef open3d_slam_OPENMP_FOUND
+#include <omp.h>
+#endif
+
 namespace o3d_slam {
 
 namespace {
@@ -36,12 +40,12 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 
 	using namespace open3d::pipelines::registration;
 	Constraints constraints;
-	const auto &cfg = params_.placeRecognition_;
+	const PlaceRecognitionParameters &cfg = params_.placeRecognition_;
 	const auto edgeLengthChecker = CorrespondenceCheckerBasedOnEdgeLength(cfg.correspondenceCheckerEdgeLength_);
 	const auto distanceChecker = CorrespondenceCheckerBasedOnDistance(cfg.correspondenceCheckerDistance_);
-	const auto &submaps = submapCollection.getSubmaps();
-	const auto &sourceSubmap = submaps.at(lastFinishedSubmapIdx);
-	const auto closeSubmapsIdxs = std::move(
+	const SubmapCollection::Submaps &submaps = submapCollection.getSubmaps();
+	const Submap &sourceSubmap = submaps.at(lastFinishedSubmapIdx);
+	const std::vector<size_t> closeSubmapsIdxs = std::move(
 			getLoopClosureCandidatesIdxs(mapToRangeSensor, submapCollection, adjMatrix, lastFinishedSubmapIdx,
 					activeSubmapIdx));
 	std::cout << "considering submap " << lastFinishedSubmapIdx << " for loop closure, num candidate submaps: "
@@ -50,10 +54,12 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 	if (closeSubmapsIdxs.empty()) {
 		return constraints;
 	}
-	const auto sourceSparse = sourceSubmap.getSparseMap();
-	const auto source = sourceSubmap.getMap();
-	const auto sourceFeature = sourceSubmap.getFeatures();
-	for (const auto id : closeSubmapsIdxs) {
+	const PointCloud sourceSparse = sourceSubmap.getSparseMap();
+	const PointCloud source = sourceSubmap.getMap();
+	const Submap::Feature sourceFeature = sourceSubmap.getFeatures();
+//#pragma omp parallel for
+	for (int i = 0; i < closeSubmapsIdxs.size(); ++i) {
+		const int id = closeSubmapsIdxs.at(i);
 		const bool isAdjacent = std::abs<int>(id - lastFinishedSubmapIdx) == 1;
 		if (!isAdjacent) {
 			std::cout << "matching submap: " << lastFinishedSubmapIdx << " with submap: " << id << "\n";
@@ -62,9 +68,9 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 					<< " since they are adjacent \n";
 			continue;
 		}
-		const auto &targetSubmap = submaps.at(id);
-		const auto targetSparse = targetSubmap.getSparseMap();
-		const auto targetFeature = targetSubmap.getFeatures();
+		const Submap &targetSubmap = submaps.at(id);
+		const PointCloud targetSparse = targetSubmap.getSparseMap();
+		const Submap::Feature targetFeature = targetSubmap.getFeatures();
 		RegistrationResult ransacResult;
 		{
 			Timer t("ransac matching");
@@ -79,7 +85,7 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 			continue;
 		}
 
-		const auto target = targetSubmap.getMap();
+		const PointCloud target = targetSubmap.getMap();
 		const double mapVoxelSize = getMapVoxelSize(params_.mapBuilder_,
 				voxelSizeCorrespondenceSearchMapVoxelSizeIsZero);
 
@@ -88,8 +94,8 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		std::vector<size_t> sourceIdxs, targetIdxs;
 		computeIndicesOfOverlappingPoints(source, target, Transform(ransacResult.transformation_),
 				voxelSizeForOverlap, minNumPointsPerVoxel, &sourceIdxs, &targetIdxs);
-		const auto sourceOverlap = *source.SelectByIndex(sourceIdxs);
-		const auto targetOverlap = *target.SelectByIndex(targetIdxs);
+		const PointCloud sourceOverlap = *source.SelectByIndex(sourceIdxs);
+		const PointCloud targetOverlap = *target.SelectByIndex(targetIdxs);
 
 //		const auto &sourceOverlap = source;
 //		const auto &targetOverlap = target;
@@ -110,19 +116,21 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 			continue;
 		}
 
-		std::cout << "source features num: " << sourceSubmap.getFeatures().Num() << "\n";
-		std::cout << "target features num: " << sourceSubmap.getFeatures().Num() << "\n";
-		std::cout << "registered num correspondences: " << ransacResult.correspondence_set_.size() << std::endl;
-		std::cout << "registered with fitness: " << ransacResult.fitness_ << std::endl;
-		std::cout << "registered with rmse: " << ransacResult.inlier_rmse_ << std::endl;
-		std::cout << "registered with transformation: \n" << asString(Transform(ransacResult.transformation_))
-				<< std::endl;
+//#pragma omp critical
+		{
+			std::cout << "source features num: " << sourceSubmap.getFeatures().Num() << "\n";
+			std::cout << "target features num: " << sourceSubmap.getFeatures().Num() << "\n";
+			std::cout << "registered num correspondences: " << ransacResult.correspondence_set_.size() << std::endl;
+			std::cout << "registered with fitness: " << ransacResult.fitness_ << std::endl;
+			std::cout << "registered with rmse: " << ransacResult.inlier_rmse_ << std::endl;
+			std::cout << "registered with transformation: \n" << asString(Transform(ransacResult.transformation_))
+					<< std::endl;
 
-		std::cout << "refined with fitness: " << icpResult.fitness_ << std::endl;
-		std::cout << "refined with rmse: " << icpResult.inlier_rmse_ << std::endl;
-		std::cout << "refined with transformation: \n" << asString(Transform(icpResult.transformation_))
-				<< std::endl;
-
+			std::cout << "refined with fitness: " << icpResult.fitness_ << std::endl;
+			std::cout << "refined with rmse: " << icpResult.inlier_rmse_ << std::endl;
+			std::cout << "refined with transformation: \n" << asString(Transform(icpResult.transformation_))
+					<< std::endl;
+		}
 		Constraint c;
 		c.sourceToTarget_ = Transform(icpResult.transformation_);
 		c.sourceSubmapIdx_ = lastFinishedSubmapIdx;
@@ -132,12 +140,14 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		c.isInformationMatrixValid_ = true;
 		c.isOdometryConstraint_ = false;
 		c.timestamp_ = timestamp;
-		constraints.emplace_back(std::move(c));
-
-		PointCloud sourceOverlapCopy = sourceOverlap;
-		sourceOverlapCopy.Transform(icpResult.transformation_);
-		saveToFile(folderPath_ + "/source_" + std::to_string(recognitionCounter_), sourceOverlapCopy);
-		saveToFile(folderPath_ + "/target_" + std::to_string(recognitionCounter_++), targetOverlap);
+//#pragma omp critical
+		{
+			constraints.emplace_back(std::move(c));
+		}
+//		PointCloud sourceOverlapCopy = sourceOverlap;
+//		sourceOverlapCopy.Transform(icpResult.transformation_);
+//		saveToFile(folderPath_ + "/source_" + std::to_string(recognitionCounter_), sourceOverlapCopy);
+//		saveToFile(folderPath_ + "/target_" + std::to_string(recognitionCounter_++), targetOverlap);
 
 	} // end for loop
 	return constraints;

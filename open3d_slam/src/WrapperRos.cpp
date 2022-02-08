@@ -25,6 +25,10 @@
 #include "open3d_conversions/open3d_conversions.h"
 #include <open3d_slam_msgs/PolygonMesh.h>
 
+#ifdef open3d_slam_OPENMP_FOUND
+#include <omp.h>
+#endif
+
 namespace o3d_slam {
 
 namespace {
