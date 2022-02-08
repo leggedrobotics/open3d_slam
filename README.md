@@ -2,6 +2,9 @@
 
 This package contains the code for a open3D SLAM framework.
 
+DISCLAIMER  
+This package has been devloped as a hobby project and it is under heavy development. Hence we cannot (yet) guarantee any stability.
+
 ## Docker
 
 ### Build docker Image
@@ -34,7 +37,7 @@ After building the image (or pulling it from docker hub), this can be done by ty
 
 This can be done using 
 ```bash
-catkin build m545_volumetric_mapping
+catkin build open3d_slam
 ```
 
 ## Running the Repo
@@ -42,7 +45,7 @@ catkin build m545_volumetric_mapping
 Add the required config to the launch file `mapping.launch`.
 Then do
 ```bash
-roslaunch m545_volumetric_mapping mapping.launch
+roslaunch open3d_slam mapping.launch
 ```
 
 ----------------------------------------------
@@ -125,4 +128,4 @@ Clone it with:
 `git clone git@github.com:catkin/catkin_simple.git`
 
 Build with:
-`catkin build m545_volumetric_mapping`
+`catkin build open3d_slam`

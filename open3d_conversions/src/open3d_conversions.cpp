@@ -270,7 +270,7 @@ void rosToOpen3d(const sensor_msgs::PointCloud2ConstPtr &ros_pc2, open3d::t::geo
 }
 
 void open3dToRos(const open3d::geometry::MeshBase &mesh, const std::string &frameId,
-		m545_volumetric_mapping_msgs::PolygonMesh &msg) {
+		open3d_slam_msgs::PolygonMesh &msg) {
 
 	enum XYZ {
 		x, y, z
@@ -292,7 +292,7 @@ void open3dToRos(const open3d::geometry::MeshBase &mesh, const std::string &fram
 	const int nTriangles = triangleMesh.triangles_.size();
 	msg.polygons.reserve(nTriangles);
 	for (int i = 0; i < nTriangles; ++i) {
-		m545_volumetric_mapping_msgs::Vertices triangle;
+		open3d_slam_msgs::Vertices triangle;
 		triangle.vertices.resize(3);
 		triangle.vertices[x] = triangleMesh.triangles_.at(i).x();
 		triangle.vertices[y] = triangleMesh.triangles_.at(i).y();
@@ -303,13 +303,13 @@ void open3dToRos(const open3d::geometry::MeshBase &mesh, const std::string &fram
 
 }
 
-void rosToOpen3d(const m545_volumetric_mapping_msgs::PolygonMesh::ConstPtr &msg, open3d::geometry::TriangleMesh &mesh){
+void rosToOpen3d(const open3d_slam_msgs::PolygonMesh::ConstPtr &msg, open3d::geometry::TriangleMesh &mesh){
 	rosToOpen3d(*msg, mesh);
 }
 
 
 
-void rosToOpen3d(const m545_volumetric_mapping_msgs::PolygonMesh &msg, open3d::geometry::TriangleMesh &mesh){
+void rosToOpen3d(const open3d_slam_msgs::PolygonMesh &msg, open3d::geometry::TriangleMesh &mesh){
 	using namespace open3d::geometry;
 	enum XYZ {
 		x, y, z
