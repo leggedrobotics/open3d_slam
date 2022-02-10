@@ -49,10 +49,15 @@ void processCloud(const open3d::geometry::PointCloud &cloud, const ros::Time &ti
 			tfBroadcaster.get());
 
 	if (rawCloudPub.getNumSubscribers() > 0) {
-		auto cloudTimePair = mapping->getLatestRegisteredCloudTimestampPair();
-		o3d_slam::publishCloud(cloudTimePair.first, o3d_slam::frames::rangeSensorFrame,
-				toRos(cloudTimePair.second), rawCloudPub);
+		std::pair<PointCloud, Time> cloudTimePair = mapping->getLatestRegisteredCloudTimestampPair();
+		const bool isTimeValid = toUniversal(cloudTimePair.second) > 0;
+		const bool isCloudEmpty = cloudTimePair.first.IsEmpty();
+		if (isTimeValid && !isCloudEmpty) {
+			o3d_slam::publishCloud(cloudTimePair.first, o3d_slam::frames::rangeSensorFrame,
+					toRos(cloudTimePair.second), rawCloudPub);
+		}
 	}
+
 	numAccumulatedRangeDataCount = 0;
 	accumulatedCloud.Clear();
 }
