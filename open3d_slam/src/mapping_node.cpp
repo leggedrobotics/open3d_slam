@@ -33,6 +33,7 @@ open3d::geometry::PointCloud accumulatedCloud;
 o3d_slam::ProjectionParameters projectionParams;
 std::shared_ptr<o3d_slam::ColorProjection> colorProjectionPtr_;
 typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::PointCloud2, sensor_msgs::Image> MySyncPolicy;
+bool isProcessAsFastAsPossible = false;
 
 void processCloud(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp,
 		const std::string &frame) {
@@ -45,18 +46,29 @@ void processCloud(const open3d::geometry::PointCloud &cloud, const ros::Time &ti
 	}
 
 	mapping->addRangeScan(accumulatedCloud, fromRos(timestamp));
-	//o3d_slam::publishTfTransform(Eigen::Matrix4d::Identity(), timestamp, frames::rangeSensorFrame, frame,
-	//		tfBroadcaster.get());
+//	o3d_slam::publishTfTransform(Eigen::Matrix4d::Identity(), timestamp, frames::rangeSensorFrame, frame + "_o3d",
+//			tfBroadcaster.get());
 
 	if (rawCloudPub.getNumSubscribers() > 0) {
-		std::pair<PointCloud, Time> cloudTimePair = mapping->getLatestRegisteredCloudTimestampPair();
-		const bool isTimeValid = toUniversal(cloudTimePair.second) > 0;
-		const bool isCloudEmpty = cloudTimePair.first.IsEmpty();
-		if (isTimeValid && !isCloudEmpty) {
-			o3d_slam::publishCloud(cloudTimePair.first, o3d_slam::frames::rangeSensorFrame,
-					toRos(cloudTimePair.second), rawCloudPub);
-		}
-	}
+		if (isProcessAsFastAsPossible) {
+			std::pair<PointCloud, Time> cloudTimePair = mapping->getLatestRegisteredCloudTimestampPair();
+			const bool isTimeValid = toUniversal(cloudTimePair.second) > 0;
+			const bool isCloudEmpty = cloudTimePair.first.IsEmpty();
+			if (isTimeValid && !isCloudEmpty) {
+				o3d_slam::publishCloud(cloudTimePair.first, o3d_slam::frames::rangeSensorFrame,
+						toRos(cloudTimePair.second), rawCloudPub);
+			}
+		} else {
+			open3d::geometry::PointCloud rawCloud;
+			if (colorProjectionPtr_ == nullptr) {
+				rawCloud = accumulatedCloud;
+			} else {
+				rawCloud = colorProjectionPtr_->filterColor(accumulatedCloud);
+			}
+
+			o3d_slam::publishCloud(rawCloud, o3d_slam::frames::rangeSensorFrame, timestamp, rawCloudPub);
+		} // end isProcessAsFastAsPossible
+	} // end rawCloudPub.getNumSubscribers() > 0
 
 	numAccumulatedRangeDataCount = 0;
 	accumulatedCloud.Clear();
@@ -153,7 +165,7 @@ int main(int argc, char **argv) {
 	std::cout << "Use RGB from the camera is set to " << useCameraRgbFlag << std::endl;
 	/// if no cameraRgb
 
-	const bool isProcessAsFastAsPossible = nh->param<bool>("is_read_from_rosbag", false);
+	isProcessAsFastAsPossible = nh->param<bool>("is_read_from_rosbag", false);
 	std::cout << "Is process as fast as possible: " << std::boolalpha << isProcessAsFastAsPossible << "\n";
 	numAccumulatedRangeDataDesired = nh->param<int>("num_accumulated_range_data", 1);
 	std::cout << "Num accumulated range data: " << numAccumulatedRangeDataDesired << std::endl;
