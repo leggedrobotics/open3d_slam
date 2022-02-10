@@ -45,8 +45,8 @@ void processCloud(const open3d::geometry::PointCloud &cloud, const ros::Time &ti
 	}
 
 	mapping->addRangeScan(accumulatedCloud, fromRos(timestamp));
-	o3d_slam::publishTfTransform(Eigen::Matrix4d::Identity(), timestamp, frames::rangeSensorFrame, frame,
-			tfBroadcaster.get());
+	//o3d_slam::publishTfTransform(Eigen::Matrix4d::Identity(), timestamp, frames::rangeSensorFrame, frame,
+	//		tfBroadcaster.get());
 
 	if (rawCloudPub.getNumSubscribers() > 0) {
 		std::pair<PointCloud, Time> cloudTimePair = mapping->getLatestRegisteredCloudTimestampPair();
