@@ -24,6 +24,7 @@
 		<arg name="is_read_from_rosbag" value="$(arg is_read_from_rosbag)" />
 		<arg name="rosbag_filepath" value="$(arg bag_filepath)" />
 		<arg name="use_rgb_from_camera" value="$(arg use_rgb_from_camera)"/>
+		<arg name="use_sim_time" value="$(arg use_sim_time)"/>
 	</include>
 
 	<node pkg="rosbag" type="play" name="rosbag"

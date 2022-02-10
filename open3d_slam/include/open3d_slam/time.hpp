@@ -45,7 +45,7 @@ constexpr int64 kUtsEpochOffsetFromUnixEpochInSeconds =
 
 struct UniversalTimeScaleClock {
   using rep = int64;
-  using period = std::ratio<1, 10000000>;
+  using period = std::ratio<1, 10000000>; // 100 / 1000000000
   using duration = std::chrono::duration<rep, period>;
   using time_point = std::chrono::time_point<UniversalTimeScaleClock>;
   static constexpr bool is_steady = true;

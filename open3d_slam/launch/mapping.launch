@@ -11,8 +11,10 @@
 	<arg name="num_accumulated_range_data" default="1"/>
 	<arg name="is_read_from_rosbag" default="false"/>
 	<arg name="rosbag_filepath" default=""/>
-	
+	<arg name="use_sim_time" default="false"/>
 
+	<param name="/use_sim_time" value="$(arg use_sim_time)" />
+	
 	<node name="mapping_node" pkg="open3d_slam"
 		type="mapping_node" output="screen" launch-prefix="$(arg launch_prefix)">
 

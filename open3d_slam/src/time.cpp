@@ -107,6 +107,13 @@ ros::Time toRos(Time time) {
 	int64_t uts_timestamp = toUniversal(time);
 	int64_t ns_since_unix_epoch = (uts_timestamp - kUtsEpochOffsetFromUnixEpochInSeconds * 10000000ll) * 100ll;
 	::ros::Time ros_time;
+	if (ns_since_unix_epoch < 0){
+		std::cerr << "ERROR: nanoseconds since unix epoch is: " << ns_since_unix_epoch << " which is impossible!!!! \n";
+		std::cerr << "       ROS time will throw you an exception fo sho!!!! \n";
+		std::cerr << "       Are you playing the rosbag with --clock??? \n";
+		std::cerr << "       If yes, did you set use_sim_time to true ??? \n";
+		std::cout << "Universal time: " << uts_timestamp << std::endl;
+	}
 	ros_time.fromNSec(ns_since_unix_epoch);
 	return ros_time;
 }
