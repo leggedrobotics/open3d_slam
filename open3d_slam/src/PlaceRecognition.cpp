@@ -60,7 +60,8 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 //#pragma omp parallel for
 	for (int i = 0; i < closeSubmapsIdxs.size(); ++i) {
 		const int id = closeSubmapsIdxs.at(i);
-		const bool isAdjacent = std::abs<int>(id - lastFinishedSubmapIdx) == 1;
+		const bool isAdjacent = std::abs<int>(id - lastFinishedSubmapIdx) == 1
+				|| adjMatrix.isAdjacent(id, lastFinishedSubmapIdx);
 		if (!isAdjacent) {
 			std::cout << "matching submap: " << lastFinishedSubmapIdx << " with submap: " << id << "\n";
 		} else {
@@ -144,11 +145,16 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		{
 			constraints.emplace_back(std::move(c));
 		}
-		if (params_.placeRecognition_.isDumpPlaceRecognitionAlignmentsToFile_){
+		if (params_.placeRecognition_.isDumpPlaceRecognitionAlignmentsToFile_) {
 			PointCloud sourceOverlapCopy = sourceOverlap;
+			PointCloud sourceCopy = source;
+			sourceCopy.Transform(icpResult.transformation_);
 			sourceOverlapCopy.Transform(icpResult.transformation_);
 			saveToFile(folderPath_ + "/source_" + std::to_string(recognitionCounter_), sourceOverlapCopy);
+			saveToFile(folderPath_ + "/sourceFull_" + std::to_string(recognitionCounter_), sourceCopy);
+			saveToFile(folderPath_ + "/targetFull_" + std::to_string(recognitionCounter_), target);
 			saveToFile(folderPath_ + "/target_" + std::to_string(recognitionCounter_++), targetOverlap);
+			std::cout << "Dumped place recognition to file \n";
 		}
 
 	} // end for loop

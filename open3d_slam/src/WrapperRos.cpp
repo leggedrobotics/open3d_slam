@@ -415,9 +415,12 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 //		c.isOdometryConstraint_ = false;
 //		c.isInformationMatrixValid_ = true;
 		optimizationProblem_->updateLoopClosureConstraint(i, c);
+		loopClosureConstraints.at(i) = c;
 		std::cout << "Loop closure constraint " << i << " new transform: " << asString(c.sourceToTarget_)
 				<< std::endl;
 	}
+
+	submaps_->updateAdjacencyMatrix(loopClosureConstraints);
 
 }
 

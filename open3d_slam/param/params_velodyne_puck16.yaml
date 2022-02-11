@@ -84,7 +84,7 @@ mapping:
     ransac_min_corresondence_set_size: 25
     max_icp_correspondence_distance: 0.2
     min_icp_refinement_fitness: 0.5
-    dump_aligned_place_recognitions_to_file: false   
+    dump_aligned_place_recognitions_to_file: true   
     
     
     

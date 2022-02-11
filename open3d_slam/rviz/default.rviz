@@ -10,7 +10,6 @@ Panels:
         - /PointCloud21
         - /PointCloud22
         - /Axes1
-        - /TFTrajectory3
       Splitter Ratio: 0.5
     Tree Height: 772
   - Class: rviz/Selection
@@ -103,18 +102,6 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        camera_accel_frame:
-          Value: true
-        camera_accel_optical_frame:
-          Value: true
-        camera_gyro_frame:
-          Value: true
-        camera_imu_optical_frame:
-          Value: true
-        camera_link:
-          Value: true
-        camera_pose_frame:
-          Value: true
         map_o3d:
           Value: true
         odom_o3d:
@@ -152,8 +139,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 11.733083724975586
-        Min Value: -1.5656547546386719
+        Max Value: 14.181523323059082
+        Min Value: -1.5382311344146729
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -242,10 +229,22 @@ Visualization Manager:
         submap_1: true
         submap_2: true
         submap_3: true
+        submap_4: true
+        submap_5: true
+        submap_6: true
+        submap_7: true
+        submap_8: true
+        submap_9: true
         submap_id_0: true
         submap_id_1: true
         submap_id_2: true
         submap_id_3: true
+        submap_id_4: true
+        submap_id_5: true
+        submap_id_6: true
+        submap_id_7: true
+        submap_id_8: true
+        submap_id_9: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -272,7 +271,7 @@ Visualization Manager:
       color: 239; 41; 41
       duration: 500
       frame: raw_rs_o3d
-      line_width: 0.009999999776482582
+      line_width: 0.15000000596046448
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -301,7 +300,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 91.22844696044922
+      Distance: 131.01809692382812
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -309,17 +308,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -16.746349334716797
-        Y: -28.770998001098633
-        Z: -8.06882381439209
+        X: -0.4626493453979492
+        Y: -15.366860389709473
+        Z: -12.865114212036133
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.089796781539917
+      Pitch: 1.2697961330413818
       Target Frame: <Fixed Frame>
-      Yaw: 2.4514126777648926
+      Yaw: 2.628260850906372
     Saved: ~
 Window Geometry:
   Displays:

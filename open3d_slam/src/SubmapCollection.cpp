@@ -67,6 +67,12 @@ size_t SubmapCollection::getTotalNumPoints() const {
 	});
 }
 
+void SubmapCollection::updateAdjacencyMatrix(const Constraints &loopClosureConstraints){
+	for (const auto &c : loopClosureConstraints){
+		adjacencyMatrix_.addEdge(c.sourceSubmapIdx_, c.targetSubmapIdx_);
+	}
+}
+
 void SubmapCollection::addScanToBuffer(const PointCloud &scan, const Transform &mapToRangeSensor,
 		const Time &timestamp) {
 	overlapScansBuffer_.push(ScanTimeTransform { scan, timestamp, mapToRangeSensor });
