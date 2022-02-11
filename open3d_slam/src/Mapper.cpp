@@ -23,6 +23,7 @@ namespace o3d_slam {
 namespace {
 namespace registration = open3d::pipelines::registration;
 std::shared_ptr<registration::TransformationEstimation> icpObjective;
+const bool isCheckTransformChainingAndPrintResult = false;
 } // namespace
 
 Mapper::Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer,
@@ -112,7 +113,6 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		auto wideCroppedCloud = preProcessScan(rawScan);
 		submaps_->insertScan(rawScan, *wideCroppedCloud, Transform::Identity(), timestamp);
 		mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
-//		mapToOdomBuffer_.push(timestamp,mapToOdom_);
 		isMatchingInProgress_ = false;
 		return true;
 	}
@@ -129,24 +129,21 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		return false;
 	}
 
+	checkTransformChainingAndPrintResult(isCheckTransformChainingAndPrintResult);
+
 	const Transform odomToRangeSensor = getTransform(timestamp, odomToRangeSensorBuffer_);
 	const Transform odomToRangeSensorPrev = getTransform(lastMeasurementTimestamp_, odomToRangeSensorBuffer_);
-	const auto odometryMotion = odomToRangeSensorPrev.inverse()*odomToRangeSensor;
-	const auto mapToRangeSensorEstimate =  mapToRangeSensorPrev_*odometryMotion ;
-	const auto &activeSubmap = submaps_->getActiveSubmap().getMap();
+	const Transform odometryMotion = odomToRangeSensorPrev.inverse()*odomToRangeSensor;
+	const Transform mapToRangeSensorEstimate =  mapToRangeSensorPrev_*odometryMotion ;
+	const PointCloud &activeSubmap = submaps_->getActiveSubmap().getMap();
 	std::shared_ptr<PointCloud> narrowCropped, wideCroppedCloud, mapPatch;
 	{
-		static double avgTime = 0;
-		static int count = 0;
 		Timer timer;
 		wideCroppedCloud = preProcessScan(rawScan);
 		narrowCropped = scanMatcherCropper_->crop(*wideCroppedCloud);
 		preProcessedScan_ = *narrowCropped;
 		scanMatcherCropper_->setPose(mapToRangeSensor_);
 		mapPatch = scanMatcherCropper_->crop(activeSubmap);
-//		avgTime += timer.elapsedMsec();
-//		++count;
-//		std::cout << "avg preprocess: " << avgTime / count << "\n";
 	}
 
 //	std::cout << "preeIcp: " << asString(mapToRangeSensorEstimate) << "\n";
@@ -164,16 +161,16 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 
 	// update transforms
 	mapToRangeSensor_.matrix() = result.transformation_;
-	mapToOdom_ = mapToRangeSensor_ * odomToRangeSensor.inverse();
 	mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
 
 	// concatenate registered cloud into map
 	submaps_->setMapToRangeSensor(mapToRangeSensor_);
-	const bool isMovedTooLittle = odometryMotion.translation().norm() < params_.minMovementBetweenMappingSteps_;
+	const Transform sensorMotion = mapToRangeSensorLastScanInsertion_.inverse() * mapToRangeSensor_;
+	const bool isMovedTooLittle = sensorMotion.translation().norm() < params_.minMovementBetweenMappingSteps_;
 	if (!isMovedTooLittle) {
 		//Timer t("scan_insertion_and_bookeeping");
 		submaps_->insertScan(rawScan, *wideCroppedCloud, mapToRangeSensor_, timestamp);
-		odomToRangeSensorPrev_ = odomToRangeSensor;
+		mapToRangeSensorLastScanInsertion_ = mapToRangeSensor_;
 	}
 
 	lastMeasurementTimestamp_ = timestamp;
@@ -238,6 +235,21 @@ Mapper::PointCloud Mapper::getAssembledMap() const {
 		}
 	}
 	return cloud;
+}
+
+void Mapper::checkTransformChainingAndPrintResult(bool isCheckTransformChainingAndPrintResult) const {
+	if (isCheckTransformChainingAndPrintResult && odomToRangeSensorBuffer_.size() > 70 && mapToRangeSensorBuffer_.size() > 70) {
+		const auto odom1 = odomToRangeSensorBuffer_.latest_measurement(60).transform_;
+		const auto odom2 = odomToRangeSensorBuffer_.latest_measurement(20).transform_;
+		const auto start = mapToRangeSensorBuffer_.latest_measurement(60).transform_;
+		const auto gt = mapToRangeSensorBuffer_.latest_measurement(20).transform_;
+		const Transform mapMotion = start.inverse() * gt;
+		const Transform odomMotion = odom1.inverse() * odom2;
+		std::cout << "start      :  " << asString(start) << "\n";
+		std::cout << "gt         :  " << asString(gt) << "\n";
+		std::cout << "gt computed:  " << asString(start*mapMotion) << "\n";
+		std::cout << "est        : " << asString(start*odomMotion) << "\n\n";
+	}
 }
 
 const Submap& Mapper::getActiveSubmap() const {

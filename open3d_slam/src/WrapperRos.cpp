@@ -183,7 +183,7 @@ void WrapperRos::odometryWorker() {
 		o3d_slam::publishTfTransform(odometry_->getOdomToRangeSensor(measurement.time_).matrix(), timestamp,
 				odomFrame, rangeSensorFrame, tfBroadcaster_.get());
 		o3d_slam::publishTfTransform(odometry_->getOdomToRangeSensor(measurement.time_).matrix(), timestamp,
-				mapFrame, "raw_odom", tfBroadcaster_.get());
+				mapFrame, "raw_odom_o3d", tfBroadcaster_.get());
 
 		if (odometryInputPub_.getNumSubscribers() > 0) {
 			auto odomInput = odometry_->getPreProcessedCloud();
@@ -308,6 +308,8 @@ void WrapperRos::publishMapToOdomTf(const Time &time) {
 	const auto timestamp = toRos(time);
 	o3d_slam::publishTfTransform(mapper_->getMapToOdom(time).matrix(), timestamp, mapFrame, odomFrame,
 			tfBroadcaster_.get());
+	o3d_slam::publishTfTransform(mapper_->getMapToRangeSensor(time).matrix(), timestamp,
+			mapFrame, "raw_rs_o3d", tfBroadcaster_.get());
 }
 
 void WrapperRos::computeFeaturesIfReady() {

@@ -16,7 +16,6 @@
 #include "open3d_slam/SubmapCollection.hpp"
 #include "open3d_slam/TransformInterpolationBuffer.hpp"
 
-
 namespace o3d_slam {
 
 class Mapper {
@@ -25,39 +24,40 @@ public:
 
 	using PointCloud = open3d::geometry::PointCloud;
 
-	Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer, std::shared_ptr<SubmapCollection> submaps);
+	Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer,
+			std::shared_ptr<SubmapCollection> submaps);
 	~Mapper() = default;
 
 	void setMapToRangeSensor(const Transform &t);
 	const PointCloud& getMap() const;
 	const PointCloud& getDenseMap() const;
 	const Submap& getActiveSubmap() const;
-	const SubmapCollection &getSubmaps() const;
+	const SubmapCollection& getSubmaps() const;
 	SubmapCollection* getSubmapsPtr();
 	PointCloud getAssembledMap() const;
 	bool addRangeMeasurement(const PointCloud &cloud, const Time &timestamp);
 	void setParameters(const MapperParameters &p);
 	bool isMatchingInProgress() const;
 	bool isManipulatingMap() const;
-	Transform getMapToOdom( const Time &timestamp) const;
-	Transform getMapToRangeSensor( const Time &timestamp) const;
-	const TransformInterpolationBuffer &getMapToRangeSensorBuffer() const;
-	TransformInterpolationBuffer *getMapToRangeSensorBufferPtr();
-	const PointCloud &getPreprocessedScan() const;
+	Transform getMapToOdom(const Time &timestamp) const;
+	Transform getMapToRangeSensor(const Time &timestamp) const;
+	const TransformInterpolationBuffer& getMapToRangeSensorBuffer() const;
+	TransformInterpolationBuffer* getMapToRangeSensorBufferPtr();
+	const PointCloud& getPreprocessedScan() const;
 	void loopClosureUpdate(const Transform &loopClosureCorrection);
 private:
 	std::shared_ptr<PointCloud> preProcessScan(const PointCloud &scan) const;
 	void update(const MapperParameters &p);
 	void estimateNormalsIfNeeded(PointCloud *pcl) const;
-
+	void checkTransformChainingAndPrintResult(bool isCheckTransformChainingAndPrintResult) const;
 
 	bool isMatchingInProgress_ = false;
 	bool isManipulatingMap_ = false;
 	Time lastMeasurementTimestamp_;
-	Transform mapToOdom_ = Transform::Identity();
-	Transform odomToRangeSensorPrev_ = Transform::Identity();
 	Transform mapToRangeSensor_ = Transform::Identity();
 	Transform mapToRangeSensorPrev_ = Transform::Identity();
+	Transform mapToRangeSensorLastScanInsertion_ = Transform::Identity();
+
 	MapperParameters params_;
 	open3d::pipelines::registration::ICPConvergenceCriteria icpCriteria_;
 	std::mutex mapManipulationMutex_;
