@@ -52,6 +52,10 @@ public:
 		return data_.size();
 	}
 
+	void clear() {
+		data_.clear();
+	}
+
 	const std::deque<T>& getImplementation() const {
 		return data_;
 	}

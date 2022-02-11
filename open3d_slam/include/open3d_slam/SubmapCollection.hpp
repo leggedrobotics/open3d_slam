@@ -67,8 +67,6 @@ public:
 	void transform(const OptimizedTransforms &transformIncrements);
 
 	const Constraints &getOdometryConstraints() const;
-//	const Constraints &getLoopClosureConstraints() const;
-//	void addLoopClosureConstraints(const Constraints &lccs);
 
 	const MapperParameters &getParameters() const;
 	void setFolderPath(const std::string &folderPath);

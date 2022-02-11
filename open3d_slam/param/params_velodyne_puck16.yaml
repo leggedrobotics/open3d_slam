@@ -18,7 +18,7 @@ mapping:
   is_attempt_loop_closures: true
   dump_submaps_to_file_before_after_lc: false
   min_movement_between_mapping_steps: 0.0
-  submaps_num_scan_overlap: 1
+  submaps_num_scan_overlap: 10
   scan_to_map_refinement:
     min_refinement_fitness: 0.7
     scan_matching:

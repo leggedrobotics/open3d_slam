@@ -6,17 +6,6 @@
  */
 
 
-
-
-/*
- * time.cpp
- *
- *  Created on: Oct 20, 2021
- *      Author: jelavice
- */
-
-
-
 #include "open3d_slam/Transform.hpp"
 #include <iostream>
 #include <string>
