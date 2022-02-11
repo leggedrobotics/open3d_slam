@@ -258,14 +258,6 @@ Constraint SubmapCollection::buildOdometryConstraint(size_t sourceSubmapIdx, siz
 	std::cout << " map " << sourceSubmapIdx << " to " << targetSubmapIdx << ": " << asString(c.sourceToTarget_)
 			<< std::endl;
 
-	c.sourceToTargetPreMultiply_ = mapToTarget * mapToSource.inverse();
-
-//    std::cout << " source: " << asString(mapToSource) << std::endl;
-//    	std::cout << " target: " << asString(mapToTarget) << std::endl;
-//    	std::cout << " source transformed into target: \n";
-//    	std::cout << asString(mapToSource * c.sourceToTarget_) << "\n";
-	//	//		std::cout << asString(c.sourceToTargetPreMultiply_ * mapToSource) << "\n\n";
-
 	return std::move(c);
 }
 

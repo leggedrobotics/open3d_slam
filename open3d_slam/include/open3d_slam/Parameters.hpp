@@ -105,6 +105,7 @@ struct PlaceRecognitionParameters{
 	size_t ransacMinCorrespondenceSetSize_ = 25;
 	double maxIcpCorrespondenceDistance_ = 0.3;
 	double minRefinementFitness_ = 0.7;
+	bool isDumpPlaceRecognitionAlignmentsToFile_ = false;
 };
 
 struct GlobalOptimizationParameters {
@@ -128,6 +129,7 @@ struct MapperParameters {
 	PlaceRecognitionParameters placeRecognition_;
 	GlobalOptimizationParameters globalOptimization_;
 	bool isAttemptLoopClosures_ = true;
+	bool isDumpSubmapsToFileBeforeAndAfterLoopClosures_ = false;
 };
 
 struct LocalMapParameters {

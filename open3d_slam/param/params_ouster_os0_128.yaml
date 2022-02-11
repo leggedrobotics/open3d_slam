@@ -16,6 +16,7 @@ odometry:
 mapping:
   is_build_dense_map: true
   is_attempt_loop_closures: false
+  dump_submaps_to_file_before_after_lc: false
   min_movement_between_mapping_steps: 0.0
   is_build_dense_map: true
   submaps_num_scan_overlap: 5
@@ -83,7 +84,8 @@ mapping:
     ransac_correspondence_checker_edge_length: 0.5
     ransac_min_corresondence_set_size: 25
     max_icp_correspondence_distance: 0.3
-    min_icp_refinement_fitness: 0.5   
+    min_icp_refinement_fitness: 0.5
+    dump_aligned_place_recognitions_to_file: false   
 
 
 

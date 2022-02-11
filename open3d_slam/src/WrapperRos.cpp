@@ -250,7 +250,9 @@ void WrapperRos::mappingWorker() {
 			const auto poseAfterUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
 			std::cout << "latest pose after update: \n " << asString(poseAfterUpdate.transform_) << "\n";
 			publishMaps(measurement.time_);
-			submaps_->dumpToFile(folderPath_, "after");
+			if (mapperParams_.isDumpSubmapsToFileBeforeAndAfterLoopClosures_){
+				submaps_->dumpToFile(folderPath_, "after");
+			}
 		}
 
 		// publish visualizatinos
@@ -357,8 +359,10 @@ void WrapperRos::loopClosureWorker() {
 			optimizationProblem_->buildOptimizationProblem(*submaps_);
 
 //			optimizationProblem_->print();
-			submaps_->dumpToFile(folderPath_, "before");
-			optimizationProblem_->dumpToFile(folderPath_ + "/poseGraph.json");
+			if (mapperParams_.isDumpSubmapsToFileBeforeAndAfterLoopClosures_){
+				submaps_->dumpToFile(folderPath_, "before");
+				optimizationProblem_->dumpToFile(folderPath_ + "/poseGraph.json");
+			}
 			optimizationProblem_->solve();
 			//optimizationProblem_->print();
 			lastLoopClosureConstraints_ = loopClosureConstraints;
