@@ -7,11 +7,9 @@ Panels:
         - /Global Options1
         - /Status1
         - /TFTrajectory1
-        - /TFTrajectory1/Status1
         - /PointCloud21
         - /PointCloud22
         - /Axes1
-        - /TFTrajectory2
       Splitter Ratio: 0.5
     Tree Height: 772
   - Class: rviz/Selection
@@ -110,7 +108,9 @@ Visualization Manager:
           Value: true
         range_sensor_o3d:
           Value: true
-        raw_odom:
+        raw_odom_o3d:
+          Value: true
+        raw_rs_o3d:
           Value: true
       Marker Alpha: 1
       Marker Scale: 1
@@ -123,7 +123,9 @@ Visualization Manager:
           odom_o3d:
             range_sensor_o3d:
               {}
-          raw_odom:
+          raw_odom_o3d:
+            {}
+          raw_rs_o3d:
             {}
       Update Interval: 0
       Value: true
@@ -137,8 +139,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 11.691300392150879
-        Min Value: -7.782086372375488
+        Max Value: 14.181523323059082
+        Min Value: -1.5382311344146729
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -224,7 +226,25 @@ Visualization Manager:
       Name: MarkerArray
       Namespaces:
         submap_0: true
+        submap_1: true
+        submap_2: true
+        submap_3: true
+        submap_4: true
+        submap_5: true
+        submap_6: true
+        submap_7: true
+        submap_8: true
+        submap_9: true
         submap_id_0: true
+        submap_id_1: true
+        submap_id_2: true
+        submap_id_3: true
+        submap_id_4: true
+        submap_id_5: true
+        submap_id_6: true
+        submap_id_7: true
+        submap_id_8: true
+        submap_id_9: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -242,7 +262,15 @@ Visualization Manager:
       Value: true
       color: 173; 127; 168
       duration: 500
-      frame: raw_odom
+      frame: raw_odom_o3d
+      line_width: 0.15000000596046448
+    - Class: jsk_rviz_plugin/TFTrajectory
+      Enabled: true
+      Name: TFTrajectory
+      Value: true
+      color: 239; 41; 41
+      duration: 500
+      frame: raw_rs_o3d
       line_width: 0.15000000596046448
   Enabled: true
   Global Options:
@@ -272,7 +300,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 160.18682861328125
+      Distance: 131.01809692382812
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -280,17 +308,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -3.799237012863159
-        Y: -9.869623184204102
-        Z: -15.006558418273926
+        X: -0.4626493453979492
+        Y: -15.366860389709473
+        Z: -12.865114212036133
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.2597966194152832
+      Pitch: 1.2697961330413818
       Target Frame: <Fixed Frame>
-      Yaw: 0.5864091515541077
+      Yaw: 2.628260850906372
     Saved: ~
 Window Geometry:
   Displays:

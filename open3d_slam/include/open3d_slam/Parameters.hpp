@@ -14,6 +14,10 @@
 
 namespace o3d_slam {
 
+namespace params_internal {
+	const double kDegToRad =  M_PI / 180.0;
+}
+
 enum class IcpObjective : int {
 	PointToPoint,
 	PointToPlane
@@ -90,6 +94,12 @@ struct SubmapParameters{
 	double minSecondsBetweenFeatureComputation_=5.0;
 };
 
+struct PlaceRecognitionConsistancyCheckParameters{
+	double maxDriftRoll_ = 90.0 * params_internal::kDegToRad;
+	double maxDriftPitch_ = 90.0 * params_internal::kDegToRad;
+	double maxDriftYaw_ = 90.0 * params_internal::kDegToRad;
+};
+
 struct PlaceRecognitionParameters{
 	double normalEstimationRadius_=1.0;
 	double featureVoxelSize_ = 0.5;
@@ -105,6 +115,8 @@ struct PlaceRecognitionParameters{
 	size_t ransacMinCorrespondenceSetSize_ = 25;
 	double maxIcpCorrespondenceDistance_ = 0.3;
 	double minRefinementFitness_ = 0.7;
+	bool isDumpPlaceRecognitionAlignmentsToFile_ = false;
+	PlaceRecognitionConsistancyCheckParameters consistencyCheck_;
 };
 
 struct GlobalOptimizationParameters {
@@ -128,6 +140,7 @@ struct MapperParameters {
 	PlaceRecognitionParameters placeRecognition_;
 	GlobalOptimizationParameters globalOptimization_;
 	bool isAttemptLoopClosures_ = true;
+	bool isDumpSubmapsToFileBeforeAndAfterLoopClosures_ = false;
 };
 
 struct LocalMapParameters {
@@ -160,6 +173,9 @@ struct VisualizationParameters {
 	double visualizeEveryNmsec_ = 250.0;
 };
 
+
+void loadParameters(const std::string &filename, PlaceRecognitionConsistancyCheckParameters *p);
+void loadParameters(const YAML::Node &node, PlaceRecognitionConsistancyCheckParameters *p);
 void loadParameters(const std::string &filename, PlaceRecognitionParameters *p);
 void loadParameters(const YAML::Node &node, PlaceRecognitionParameters *p);
 void loadParameters(const std::string &filename, GlobalOptimizationParameters *p);

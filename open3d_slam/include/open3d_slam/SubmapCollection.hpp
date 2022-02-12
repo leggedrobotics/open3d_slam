@@ -65,10 +65,8 @@ public:
 
 	void dumpToFile(const std::string &folderPath, const std::string &filename) const;
 	void transform(const OptimizedTransforms &transformIncrements);
-
+	void updateAdjacencyMatrix(const Constraints &loopClosureConstraints);
 	const Constraints &getOdometryConstraints() const;
-//	const Constraints &getLoopClosureConstraints() const;
-//	void addLoopClosureConstraints(const Constraints &lccs);
 
 	const MapperParameters &getParameters() const;
 	void setFolderPath(const std::string &folderPath);
@@ -95,7 +93,7 @@ private:
 	size_t submapId_=0;
 	PlaceRecognition placeRecognition_;
 	ThreadSafeBuffer<TimestampedSubmapId> loopClosureCandidatesIdxs_, finishedSubmapsIdxs_;
-	Constraints odometryConstraints_, loopClosureConstraints_;
+	Constraints odometryConstraints_;
 	CircularBuffer<ScanTimeTransform> overlapScansBuffer_;
 	std::string savingDataFolderPath_;
 

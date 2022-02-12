@@ -67,6 +67,12 @@ size_t SubmapCollection::getTotalNumPoints() const {
 	});
 }
 
+void SubmapCollection::updateAdjacencyMatrix(const Constraints &loopClosureConstraints){
+	for (const auto &c : loopClosureConstraints){
+		adjacencyMatrix_.addEdge(c.sourceSubmapIdx_, c.targetSubmapIdx_);
+	}
+}
+
 void SubmapCollection::addScanToBuffer(const PointCloud &scan, const Transform &mapToRangeSensor,
 		const Time &timestamp) {
 	overlapScansBuffer_.push(ScanTimeTransform { scan, timestamp, mapToRangeSensor });
@@ -220,12 +226,6 @@ bool SubmapCollection::isComputingFeatures() const {
 const Constraints& SubmapCollection::getOdometryConstraints() const {
 	return odometryConstraints_;
 }
-//const Constraints& SubmapCollection::getLoopClosureConstraints() const {
-//	return loopClosureConstraints_;
-//}
-//void SubmapCollection::addLoopClosureConstraints(const Constraints &lccs) {
-//	loopClosureConstraints_.insert(loopClosureConstraints_.end(), lccs.begin(), lccs.end());
-//}
 
 Constraints SubmapCollection::buildLoopClosureConstraints(
 		const TimestampedSubmapIds &loopClosureCandidatesIdxs) const {
@@ -257,14 +257,6 @@ Constraint SubmapCollection::buildOdometryConstraint(size_t sourceSubmapIdx, siz
 	std::cout << "added an odom constraint: \n";
 	std::cout << " map " << sourceSubmapIdx << " to " << targetSubmapIdx << ": " << asString(c.sourceToTarget_)
 			<< std::endl;
-
-	c.sourceToTargetPreMultiply_ = mapToTarget * mapToSource.inverse();
-
-//    std::cout << " source: " << asString(mapToSource) << std::endl;
-//    	std::cout << " target: " << asString(mapToTarget) << std::endl;
-//    	std::cout << " source transformed into target: \n";
-//    	std::cout << asString(mapToSource * c.sourceToTarget_) << "\n";
-	//	//		std::cout << asString(c.sourceToTargetPreMultiply_ * mapToSource) << "\n\n";
 
 	return std::move(c);
 }
@@ -326,6 +318,9 @@ void SubmapCollection::transform(const OptimizedTransforms &transformIncrements)
 			}
 		}
 	}
+
+	//need to flush the buffered scans
+	overlapScansBuffer_.clear();
 
 }
 

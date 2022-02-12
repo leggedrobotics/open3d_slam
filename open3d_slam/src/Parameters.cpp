@@ -9,6 +9,19 @@
 
 namespace o3d_slam {
 
+void loadParameters(const std::string &filename, PlaceRecognitionConsistancyCheckParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+		if (basenode.IsNull()) {
+			throw std::runtime_error("PlaceRecognitionParams::loadParameters loading failed");
+		}
+		loadParameters(basenode["consistancy_check"], p);
+}
+void loadParameters(const YAML::Node &node, PlaceRecognitionConsistancyCheckParameters *p){
+	p->maxDriftPitch_ = node["max_drift_pitch"].as<double>() * params_internal::kDegToRad;
+	p->maxDriftRoll_ =  node["max_drift_roll"].as<double>() * params_internal::kDegToRad;
+	p->maxDriftYaw_ =  node["max_drift_yaw"].as<double>() * params_internal::kDegToRad;
+}
+
 void loadParameters(const std::string &filename, PlaceRecognitionParameters *p){
 	YAML::Node basenode = YAML::LoadFile(filename);
 	if (basenode.IsNull()) {
@@ -32,7 +45,8 @@ void loadParameters(const YAML::Node &node, PlaceRecognitionParameters *p){
 	p->ransacMinCorrespondenceSetSize_ = node["ransac_min_corresondence_set_size"].as<int>();
 	p->maxIcpCorrespondenceDistance_ = node["max_icp_correspondence_distance"].as<double>();
 	p->minRefinementFitness_ = node["min_icp_refinement_fitness"].as<double>();
-
+	p->isDumpPlaceRecognitionAlignmentsToFile_ = node["dump_aligned_place_recognitions_to_file"].as<bool>();
+	loadParameters(node["consistancy_check"], &(p->consistencyCheck_));
 }
 
 void loadParameters(const std::string &filename, GlobalOptimizationParameters *p){
@@ -206,6 +220,7 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	p->minMovementBetweenMappingSteps_ = node["min_movement_between_mapping_steps"].as<double>();
 	p->minRefinementFitness_ = node["scan_to_map_refinement"]["min_refinement_fitness"].as<double>();
 	p->numScansOverlap_ = node["submaps_num_scan_overlap"].as<int>();
+	p->isDumpSubmapsToFileBeforeAndAfterLoopClosures_ = node["dump_submaps_to_file_before_after_lc"].as<bool>();
 	loadParameters(node["scan_to_map_refinement"]["scan_matching"],&(p->scanMatcher_));
 	loadParameters(node["scan_to_map_refinement"]["scan_processing"],&(p->scanProcessing_));
 	if(p->isBuildDenseMap_){
