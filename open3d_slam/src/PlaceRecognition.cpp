@@ -9,6 +9,7 @@
 #include "open3d_slam/Parameters.hpp"
 #include "open3d_slam/SubmapCollection.hpp"
 #include "open3d_slam/magic.hpp"
+#include "open3d_slam/math.hpp"
 
 #include <open3d/pipelines/registration/FastGlobalRegistration.h>
 #include <open3d/pipelines/registration/Registration.h>
@@ -86,6 +87,11 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 			continue;
 		}
 
+		if (!isRegistrationConsistent(ransacResult.transformation_)){
+			std::cout << "skipping place recognition \n";
+			continue;
+		}
+
 		const PointCloud target = targetSubmap.getMap();
 		const double mapVoxelSize = getMapVoxelSize(params_.mapBuilder_,
 				voxelSizeCorrespondenceSearchMapVoxelSizeIsZero);
@@ -114,6 +120,11 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		const auto &cfg = params_.placeRecognition_;
 		if (icpResult.fitness_ < cfg.minRefinementFitness_) {
 			std::cout << "skipping place recognition with refinement score: " << icpResult.fitness_ << " \n";
+			continue;
+		}
+
+		if (!isRegistrationConsistent(icpResult.transformation_)){
+			std::cout << "skipping place recognition \n";
 			continue;
 		}
 
@@ -163,6 +174,36 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 
 void PlaceRecognition::setFolderPath(const std::string &folderPath) {
 	folderPath_ = folderPath;
+}
+
+bool PlaceRecognition::isRegistrationConsistent(const Eigen::Matrix4d &mat) const{
+	const Transform T(mat);
+	const Eigen::Vector3d rpy = toRPY(Eigen::Quaterniond(T.rotation()));
+	const double roll = rpy.x();
+	const double pitch = rpy.y();
+	const double yaw = rpy.z();
+	bool result = true;
+	const PlaceRecognitionConsistancyCheckParameters &p = params_.placeRecognition_.consistencyCheck_;
+	if (std::fabs(roll) > p.maxDriftRoll_){
+		result = false;
+		std::cout << " The roll drift is: " << roll << " which is > than " << p.maxDriftRoll_ << "\n";
+	}
+	if (std::fabs(pitch) > p.maxDriftPitch_){
+		result = false;
+		std::cout << " The pitch drift is: " << pitch << " which is > than " << p.maxDriftPitch_ << "\n";
+	}
+	if (std::fabs(yaw) > p.maxDriftYaw_){
+		result = false;
+		std::cout << " The yaw drift is: " << yaw << " which is > than " << p.maxDriftYaw_ << "\n";
+	}
+
+	if (!result){
+		std::cout << "   It is very unlikely that your odometry has drifted that much. Most likely, "
+				"the place recognition module has fallen prey to spatial aliasing. If you are sure that this is "
+				"not the case, feel free to disable this check! \n";
+	}
+
+	return result;
 }
 
 std::vector<size_t> PlaceRecognition::getLoopClosureCandidatesIdxs(const Transform &mapToRangeSensor,

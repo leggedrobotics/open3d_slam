@@ -83,8 +83,12 @@ mapping:
     ransac_correspondence_checker_edge_length: 0.5
     ransac_min_corresondence_set_size: 25
     max_icp_correspondence_distance: 0.2
-    min_icp_refinement_fitness: 0.5
-    dump_aligned_place_recognitions_to_file: true   
+    min_icp_refinement_fitness: 0.5 #the more aliasing, the higher this should be
+    dump_aligned_place_recognitions_to_file: true 
+    consistancy_check:
+      max_drift_roll: 70.0 #deg
+      max_drift_pitch: 70.0 # deg
+      max_drift_yaw: 70.0 #deg
     
     
     

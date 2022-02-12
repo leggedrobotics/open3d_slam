@@ -21,7 +21,10 @@ public:
 	}
 
 	void push(const T &data) {
-		data_.push_back(data);
+		{
+			std::lock_guard<std::mutex> lck(pushMutex_);
+			data_.push_back(data);
+		}
 		removeOldMeasurementsIfNeeded();
 	}
 
@@ -34,7 +37,7 @@ public:
 	}
 
 	T pop() {
-		std::lock_guard<std::mutex> lck(popMutex_);
+		std::lock_guard<std::mutex> lck(removeMutex_);
 		T copy = data_.front();
 		data_.pop_front();
 		return copy;
@@ -53,6 +56,7 @@ public:
 	}
 
 	void clear() {
+		std::lock_guard<std::mutex> lck(removeMutex_);
 		data_.clear();
 	}
 
@@ -67,14 +71,14 @@ public:
 private:
 
 	void removeOldMeasurementsIfNeeded() {
-		std::lock_guard<std::mutex> lck(popMutex_);
+		std::lock_guard<std::mutex> lck(removeMutex_);
 		while (data_.size() > bufferSizeLimit_) {
 			data_.pop_front();
 		}
 	}
 
 	std::deque<T> data_;
-	std::mutex popMutex_;
+	std::mutex removeMutex_, pushMutex_;
 	size_t bufferSizeLimit_ = 10;
 };
 

@@ -30,6 +30,8 @@ public:
 			size_t activeSubmapIdx) const;
 	void setFolderPath(const std::string &folderPath);
 private:
+	bool isRegistrationConsistent(const Eigen::Matrix4d &T) const;
+
 	std::string folderPath_ = "";
 	mutable size_t recognitionCounter_ = 0;
 	MapperParameters params_;
