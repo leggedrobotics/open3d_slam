@@ -143,6 +143,8 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 			std::cout << "refined with transformation: \n" << asString(Transform(icpResult.transformation_))
 					<< std::endl;
 		}
+
+
 		Constraint c;
 		c.sourceToTarget_ = Transform(icpResult.transformation_);
 		c.sourceSubmapIdx_ = lastFinishedSubmapIdx;
@@ -186,19 +188,19 @@ bool PlaceRecognition::isRegistrationConsistent(const Eigen::Matrix4d &mat) cons
 	const PlaceRecognitionConsistancyCheckParameters &p = params_.placeRecognition_.consistencyCheck_;
 	if (std::fabs(roll) > p.maxDriftRoll_){
 		result = false;
-		std::cout << " The roll drift is: " << roll << " which is > than " << p.maxDriftRoll_ << "\n";
+		std::cout << "  PlaceRecognition::isRegistrationConsistent The roll drift is: " << roll << " which is > than " << p.maxDriftRoll_ << "\n";
 	}
 	if (std::fabs(pitch) > p.maxDriftPitch_){
 		result = false;
-		std::cout << " The pitch drift is: " << pitch << " which is > than " << p.maxDriftPitch_ << "\n";
+		std::cout << "  PlaceRecognition::isRegistrationConsistent The pitch drift is: " << pitch << " which is > than " << p.maxDriftPitch_ << "\n";
 	}
 	if (std::fabs(yaw) > p.maxDriftYaw_){
 		result = false;
-		std::cout << " The yaw drift is: " << yaw << " which is > than " << p.maxDriftYaw_ << "\n";
+		std::cout << "  PlaceRecognition::isRegistrationConsistent The yaw drift is: " << yaw << " which is > than " << p.maxDriftYaw_ << "\n";
 	}
 
 	if (!result){
-		std::cout << "   It is very unlikely that your odometry has drifted that much. Most likely, "
+		std::cout << "   It is very unlikely that lidar odometry has drifted that much. Most likely, "
 				"the place recognition module has fallen prey to spatial aliasing. If you are sure that this is "
 				"not the case, feel free to disable this check! \n";
 	}
