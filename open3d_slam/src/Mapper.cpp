@@ -117,24 +117,29 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		return true;
 	}
 
-	if (!odomToRangeSensorBuffer_.has(timestamp)) {
-		std::cerr << "WARNING: odomToRangeSensorBuffer_ DOES NOT HAVE THE DESIRED TRANSFORM! \n";
-		isMatchingInProgress_ = false;
-		return false;
-	}
-
 	if (timestamp < lastMeasurementTimestamp_) {
 		std::cerr << "\n\n !!!!! MAPER WARNING: Measurements came out of order!!!! \n\n";
 		isMatchingInProgress_ = false;
 		return false;
 	}
 
+	bool isOdomOkay = odomToRangeSensorBuffer_.has(timestamp);
+	if (!isOdomOkay) {
+		std::cerr << "WARNING: odomToRangeSensorBuffer_ DOES NOT HAVE THE DESIRED TRANSFORM! \n";
+		std::cerr << "  going to attempt the scan to map refinement anyway \n";
+	}
+
 	checkTransformChainingAndPrintResult(isCheckTransformChainingAndPrintResult);
 
-	const Transform odomToRangeSensor = getTransform(timestamp, odomToRangeSensorBuffer_);
-	const Transform odomToRangeSensorPrev = getTransform(lastMeasurementTimestamp_, odomToRangeSensorBuffer_);
-	const Transform odometryMotion = odomToRangeSensorPrev.inverse()*odomToRangeSensor;
-	const Transform mapToRangeSensorEstimate =  mapToRangeSensorPrev_*odometryMotion ;
+	Transform mapToRangeSensorEstimate =  mapToRangeSensorPrev_;
+
+	if (isOdomOkay){
+		const Transform odomToRangeSensor = getTransform(timestamp, odomToRangeSensorBuffer_);
+		const Transform odomToRangeSensorPrev = getTransform(lastMeasurementTimestamp_, odomToRangeSensorBuffer_);
+		const Transform odometryMotion = odomToRangeSensorPrev.inverse()*odomToRangeSensor;
+		mapToRangeSensorEstimate =  mapToRangeSensorPrev_*odometryMotion ;
+	}
+
 	const PointCloud &activeSubmap = submaps_->getActiveSubmap().getMap();
 	std::shared_ptr<PointCloud> narrowCropped, wideCroppedCloud, mapPatch;
 	{

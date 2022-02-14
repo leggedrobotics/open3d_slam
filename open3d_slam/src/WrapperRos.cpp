@@ -172,13 +172,17 @@ void WrapperRos::odometryWorker() {
 		}
 		odometryStatisticsTimer_.startStopwatch();
 		const TimestampedPointCloud measurement = odometryBuffer_.pop();
-		if (!odometry_->addRangeScan(measurement.cloud_, measurement.time_)) {
-			std::cerr << "WARNING: odometry has failed!!!! \n";
-			continue;
-		}
+		const auto isOdomOkay = odometry_->addRangeScan(measurement.cloud_, measurement.time_);
+
 		// this ensures that the odom is always ahead of the mapping
 		// so then we can look stuff up in the interpolation buffer
 		mappingBuffer_.push(measurement);
+
+		if (!isOdomOkay) {
+			std::cerr << "WARNING: odometry has failed!!!! \n";
+			continue;
+		}
+
 		const auto timestamp = toRos(measurement.time_);
 		o3d_slam::publishTfTransform(odometry_->getOdomToRangeSensor(measurement.time_).matrix(), timestamp,
 				odomFrame, rangeSensorFrame, tfBroadcaster_.get());
