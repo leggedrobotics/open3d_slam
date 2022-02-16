@@ -47,10 +47,11 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 	const bool isOdomOkay = result.fitness_ > 0.1;
 	if (!isOdomOkay) {
 		  std::cout << "Odometry failed!!!!! \n";
+		  std::cout << "Size of the odom buffer: " << odomToRangeSensorBuffer_.size() << std::endl;
 			std::cout << "Scan matching time elapsed: " << timer.elapsedMsec() << " msec \n";
 			std::cout << "Fitness: " << result.fitness_ << "\n";
 			std::cout << "RMSE: " << result.inlier_rmse_ << "\n";
-			std::cout << "Transform: " << result.transformation_ << "\n";
+			std::cout << "Transform: \n" << asString(Transform(result.transformation_)) << "\n";
 			std::cout << "target size: " << cloud.points_.size() << std::endl;
 			std::cout << "reference size: " << cloudPrev_.points_.size() << std::endl;
 			std::cout << "\n \n";
