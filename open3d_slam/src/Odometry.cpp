@@ -31,7 +31,7 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 			return false;
 	}
 
-//	const o3d_slam::Timer timer("scan_to_scan_odometry");
+	const o3d_slam::Timer timer;
 	auto croppedCloud = cropper_->crop(cloud);
 	o3d_slam::voxelize(params_.scanProcessing_.voxelSize_, croppedCloud.get());
 	auto downSampledCloud = croppedCloud->RandomDownSample(params_.scanProcessing_.downSamplingRatio_);
@@ -44,22 +44,27 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 			params_.scanMatcher_.maxCorrespondenceDistance_, Eigen::Matrix4d::Identity(), *icpObjective_,
 			icpConvergenceCriteria_);
 
-	//	std::cout << "Scan to scan matching finished \n";
-	//	std::cout << "Time elapsed: " << timer.elapsedMsec() << " msec \n";
-	//	std::cout << "Fitness: " << result.fitness_ << "\n";
-	//	std::cout << "RMSE: " << result.inlier_rmse_ << "\n";
-	//	std::cout << "Transform: " << result.transformation_ << "\n";
-	//	std::cout << "target size: " << cloud.points_.size() << std::endl;
-	//	std::cout << "reference size: " << cloudPrev.points_.size() << std::endl;
-	//	std::cout << "\n \n";
-	if (result.fitness_ <= 0.1) {
-		return false;
+	const bool isOdomOkay = result.fitness_ > 0.1;
+	if (!isOdomOkay) {
+		  std::cout << "Odometry failed!!!!! \n";
+		  std::cout << "Size of the odom buffer: " << odomToRangeSensorBuffer_.size() << std::endl;
+			std::cout << "Scan matching time elapsed: " << timer.elapsedMsec() << " msec \n";
+			std::cout << "Fitness: " << result.fitness_ << "\n";
+			std::cout << "RMSE: " << result.inlier_rmse_ << "\n";
+			std::cout << "Transform: \n" << asString(Transform(result.transformation_)) << "\n";
+			std::cout << "target size: " << cloud.points_.size() << std::endl;
+			std::cout << "reference size: " << cloudPrev_.points_.size() << std::endl;
+			std::cout << "\n \n";
+		if (!downSampledCloud->IsEmpty()){
+			cloudPrev_ = std::move(*downSampledCloud);
+		}
+		return isOdomOkay;
 	}
 	odomToRangeSensorCumulative_.matrix() *= result.transformation_.inverse();
 	cloudPrev_ = std::move(*downSampledCloud);
 	odomToRangeSensorBuffer_.push(timestamp, odomToRangeSensorCumulative_);
 	lastMeasurementTimestamp_ = timestamp;
-	return true;
+	return isOdomOkay;
 }
 const Transform LidarOdometry::getOdomToRangeSensor(const Time &t) const {
 	return getTransform(t, odomToRangeSensorBuffer_);

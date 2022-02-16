@@ -28,6 +28,7 @@ std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
 ros::Publisher rawCloudPub;
 std::shared_ptr<WrapperRos> mapping;
 size_t numAccumulatedRangeDataCount = 0;
+size_t numPointCloudsReceived_ = 0;
 size_t numAccumulatedRangeDataDesired = 1;
 open3d::geometry::PointCloud accumulatedCloud;
 o3d_slam::ProjectionParameters projectionParams;
@@ -42,6 +43,19 @@ void processCloud(const open3d::geometry::PointCloud &cloud, const ros::Time &ti
 	accumulatedCloud += cloud;
 	++numAccumulatedRangeDataCount;
 	if (numAccumulatedRangeDataCount < numAccumulatedRangeDataDesired) {
+		return;
+	}
+
+	if (numPointCloudsReceived_ < 5){
+		++numPointCloudsReceived_;
+		return;
+		// somehow the first cloud can be missing a lot of points when running with ouster os-128 on the robot
+		// if we skip that first measurement, it all works okay
+		// we skip first five, just to be extra safe
+	}
+
+	if (accumulatedCloud.IsEmpty()){
+		std::cout << "Trying to insert and empyt cloud!!! Skipping the measurement \n";
 		return;
 	}
 
