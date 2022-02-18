@@ -15,6 +15,8 @@
 
 namespace o3d_slam {
 
+bool Timer::isDisablePrintInDestructor_ = false;
+
 Timer::Timer() :
 		Timer(false, "") {
 
@@ -30,7 +32,7 @@ Timer::Timer(bool isPrintInDestructor, const std::string &name) {
 	startTimeStopWatch_ = startTime_;
 }
 Timer::~Timer() {
-	if (isPrintInDestructor_) {
+	if (!isDisablePrintInDestructor_ && isPrintInDestructor_) {
 		std::cout << "Timer " << name_ << ": Elapsed time: " << elapsedMsec() << " msec \n";
 	}
 }

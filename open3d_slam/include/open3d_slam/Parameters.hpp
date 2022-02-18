@@ -141,6 +141,7 @@ struct MapperParameters {
 	GlobalOptimizationParameters globalOptimization_;
 	bool isAttemptLoopClosures_ = true;
 	bool isDumpSubmapsToFileBeforeAndAfterLoopClosures_ = false;
+	bool isPrintTimingStatistics_ = true;
 };
 
 struct LocalMapParameters {

@@ -29,6 +29,7 @@ public:
 	double elapsedMsecSinceStopwatchStart() const;
 	void addMeasurementMsec(double msec);
 	double getAvgMeasurementMsec() const;
+	static bool isDisablePrintInDestructor_;
 private:
 	std::chrono::steady_clock::time_point startTime_;
 	std::chrono::steady_clock::time_point startTimeStopWatch_;
