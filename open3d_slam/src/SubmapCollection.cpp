@@ -416,8 +416,8 @@ void computeOdometryConstraints(const SubmapCollection &submaps,
 		if (candidate.submapId_ < 1) {
 			continue;
 		}
-		const size_t sourceCandidate = candidate.submapId_ - 1;
 		const size_t targetCandidate = candidate.submapId_;
+		const size_t sourceCandidate = submaps.getSubmaps().at(targetCandidate).getParentId();
 		if (!hasConstraint(sourceCandidate, targetCandidate, *constraints)) {
 			const Constraint c = buildOdometryConstraint(sourceCandidate, targetCandidate, submaps);
 			constraints->emplace_back(std::move(c));
@@ -431,8 +431,8 @@ void computeOdometryConstraints(const SubmapCollection &submaps, Constraints *co
 	const size_t nSubmaps = submaps.getSubmaps().size();
 	const size_t activeSubmapIdx = submaps.getActiveSubmap().getId();
 	for (size_t submapIdx = 1; submapIdx < nSubmaps; ++submapIdx) {
-		const size_t sourceIdx = submapIdx - 1;
 		const size_t targetIdx = submapIdx;
+		const size_t sourceIdx = submaps.getSubmaps().at(targetIdx).getParentId();
 		if (!hasConstraint(sourceIdx, targetIdx, *constraints) && sourceIdx != activeSubmapIdx
 				&& targetIdx != activeSubmapIdx) {
 			const Constraint c = buildOdometryConstraint(sourceIdx, targetIdx, submaps);

@@ -417,10 +417,6 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 		const Constraint &oldConstraint = loopClosureConstraints.at(i);
 		Constraint c = oldConstraint;
 		c.sourceToTarget_.setIdentity();
-//		Constraint c = buildConstraint(oldConstraint.sourceSubmapIdx_, oldConstraint.targetSubmapIdx_, *submaps_,
-//				true, mapperParams_.placeRecognition_.maxIcpCorrespondenceDistance_,2.0, false);
-//		c.isOdometryConstraint_ = false;
-//		c.isInformationMatrixValid_ = true;
 		optimizationProblem_->updateLoopClosureConstraint(i, c);
 		loopClosureConstraints.at(i) = c;
 		std::cout << "Loop closure constraint " << i << " new transform: " << asString(c.sourceToTarget_)

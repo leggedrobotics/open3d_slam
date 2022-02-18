@@ -71,6 +71,7 @@ void OptimizationProblem::setupOdometryEdgesAndPoseGraphNodes() {
 		registration::PoseGraphEdge edge;
 		edge.source_node_id_ = c.sourceSubmapIdx_;
 		edge.target_node_id_ = c.targetSubmapIdx_;
+		assert_gt(c.targetSubmapIdx_,c.sourceSubmapIdx_);
 		edge.transformation_ = c.sourceToTarget_.matrix();
 		edge.information_ = c.informationMatrix_;
 		edge.uncertain_ = false;
@@ -114,7 +115,6 @@ void OptimizationProblem::setupLoopClosureEdges(){
 		}
 
 		for (auto &loopClosingConstraint : loopClosureConstraints_) {
-	//		loopClosingConstraint.sourceToTarget_.setIdentity();
 			std::cout << " loop closure from submap: " << loopClosingConstraint.sourceSubmapIdx_ << " to submap "
 					<< loopClosingConstraint.targetSubmapIdx_ << "\n";
 		}
@@ -189,7 +189,6 @@ void OptimizationProblem::insertLoopClosureConstraints(const Constraints &cs) {
 			loopClosureConstraints_.push_back(c);
 		}
 	}
-//	loopClosureConstraints_.insert(loopClosureConstraints_.end(), cs.begin(), cs.end());
 }
 
 OptimizedTransforms OptimizationProblem::getOptimizedTransformIncrements() const {
