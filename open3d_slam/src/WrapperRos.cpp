@@ -142,8 +142,8 @@ void WrapperRos::initialize() {
 
 	loadParameters(paramFile, &visualizationParameters_);
 
-//	Timer::isDisablePrintInDestructor_ = true;
-//	mapperParams_.isPrintTimingStatistics_ = false;
+	// set the verobsity for timing statistics
+	Timer::isDisablePrintInDestructor_ = !mapperParams_.isPrintTimingStatistics_;
 
 }
 

@@ -14,6 +14,7 @@ odometry:
       cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius
   
 mapping:
+  is_print_timing_information: true
   is_build_dense_map: false
   is_attempt_loop_closures: true
   dump_submaps_to_file_before_after_lc: false

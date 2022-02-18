@@ -115,7 +115,7 @@ void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor) {
 
 void SubmapCollection::createNewSubmap(const Transform &mapToSubmap) {
 	const size_t submapId = submapId_++;
-	const size_t submapParentId = std::max<int>(0, static_cast<int>(submapId) - 1);
+	const size_t submapParentId = activeSubmapIdx_;
 	Submap newSubmap(submapId, submapParentId);
 	newSubmap.setMapToSubmapOrigin(mapToSubmap);
 	newSubmap.setParameters(params_);
@@ -125,10 +125,6 @@ void SubmapCollection::createNewSubmap(const Transform &mapToSubmap) {
 	std::cout << "Created submap: " << activeSubmapIdx_ << " with parent " << submapParentId << std::endl;
 	std::cout << "Submap " << activeSubmapIdx_ << " pose: " << asString(newSubmap.getMapToSubmapOrigin())
 			<< std::endl;
-//	if (submaps_.size() > 1) {
-//		const auto c = buildOdometryConstraint(activeSubmapIdx_ - 1, activeSubmapIdx_);
-//		odometryConstraints_.push_back(c);
-//	}
 }
 
 size_t SubmapCollection::findClosestSubmap(const Transform &mapToRangeSensor) const {
