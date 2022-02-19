@@ -66,11 +66,13 @@ void OptimizationProblem::setupOdometryEdgesAndPoseGraphNodes() {
 				return c1.sourceSubmapIdx_ < c2.targetSubmapIdx_;
 			});
 
-	poseGraph_.edges_.reserve(odometryConstraints_.size()+loopClosureConstraints_.size());
+	poseGraph_.edges_.reserve(odometryConstraints_.size() + loopClosureConstraints_.size());
 	for (const auto &c : odometryConstraints_) {
 		registration::PoseGraphEdge edge;
 		edge.source_node_id_ = c.sourceSubmapIdx_;
 		edge.target_node_id_ = c.targetSubmapIdx_;
+		assert_gt(c.targetSubmapIdx_, c.sourceSubmapIdx_,
+				"id_source should always be less than id_target for the odometry constraints");
 		edge.transformation_ = c.sourceToTarget_.matrix();
 		edge.information_ = c.informationMatrix_;
 		edge.uncertain_ = false;
@@ -81,7 +83,7 @@ void OptimizationProblem::setupOdometryEdgesAndPoseGraphNodes() {
 	prototypeNode.pose_ = Eigen::Matrix4d::Identity();
 	Eigen::Matrix4d odometry = Eigen::Matrix4d::Identity();
 	const int nExistingEdges = poseGraphOptimized_.edges_.size();
-	poseGraph_.nodes_.reserve(odometryConstraints_.size()+1);
+	poseGraph_.nodes_.reserve(odometryConstraints_.size() + 1);
 	if (nExistingEdges > 0) {
 		odometry = poseGraphOptimized_.nodes_.back().pose_.inverse();
 	} else {
@@ -97,27 +99,26 @@ void OptimizationProblem::setupOdometryEdgesAndPoseGraphNodes() {
 //	std::cout << "Num odom constraints: " << odometryConstraints_.size() << std::endl;
 }
 
-void OptimizationProblem::setupLoopClosureEdges(){
+void OptimizationProblem::setupLoopClosureEdges() {
 	numLoopClosuresPrev_ = loopClosureConstraints_.size();
-		for (const auto &c : loopClosureConstraints_) {
-			registration::PoseGraphEdge edge;
-			edge.source_node_id_ = c.sourceSubmapIdx_;
-			edge.target_node_id_ = c.targetSubmapIdx_;
-			edge.transformation_ = c.sourceToTarget_.matrix();
-			edge.information_ = c.informationMatrix_;
-			assert_true(c.isInformationMatrixValid_,
-					"Invalid information matrix between: " + std::to_string(c.sourceSubmapIdx_) + " and "
-							+ std::to_string(c.targetSubmapIdx_));
-			assert_gt(c.sourceSubmapIdx_, c.targetSubmapIdx_, "Optimization problem, loop closure constraints: ");
-			edge.uncertain_ = true;
-			poseGraph_.edges_.push_back(std::move(edge));
-		}
+	for (const auto &c : loopClosureConstraints_) {
+		registration::PoseGraphEdge edge;
+		edge.source_node_id_ = c.sourceSubmapIdx_;
+		edge.target_node_id_ = c.targetSubmapIdx_;
+		edge.transformation_ = c.sourceToTarget_.matrix();
+		edge.information_ = c.informationMatrix_;
+		assert_true(c.isInformationMatrixValid_,
+				"Invalid information matrix between: " + std::to_string(c.sourceSubmapIdx_) + " and "
+						+ std::to_string(c.targetSubmapIdx_));
+		assert_gt(c.sourceSubmapIdx_, c.targetSubmapIdx_, "Optimization problem, loop closure constraints: ");
+		edge.uncertain_ = true;
+		poseGraph_.edges_.push_back(std::move(edge));
+	}
 
-		for (auto &loopClosingConstraint : loopClosureConstraints_) {
-	//		loopClosingConstraint.sourceToTarget_.setIdentity();
-			std::cout << " loop closure from submap: " << loopClosingConstraint.sourceSubmapIdx_ << " to submap "
-					<< loopClosingConstraint.targetSubmapIdx_ << "\n";
-		}
+	for (auto &loopClosingConstraint : loopClosureConstraints_) {
+		std::cout << " loop closure from submap: " << loopClosingConstraint.sourceSubmapIdx_ << " to submap "
+				<< loopClosingConstraint.targetSubmapIdx_ << "\n";
+	}
 }
 
 void OptimizationProblem::print() const {
@@ -189,7 +190,6 @@ void OptimizationProblem::insertLoopClosureConstraints(const Constraints &cs) {
 			loopClosureConstraints_.push_back(c);
 		}
 	}
-//	loopClosureConstraints_.insert(loopClosureConstraints_.end(), cs.begin(), cs.end());
 }
 
 OptimizedTransforms OptimizationProblem::getOptimizedTransformIncrements() const {
@@ -206,11 +206,11 @@ OptimizedTransforms OptimizationProblem::getOptimizedTransformIncrements() const
 	return retVal;
 }
 
-const Constraints &OptimizationProblem::getLoopClosureConstraints() const{
+const Constraints& OptimizationProblem::getLoopClosureConstraints() const {
 	return loopClosureConstraints_;
 }
 
-void OptimizationProblem::updateLoopClosureConstraint(size_t idx, const Constraint &c){
+void OptimizationProblem::updateLoopClosureConstraint(size_t idx, const Constraint &c) {
 	loopClosureConstraints_.at(idx) = c;
 }
 

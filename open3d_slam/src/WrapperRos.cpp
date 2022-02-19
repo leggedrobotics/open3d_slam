@@ -142,6 +142,9 @@ void WrapperRos::initialize() {
 
 	loadParameters(paramFile, &visualizationParameters_);
 
+	// set the verobsity for timing statistics
+	Timer::isDisablePrintInDestructor_ = !mapperParams_.isPrintTimingStatistics_;
+
 }
 
 void WrapperRos::start() {
@@ -198,7 +201,7 @@ void WrapperRos::odometryWorker() {
 		}
 		const double timeMeasurement = odometryStatisticsTimer_.elapsedMsecSinceStopwatchStart();
 		odometryStatisticsTimer_.addMeasurementMsec(timeMeasurement);
-		if (odometryStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {
+		if (mapperParams_.isPrintTimingStatistics_ && odometryStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {
 			std::cout << "Odometry timing stats: Avg execution time: "
 					<< odometryStatisticsTimer_.getAvgMeasurementMsec() << " msec , frequency: "
 					<< 1e3 / odometryStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
@@ -265,7 +268,7 @@ void WrapperRos::mappingWorker() {
 		//just get the stats
 		const double timeMeasurement = mappingStatisticsTimer_.elapsedMsecSinceStopwatchStart();
 		mappingStatisticsTimer_.addMeasurementMsec(timeMeasurement);
-		if (mappingStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {
+		if (mapperParams_.isPrintTimingStatistics_ && mappingStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {
 			std::cout << "Mapper timing stats: Avg execution time: "
 					<< mappingStatisticsTimer_.getAvgMeasurementMsec() << " msec , frequency: "
 					<< 1e3 / mappingStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
@@ -297,7 +300,7 @@ void WrapperRos::denseMapWorker() {
 
 		const double timeMeasurement = denseMapStatiscticsTimer_.elapsedMsecSinceStopwatchStart();
 		denseMapStatiscticsTimer_.addMeasurementMsec(timeMeasurement);
-		if (denseMapStatiscticsTimer_.elapsedSec() > timingStatsEveryNsec) {
+		if (mapperParams_.isPrintTimingStatistics_ && denseMapStatiscticsTimer_.elapsedSec() > timingStatsEveryNsec) {
 			std::cout << "Dense mapping timing stats: Avg execution time: "
 					<< denseMapStatiscticsTimer_.getAvgMeasurementMsec() << " msec , frequency: "
 					<< 1e3 / denseMapStatiscticsTimer_.getAvgMeasurementMsec() << " Hz \n";
@@ -414,10 +417,6 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 		const Constraint &oldConstraint = loopClosureConstraints.at(i);
 		Constraint c = oldConstraint;
 		c.sourceToTarget_.setIdentity();
-//		Constraint c = buildConstraint(oldConstraint.sourceSubmapIdx_, oldConstraint.targetSubmapIdx_, *submaps_,
-//				true, mapperParams_.placeRecognition_.maxIcpCorrespondenceDistance_,2.0, false);
-//		c.isOdometryConstraint_ = false;
-//		c.isInformationMatrixValid_ = true;
 		optimizationProblem_->updateLoopClosureConstraint(i, c);
 		loopClosureConstraints.at(i) = c;
 		std::cout << "Loop closure constraint " << i << " new transform: " << asString(c.sourceToTarget_)

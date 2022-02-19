@@ -203,6 +203,7 @@ void Submap::computeFeatures() {
 			open3d::geometry::KDTreeSearchParamHybrid(p.normalEstimationRadius_, p.normalKnn_));
 	sparseMap_.NormalizeNormals();
 	sparseMap_.OrientNormalsTowardsCameraLocation(Eigen::Vector3d::Zero());
+	feature_.reset();
 	feature_ = registration::ComputeFPFHFeature(sparseMap_,
 			open3d::geometry::KDTreeSearchParamHybrid(p.featureRadius_, p.featureKnn_));
 //	std::cout <<"map num points: " << map_.points_.size() << ", sparse map: " << sparseMap_.points_.size() << "\n";
@@ -212,10 +213,6 @@ void Submap::computeFeatures() {
 const Submap::Feature& Submap::getFeatures() const {
 	assert_nonNullptr(feature_, "Feature ptr is nullptr");
 	return *feature_;
-}
-
-Submap::Feature* Submap::getFeaturePtr() const {
-	return feature_.get();
 }
 
 void Submap::computeSubmapCenter() {
