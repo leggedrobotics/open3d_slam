@@ -100,6 +100,7 @@ void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor) {
 			return;
 		}
 		if (adjacencyMatrix_.isAdjacent(closestSubmap.getId(), activeSubmap.getId())) {
+			//todo here we could put a consistancy check
 			activeSubmapIdx_ = closestMapIdx;
 		} else {
 			const bool isTraveledSufficientDistance = (mapToRangeSensor_.translation()
