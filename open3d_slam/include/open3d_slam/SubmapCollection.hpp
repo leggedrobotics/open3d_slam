@@ -72,12 +72,12 @@ public:
 	void setFolderPath(const std::string &folderPath);
 
 private:
+	bool isSwitchingSubmapsConsistant(const PointCloud &scan, size_t newActiveSubmapCandidate, const Transform &mapToRangeSensor) const;
 	void insertBufferedScans(Submap *submap);
 	void addScanToBuffer(const PointCloud &scan, const Transform &mapToRangeSensor, const Time &timestamp);
-	void updateActiveSubmap(const Transform &mapToRangeSensor);
+	void updateActiveSubmap(const Transform &mapToRangeSensor, const PointCloud &scan);
 	void createNewSubmap(const Transform &mapToSubmap);
 	size_t findClosestSubmap(const Transform &mapToRangesensor) const;
-	Constraint buildOdometryConstraint(size_t sourceSubmapIdx, size_t targetSubmapIdx) const;
 	std::vector<size_t> getAllSubmapIdxs() const;
 
 	Transform mapToRangeSensor_ = Transform::Identity();

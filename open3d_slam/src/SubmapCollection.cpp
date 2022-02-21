@@ -70,8 +70,8 @@ size_t SubmapCollection::getTotalNumPoints() const {
 	});
 }
 
-void SubmapCollection::updateAdjacencyMatrix(const Constraints &loopClosureConstraints){
-	for (const auto &c : loopClosureConstraints){
+void SubmapCollection::updateAdjacencyMatrix(const Constraints &loopClosureConstraints) {
+	for (const auto &c : loopClosureConstraints) {
 		adjacencyMatrix_.addEdge(c.sourceSubmapIdx_, c.targetSubmapIdx_);
 	}
 }
@@ -88,7 +88,7 @@ void SubmapCollection::insertBufferedScans(Submap *submap) {
 	}
 }
 
-void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor) {
+void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor, const PointCloud &scan) {
 	if (numScansMergedInActiveSubmap_ < params_.submaps_.minNumRangeData_) {
 		return;
 	}
@@ -102,9 +102,10 @@ void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor) {
 		if (closestMapIdx == activeSubmapIdx_) {
 			return;
 		}
-		if (adjacencyMatrix_.isAdjacent(closestSubmap.getId(), activeSubmap.getId())) {
+		if (adjacencyMatrix_.isAdjacent(closestSubmap.getId(), activeSubmap.getId())
+				&& isSwitchingSubmapsConsistant(scan, closestSubmap.getId(), mapToRangeSensor)) {
 			//todo here we could put a consistancy check
-			activeSubmapIdx_ = closestMapIdx;
+				activeSubmapIdx_ = closestMapIdx;
 		} else {
 			const bool isTraveledSufficientDistance = (mapToRangeSensor_.translation()
 					- activeSubmap.getMapToSubmapCenter()).norm() > params_.submaps_.radius_;
@@ -160,7 +161,7 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 	}
 	addScanToBuffer(preProcessedScan, mapToRangeSensor, timestamp);
 	const size_t prevActiveSubmapIdx = activeSubmapIdx_;
-	updateActiveSubmap(mapToRangeSensor);
+	updateActiveSubmap(mapToRangeSensor, rawScan);
 	// either different one is active or new one is created
 	const bool isActiveSubmapChanged = prevActiveSubmapIdx != activeSubmapIdx_;
 	if (isActiveSubmapChanged) {
@@ -244,23 +245,6 @@ Constraints SubmapCollection::buildLoopClosureConstraints(
 	return retVal;
 }
 
-Constraint SubmapCollection::buildOdometryConstraint(size_t sourceSubmapIdx, size_t targetSubmapIdx) const {
-	//by convention the source is map k and target k+1
-	Constraint c;
-	c.sourceSubmapIdx_ = sourceSubmapIdx;
-	c.targetSubmapIdx_ = targetSubmapIdx;
-	const Transform &mapToSource = submaps_.at(sourceSubmapIdx).getMapToSubmapOrigin();
-	const Transform &mapToTarget = submaps_.at(targetSubmapIdx).getMapToSubmapOrigin();
-	c.sourceToTarget_ = mapToSource.inverse() * mapToTarget;
-	c.isOdometryConstraint_ = true;
-	c.isInformationMatrixValid_ = false;
-	std::cout << "added an odom constraint: \n";
-	std::cout << " map " << sourceSubmapIdx << " to " << targetSubmapIdx << ": " << asString(c.sourceToTarget_)
-			<< std::endl;
-
-	return std::move(c);
-}
-
 void SubmapCollection::dumpToFile(const std::string &folderPath, const std::string &filename) const {
 	for (size_t i = 0; i < submaps_.size(); ++i) {
 		auto copy = submaps_.at(i).getMap();
@@ -337,6 +321,21 @@ const MapperParameters& SubmapCollection::getParameters() const {
 void SubmapCollection::setFolderPath(const std::string &folderPath) {
 	savingDataFolderPath_ = folderPath;
 	placeRecognition_.setFolderPath(folderPath);
+}
+
+bool SubmapCollection::isSwitchingSubmapsConsistant(const PointCloud &scan,
+		size_t newActiveSubmapCandidate, const Transform &mapToRangeSensor) const {
+	//Timer("submap_switch_consistancy_check");
+	int numOverlappingPoints = 0;
+	const VoxelMap &voxelMap = submaps_.at(newActiveSubmapCandidate).getVoxelMap();
+	for (int i = 0; i < scan.points_.size(); ++i) {
+		const Eigen::Vector3d p = mapToRangeSensor * scan.points_.at(i);
+		numOverlappingPoints += int(voxelMap.hasVoxelContainingPoint(p));
+	}
+	const double fitness = static_cast<double>(numOverlappingPoints) / scan.points_.size();
+//	std::cout << "Fitness: " << fitness << std::endl;
+	return fitness > 0.3;
+
 }
 
 } // namespace o3d_slam
