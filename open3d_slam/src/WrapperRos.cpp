@@ -16,6 +16,7 @@
 #include "open3d_slam/time.hpp"
 #include "open3d_slam/math.hpp"
 #include "open3d_slam/croppers.hpp"
+#include "open3d_slam/output.hpp"
 #include "open3d_slam/Mapper.hpp"
 #include "open3d_slam/assert.hpp"
 #include "open3d_slam/Mesher.hpp"

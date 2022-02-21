@@ -205,6 +205,7 @@ void Submap::computeFeatures() {
 	}
 
 	std::thread computeVoxelMapThread ([this](){
+		Timer t("compute_voxel_submap");
 		voxelMap_.clear();
 		voxelMap_.buildFromCloud(map_);
 	});

@@ -10,6 +10,7 @@
 #include "open3d_slam/SubmapCollection.hpp"
 #include "open3d_slam/magic.hpp"
 #include "open3d_slam/math.hpp"
+#include "open3d_slam/output.hpp"
 
 #include <open3d/pipelines/registration/FastGlobalRegistration.h>
 #include <open3d/pipelines/registration/Registration.h>

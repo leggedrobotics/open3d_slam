@@ -11,6 +11,7 @@
 #include "open3d_slam/typedefs.hpp"
 #include "open3d_slam/math.hpp"
 #include "open3d_slam/magic.hpp"
+#include "open3d_slam/output.hpp"
 #include "open3d_slam/constraint_builders.hpp"
 
 #include <open3d/io/PointCloudIO.h>
