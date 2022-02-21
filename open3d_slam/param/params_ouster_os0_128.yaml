@@ -40,7 +40,8 @@ mapping:
   submaps:
     size: 30
     min_num_range_data: 10
-
+    adjacency_based_revisiting_min_fitness: 0.4
+    
   map_builder:
     scan_cropping:
       cropping_radius: 40.0

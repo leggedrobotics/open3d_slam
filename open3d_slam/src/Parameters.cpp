@@ -188,6 +188,7 @@ void loadParameters(const std::string &filename, SubmapParameters *p){
 void loadParameters(const YAML::Node &node, SubmapParameters *p){
 	p->radius_ = node["size"].as<double>();
 	p->minNumRangeData_ = node["min_num_range_data"].as<int>();
+	p->adjacencyBasedRevisitingMinFitness_ = node["adjacency_based_revisiting_min_fitness"].as<double>();
 }
 
 void loadParameters(const std::string &filename, MapBuilderParameters *p) {

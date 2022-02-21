@@ -161,7 +161,7 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 	}
 	addScanToBuffer(preProcessedScan, mapToRangeSensor, timestamp);
 	const size_t prevActiveSubmapIdx = activeSubmapIdx_;
-	updateActiveSubmap(mapToRangeSensor, rawScan);
+	updateActiveSubmap(mapToRangeSensor, preProcessedScan);
 	// either different one is active or new one is created
 	const bool isActiveSubmapChanged = prevActiveSubmapIdx != activeSubmapIdx_;
 	if (isActiveSubmapChanged) {
@@ -333,8 +333,8 @@ bool SubmapCollection::isSwitchingSubmapsConsistant(const PointCloud &scan,
 		numOverlappingPoints += int(voxelMap.hasVoxelContainingPoint(p));
 	}
 	const double fitness = static_cast<double>(numOverlappingPoints) / scan.points_.size();
-//	std::cout << "Fitness: " << fitness << std::endl;
-	return fitness > 0.3;
+
+	return fitness > params_.submaps_.adjacencyBasedRevisitingMinFitness_;
 
 }
 

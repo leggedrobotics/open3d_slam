@@ -92,6 +92,7 @@ struct SubmapParameters{
 	double radius_=20.0;
 	int minNumRangeData_ = 5;
 	double minSecondsBetweenFeatureComputation_=5.0;
+	double adjacencyBasedRevisitingMinFitness_ = 0.4;
 };
 
 struct PlaceRecognitionConsistancyCheckParameters{
