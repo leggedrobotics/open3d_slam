@@ -17,6 +17,7 @@
 #include "open3d_slam/Transform.hpp"
 #include <open3d/pipelines/registration/Feature.h>
 #include "open3d_slam/ColorProjection.hpp"
+#include "open3d_slam/Voxel.hpp"
 
 namespace o3d_slam {
 
@@ -55,6 +56,7 @@ public:
 	SubmapId getId() const;
 	size_t getParentId() const;
 	void transform(const Transform &T);
+	const VoxelMap &getVoxelMap() const;
 	mutable PointCloud toRemove_;
 	mutable PointCloud scanRef_;
 
@@ -82,6 +84,7 @@ private:
 	std::shared_ptr<o3d_slam::ColorProjection> colorProjectionPtr_;
 	int scanCounter_ = 0;
 	bool isFirstDenseScan_ = true;
+	VoxelMap voxelMap_;
 
 };
 

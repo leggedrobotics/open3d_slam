@@ -20,6 +20,7 @@
 #include "open3d_slam/assert.hpp"
 #include "open3d_slam/Mesher.hpp"
 #include "open3d_slam/OptimizationProblem.hpp"
+#include "open3d_slam/constraint_builders.hpp"
 
 #include "open3d_slam/Odometry.hpp"
 #include "open3d_conversions/open3d_conversions.h"

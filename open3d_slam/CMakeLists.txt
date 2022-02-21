@@ -26,6 +26,7 @@ set(SRC_FILES
   src/OptimizationProblem.cpp
   src/WrapperRos.cpp
   src/ColorProjection.cpp
+  src/constraint_builders.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES

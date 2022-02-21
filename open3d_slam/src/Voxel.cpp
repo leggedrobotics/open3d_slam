@@ -32,6 +32,20 @@ VoxelMap::VoxelMap(const Eigen::Vector3d &voxelSize) :
 		voxelSize_(voxelSize) {
 }
 
+void VoxelMap::clear() {
+	voxels_.clear();
+}
+
+bool VoxelMap::empty() const{
+	return voxels_.empty();
+}
+
+bool VoxelMap::hasVoxelContainingPoint(const Eigen::Vector3d &p) const{
+	const auto voxelIdx = getVoxelIdx(p, voxelSize_);
+		const auto search = voxels_.find(voxelIdx);
+		return search != voxels_.end() ? true : false;
+}
+
 std::vector<size_t> VoxelMap::getIndicesInVoxel(const Eigen::Vector3d &p) const {
 	const auto voxelIdx = getVoxelIdx(p, voxelSize_);
 	const auto search = voxels_.find(voxelIdx);

@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <numeric>
 #include <utility>
+#include <thread>
 
 namespace o3d_slam {
 
@@ -192,11 +193,22 @@ bool Submap::isEmpty() const {
 	return map_.points_.empty();
 }
 
+const VoxelMap &Submap::getVoxelMap() const{
+	return voxelMap_;
+}
+
+
 void Submap::computeFeatures() {
 	if (feature_ != nullptr
 			&& featureTimer_.elapsedSec() < params_.submaps_.minSecondsBetweenFeatureComputation_) {
 		return;
 	}
+
+	std::thread computeVoxelMapThread ([this](){
+		voxelMap_.clear();
+		voxelMap_.buildFromCloud(map_);
+	});
+
 	const auto &p = params_.placeRecognition_;
 	sparseMap_ = *(map_.VoxelDownSample(p.featureVoxelSize_));
 	sparseMap_.EstimateNormals(
@@ -207,6 +219,7 @@ void Submap::computeFeatures() {
 	feature_ = registration::ComputeFPFHFeature(sparseMap_,
 			open3d::geometry::KDTreeSearchParamHybrid(p.featureRadius_, p.featureKnn_));
 //	std::cout <<"map num points: " << map_.points_.size() << ", sparse map: " << sparseMap_.points_.size() << "\n";
+	computeVoxelMapThread.join();
 	featureTimer_.reset();
 }
 
