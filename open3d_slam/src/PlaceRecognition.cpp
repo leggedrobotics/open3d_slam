@@ -97,7 +97,7 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		const double mapVoxelSize = getMapVoxelSize(params_.mapBuilder_,
 				voxelSizeCorrespondenceSearchMapVoxelSizeIsZero);
 
-		const double voxelSizeForOverlap = 20.0 * mapVoxelSize;
+		const double voxelSizeForOverlap = voxelExpansionFactorOverlapComputation * mapVoxelSize;
 		const size_t minNumPointsPerVoxel = 1;
 		std::vector<size_t> sourceIdxs, targetIdxs;
 		computeIndicesOfOverlappingPoints(source, target, Transform(ransacResult.transformation_),

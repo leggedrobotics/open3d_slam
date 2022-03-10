@@ -5,11 +5,6 @@
  *      Author: jelavice
  */
 
-
-
-
-
-
 #include <Eigen/Dense>
 #include "open3d_slam/constraint_builders.hpp"
 #include "open3d_slam/typedefs.hpp"
@@ -18,7 +13,6 @@
 #include "open3d_slam/output.hpp"
 #include <open3d/pipelines/registration/Registration.h>
 #include "open3d_slam/helpers.hpp"
-
 
 namespace o3d_slam {
 
@@ -39,8 +33,10 @@ bool hasConstraint(size_t sourceIdx, size_t targetIdx, const Constraints &constr
 Constraint buildOdometryConstraint(size_t sourceIdx, size_t targetIdx, const SubmapCollection &submaps) {
 	const double mapVoxelSize = getMapVoxelSize(submaps.getParameters().mapBuilder_,
 			voxelSizeCorrespondenceSearchMapVoxelSizeIsZero);
-	Constraint c = buildConstraint(sourceIdx, targetIdx, submaps, true, 1.5 * mapVoxelSize,
-			20.0 * mapVoxelSize,true, !submaps.getParameters().isRefineOdometryConstraintsBetweenSubmaps_);
+	Constraint c = buildConstraint(sourceIdx, targetIdx, submaps, true,
+			voxelExpansionFactorIcpCorrespondenceDistance * mapVoxelSize,
+			voxelExpansionFactorOverlapComputation * mapVoxelSize, true,
+			!submaps.getParameters().isRefineOdometryConstraintsBetweenSubmaps_);
 	c.isOdometryConstraint_ = true;
 	return c;
 }
