@@ -2,7 +2,7 @@
 
 <launch>
 
-	<arg name="launch_prefix" default="" doc="gdb -ex run --args"/>
+	<arg name="launch_prefix" default="gdb -ex run --args" doc="gdb -ex run --args"/>
 	<arg name="launch_rviz" default="false" />
 	<arg name="cloud_topic" default="/ouster_points_self_filtered" />
 	<arg name="image_topic" default="/camMainView/image_raw" />

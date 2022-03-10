@@ -223,6 +223,7 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	p->numScansOverlap_ = node["submaps_num_scan_overlap"].as<int>();
 	p->isDumpSubmapsToFileBeforeAndAfterLoopClosures_ = node["dump_submaps_to_file_before_after_lc"].as<bool>();
 	p->isPrintTimingStatistics_ = node["is_print_timing_information"].as<bool>();
+	p->isRefineOdometryConstraintsBetweenSubmaps_ = node["is_refine_odometry_constraints_between_submaps"].as<bool>();
 	loadParameters(node["scan_to_map_refinement"]["scan_matching"],&(p->scanMatcher_));
 	loadParameters(node["scan_to_map_refinement"]["scan_processing"],&(p->scanProcessing_));
 	if(p->isBuildDenseMap_){

@@ -143,6 +143,7 @@ struct MapperParameters {
 	bool isAttemptLoopClosures_ = true;
 	bool isDumpSubmapsToFileBeforeAndAfterLoopClosures_ = false;
 	bool isPrintTimingStatistics_ = true;
+	bool isRefineOdometryConstraintsBetweenSubmaps_ = false;
 };
 
 struct LocalMapParameters {

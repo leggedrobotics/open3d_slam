@@ -15,6 +15,7 @@
 #include "open3d_slam/typedefs.hpp"
 #include "open3d_slam/math.hpp"
 #include "open3d_slam/magic.hpp"
+#include "open3d_slam/output.hpp"
 #include <open3d/pipelines/registration/Registration.h>
 #include "open3d_slam/helpers.hpp"
 
@@ -39,14 +40,14 @@ Constraint buildOdometryConstraint(size_t sourceIdx, size_t targetIdx, const Sub
 	const double mapVoxelSize = getMapVoxelSize(submaps.getParameters().mapBuilder_,
 			voxelSizeCorrespondenceSearchMapVoxelSizeIsZero);
 	Constraint c = buildConstraint(sourceIdx, targetIdx, submaps, true, 1.5 * mapVoxelSize,
-			20.0 * mapVoxelSize,true);
+			20.0 * mapVoxelSize,true, !submaps.getParameters().isRefineOdometryConstraintsBetweenSubmaps_);
 	c.isOdometryConstraint_ = true;
 	return c;
 }
 
 Constraint buildConstraint(size_t sourceIdx, size_t targetIdx, const SubmapCollection &submaps,
 		bool isComputeOverlap, double icpMaxCorrespondenceDistance, double voxelSizeOverlapCompute,
-		bool isEstimateInformationMatrix) {
+		bool isEstimateInformationMatrix, bool isSkipIcpRefinement) {
 
 	PointCloud source = submaps.getSubmaps().at(sourceIdx).getMap();
 	PointCloud target = submaps.getSubmaps().at(targetIdx).getMap();
@@ -62,12 +63,15 @@ Constraint buildConstraint(size_t sourceIdx, size_t targetIdx, const SubmapColle
 		target = *target.SelectByIndex(targetIdxs);
 	}
 
-	open3d::pipelines::registration::ICPConvergenceCriteria criteria;
-	criteria.max_iteration_ = icpRunUntilConvergenceNumberOfIterations; // i.e. run until convergence
-	const auto icpResult = open3d::pipelines::registration::RegistrationICP(source, target,
-			icpMaxCorrespondenceDistance, Eigen::Matrix4d::Identity(),
-			open3d::pipelines::registration::TransformationEstimationPointToPlane(), criteria);
-
+	open3d::pipelines::registration::RegistrationResult icpResult;
+	icpResult.transformation_.setIdentity();
+	if (!isSkipIcpRefinement) {
+		open3d::pipelines::registration::ICPConvergenceCriteria criteria;
+		criteria.max_iteration_ = icpRunUntilConvergenceNumberOfIterations; // i.e. run until convergence
+		icpResult = open3d::pipelines::registration::RegistrationICP(source, target, icpMaxCorrespondenceDistance,
+				Eigen::Matrix4d::Identity(), open3d::pipelines::registration::TransformationEstimationPointToPlane(),
+				criteria);
+	}
 	Eigen::Matrix6d informationMatrix = Eigen::Matrix6d::Identity();
 	if (isEstimateInformationMatrix) {
 		informationMatrix = open3d::pipelines::registration::GetInformationMatrixFromPointClouds(source, target,
@@ -83,9 +87,7 @@ Constraint buildConstraint(size_t sourceIdx, size_t targetIdx, const SubmapColle
 //	c.sourceToTarget_ = Transform::Identity();
 	c.informationMatrix_ = informationMatrix;
 
-//	printf("submap %ld size: %ld \n", sourceIdx, sourceFull.points_.size());
 //	printf("submap %ld overlap size: %ld \n", sourceIdx, source.points_.size());
-//	printf("submap %ld size: %ld \n", targetIdx, targetFull.points_.size());
 //	printf("submap %ld overlap size: %ld \n", targetIdx, target.points_.size());
 //	printf("Adding odometry constraint from submap %ld to submap %ld with transformation \n: ",
 //			sourceIdx, targetIdx);
