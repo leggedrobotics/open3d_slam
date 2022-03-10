@@ -451,7 +451,12 @@ void WrapperRos::publishMaps(const Time &time) {
 		return;
 	}
 
+	if (isPublishMapsThreadRunning_){
+		return;
+	}
+
 	const auto timestamp = toRos(time);
+	isPublishMapsThreadRunning_ = true;
 	std::thread t([this, timestamp]() {
 		PointCloud map = mapper_->getAssembledMap();
 		voxelize(visualizationParameters_.assembledMapVoxelSize_, &map);
@@ -467,6 +472,7 @@ void WrapperRos::publishMaps(const Time &time) {
 			voxelize(visualizationParameters_.submapVoxelSize_, &cloud);
 			o3d_slam::publishCloud(cloud, o3d_slam::frames::mapFrame, timestamp, submapsPub_);
 		}
+		isPublishMapsThreadRunning_ = false;
 	});
 	t.detach();
 	visualizationUpdateTimer_.reset();
