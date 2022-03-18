@@ -111,6 +111,26 @@ open3d::pipelines::registration::RegistrationResult icpRegistration(
 				maxCorrespondenceDistance, init, transformationEstimation,
 				icpConvergenceCriteria);
 	}
+	case IcpExecutionDevice::GPU: {
+		const auto sourceT = toTensor(source);
+		const auto targetT = toTensor(target);
+		const auto icpConvergenceCriteriaT = toTensor(icpConvergenceCriteria);
+		const auto transformationEstimationT = toTensor(
+				transformationEstimation);
+		const auto initT = toTensor(init);
+
+		auto res = registration::ICP(sourceT, targetT,
+				maxCorrespondenceDistance, initT, *transformationEstimationT,
+				icpConvergenceCriteriaT);
+
+		open3d::pipelines::registration::RegistrationResult out;
+		out.fitness_ = res.fitness_;
+		out.inlier_rmse_ = res.inlier_rmse_;
+
+
+		return out;
+
+	}
 	default:
 		throw std::runtime_error("Unknonwn execution device for the icp");
 	}
