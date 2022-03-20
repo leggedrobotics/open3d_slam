@@ -1,10 +1,7 @@
 cmake_minimum_required(VERSION 3.18)
 project(open3d_catkin)
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-add_compile_options(-O2)
-
+find_package(catkin REQUIRED)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   roscpp
@@ -17,19 +14,16 @@ find_package(catkin REQUIRED COMPONENTS
 
 # Catkinization of open3D
 include(ExternalProject)
-
 file(MAKE_DIRECTORY ${CATKIN_DEVEL_PREFIX}/include)
-file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/open3d)
-file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/open3d/build)
 
 ExternalProject_Add(open3d
   GIT_REPOSITORY "https://github.com/isl-org/Open3D"
-  GIT_TAG "v0.14.0"
+  GIT_TAG "v0.15.1"
   GIT_SUBMODULES_RECURSE "true"
   GIT_PROGRESS "true"
   PREFIX "${CMAKE_SOURCE_DIR}"
   SOURCE_DIR "${CMAKE_SOURCE_DIR}/open3d"
-  BINARY_DIR "${CMAKE_SOURCE_DIR}/open3d/build"
+  BINARY_DIR "${CMAKE_SOURCE_DIR}/open3d/tmp"
   # CMAKE_ARGS 
   #     -DBUILD_SHARED_LIBS=ON
   #     -DCMAKE_BUILD_TYPE:STRING="RelWithDebInfo"
@@ -40,7 +34,7 @@ ExternalProject_Add(open3d
   #     -DUSE_SYSTEM_JSONCPP=ON
   CMAKE_COMMAND cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_SYSTEM_EIGEN3=OFF -DGLIBCXX_USE_CXX11_ABI=ON -DBUILD_PYTHON_MODULE=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/Programs/open3d_install "${CMAKE_SOURCE_DIR}/open3d"
   BUILD_COMMAND make -j${NCPU}
-  INSTALL_COMMAND bash "-c" "cp -r ../open3d/cpp/open3d ${CATKIN_DEVEL_PREFIX}/include && cp lib/*.a ${CATKIN_DEVEL_PREFIX}/lib && cp lib/*.so ${CATKIN_DEVEL_PREFIX}/lib"
+  INSTALL_COMMAND bash "-c" "cp -r ${CMAKE_SOURCE_DIR}/open3d/cpp/open3d ${CATKIN_DEVEL_PREFIX}/include && cp ${CMAKE_SOURCE_DIR}/open3d/tmp/lib/*/*.a ${CATKIN_DEVEL_PREFIX}/lib && cp ${CMAKE_SOURCE_DIR}/open3d/tmp/lib/*/*.so ${CATKIN_DEVEL_PREFIX}/lib"
 )
 
 
@@ -48,7 +42,6 @@ catkin_package(
   INCLUDE_DIRS 
     ${CATKIN_DEVEL_PREFIX}/include
   LIBRARIES
-    open3d
   CATKIN_DEPENDS
 )
 
