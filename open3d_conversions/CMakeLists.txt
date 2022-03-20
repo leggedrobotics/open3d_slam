@@ -36,7 +36,7 @@ include_directories(
 
 # C++ library
 add_library(open3d_conversions src/open3d_conversions.cpp)
-target_link_libraries(open3d_conversions ${catkin_LIBRARIES})
+target_link_libraries(open3d_conversions ${catkin_LIBRARIES} fmt)
 
 # Install
 install(TARGETS open3d_conversions

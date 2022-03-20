@@ -21,6 +21,7 @@ ExternalProject_Add(open3d
   GIT_TAG "v0.15.1"
   GIT_SUBMODULES_RECURSE "true"
   GIT_PROGRESS "true"
+  CMAKE_CACHE_ARGS "-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=true"
   PREFIX "${CMAKE_SOURCE_DIR}"
   SOURCE_DIR "${CMAKE_SOURCE_DIR}/open3d"
   BINARY_DIR "${CMAKE_SOURCE_DIR}/open3d/tmp"
@@ -34,7 +35,7 @@ ExternalProject_Add(open3d
   #     -DUSE_SYSTEM_JSONCPP=ON
   CMAKE_COMMAND cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_SYSTEM_EIGEN3=OFF -DGLIBCXX_USE_CXX11_ABI=ON -DBUILD_PYTHON_MODULE=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/Programs/open3d_install "${CMAKE_SOURCE_DIR}/open3d"
   BUILD_COMMAND make -j${NCPU}
-  INSTALL_COMMAND bash "-c" "cp -r ${CMAKE_SOURCE_DIR}/open3d/cpp/open3d ${CATKIN_DEVEL_PREFIX}/include && cp ${CMAKE_SOURCE_DIR}/open3d/tmp/lib/*/*.a ${CATKIN_DEVEL_PREFIX}/lib && cp ${CMAKE_SOURCE_DIR}/open3d/tmp/lib/*/*.so ${CATKIN_DEVEL_PREFIX}/lib"
+  INSTALL_COMMAND bash "-c" "cp -r ${CMAKE_SOURCE_DIR}/open3d/cpp/open3d ${CATKIN_DEVEL_PREFIX}/include && cp ${CMAKE_SOURCE_DIR}/open3d/tmp/lib/*/*.a ${CATKIN_DEVEL_PREFIX}/lib/ && cp ${CMAKE_SOURCE_DIR}/open3d/tmp/lib/*/*.so ${CATKIN_DEVEL_PREFIX}/lib/"
 )
 
 
@@ -42,6 +43,7 @@ catkin_package(
   INCLUDE_DIRS 
     ${CATKIN_DEVEL_PREFIX}/include
   LIBRARIES
+    ${CATKIN_DEVEL_PREFIX}/lib/libOpen3D.so
   CATKIN_DEPENDS
 )
 
@@ -49,7 +51,7 @@ catkin_package(
 ## INSTALL ##
 #############
 
-install(DIRECTORY ${CATKIN_DEVEL_PREFIX}/include/open3d
+install(DIRECTORY ${CATKIN_DEVEL_PREFIX}/include/
   DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
 )
 

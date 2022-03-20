@@ -66,10 +66,9 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIR}
+  ${EIGEN3_INCLUDE_DIR}list()
   ${YAML_CPP_INCLUDE_DIR}
   ${OpenMP_CXX_INCLUDE_DIRS}
-  
 )
 
 add_library(${PROJECT_NAME}
@@ -85,8 +84,6 @@ target_link_libraries(${PROJECT_NAME}
   yaml-cpp
   ${OpenMP_CXX_LIBRARIES}
 )
-
-
 
 
 add_executable(mapping_node
