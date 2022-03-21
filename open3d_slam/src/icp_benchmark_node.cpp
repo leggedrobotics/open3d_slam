@@ -42,12 +42,12 @@ open3d::geometry::PointCloud load(const std::string &filename) {
 }
 
 PointCloud fromTensor(const tPointCloud &in) {
-	return in.ToLegacyPointCloud();
+	return in.ToLegacy();
 }
 
 tPointCloud toTensor(const PointCloud &in) {
 	open3d::core::Device device(deviceType, 0);
-	return tPointCloud::FromLegacyPointCloud(in, scalarType,
+	return tPointCloud::FromLegacy(in, scalarType,
 			device);
 }
 
@@ -119,7 +119,7 @@ open3d::pipelines::registration::RegistrationResult icpRegistration(
 				transformationEstimation);
 		const auto initT = toTensor(init);
 
-		auto res = registration::RegistrationICP(sourceT, targetT,
+		auto res = registration::ICP(sourceT, targetT,
 				maxCorrespondenceDistance, initT, *transformationEstimationT,
 				icpConvergenceCriteriaT);
 
