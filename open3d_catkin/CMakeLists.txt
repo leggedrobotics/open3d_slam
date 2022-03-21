@@ -78,7 +78,7 @@ else()
     #     -DBUILD_PYTHON_MODULE=OFF
     #     -DUSE_SYSTEM_JPEG=ON
     #     -DUSE_SYSTEM_JSONCPP=ON
-    CMAKE_COMMAND cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_SYSTEM_EIGEN3=OFF -DGLIBCXX_USE_CXX11_ABI=ON -DBUILD_PYTHON_MODULE=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/Programs/open3d_install "${CMAKE_SOURCE_DIR}/open3d"
+    CMAKE_COMMAND cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_SYSTEM_EIGEN3=OFF -DGLIBCXX_USE_CXX11_ABI=ON -DBUILD_PYTHON_MODULE=OFF -DCMAKE_INSTALL_PREFIX=$ENV{HOME}/Programs/open3d_install "${CMAKE_SOURCE_DIR}/open3d"
     BUILD_COMMAND make -j${NCPU}
     INSTALL_COMMAND bash "-c" "cp -r ${CMAKE_SOURCE_DIR}/open3d/cpp/open3d ${CATKIN_DEVEL_PREFIX}/include && cp ${CMAKE_SOURCE_DIR}/tmp/lib/*/*.a ${CATKIN_DEVEL_PREFIX}/lib/ && cp ${CMAKE_SOURCE_DIR}/tmp/lib/*/*.so ${CATKIN_DEVEL_PREFIX}/lib/"
   )
@@ -103,5 +103,15 @@ else()
   install(DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/
     DESTINATION ${CATKIN_GLOBAL_LIB_DESTINATION}
   )
+  
+  if(${MAKE_LOCAL_INSTALL})
+    message("${BoldMagenta}INFO: Making a local install.${ColourReset}")
+  	add_custom_command (OUTPUT run_install_script___OK 
+                        COMMAND ${CMAKE_SOURCE_DIR}/local_install.sh "${CMAKE_SOURCE_DIR}"
+                        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/)         
+  	add_custom_target(
+  	  RunInstallScript ALL
+  	  DEPENDS run_install_script___OK)
+  endif()
 
 endif()
