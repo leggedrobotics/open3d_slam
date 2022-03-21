@@ -10,6 +10,7 @@ This package has been devloped as a hobby project and it is under heavy developm
 This package depends on Open3D. There are currently two ways of compiling open3d_slam:
 1.  By installing Open3D beforehand, see below for the instructions.
 2.  By compiling Open3D alongside open3d_slam in the catkin workspace.
+
 Both versions are possible, and the compilation is automatically handled by open3d_catkin.
 
 ### open3d_catkin
@@ -17,6 +18,7 @@ The options for compiling are taken in the following order:
 1.  If an environment variable _${Open3D_DIR}_ is set, the Open3D installation at this location is chosen.
 2.  If 1. is not given, but Open3D is installed (i.e. can be found by cmake), this installation is taken.
 3.  If the two points before are not given, Open3D will automatically be pulled from GitHub and compiled alongside the other packages in the workspace.
+
 Please note that the latter option is more flexible but slower, as open3d is first compiled from source.
 
 ### Docker
@@ -24,11 +26,10 @@ We provide a docker image with pre-compiled Open3D binaries.
 
 #### Pulling the Image from Docker Hub
 
-The image can also be pulled from docker hub using
+The image can be pulled from docker hub using
 ```bash
 docker pull rslethz/m545-gpu:open3d
 ```
-.
 
 #### Running the Docker Image
 
@@ -39,26 +40,19 @@ After building the image (or pulling it from docker hub), this can be done by ty
 ./bin/run.sh --type=gpu --tag=open3d
 ```
 
-#### Build docker Image
-
-For building the docker image go to the [m545 docker repo](https://github.com/leggedrobotics/m545_docker) into projects/open3D and execute:
-```bash
-git clone --recursive git@bitbucket.org:leggedrobotics/open3d.git
-docker build -t rslethz/m545-gpu:open3d -f open3d.Dockerfile .
-```
-
 
 ## Compiling the Repo
 
-This can be done using 
+If Open3D is installed (e.g. inside the docker), the compilation can be performed using 
 ```bash
 catkin build open3d_slam
 ```
+If not instllation can be found, also Open3D will be compiled from source automatically.
 
 ## Running the Repo
 
 Add the required config to the launch file `mapping.launch`.
-Then do
+Then after sourcing the workspace do
 ```bash
 roslaunch open3d_slam mapping.launch
 ```
@@ -103,7 +97,7 @@ Create a build directory and build from source:
 ```bash   
 mkdir build
 cd build 
-cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_SYSTEM_EIGEN3=ON -DGLIBCXX_USE_CXX11_ABI=ON -DBUILD_PYTHON_MODULE=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/Programs/open3d_install ..
+cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_SYSTEM_EIGEN3=OFF -DGLIBCXX_USE_CXX11_ABI=ON -DBUILD_PYTHON_MODULE=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/Programs/open3d_install ..
 make -j8
 make install
 ```
