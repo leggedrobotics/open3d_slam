@@ -132,9 +132,9 @@ void open3dToRos(const open3d::t::geometry::PointCloud &pointcloud, sensor_msgs:
 		}
 		va_end(vl);
 	}
-	const open3d::core::Tensor &o3d_TensorList_points = pointcloud.GetPoints();
-	modifier.resize(pointcloud.GetPoints().GetShape()[0]);
-	ros_pc2.data.reserve(pointcloud.GetPoints().GetShape()[0]);
+	const open3d::core::Tensor &o3d_TensorList_points = pointcloud.GetPointPositions();
+	modifier.resize(pointcloud.GetPointPositions().GetShape()[0]);
+	ros_pc2.data.reserve(pointcloud.GetPointPositions().GetShape()[0]);
 	ros_pc2.header.frame_id = frame_id;
 	sensor_msgs::PointCloud2Iterator<float> ros_pc2_x(ros_pc2, "x");
 	sensor_msgs::PointCloud2Iterator<float> ros_pc2_y(ros_pc2, "y");
@@ -207,7 +207,7 @@ void rosToOpen3d(const sensor_msgs::PointCloud2ConstPtr &ros_pc2, open3d::t::geo
 			}
 			open3d::core::Tensor o3d_tpc_points = open3d::core::eigen_converter::EigenVector3dVectorToTensor(
 					o3d_TensorList_points, dtype_f, device_type);
-			o3d_tpc.SetPoints(o3d_tpc_points);
+			o3d_tpc.SetPointPositions(o3d_tpc_points);
 			num_fields++;
 			num_fields++;
 		} else if (ros_pc2->fields[num_fields].name == "rgb" && !skip_colors) {

@@ -48,6 +48,9 @@ Thumbs.db
 *.mov
 *.wmv
 
+open3d_catkin/open3d
+open3d_catkin/src
+open3d_catkin/tmp
 /open3d_slam/data/*
 !/open3d_slam/data/.gitkeep
 
