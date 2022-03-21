@@ -27,7 +27,7 @@ endif()
 if(DEFINED ENV{Open3D_DIR})
   set(Open3D_DIR ENV{Open3D_DIR})
   find_package(Open3D CONFIG REQUIRED)
-  message("${BoldMagenta}INFO: Found manually set path to Open3D.${ColourReset}")
+  message("${BoldMagenta}INFO: Found manually set path to Open3D. Using version located at $ENV{Open3D_DIR}.${ColourReset}")
 
   catkin_package(
   INCLUDE_DIRS 
