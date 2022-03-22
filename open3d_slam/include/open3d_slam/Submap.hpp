@@ -46,7 +46,7 @@ public:
 	Eigen::Vector3d getMapToSubmapCenter() const;
 	void setMapToSubmapOrigin(const Transform &T);
 	const PointCloud& getMap() const;
-	const PointCloud& getDenseMap() const;
+	const VoxelizedPointCloud& getDenseMap() const;
 	bool isEmpty() const;
 	const Feature& getFeatures() const;
 	const PointCloud& getSparseMap() const;
@@ -68,7 +68,7 @@ private:
 	void voxelizeInsideCroppingVolume(const CroppingVolume &cropper, const MapBuilderParameters &param,
 			PointCloud *map) const;
 
-	PointCloud sparseMap_, map_, denseMap_;
+	PointCloud sparseMap_, map_;
 	Transform mapToSubmap_ = Transform::Identity();
 	Transform mapToRangeSensor_ = Transform::Identity();
 	Eigen::Vector3d submapCenter_ = Eigen::Vector3d::Zero();
@@ -85,6 +85,7 @@ private:
 	int scanCounter_ = 0;
 	bool isFirstDenseScan_ = true;
 	VoxelMap voxelMap_;
+	VoxelizedPointCloud  voxelizedCloud_;
 
 };
 

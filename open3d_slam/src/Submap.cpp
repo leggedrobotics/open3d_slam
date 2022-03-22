@@ -75,23 +75,27 @@ bool Submap::insertScanDenseMap(const PointCloud &rawScan, const Transform &mapT
 		return false;
 	}
 
+
 	auto colored = colorProjectionPtr_->filterColor(rawScan);
 	denseMapCropper_->setPose(Transform::Identity());
 	auto cropped = denseMapCropper_->crop(colored);
-	o3d_slam::voxelize(params_.denseMapBuilder_.mapVoxelSize_, cropped.get());
 	auto transformedCloud = o3d_slam::transform(mapToRangeSensor.matrix(), *cropped);
-	denseMapCropper_->setPose(mapToRangeSensor);
-	if (isPerformCarving) {
-		carve(rawScan, mapToRangeSensor, *denseMapCropper_, params_.denseMapBuilder_.carving_, &denseMap_,
-				&carveDenseMapTimer_);
-	}
-	denseMap_ += *transformedCloud;
-	if (++scanCounter_ >= params_.denseMapBuilder_.voxelizeEveryNscans_) {
-		auto voxelizedDense = voxelizeWithinCroppingVolume(params_.denseMapBuilder_.mapVoxelSize_,
-				*denseMapCropper_, denseMap_);
-		denseMap_ = *voxelizedDense;
-		scanCounter_ = 0;
-	}
+	voxelizedCloud_.insert(*transformedCloud);
+
+//	o3d_slam::voxelize(params_.denseMapBuilder_.mapVoxelSize_, cropped.get());
+//	auto transformedCloud = o3d_slam::transform(mapToRangeSensor.matrix(), *cropped);
+//	denseMapCropper_->setPose(mapToRangeSensor);
+//	if (isPerformCarving) {
+//		carve(rawScan, mapToRangeSensor, *denseMapCropper_, params_.denseMapBuilder_.carving_, &denseMap_,
+//				&carveDenseMapTimer_);
+//	}
+//	denseMap_ += *transformedCloud;
+//	if (++scanCounter_ >= params_.denseMapBuilder_.voxelizeEveryNscans_) {
+//		auto voxelizedDense = voxelizeWithinCroppingVolume(params_.denseMapBuilder_.mapVoxelSize_,
+//				*denseMapCropper_, denseMap_);
+//		denseMap_ = *voxelizedDense;
+//		scanCounter_ = 0;
+//	}
 	return true;
 }
 
@@ -99,15 +103,9 @@ void Submap::transform(const Transform &T) {
 	const Eigen::Matrix4d mat(T.matrix());
 	sparseMap_.Transform(mat);
 	map_.Transform(mat);
-	denseMap_.Transform(mat);
-	// not really sure whether I should update this map to submap thingy, since
-	// that guy is used to compute the odometry
-//	mapToSubmap_ = mapToSubmap_ * T;
+	voxelizedCloud_.transform(T);
 	mapToRangeSensor_ = mapToRangeSensor_ * T;
-//	std::cout << "Submap " << getId() << " center before: " << submapCenter_.transpose() << std::endl;
 	submapCenter_ = T * submapCenter_;
-//	std::cout << "Submap " << getId() << " center after: " << submapCenter_.transpose() << std::endl;
-//	std::cout << "test for submap " << getId() << " " << map_.GetCenter().transpose() << std::endl;
 }
 
 void Submap::carve(const PointCloud &rawScan, const Transform &mapToRangeSensor,
@@ -160,8 +158,8 @@ Eigen::Vector3d Submap::getMapToSubmapCenter() const {
 const Submap::PointCloud& Submap::getMap() const {
 	return map_;
 }
-const Submap::PointCloud& Submap::getDenseMap() const {
-	return denseMap_;
+const VoxelizedPointCloud& Submap::getDenseMap() const {
+	return voxelizedCloud_;
 }
 
 const Submap::PointCloud& Submap::getSparseMap() const {
@@ -173,8 +171,6 @@ void Submap::setMapToSubmapOrigin(const Transform &T) {
 }
 
 void Submap::update(const MapperParameters &p) {
-//	mapBuilderCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.mapBuilder_.scanCroppingRadius_);
-//	denseMapCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.denseMapBuilder_.scanCroppingRadius_);
 	{
 		const auto &par = p.mapBuilder_.cropper_;
 		mapBuilderCropper_ = croppingVolumeFactory(par.cropperName_, par.croppingRadius_, par.croppingMinZ_,
@@ -187,16 +183,17 @@ void Submap::update(const MapperParameters &p) {
 				par.croppingMaxZ_);
 	}
 
+	voxelizedCloud_ = std::move(VoxelizedPointCloud(Eigen::Vector3d::Constant(p.denseMapBuilder_.mapVoxelSize_)));
+
 }
 
 bool Submap::isEmpty() const {
 	return map_.points_.empty();
 }
 
-const VoxelMap &Submap::getVoxelMap() const{
+const VoxelMap& Submap::getVoxelMap() const {
 	return voxelMap_;
 }
-
 
 void Submap::computeFeatures() {
 	if (feature_ != nullptr
@@ -204,7 +201,7 @@ void Submap::computeFeatures() {
 		return;
 	}
 
-	std::thread computeVoxelMapThread ([this](){
+	std::thread computeVoxelMapThread([this]() {
 		Timer t("compute_voxel_submap");
 		voxelMap_.clear();
 		voxelMap_.buildFromCloud(map_);

@@ -287,18 +287,13 @@ void WrapperRos::denseMapWorker() {
 			continue;
 		}
 		denseMapStatiscticsTimer_.startStopwatch();
+
 		const RegisteredPointCloud regCloud = registeredCloudBuffer_.pop();
 
 		mapper_->getSubmapsPtr()->getSubmapPtr(regCloud.submapId_)->insertScanDenseMap(regCloud.raw_.cloud_,
-				regCloud.transform_, regCloud.raw_.time_, true);
+					regCloud.transform_, regCloud.raw_.time_, true);
 
-		if (mapper_->getDenseMap().HasColors()
-				&& denseMapVisualizationUpdateTimer_.elapsedMsec() > visualizationParameters_.visualizeEveryNmsec_) {
-			const auto denseMap = mapper_->getDenseMap(); //copy
-			const auto timestamp = toRos(regCloud.raw_.time_);
-			o3d_slam::publishCloud(denseMap, o3d_slam::frames::mapFrame, timestamp, denseMapPub_);
-			denseMapVisualizationUpdateTimer_.reset();
-		}
+		publishDenseMap(regCloud.raw_.time_);
 
 		const double timeMeasurement = denseMapStatiscticsTimer_.elapsedMsecSinceStopwatchStart();
 		denseMapStatiscticsTimer_.addMeasurementMsec(timeMeasurement);
@@ -445,6 +440,26 @@ void WrapperRos::mesherWorker() {
 
 }
 
+void WrapperRos::publishDenseMap(const Time &time) {
+	if (denseMapVisualizationUpdateTimer_.elapsedMsec() < visualizationParameters_.visualizeEveryNmsec_) {
+		return;
+	}
+	if (isPublishDenseMapThreadRunning_) {
+		return;
+	}
+
+	isPublishDenseMapThreadRunning_ = true;
+	std::thread t([this, time]() {
+		const auto denseMap = mapper_->getDenseMap(); //copy
+		const auto timestamp = toRos(time);
+		o3d_slam::publishCloud(denseMap.toPointCloud(), o3d_slam::frames::mapFrame, timestamp, denseMapPub_);
+		denseMapVisualizationUpdateTimer_.reset();
+		isPublishDenseMapThreadRunning_ = false;
+	});
+	t.detach();
+
+}
+
 void WrapperRos::publishMaps(const Time &time) {
 	if (visualizationUpdateTimer_.elapsedMsec() < visualizationParameters_.visualizeEveryNmsec_
 			&& !isVisualizationFirstTime_) {
@@ -462,8 +477,6 @@ void WrapperRos::publishMaps(const Time &time) {
 		voxelize(visualizationParameters_.assembledMapVoxelSize_, &map);
 		o3d_slam::publishCloud(map, o3d_slam::frames::mapFrame, timestamp, assembledMapPub_);
 		o3d_slam::publishCloud(mapper_->getPreprocessedScan(), o3d_slam::frames::rangeSensorFrame, timestamp, mappingInputPub_);
-//		o3d_slam::publishCloud(mapper_->getDenseMap(), o3d_slam::frames::mapFrame, timestamp,
-//				denseMapPub_);
 		o3d_slam::publishSubmapCoordinateAxes(mapper_->getSubmaps(), o3d_slam::frames::mapFrame, timestamp,
 				submapOriginsPub_);
 		if (submapsPub_.getNumSubscribers() > 0) {

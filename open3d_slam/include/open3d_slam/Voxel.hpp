@@ -12,9 +12,11 @@
 #include <open3d/geometry/PointCloud.h>
 #include <unordered_map>
 #include <map>
-#include <unordered_set>
+#include <mutex>
 #include <open3d/utility/Eigen.h>
 #include <open3d/utility/Helper.h>
+#include <open3d_slam/typedefs.hpp>
+#include <open3d_slam/Transform.hpp>
 
 namespace o3d_slam {
 class Voxel {
@@ -22,6 +24,8 @@ class Voxel {
 public:
 	std::vector<size_t> idxs_;
 };
+
+
 
 struct EigenVec3iHash {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -69,6 +73,51 @@ public:
 
 Eigen::Vector3d voxelSize_;
 std::unordered_map<Eigen::Vector3i, VoxelLayers, EigenVec3iHash> voxels_;
+
+};
+
+class VoxelizedPointCloud;
+class AggregatedVoxel {
+	friend class VoxelizedPointCloud;
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+	 Eigen::Vector3d getAggregatedPosition() const;
+	 Eigen::Vector3d getAggregatedNormal() const;
+	 Eigen::Vector3d getAggregatedColor() const;
+
+
+	int numAggregatedPoints_ = 0;
+	Eigen::Vector3d aggregatedPosition_ = Eigen::Vector3d::Zero();
+	Eigen::Vector3d aggregatedNormal_ = Eigen::Vector3d::Zero();
+	Eigen::Vector3d aggregatedColor_ = Eigen::Vector3d::Zero();
+
+private:
+	// aggregate point has to be called before aggregate normal and aggregate color!!!!
+	void aggregatePoint(const Eigen::Vector3d &p);
+	void aggregateNormal(const Eigen::Vector3d &n);
+	void aggregateColor(const Eigen::Vector3d &c);
+
+};
+
+class VoxelizedPointCloud {
+public:EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+	VoxelizedPointCloud();
+	VoxelizedPointCloud(const Eigen::Vector3d &voxelSize);
+	void insert(const PointCloud &cloud);
+	PointCloud toPointCloud() const;
+	bool hasVoxelContainingPoint(const Eigen::Vector3d &p) const;
+	void clear();
+	bool empty() const;
+	bool hasColors() const;
+	bool hasNormals() const;
+	void transform(const Transform &T);
+
+	bool isHasNormals_ =false;
+	bool isHasColors_ =false;
+	Eigen::Vector3d voxelSize_;
+	std::unordered_map<Eigen::Vector3i, AggregatedVoxel, EigenVec3iHash> voxels_;
+	//std::mutex mutex_;
 
 };
 

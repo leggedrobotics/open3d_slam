@@ -58,7 +58,6 @@ void processCloud(const open3d::geometry::PointCloud &cloud, const ros::Time &ti
 		std::cout << "Trying to insert and empyt cloud!!! Skipping the measurement \n";
 		return;
 	}
-
 	mapping->addRangeScan(accumulatedCloud, fromRos(timestamp));
 //	o3d_slam::publishTfTransform(Eigen::Matrix4d::Identity(), timestamp, frames::rangeSensorFrame, frame + "_o3d",
 //			tfBroadcaster.get());
@@ -90,7 +89,7 @@ void processCloud(const open3d::geometry::PointCloud &cloud, const ros::Time &ti
 
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	open3d::geometry::PointCloud cloud;
-	open3d_conversions::rosToOpen3d(msg, cloud, true);
+	open3d_conversions::rosToOpen3d(msg, cloud, false);
 	const ros::Time timestamp = msg->header.stamp;
 
 	processCloud(cloud, timestamp, msg->header.frame_id);

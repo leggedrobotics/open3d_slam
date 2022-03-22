@@ -263,7 +263,7 @@ const Submap& Mapper::getActiveSubmap() const {
 	return submaps_->getActiveSubmap();
 }
 
-const Mapper::PointCloud& Mapper::getDenseMap() const {
+const VoxelizedPointCloud& Mapper::getDenseMap() const {
 	return submaps_->getActiveSubmap().getDenseMap();
 }
 
