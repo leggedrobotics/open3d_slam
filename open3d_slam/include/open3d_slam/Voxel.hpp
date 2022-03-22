@@ -111,6 +111,7 @@ public:EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	Eigen::Vector3i getKey(const Eigen::Vector3d &p) const;
   void removeKey(const Eigen::Vector3i &k);
 
+  size_t size() const;
 	void clear();
 	bool empty() const;
 	bool hasColors() const;

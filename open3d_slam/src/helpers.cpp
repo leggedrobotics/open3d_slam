@@ -387,5 +387,34 @@ std::vector<Eigen::Vector3i> getKeysOfCarvedPoints(const open3d::geometry::Point
 	return vecOfIdsToRemove;
 }
 
+PointCloud getPointCloudWithinCroppingVolume(const CroppingVolume &croppingVolume,
+		const VoxelizedPointCloud &voxels, bool isIgnoreColors) {
+
+	if (voxels.empty()) {
+		return PointCloud();
+	}
+	PointCloud ret;
+	ret.points_.reserve(voxels.size());
+	if (!isIgnoreColors && voxels.hasColors()) {
+		ret.colors_.reserve(voxels.size());
+	}
+	if (voxels.hasNormals()) {
+		ret.normals_.reserve(voxels.size());
+	}
+
+	for (const auto &voxel : voxels.voxels_) {
+		if (croppingVolume.isWithinVolume(voxel.second.getAggregatedPosition())) {
+			ret.points_.push_back(voxel.second.getAggregatedPosition());
+			if (!isIgnoreColors && voxels.hasColors()) {
+				ret.colors_.push_back(voxel.second.getAggregatedColor());
+			}
+			if (voxels.hasNormals()) {
+				ret.normals_.push_back(voxel.second.getAggregatedNormal());
+			}
+		}
+	}
+	return ret;
+}
+
 } /* namespace o3d_slam */
 

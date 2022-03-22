@@ -120,6 +120,10 @@ void VoxelizedPointCloud::removeKey(const Eigen::Vector3i &k){
 	voxels_.erase(k);
 }
 
+size_t VoxelizedPointCloud::size() const{
+	return voxels_.size();
+}
+
 void VoxelizedPointCloud::transform(const Transform &T){
 	std::unordered_map<Eigen::Vector3i, AggregatedVoxel, EigenVec3iHash> voxels;
 	if (empty()){
