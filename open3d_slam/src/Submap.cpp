@@ -82,6 +82,11 @@ bool Submap::insertScanDenseMap(const PointCloud &rawScan, const Transform &mapT
 	auto transformedCloud = o3d_slam::transform(mapToRangeSensor.matrix(), *cropped);
 	voxelizedCloud_.insert(*transformedCloud);
 
+	if (isPerformCarving) {
+		carve(rawScan, mapToRangeSensor.translation(), params_.denseMapBuilder_.carving_, &voxelizedCloud_,
+				&carveDenseMapTimer_);
+	}
+
 //	o3d_slam::voxelize(params_.denseMapBuilder_.mapVoxelSize_, cropped.get());
 //	auto transformedCloud = o3d_slam::transform(mapToRangeSensor.matrix(), *cropped);
 //	denseMapCropper_->setPose(mapToRangeSensor);
@@ -123,6 +128,17 @@ void Submap::carve(const PointCloud &rawScan, const Transform &mapToRangeSensor,
 	scanRef_ = std::move(*scan);
 //	std::cout << "Would remove: " << idxsToRemove.size() << std::endl;
 	removeByIds(idxsToRemove, map);
+	timer->reset();
+}
+
+void Submap::carve(const PointCloud &scan, const Eigen::Vector3d &sensorPosition, const SpaceCarvingParameters &param, VoxelizedPointCloud *cloud,Timer *timer){
+	if (cloud->empty() || timer->elapsedSec() < param.carveSpaceEveryNsec_) {
+			return;
+		}
+	std::vector<Eigen::Vector3i> keysToRemove = getKeysOfCarvedPoints(scan, *cloud, sensorPosition, param);
+	for (const auto &k : keysToRemove){
+		cloud->removeKey(k);
+	}
 	timer->reset();
 }
 

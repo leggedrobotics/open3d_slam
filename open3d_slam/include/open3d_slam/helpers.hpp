@@ -17,6 +17,7 @@
 namespace o3d_slam {
 
 class CroppingVolume;
+class VoxelizedPointCloud;
 
 std::shared_ptr<open3d::geometry::PointCloud> transform(const Eigen::Matrix4d &T,
 		const open3d::geometry::PointCloud &cloud);
@@ -52,5 +53,8 @@ double icpMaxCorrespondenceDistance(double mappingVoxelSize);
 double getMapVoxelSize(const MapBuilderParameters &p, double valueIfZero);
 bool isValidColor(const Eigen::Vector3d &c);
 
+
+std::vector<Eigen::Vector3i> getKeysOfCarvedPoints(const PointCloud &scan,
+		const VoxelizedPointCloud &cloud, const Eigen::Vector3d &sensorPosition, const SpaceCarvingParameters &param);
 
 } /* namespace o3d_slam */

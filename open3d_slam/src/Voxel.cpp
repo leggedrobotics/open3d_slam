@@ -93,6 +93,10 @@ VoxelizedPointCloud::VoxelizedPointCloud() :
 		VoxelizedPointCloud(Eigen::Vector3d::Constant(0.25)) {
 }
 
+Eigen::Vector3i VoxelizedPointCloud::getKey(const Eigen::Vector3d &p) const{
+	return getVoxelIdx(p, voxelSize_);
+}
+
 VoxelizedPointCloud::VoxelizedPointCloud(const Eigen::Vector3d &voxelSize) :
 		voxelSize_(voxelSize) {
 }
@@ -110,6 +114,10 @@ bool VoxelizedPointCloud::hasColors() const {
 }
 bool VoxelizedPointCloud::hasNormals() const {
 	return isHasNormals_;
+}
+
+void VoxelizedPointCloud::removeKey(const Eigen::Vector3i &k){
+	voxels_.erase(k);
 }
 
 void VoxelizedPointCloud::transform(const Transform &T){
@@ -132,6 +140,11 @@ void VoxelizedPointCloud::transform(const Transform &T){
 bool VoxelizedPointCloud::hasVoxelContainingPoint(const Eigen::Vector3d &p) const {
 	const auto voxelIdx = getVoxelIdx(p, voxelSize_);
 	const auto search = voxels_.find(voxelIdx);
+	return search != voxels_.end();
+}
+
+bool VoxelizedPointCloud::hasVoxelWithKey(const Eigen::Vector3i &key) const{
+	const auto search = voxels_.find(key);
 	return search != voxels_.end();
 }
 

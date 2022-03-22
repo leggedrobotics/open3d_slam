@@ -107,6 +107,10 @@ public:EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	void insert(const PointCloud &cloud);
 	PointCloud toPointCloud() const;
 	bool hasVoxelContainingPoint(const Eigen::Vector3d &p) const;
+	bool hasVoxelWithKey(const Eigen::Vector3i &p) const;
+	Eigen::Vector3i getKey(const Eigen::Vector3d &p) const;
+  void removeKey(const Eigen::Vector3i &k);
+
 	void clear();
 	bool empty() const;
 	bool hasColors() const;
