@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>open3d_conversions</name>
+  <version>0.0.2</version>
+  <description>Provides conversion functions to and from Open3D datatypes</description>
+
+  <maintainer email="matnay17@gmail.com">Pranay Mathur</maintainer>
+  <maintainer email="nkhedekar@nevada.unr.edu">Nikhil Khedekar</maintainer>
+  <maintainer email="stevenmacenski@gmail.com">Steve Macenski</maintainer>
+
+  <license>Apache-2.0</license>
+
+  <author email="matnay17@gmail.com">Pranay Mathur</author>
+  <author email="nkhedekar@nevada.unr.edu">Nikhil Khedekar</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>roscpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>eigen</depend>
+  <depend>open3d_catkin</depend>
+  <depend>open3d_slam_msgs</depend>
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+</package>
