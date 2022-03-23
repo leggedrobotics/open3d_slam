@@ -66,6 +66,11 @@ WrapperRos::~WrapperRos() {
 		denseMapWorker_.join();
 		std::cout << "Joined the dense map worker! \n";
 	}
+
+	std::cout << "    Scan insertion: Avg execution time: "
+			<< mapperOnlyTimer_.getAvgMeasurementMsec() << " msec , frequency: "
+			<< 1e3 / mapperOnlyTimer_.getAvgMeasurementMsec() << " Hz \n";
+
 }
 
 size_t WrapperRos::getOdometryBufferSize() const {
@@ -232,7 +237,10 @@ void WrapperRos::mappingWorker() {
 			std::cout << "requested: " << readable(measurement.time_) << std::endl;
 		}
 		const size_t activeSubmapIdx = mapper_->getActiveSubmap().getId();
+		mapperOnlyTimer_.startStopwatch();
 		const bool mappingResult = mapper_->addRangeMeasurement(measurement.cloud_, measurement.time_);
+		const double timeElapsed = 	mapperOnlyTimer_.elapsedMsecSinceStopwatchStart();
+		mapperOnlyTimer_.addMeasurementMsec(timeElapsed);
 		publishMapToOdomTf(measurement.time_);
 		//mesherBufffer_.push(measurement.time_);
 

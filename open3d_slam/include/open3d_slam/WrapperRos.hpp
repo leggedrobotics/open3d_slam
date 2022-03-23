@@ -109,6 +109,7 @@ private:
 	Constraints lastLoopClosureConstraints_;
 	bool isPublishMapsThreadRunning_ = false;
 	bool isPublishDenseMapThreadRunning_ = false;
+	Timer mapperOnlyTimer_;
 
 };
 
