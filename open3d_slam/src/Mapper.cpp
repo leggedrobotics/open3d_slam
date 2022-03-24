@@ -131,7 +131,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		mapToRangeSensorEstimate =  mapToRangeSensorPrev_*odometryMotion ;
 	}
 
-	const PointCloud &activeSubmap = submaps_->getActiveSubmap().getMap();
+	const PointCloud &activeSubmap = submaps_->getActiveSubmap().getMapPointCloud();
 	std::shared_ptr<PointCloud> narrowCropped, wideCroppedCloud, mapPatch;
 	{
 		Timer timer;
@@ -196,7 +196,7 @@ std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud &raw
 }
 
 const Mapper::PointCloud& Mapper::getMapPointCloud() const {
-	return submaps_->getActiveSubmap().getMap();
+	return submaps_->getActiveSubmap().getMapPointCloud();
 }
 
 Mapper::PointCloud Mapper::getAssembledMapPointCloud() const {
@@ -212,7 +212,7 @@ Mapper::PointCloud Mapper::getAssembledMapPointCloud() const {
 	}
 
 	for (size_t j = 0; j < submaps_->getSubmaps().size(); ++j) {
-		const PointCloud submap = submaps_->getSubmaps().at(j).getMap();
+		const PointCloud submap = submaps_->getSubmaps().at(j).getMapPointCloud();
 		const auto color = Color::getColor(j % (Color::numColors_ - 2) + 2);
 		for (size_t i = 0; i < submap.points_.size(); ++i) {
 			cloud.points_.push_back(submap.points_.at(i));

@@ -45,8 +45,8 @@ Constraint buildConstraint(size_t sourceIdx, size_t targetIdx, const SubmapColle
 		bool isComputeOverlap, double icpMaxCorrespondenceDistance, double voxelSizeOverlapCompute,
 		bool isEstimateInformationMatrix, bool isSkipIcpRefinement) {
 
-	PointCloud source = submaps.getSubmaps().at(sourceIdx).getMap();
-	PointCloud target = submaps.getSubmaps().at(targetIdx).getMap();
+	PointCloud source = submaps.getSubmaps().at(sourceIdx).getMapPointCloud();
+	PointCloud target = submaps.getSubmaps().at(targetIdx).getMapPointCloud();
 	const double mapVoxelSize = getMapVoxelSize(submaps.getParameters().mapBuilder_,
 			voxelSizeCorrespondenceSearchMapVoxelSizeIsZero);
 

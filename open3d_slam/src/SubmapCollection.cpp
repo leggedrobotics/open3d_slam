@@ -66,7 +66,7 @@ size_t SubmapCollection::numLoopClosureCandidates() const {
 size_t SubmapCollection::getTotalNumPoints() const {
 	const int nSubmaps = submaps_.size();
 	return std::accumulate(submaps_.begin(), submaps_.end(), 0, [](size_t sum, const Submap &s) {
-		return sum + s.getMap().points_.size();
+		return sum + s.getMapPointCloud().points_.size();
 	});
 }
 
@@ -247,7 +247,7 @@ Constraints SubmapCollection::buildLoopClosureConstraints(
 
 void SubmapCollection::dumpToFile(const std::string &folderPath, const std::string &filename) const {
 	for (size_t i = 0; i < submaps_.size(); ++i) {
-		auto copy = submaps_.at(i).getMap();
+		auto copy = submaps_.at(i).getMapPointCloud();
 		const std::string fullPath = folderPath + "/" + filename + "_" + std::to_string(i) + ".pcd";
 		open3d::io::WritePointCloudToPCD(fullPath, copy, open3d::io::WritePointCloudOption());
 	}

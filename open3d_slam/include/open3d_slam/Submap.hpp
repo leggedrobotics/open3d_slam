@@ -22,7 +22,7 @@
 namespace o3d_slam {
 
 struct TimestampedSubmapId {
-	int64 submapId_;
+	size_t submapId_;
 	Time time_;
 };
 
@@ -31,8 +31,9 @@ class Submap {
 public:
 	using PointCloud = open3d::geometry::PointCloud;
 	using Feature = open3d::pipelines::registration::Feature;
-	using SubmapId = int64;EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	;
+	using SubmapId = size_t;
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 
 	Submap(size_t id, size_t parentId);
 	~Submap() = default;
@@ -46,15 +47,15 @@ public:
 	const Transform& getMapToSubmapOrigin() const;
 	Eigen::Vector3d getMapToSubmapCenter() const;
 	void setMapToSubmapOrigin(const Transform &T);
-	const PointCloud& getMap() const;
+	const PointCloud& getMapPointCloud() const;
 	const VoxelizedPointCloud& getDenseMap() const;
 	bool isEmpty() const;
 	const Feature& getFeatures() const;
-	const PointCloud& getSparseMap() const;
+	const PointCloud& getSparseMapPointCloud() const;
 	void computeSubmapCenter();
 	void computeFeatures();
 	Time getCreationTime() const;
-	SubmapId getId() const;
+	size_t getId() const;
 	size_t getParentId() const;
 	void transform(const Transform &T);
 	const VoxelMap& getVoxelMap() const;

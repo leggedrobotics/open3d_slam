@@ -56,8 +56,8 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 	if (closeSubmapsIdxs.empty()) {
 		return constraints;
 	}
-	const PointCloud sourceSparse = sourceSubmap.getSparseMap();
-	const PointCloud source = sourceSubmap.getMap();
+	const PointCloud sourceSparse = sourceSubmap.getSparseMapPointCloud();
+	const PointCloud source = sourceSubmap.getMapPointCloud();
 	const Submap::Feature sourceFeature = sourceSubmap.getFeatures();
 //#pragma omp parallel for
 	for (int i = 0; i < closeSubmapsIdxs.size(); ++i) {
@@ -72,7 +72,7 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 			continue;
 		}
 		const Submap &targetSubmap = submaps.at(id);
-		const PointCloud targetSparse = targetSubmap.getSparseMap();
+		const PointCloud targetSparse = targetSubmap.getSparseMapPointCloud();
 		const Submap::Feature targetFeature = targetSubmap.getFeatures();
 		RegistrationResult ransacResult;
 		{
@@ -93,7 +93,7 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 			continue;
 		}
 
-		const PointCloud target = targetSubmap.getMap();
+		const PointCloud target = targetSubmap.getMapPointCloud();
 		const double mapVoxelSize = getMapVoxelSize(params_.mapBuilder_,
 				voxelSizeCorrespondenceSearchMapVoxelSizeIsZero);
 

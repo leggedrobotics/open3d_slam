@@ -105,8 +105,8 @@ void assembleColoredPointCloud(const SubmapCollection &submaps, open3d::geometry
 	for (size_t j = 0; j < submaps.getSubmaps().size(); ++j) {
 		const auto &submap = submaps.getSubmaps().at(j);
 		const auto color = Color::getColor(j % (Color::numColors_ - 2) + 2);
-		for (size_t i = 0; i < submap.getMap().points_.size(); ++i) {
-			cloud->points_.push_back(submap.getMap().points_.at(i));
+		for (size_t i = 0; i < submap.getMapPointCloud().points_.size(); ++i) {
+			cloud->points_.push_back(submap.getMapPointCloud().points_.at(i));
 			cloud->colors_.emplace_back(Eigen::Vector3d(color.r, color.g, color.b));
 		}
 	}

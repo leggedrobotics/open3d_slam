@@ -26,13 +26,9 @@ Submap::Submap(size_t id, size_t parentId) :
 	colorProjectionPtr_ = std::make_shared<ColorProjection>();
 }
 
-int64 Submap::getId() const {
+size_t Submap::getId() const {
 	return id_;
 //	return toUniversal(creationTime_);
-}
-
-Time Submap::getCreationTime() const {
-	return creationTime_;
 }
 
 size_t Submap::getParentId() const {
@@ -86,21 +82,6 @@ bool Submap::insertScanDenseMap(const PointCloud &rawScan, const Transform &mapT
 		carve(rawScan, mapToRangeSensor.translation(), params_.denseMapBuilder_.carving_, &voxelizedCloud_,
 				&carveDenseMapTimer_);
 	}
-
-//	o3d_slam::voxelize(params_.denseMapBuilder_.mapVoxelSize_, cropped.get());
-//	auto transformedCloud = o3d_slam::transform(mapToRangeSensor.matrix(), *cropped);
-//	denseMapCropper_->setPose(mapToRangeSensor);
-//	if (isPerformCarving) {
-//		carve(rawScan, mapToRangeSensor, *denseMapCropper_, params_.denseMapBuilder_.carving_, &denseMap_,
-//				&carveDenseMapTimer_);
-//	}
-//	denseMap_ += *transformedCloud;
-//	if (++scanCounter_ >= params_.denseMapBuilder_.voxelizeEveryNscans_) {
-//		auto voxelizedDense = voxelizeWithinCroppingVolume(params_.denseMapBuilder_.mapVoxelSize_,
-//				*denseMapCropper_, denseMap_);
-//		denseMap_ = *voxelizedDense;
-//		scanCounter_ = 0;
-//	}
 	return true;
 }
 
@@ -171,14 +152,14 @@ Eigen::Vector3d Submap::getMapToSubmapCenter() const {
 	return isCenterComputed_ ? submapCenter_ : mapToSubmap_.translation();
 }
 
-const Submap::PointCloud& Submap::getMap() const {
+const Submap::PointCloud& Submap::getMapPointCloud() const {
 	return map_;
 }
 const VoxelizedPointCloud& Submap::getDenseMap() const {
 	return voxelizedCloud_;
 }
 
-const Submap::PointCloud& Submap::getSparseMap() const {
+const Submap::PointCloud& Submap::getSparseMapPointCloud() const {
 	return sparseMap_;
 }
 
