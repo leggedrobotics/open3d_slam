@@ -153,6 +153,9 @@ void readRosbag(const rosbag::Bag &bag, const std::string &cloudTopic) {
 
 			}
 		} // end if
+		if (!ros::ok()){
+			return;
+		}
 	} // end foreach
 
 	const ros::Time bag_begin_time = view.getBeginTime();
@@ -203,6 +206,7 @@ int main(int argc, char **argv) {
 	} else {
 		if (!isProcessAsFastAsPossible) {
 			cloudSub = nh->subscribe(cloudTopic, 100, &cloudCallback);
+
 		} else {
 			//handle rosbag
 			const std::string rosbagFilename = nh->param<std::string>("rosbag_filepath", "");
