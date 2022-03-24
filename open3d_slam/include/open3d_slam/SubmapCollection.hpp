@@ -48,8 +48,9 @@ public:
 			const Transform &mapToRangeSensor, const Time &timestamp);
 	void setParameters(const MapperParameters &p);
 	bool isEmpty() const;
-	const Submaps& getSubmaps() const;
-	Submap* getSubmapPtr(size_t idx);
+	Submap* getSubmapPtr(SubmapId idx);
+	const Submap &getSubmap(SubmapId idx) const;
+	size_t getNumSubmaps() const;
 	size_t getTotalNumPoints() const;
 
 	void computeFeatures(const TimestampedSubmapIds &ids);

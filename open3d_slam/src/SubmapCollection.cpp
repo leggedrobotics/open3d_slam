@@ -39,12 +39,15 @@ bool SubmapCollection::isEmpty() const {
 	return submaps_.empty();
 }
 
-const SubmapCollection::Submaps& SubmapCollection::getSubmaps() const {
-	return submaps_;
+Submap* SubmapCollection::getSubmapPtr(SubmapId idx) {
+	return &(submaps_.at(idx));
 }
 
-Submap* SubmapCollection::getSubmapPtr(size_t idx) {
-	return &(submaps_.at(idx));
+const Submap &SubmapCollection::getSubmap(SubmapId idx) const{
+	return submaps_.at(idx);
+}
+size_t SubmapCollection::getNumSubmaps() const{
+	return submaps_.size();
 }
 
 SubmapCollection::TimestampedSubmapIds SubmapCollection::popFinishedSubmapIds() {
@@ -93,8 +96,8 @@ void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor, con
 		return;
 	}
 	const size_t closestMapIdx = findClosestSubmap(mapToRangeSensor_);
-	const auto &closestSubmap = submaps_.at(closestMapIdx);
-	const auto &activeSubmap = submaps_.at(activeSubmapIdx_);
+	const Submap &closestSubmap = submaps_.at(closestMapIdx);
+	const Submap &activeSubmap = submaps_.at(activeSubmapIdx_);
 	const Eigen::Vector3d closestSubmapPosition = closestSubmap.getMapToSubmapCenter();
 	const bool isAnotherSubmapWithinRange = (mapToRangeSensor_.translation() - closestSubmapPosition).norm()
 			< params_.submaps_.radius_;

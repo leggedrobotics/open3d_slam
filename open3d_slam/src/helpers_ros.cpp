@@ -66,9 +66,9 @@ void publishSubmapCoordinateAxes(const SubmapCollection &submaps, const std::str
 		const ros::Time &timestamp, const ros::Publisher &pub) {
 	visualization_msgs::MarkerArray msg;
 	int id = 0;
-	msg.markers.reserve(2 * submaps.getSubmaps().size());
-	for (size_t j = 0; j < submaps.getSubmaps().size(); ++j) {
-		const auto &submap = submaps.getSubmaps().at(j);
+	msg.markers.reserve(2 * submaps.getNumSubmaps());
+	for (size_t j = 0; j < submaps.getNumSubmaps(); ++j) {
+		const Submap &submap = submaps.getSubmap(j);
 		visualization_msgs::Marker axes, text;
 		drawAxes(submap.getMapToSubmapCenter(), Eigen::Quaterniond(submap.getMapToSubmapOrigin().rotation()), 0.8, 0.08,
 				&axes);
@@ -97,13 +97,12 @@ void assembleColoredPointCloud(const SubmapCollection &submaps, open3d::geometry
 	}
 	std::mt19937 rndGen;
 	rndGen.seed(time(NULL));
-	const int nSubmaps = submaps.getSubmaps().size();
 	const int nPoints = submaps.getTotalNumPoints();
 	cloud->points_.reserve(nPoints);
 	cloud->colors_.reserve(nPoints);
 	std::uniform_int_distribution<int> rndInt(2, 12);
-	for (size_t j = 0; j < submaps.getSubmaps().size(); ++j) {
-		const auto &submap = submaps.getSubmaps().at(j);
+	for (size_t j = 0; j < submaps.getNumSubmaps(); ++j) {
+		const Submap &submap = submaps.getSubmap(j);
 		const auto color = Color::getColor(j % (Color::numColors_ - 2) + 2);
 		for (size_t i = 0; i < submap.getMapPointCloud().points_.size(); ++i) {
 			cloud->points_.push_back(submap.getMapPointCloud().points_.at(i));

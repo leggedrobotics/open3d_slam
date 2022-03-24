@@ -201,7 +201,6 @@ const Mapper::PointCloud& Mapper::getMapPointCloud() const {
 
 Mapper::PointCloud Mapper::getAssembledMapPointCloud() const {
 	PointCloud cloud;
-	const int nSubmaps = submaps_->getSubmaps().size();
 	const int nPoints = submaps_->getTotalNumPoints();
 	cloud.points_.reserve(nPoints);
 	if (getMapPointCloud().HasColors()) {
@@ -211,8 +210,8 @@ Mapper::PointCloud Mapper::getAssembledMapPointCloud() const {
 		cloud.normals_.reserve(nPoints);
 	}
 
-	for (size_t j = 0; j < submaps_->getSubmaps().size(); ++j) {
-		const PointCloud submap = submaps_->getSubmaps().at(j).getMapPointCloud();
+	for (size_t j = 0; j < submaps_->getNumSubmaps(); ++j) {
+		const PointCloud submap = submaps_->getSubmap(j).getMapPointCloud();
 		const auto color = Color::getColor(j % (Color::numColors_ - 2) + 2);
 		for (size_t i = 0; i < submap.points_.size(); ++i) {
 			cloud.points_.push_back(submap.points_.at(i));

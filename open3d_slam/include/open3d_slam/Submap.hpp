@@ -54,7 +54,6 @@ public:
 	const PointCloud& getSparseMapPointCloud() const;
 	void computeSubmapCenter();
 	void computeFeatures();
-	Time getCreationTime() const;
 	size_t getId() const;
 	size_t getParentId() const;
 	void transform(const Transform &T);
