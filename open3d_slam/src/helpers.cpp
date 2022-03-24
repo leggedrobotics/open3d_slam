@@ -416,5 +416,17 @@ PointCloud getPointCloudWithinCroppingVolume(const CroppingVolume &croppingVolum
 	return ret;
 }
 
+Eigen::Vector3d computeCenter(const VoxelizedPointCloud &voxels) {
+	Eigen::Vector3d center = Eigen::Vector3d::Zero();
+	int n = 0;
+	for (const auto &voxel : voxels.voxels_) {
+		if (voxel.second.numAggregatedPoints_ > 0) {
+			center += voxel.second.getAggregatedPosition();
+			++n;
+		}
+	}
+	return center / static_cast<double>(n);
+}
+
 } /* namespace o3d_slam */
 
