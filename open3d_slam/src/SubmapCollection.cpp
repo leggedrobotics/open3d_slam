@@ -11,6 +11,9 @@
 #include "open3d_slam/typedefs.hpp"
 #include "open3d_slam/math.hpp"
 #include "open3d_slam/magic.hpp"
+#include "open3d_slam/output.hpp"
+#include "open3d_slam/constraint_builders.hpp"
+
 #include <open3d/io/PointCloudIO.h>
 #include <open3d/pipelines/registration/Registration.h>
 
@@ -67,8 +70,8 @@ size_t SubmapCollection::getTotalNumPoints() const {
 	});
 }
 
-void SubmapCollection::updateAdjacencyMatrix(const Constraints &loopClosureConstraints){
-	for (const auto &c : loopClosureConstraints){
+void SubmapCollection::updateAdjacencyMatrix(const Constraints &loopClosureConstraints) {
+	for (const auto &c : loopClosureConstraints) {
 		adjacencyMatrix_.addEdge(c.sourceSubmapIdx_, c.targetSubmapIdx_);
 	}
 }
@@ -85,7 +88,7 @@ void SubmapCollection::insertBufferedScans(Submap *submap) {
 	}
 }
 
-void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor) {
+void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor, const PointCloud &scan) {
 	if (numScansMergedInActiveSubmap_ < params_.submaps_.minNumRangeData_) {
 		return;
 	}
@@ -99,9 +102,10 @@ void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor) {
 		if (closestMapIdx == activeSubmapIdx_) {
 			return;
 		}
-		if (adjacencyMatrix_.isAdjacent(closestSubmap.getId(), activeSubmap.getId())) {
+		if (adjacencyMatrix_.isAdjacent(closestSubmap.getId(), activeSubmap.getId())
+				&& isSwitchingSubmapsConsistant(scan, closestSubmap.getId(), mapToRangeSensor)) {
 			//todo here we could put a consistancy check
-			activeSubmapIdx_ = closestMapIdx;
+				activeSubmapIdx_ = closestMapIdx;
 		} else {
 			const bool isTraveledSufficientDistance = (mapToRangeSensor_.translation()
 					- activeSubmap.getMapToSubmapCenter()).norm() > params_.submaps_.radius_;
@@ -157,7 +161,7 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 	}
 	addScanToBuffer(preProcessedScan, mapToRangeSensor, timestamp);
 	const size_t prevActiveSubmapIdx = activeSubmapIdx_;
-	updateActiveSubmap(mapToRangeSensor);
+	updateActiveSubmap(mapToRangeSensor, preProcessedScan);
 	// either different one is active or new one is created
 	const bool isActiveSubmapChanged = prevActiveSubmapIdx != activeSubmapIdx_;
 	if (isActiveSubmapChanged) {
@@ -241,23 +245,6 @@ Constraints SubmapCollection::buildLoopClosureConstraints(
 	return retVal;
 }
 
-Constraint SubmapCollection::buildOdometryConstraint(size_t sourceSubmapIdx, size_t targetSubmapIdx) const {
-	//by convention the source is map k and target k+1
-	Constraint c;
-	c.sourceSubmapIdx_ = sourceSubmapIdx;
-	c.targetSubmapIdx_ = targetSubmapIdx;
-	const Transform &mapToSource = submaps_.at(sourceSubmapIdx).getMapToSubmapOrigin();
-	const Transform &mapToTarget = submaps_.at(targetSubmapIdx).getMapToSubmapOrigin();
-	c.sourceToTarget_ = mapToSource.inverse() * mapToTarget;
-	c.isOdometryConstraint_ = true;
-	c.isInformationMatrixValid_ = false;
-	std::cout << "added an odom constraint: \n";
-	std::cout << " map " << sourceSubmapIdx << " to " << targetSubmapIdx << ": " << asString(c.sourceToTarget_)
-			<< std::endl;
-
-	return std::move(c);
-}
-
 void SubmapCollection::dumpToFile(const std::string &folderPath, const std::string &filename) const {
 	for (size_t i = 0; i < submaps_.size(); ++i) {
 		auto copy = submaps_.at(i).getMap();
@@ -336,110 +323,18 @@ void SubmapCollection::setFolderPath(const std::string &folderPath) {
 	placeRecognition_.setFolderPath(folderPath);
 }
 
-////////////////////////////////////////////////////////////////////
-/// NON MEMBER ////////
-////////////////////////////////////////////////////////////////////
-namespace {
-bool hasConstraint(size_t sourceIdx, size_t targetIdx, const Constraints &constraints) {
-	for (const auto &c : constraints) {
-		if (c.sourceSubmapIdx_ == sourceIdx && c.targetSubmapIdx_ == targetIdx) {
-			return true;
-		}
+bool SubmapCollection::isSwitchingSubmapsConsistant(const PointCloud &scan,
+		size_t newActiveSubmapCandidate, const Transform &mapToRangeSensor) const {
+	//Timer("submap_switch_consistancy_check");
+	int numOverlappingPoints = 0;
+	const VoxelMap &voxelMap = submaps_.at(newActiveSubmapCandidate).getVoxelMap();
+	for (int i = 0; i < scan.points_.size(); ++i) {
+		const Eigen::Vector3d p = mapToRangeSensor * scan.points_.at(i);
+		numOverlappingPoints += int(voxelMap.hasVoxelContainingPoint(p));
 	}
-	return false;
-}
-} // namespace
+	const double fitness = static_cast<double>(numOverlappingPoints) / scan.points_.size();
 
-Constraint buildOdometryConstraint(size_t sourceIdx, size_t targetIdx, const SubmapCollection &submaps) {
-	const double mapVoxelSize = getMapVoxelSize(submaps.getParameters().mapBuilder_,
-			voxelSizeCorrespondenceSearchMapVoxelSizeIsZero);
-	Constraint c = buildConstraint(sourceIdx, targetIdx, submaps, true, 1.5 * mapVoxelSize,
-			20.0 * mapVoxelSize,true);
-	c.isOdometryConstraint_ = true;
-	return c;
-}
-
-Constraint buildConstraint(size_t sourceIdx, size_t targetIdx, const SubmapCollection &submaps,
-		bool isComputeOverlap, double icpMaxCorrespondenceDistance, double voxelSizeOverlapCompute,
-		bool isEstimateInformationMatrix) {
-
-	PointCloud source = submaps.getSubmaps().at(sourceIdx).getMap();
-	PointCloud target = submaps.getSubmaps().at(targetIdx).getMap();
-	const double mapVoxelSize = getMapVoxelSize(submaps.getParameters().mapBuilder_,
-			voxelSizeCorrespondenceSearchMapVoxelSizeIsZero);
-
-	if (isComputeOverlap) {
-		std::vector<size_t> sourceIdxs, targetIdxs;
-		const size_t minNumPointsPerVoxel = 1;
-		computeIndicesOfOverlappingPoints(source, target, Transform::Identity(), voxelSizeOverlapCompute,
-				minNumPointsPerVoxel, &sourceIdxs, &targetIdxs);
-		source = *source.SelectByIndex(sourceIdxs);
-		target = *target.SelectByIndex(targetIdxs);
-	}
-
-	open3d::pipelines::registration::ICPConvergenceCriteria criteria;
-	criteria.max_iteration_ = icpRunUntilConvergenceNumberOfIterations; // i.e. run until convergence
-	const auto icpResult = open3d::pipelines::registration::RegistrationICP(source, target,
-			icpMaxCorrespondenceDistance, Eigen::Matrix4d::Identity(),
-			open3d::pipelines::registration::TransformationEstimationPointToPlane(), criteria);
-
-	Eigen::Matrix6d informationMatrix = Eigen::Matrix6d::Identity();
-	if (isEstimateInformationMatrix) {
-		informationMatrix = open3d::pipelines::registration::GetInformationMatrixFromPointClouds(source, target,
-				icpMaxCorrespondenceDistance, icpResult.transformation_);
-	}
-
-	Constraint c;
-	c.sourceSubmapIdx_ = sourceIdx;
-	c.targetSubmapIdx_ = targetIdx;
-	c.isOdometryConstraint_ = true;
-	c.isInformationMatrixValid_ = isEstimateInformationMatrix;
-	c.sourceToTarget_ = Transform(icpResult.transformation_);
-//	c.sourceToTarget_ = Transform::Identity();
-	c.informationMatrix_ = informationMatrix;
-
-//	printf("submap %ld size: %ld \n", sourceIdx, sourceFull.points_.size());
-//	printf("submap %ld overlap size: %ld \n", sourceIdx, source.points_.size());
-//	printf("submap %ld size: %ld \n", targetIdx, targetFull.points_.size());
-//	printf("submap %ld overlap size: %ld \n", targetIdx, target.points_.size());
-//	printf("Adding odometry constraint from submap %ld to submap %ld with transformation \n: ",
-//			sourceIdx, targetIdx);
-//	std::cout << asString(c.sourceToTarget_) << std::endl;
-	return c;
-
-}
-
-void computeOdometryConstraints(const SubmapCollection &submaps,
-		const SubmapCollection::TimestampedSubmapIds &candidates, Constraints *constraints) {
-	const size_t nSubmaps = submaps.getSubmaps().size();
-	const size_t activeSubmapIdx = submaps.getActiveSubmap().getId();
-	for (const auto candidate : candidates) {
-		if (candidate.submapId_ < 1) {
-			continue;
-		}
-		const size_t targetCandidate = candidate.submapId_;
-		const size_t sourceCandidate = submaps.getSubmaps().at(targetCandidate).getParentId();
-		if (!hasConstraint(sourceCandidate, targetCandidate, *constraints)) {
-			const Constraint c = buildOdometryConstraint(sourceCandidate, targetCandidate, submaps);
-			constraints->emplace_back(std::move(c));
-		}
-
-	}
-
-}
-
-void computeOdometryConstraints(const SubmapCollection &submaps, Constraints *constraints) {
-	const size_t nSubmaps = submaps.getSubmaps().size();
-	const size_t activeSubmapIdx = submaps.getActiveSubmap().getId();
-	for (size_t submapIdx = 1; submapIdx < nSubmaps; ++submapIdx) {
-		const size_t targetIdx = submapIdx;
-		const size_t sourceIdx = submaps.getSubmaps().at(targetIdx).getParentId();
-		if (!hasConstraint(sourceIdx, targetIdx, *constraints) && sourceIdx != activeSubmapIdx
-				&& targetIdx != activeSubmapIdx) {
-			const Constraint c = buildOdometryConstraint(sourceIdx, targetIdx, submaps);
-			constraints->emplace_back(std::move(c));
-		}
-	}
+	return fitness > params_.submaps_.adjacencyBasedRevisitingMinFitness_;
 
 }
 

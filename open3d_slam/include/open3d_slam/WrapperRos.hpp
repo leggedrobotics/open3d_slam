@@ -76,6 +76,7 @@ private:
 	void mesherWorker();
 	void denseMapWorker();
 	void publishMaps(const Time &time);
+	void publishDenseMap(const Time &time);
 	void publishMapToOdomTf(const Time &time);
 
 
@@ -106,6 +107,9 @@ private:
 	std::future<void> computeFeaturesResult_;
 	bool isOptimizedGraphAvailable_ = false;
 	Constraints lastLoopClosureConstraints_;
+	bool isPublishMapsThreadRunning_ = false;
+	bool isPublishDenseMapThreadRunning_ = false;
+	Timer mapperOnlyTimer_;
 
 };
 

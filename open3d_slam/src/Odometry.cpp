@@ -9,7 +9,7 @@
 #include "open3d_slam/frames.hpp"
 #include "open3d_slam/helpers.hpp"
 #include "open3d_slam/time.hpp"
-#include <open3d/geometry/BoundingVolume.h>
+#include "open3d_slam/output.hpp"
 
 namespace o3d_slam {
 

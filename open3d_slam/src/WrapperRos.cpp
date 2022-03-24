@@ -16,10 +16,12 @@
 #include "open3d_slam/time.hpp"
 #include "open3d_slam/math.hpp"
 #include "open3d_slam/croppers.hpp"
+#include "open3d_slam/output.hpp"
 #include "open3d_slam/Mapper.hpp"
 #include "open3d_slam/assert.hpp"
 #include "open3d_slam/Mesher.hpp"
 #include "open3d_slam/OptimizationProblem.hpp"
+#include "open3d_slam/constraint_builders.hpp"
 
 #include "open3d_slam/Odometry.hpp"
 #include "open3d_conversions/open3d_conversions.h"
@@ -64,6 +66,11 @@ WrapperRos::~WrapperRos() {
 		denseMapWorker_.join();
 		std::cout << "Joined the dense map worker! \n";
 	}
+
+	std::cout << "    Scan insertion: Avg execution time: "
+			<< mapperOnlyTimer_.getAvgMeasurementMsec() << " msec , frequency: "
+			<< 1e3 / mapperOnlyTimer_.getAvgMeasurementMsec() << " Hz \n";
+
 }
 
 size_t WrapperRos::getOdometryBufferSize() const {
@@ -230,7 +237,10 @@ void WrapperRos::mappingWorker() {
 			std::cout << "requested: " << readable(measurement.time_) << std::endl;
 		}
 		const size_t activeSubmapIdx = mapper_->getActiveSubmap().getId();
+		mapperOnlyTimer_.startStopwatch();
 		const bool mappingResult = mapper_->addRangeMeasurement(measurement.cloud_, measurement.time_);
+		const double timeElapsed = 	mapperOnlyTimer_.elapsedMsecSinceStopwatchStart();
+		mapperOnlyTimer_.addMeasurementMsec(timeElapsed);
 		publishMapToOdomTf(measurement.time_);
 		//mesherBufffer_.push(measurement.time_);
 
@@ -285,18 +295,13 @@ void WrapperRos::denseMapWorker() {
 			continue;
 		}
 		denseMapStatiscticsTimer_.startStopwatch();
+
 		const RegisteredPointCloud regCloud = registeredCloudBuffer_.pop();
 
 		mapper_->getSubmapsPtr()->getSubmapPtr(regCloud.submapId_)->insertScanDenseMap(regCloud.raw_.cloud_,
-				regCloud.transform_, regCloud.raw_.time_, true);
+					regCloud.transform_, regCloud.raw_.time_, true);
 
-		if (mapper_->getDenseMap().HasColors()
-				&& denseMapVisualizationUpdateTimer_.elapsedMsec() > visualizationParameters_.visualizeEveryNmsec_) {
-			const auto denseMap = mapper_->getDenseMap(); //copy
-			const auto timestamp = toRos(regCloud.raw_.time_);
-			o3d_slam::publishCloud(denseMap, o3d_slam::frames::mapFrame, timestamp, denseMapPub_);
-			denseMapVisualizationUpdateTimer_.reset();
-		}
+		publishDenseMap(regCloud.raw_.time_);
 
 		const double timeMeasurement = denseMapStatiscticsTimer_.elapsedMsecSinceStopwatchStart();
 		denseMapStatiscticsTimer_.addMeasurementMsec(timeMeasurement);
@@ -443,20 +448,43 @@ void WrapperRos::mesherWorker() {
 
 }
 
+void WrapperRos::publishDenseMap(const Time &time) {
+	if (denseMapVisualizationUpdateTimer_.elapsedMsec() < visualizationParameters_.visualizeEveryNmsec_) {
+		return;
+	}
+	if (isPublishDenseMapThreadRunning_) {
+		return;
+	}
+
+	isPublishDenseMapThreadRunning_ = true;
+	std::thread t([this, time]() {
+		const auto denseMap = mapper_->getDenseMap(); //copy
+		const auto timestamp = toRos(time);
+		o3d_slam::publishCloud(denseMap.toPointCloud(), o3d_slam::frames::mapFrame, timestamp, denseMapPub_);
+		denseMapVisualizationUpdateTimer_.reset();
+		isPublishDenseMapThreadRunning_ = false;
+	});
+	t.detach();
+
+}
+
 void WrapperRos::publishMaps(const Time &time) {
 	if (visualizationUpdateTimer_.elapsedMsec() < visualizationParameters_.visualizeEveryNmsec_
 			&& !isVisualizationFirstTime_) {
 		return;
 	}
 
+	if (isPublishMapsThreadRunning_){
+		return;
+	}
+
 	const auto timestamp = toRos(time);
+	isPublishMapsThreadRunning_ = true;
 	std::thread t([this, timestamp]() {
 		PointCloud map = mapper_->getAssembledMap();
 		voxelize(visualizationParameters_.assembledMapVoxelSize_, &map);
 		o3d_slam::publishCloud(map, o3d_slam::frames::mapFrame, timestamp, assembledMapPub_);
 		o3d_slam::publishCloud(mapper_->getPreprocessedScan(), o3d_slam::frames::rangeSensorFrame, timestamp, mappingInputPub_);
-//		o3d_slam::publishCloud(mapper_->getDenseMap(), o3d_slam::frames::mapFrame, timestamp,
-//				denseMapPub_);
 		o3d_slam::publishSubmapCoordinateAxes(mapper_->getSubmaps(), o3d_slam::frames::mapFrame, timestamp,
 				submapOriginsPub_);
 		if (submapsPub_.getNumSubscribers() > 0) {
@@ -465,6 +493,7 @@ void WrapperRos::publishMaps(const Time &time) {
 			voxelize(visualizationParameters_.submapVoxelSize_, &cloud);
 			o3d_slam::publishCloud(cloud, o3d_slam::frames::mapFrame, timestamp, submapsPub_);
 		}
+		isPublishMapsThreadRunning_ = false;
 	});
 	t.detach();
 	visualizationUpdateTimer_.reset();

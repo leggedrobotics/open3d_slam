@@ -6,8 +6,6 @@
  */
 
 #include "open3d_slam/Mapper.hpp"
-#include <open3d/Open3D.h>
-#include <open3d/pipelines/registration/Registration.h>
 #include "open3d_slam/frames.hpp"
 #include "open3d_slam/helpers.hpp"
 #include "open3d_slam/helpers_ros.hpp"
@@ -15,8 +13,12 @@
 #include "open3d_slam/math.hpp"
 #include "open3d_slam/Voxel.hpp"
 #include "open3d_slam/assert.hpp"
+#include "open3d_slam/output.hpp"
+
 #include "open3d/utility/Eigen.h"
 #include "open3d/utility/Helper.h"
+#include <open3d/Open3D.h>
+#include <open3d/pipelines/registration/Registration.h>
 
 namespace o3d_slam {
 
@@ -261,7 +263,7 @@ const Submap& Mapper::getActiveSubmap() const {
 	return submaps_->getActiveSubmap();
 }
 
-const Mapper::PointCloud& Mapper::getDenseMap() const {
+const VoxelizedPointCloud& Mapper::getDenseMap() const {
 	return submaps_->getActiveSubmap().getDenseMap();
 }
 

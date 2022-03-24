@@ -72,12 +72,12 @@ public:
 	void setFolderPath(const std::string &folderPath);
 
 private:
+	bool isSwitchingSubmapsConsistant(const PointCloud &scan, size_t newActiveSubmapCandidate, const Transform &mapToRangeSensor) const;
 	void insertBufferedScans(Submap *submap);
 	void addScanToBuffer(const PointCloud &scan, const Transform &mapToRangeSensor, const Time &timestamp);
-	void updateActiveSubmap(const Transform &mapToRangeSensor);
+	void updateActiveSubmap(const Transform &mapToRangeSensor, const PointCloud &scan);
 	void createNewSubmap(const Transform &mapToSubmap);
 	size_t findClosestSubmap(const Transform &mapToRangesensor) const;
-	Constraint buildOdometryConstraint(size_t sourceSubmapIdx, size_t targetSubmapIdx) const;
 	std::vector<size_t> getAllSubmapIdxs() const;
 
 	Transform mapToRangeSensor_ = Transform::Identity();
@@ -98,15 +98,5 @@ private:
 	std::string savingDataFolderPath_;
 
 };
-
-void computeOdometryConstraints(const SubmapCollection &submaps,
-		Constraints *constraints);
-void computeOdometryConstraints(const SubmapCollection &submaps, const SubmapCollection::TimestampedSubmapIds &candidates,
-		Constraints *constraints);
-
-Constraint buildOdometryConstraint(size_t sourceIdx, size_t targetIdx,
-		const SubmapCollection &submaps);
-Constraint buildConstraint(size_t sourceIdx, size_t targetIdx,
-		const SubmapCollection &submaps, bool isComputeOverlap, double icpMaxCorrespondenceDistance, double voxelSizeOverlapCompute, bool isEstimateInformationMatrix);
 
 } // namespace o3d_slam

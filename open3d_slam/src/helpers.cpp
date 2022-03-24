@@ -17,7 +17,6 @@
 #include <open3d/pipelines/registration/Registration.h>
 #include <open3d/utility/Eigen.h>
 #include "open3d/geometry/KDTreeFlann.h"
-#include <open3d/io/PointCloudIO.h>
 
 #ifdef open3d_slam_OPENMP_FOUND
 #include <omp.h>
@@ -90,33 +89,6 @@ double icpMaxCorrespondenceDistance(double mappingVoxelSize) {
 	return isClose(mappingVoxelSize, 0.0, 1e-3) ? 0.05 : (2.0 * mappingVoxelSize);
 }
 
-void cropPointcloud(const open3d::geometry::AxisAlignedBoundingBox &bbox, open3d::geometry::PointCloud *pcl) {
-	auto croppedCloud = pcl->Crop(bbox);
-	*pcl = std::move(*croppedCloud);
-}
-
-std::string asString(const Transform &T) {
-	const double kRadToDeg = 180.0 / M_PI;
-	const auto &t = T.translation();
-	const auto &q = Eigen::Quaterniond(T.rotation());
-	const std::string trans = string_format("t:[%f, %f, %f]", t.x(), t.y(), t.z());
-	const std::string rot = string_format("q:[%f, %f, %f, %f]", q.x(), q.y(), q.z(), q.w());
-	const auto rpy = toRPY(q) * kRadToDeg;
-	const std::string rpyString = string_format("rpy (deg):[%f, %f, %f]", rpy.x(), rpy.y(), rpy.z());
-	return trans + " ; " + rot + " ; " + rpyString;
-
-}
-
-void saveToFile(const std::string &filename, const PointCloud &cloud) {
-	PointCloud copy = cloud;
-	std::string nameWithCorrectSuffix = filename;
-	size_t found = filename.find(".pcd");
-	if (found == std::string::npos) {
-		nameWithCorrectSuffix = filename + ".pcd";
-	}
-	open3d::io::WritePointCloudToPCD(nameWithCorrectSuffix, copy, open3d::io::WritePointCloudOption());
-}
-
 void estimateNormals(int numNearestNeighbours, open3d::geometry::PointCloud *pcl) {
 	open3d::geometry::KDTreeSearchParamKNN param(numNearestNeighbours);
 	pcl->EstimateNormals(param);
@@ -142,14 +114,6 @@ std::shared_ptr<registration::TransformationEstimation> icpObjectiveFactory(
 
 }
 
-open3d::geometry::AxisAlignedBoundingBox boundingBoxAroundPosition(const Eigen::Vector3d &low,
-		const Eigen::Vector3d &high, const Eigen::Vector3d &origin /*= Eigen::Vector3d::Zero()*/) {
-	open3d::geometry::AxisAlignedBoundingBox bbox;
-	bbox.min_bound_ = origin + low;
-	bbox.max_bound_ = origin + high;
-	return bbox;
-}
-
 void randomDownSample(double downSamplingRatio, open3d::geometry::PointCloud *pcl) {
 	if (downSamplingRatio >= 1.0) {
 		return;
@@ -163,11 +127,6 @@ void voxelize(double voxelSize, open3d::geometry::PointCloud *pcl) {
 	}
 	auto voxelized = pcl->VoxelDownSample(voxelSize);
 	*pcl = std::move(*voxelized);
-}
-
-bool isInside(const open3d::geometry::AxisAlignedBoundingBox &bbox, const Eigen::Vector3d &p) {
-	return p.x() <= bbox.max_bound_.x() && p.y() <= bbox.max_bound_.y() && p.z() <= bbox.max_bound_.z()
-			&& p.x() >= bbox.min_bound_.x() && p.y() >= bbox.min_bound_.y() && p.z() >= bbox.min_bound_.z();
 }
 
 std::shared_ptr<open3d::geometry::PointCloud> voxelizeWithinCroppingVolume(double voxel_size,
@@ -395,6 +354,66 @@ Eigen::Vector3d computeCenter(const open3d::geometry::PointCloud &cloud, const s
 
 double getMapVoxelSize(const MapBuilderParameters &p, double valueIfZero) {
 	return std::abs(p.mapVoxelSize_) <= 1e-3 ? valueIfZero : p.mapVoxelSize_;
+}
+
+
+std::vector<Eigen::Vector3i> getKeysOfCarvedPoints(const open3d::geometry::PointCloud &scan,
+		const VoxelizedPointCloud &cloud, const Eigen::Vector3d &sensorPosition, const SpaceCarvingParameters &param) {
+
+	const double stepSize = param.voxelSize_;
+	std::unordered_set<Eigen::Vector3i,EigenVec3iHash> setOfIdsToRemove;
+	setOfIdsToRemove.reserve(scan.points_.size());
+#pragma omp parallel for schedule(static)
+	for (size_t i = 0; i < scan.points_.size(); ++i) {
+		const Eigen::Vector3d &p = scan.points_[i];
+		const double length = (p - sensorPosition).norm();
+		const Eigen::Vector3d direction = (p - sensorPosition) / length;
+		double distance = 0.0;
+		const double maximalPathTraveled = std::max(param.voxelSize_,
+				std::min(length - param.truncationDistance_, param.maxRaytracingLength_));
+		while (distance < maximalPathTraveled) {
+			const Eigen::Vector3d currentPosition = distance * direction + sensorPosition;
+			const Eigen::Vector3i key = cloud.getKey(currentPosition);
+			//todo also check the dot product
+			if (cloud.hasVoxelWithKey(key)){
+#pragma omp critical
+					setOfIdsToRemove.insert(key);
+			}
+			distance += stepSize;
+		}
+	}
+	std::vector<Eigen::Vector3i> vecOfIdsToRemove;
+	vecOfIdsToRemove.insert(vecOfIdsToRemove.end(), setOfIdsToRemove.begin(), setOfIdsToRemove.end());
+	return vecOfIdsToRemove;
+}
+
+PointCloud getPointCloudWithinCroppingVolume(const CroppingVolume &croppingVolume,
+		const VoxelizedPointCloud &voxels, bool isIgnoreColors) {
+
+	if (voxels.empty()) {
+		return PointCloud();
+	}
+	PointCloud ret;
+	ret.points_.reserve(voxels.size());
+	if (!isIgnoreColors && voxels.hasColors()) {
+		ret.colors_.reserve(voxels.size());
+	}
+	if (voxels.hasNormals()) {
+		ret.normals_.reserve(voxels.size());
+	}
+
+	for (const auto &voxel : voxels.voxels_) {
+		if (croppingVolume.isWithinVolume(voxel.second.getAggregatedPosition())) {
+			ret.points_.push_back(voxel.second.getAggregatedPosition());
+			if (!isIgnoreColors && voxels.hasColors()) {
+				ret.colors_.push_back(voxel.second.getAggregatedColor());
+			}
+			if (voxels.hasNormals()) {
+				ret.normals_.push_back(voxel.second.getAggregatedNormal());
+			}
+		}
+	}
+	return ret;
 }
 
 } /* namespace o3d_slam */

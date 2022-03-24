@@ -9,6 +9,7 @@
 #include "open3d_slam/Submap.hpp"
 #include "open3d_slam/assert.hpp"
 #include "open3d_slam/helpers.hpp"
+#include "open3d_slam/output.hpp"
 #include "open3d_slam/SubmapCollection.hpp"
 #include <open3d/pipelines/registration/GlobalOptimization.h>
 #include <open3d/io/PoseGraphIO.h>

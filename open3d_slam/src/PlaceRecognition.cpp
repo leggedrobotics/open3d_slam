@@ -10,6 +10,7 @@
 #include "open3d_slam/SubmapCollection.hpp"
 #include "open3d_slam/magic.hpp"
 #include "open3d_slam/math.hpp"
+#include "open3d_slam/output.hpp"
 
 #include <open3d/pipelines/registration/FastGlobalRegistration.h>
 #include <open3d/pipelines/registration/Registration.h>
@@ -87,7 +88,7 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 			continue;
 		}
 
-		if (!isRegistrationConsistent(ransacResult.transformation_)){
+		if (!isRegistrationConsistent(ransacResult.transformation_)) {
 			std::cout << "skipping place recognition \n";
 			continue;
 		}
@@ -96,7 +97,7 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		const double mapVoxelSize = getMapVoxelSize(params_.mapBuilder_,
 				voxelSizeCorrespondenceSearchMapVoxelSizeIsZero);
 
-		const double voxelSizeForOverlap = 20.0 * mapVoxelSize;
+		const double voxelSizeForOverlap = voxelExpansionFactorOverlapComputation * mapVoxelSize;
 		const size_t minNumPointsPerVoxel = 1;
 		std::vector<size_t> sourceIdxs, targetIdxs;
 		computeIndicesOfOverlappingPoints(source, target, Transform(ransacResult.transformation_),
@@ -123,7 +124,7 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 			continue;
 		}
 
-		if (!isRegistrationConsistent(icpResult.transformation_)){
+		if (!isRegistrationConsistent(icpResult.transformation_)) {
 			std::cout << "skipping place recognition \n";
 			continue;
 		}
@@ -143,7 +144,6 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 			std::cout << "refined with transformation: \n" << asString(Transform(icpResult.transformation_))
 					<< std::endl;
 		}
-
 
 		Constraint c;
 		c.sourceToTarget_ = Transform(icpResult.transformation_);
@@ -178,7 +178,8 @@ void PlaceRecognition::setFolderPath(const std::string &folderPath) {
 	folderPath_ = folderPath;
 }
 
-bool PlaceRecognition::isRegistrationConsistent(const Eigen::Matrix4d &mat) const{
+bool PlaceRecognition::isRegistrationConsistent(const Eigen::Matrix4d &mat) const {
+	const double kRadToDeg = 180.0 / M_PI;
 	const Transform T(mat);
 	const Eigen::Vector3d rpy = toRPY(Eigen::Quaterniond(T.rotation()));
 	const double roll = rpy.x();
@@ -186,20 +187,23 @@ bool PlaceRecognition::isRegistrationConsistent(const Eigen::Matrix4d &mat) cons
 	const double yaw = rpy.z();
 	bool result = true;
 	const PlaceRecognitionConsistancyCheckParameters &p = params_.placeRecognition_.consistencyCheck_;
-	if (std::fabs(roll) > p.maxDriftRoll_){
+	if (std::fabs(roll) > p.maxDriftRoll_) {
 		result = false;
-		std::cout << "  PlaceRecognition::isRegistrationConsistent The roll drift is: " << roll << " which is > than " << p.maxDriftRoll_ << "\n";
+		std::cout << "  PlaceRecognition::isRegistrationConsistent The roll drift is: " << roll * kRadToDeg
+				<< " [deg] which is > than " << p.maxDriftRoll_ * kRadToDeg << "\n";
 	}
-	if (std::fabs(pitch) > p.maxDriftPitch_){
+	if (std::fabs(pitch) > p.maxDriftPitch_) {
 		result = false;
-		std::cout << "  PlaceRecognition::isRegistrationConsistent The pitch drift is: " << pitch << " which is > than " << p.maxDriftPitch_ << "\n";
+		std::cout << "  PlaceRecognition::isRegistrationConsistent The pitch drift is: " << pitch * kRadToDeg
+				<< " [deg] which is > than " << p.maxDriftPitch_ * kRadToDeg << "\n";
 	}
-	if (std::fabs(yaw) > p.maxDriftYaw_){
+	if (std::fabs(yaw) > p.maxDriftYaw_) {
 		result = false;
-		std::cout << "  PlaceRecognition::isRegistrationConsistent The yaw drift is: " << yaw << " which is > than " << p.maxDriftYaw_ << "\n";
+		std::cout << "  PlaceRecognition::isRegistrationConsistent The yaw drift is: " << yaw * kRadToDeg
+				<< " [deg] which is > than " << p.maxDriftYaw_ * kRadToDeg << "\n";
 	}
 
-	if (!result){
+	if (!result) {
 		std::cout << "   It is very unlikely that lidar odometry has drifted that much. Most likely, "
 				"the place recognition module has fallen prey to spatial aliasing. If you are sure that this is "
 				"not the case, feel free to disable this check! \n";

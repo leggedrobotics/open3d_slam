@@ -5,6 +5,7 @@
 #include <open3d/geometry/PointCloud.h>
 #include <open3d/geometry/RGBDImage.h>
 #include "open3d_slam/helpers.hpp"
+#include "open3d_slam/math.hpp"
 #include <Eigen/Geometry>
 
 namespace o3d_slam {
