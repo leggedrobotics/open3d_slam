@@ -40,9 +40,6 @@ void Mapper::setParameters(const MapperParameters &p) {
 }
 
 void Mapper::loopClosureUpdate(const Transform &loopClosureCorrection) {
-//	mapToRangeSensor_ =mapToRangeSensor_ * loopClosureCorrection;
-//	mapToRangeSensorPrev_ = mapToRangeSensorPrev_ * loopClosureCorrection;
-
 	mapToRangeSensor_ = loopClosureCorrection * mapToRangeSensor_;
 	mapToRangeSensorPrev_ = loopClosureCorrection * mapToRangeSensorPrev_;
 
@@ -51,10 +48,6 @@ void Mapper::loopClosureUpdate(const Transform &loopClosureCorrection) {
 void Mapper::update(const MapperParameters &p) {
 	icpCriteria_.max_iteration_ = p.scanMatcher_.maxNumIter_;
 	icpObjective = icpObjectiveFactory(p.scanMatcher_.icpObjective_);
-//	scanMatcherCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.scanProcessing_.croppingRadius_);
-//	mapBuilderCropper_ = std::make_shared<MaxRadiusCroppingVolume>(p.mapBuilder_.scanCroppingRadius_);
-//	mapBuilderCropper_ = std::make_shared<CylinderCroppingVolume>(p.mapBuilder_.scanCroppingRadius_, -3.0, 1.5);
-//	scanMatcherCropper_ = std::make_shared<CylinderCroppingVolume>(p.scanProcessing_.croppingRadius_, -3.0, 1.0);
 	{
 		const auto &par = params_.mapBuilder_.cropper_;
 		mapBuilderCropper_ = croppingVolumeFactory(par.cropperName_, par.croppingRadius_, par.croppingMinZ_,
@@ -66,10 +59,6 @@ void Mapper::update(const MapperParameters &p) {
 				par.croppingMaxZ_);
 	}
 	submaps_->setParameters(p);
-}
-
-bool Mapper::isMatchingInProgress() const {
-	return isMatchingInProgress_;
 }
 
 Transform Mapper::getMapToOdom(const Time &timestamp) const {
@@ -188,12 +177,6 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 
 std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud &rawScan) const {
 	mapBuilderCropper_->setPose(Transform::Identity());
-//	auto wideCroppedCloud = mapBuilderCropper_->crop(rawScan);
-//	o3d_slam::voxelize(params_.scanProcessing_.voxelSize_, wideCroppedCloud.get());
-//	o3d_slam::randomDownSample(params_.scanProcessing_.downSamplingRatio_, wideCroppedCloud.get());
-//	estimateNormalsIfNeeded(wideCroppedCloud.get());
-//	return wideCroppedCloud;
-
 	std::shared_ptr<PointCloud> wideCroppedCloud, voxelized, downsampled;
 	wideCroppedCloud = mapBuilderCropper_->crop(rawScan);
 	if (params_.scanProcessing_.voxelSize_ <= 0.0) {
@@ -212,19 +195,19 @@ std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud &raw
 
 }
 
-const Mapper::PointCloud& Mapper::getMap() const {
+const Mapper::PointCloud& Mapper::getMapPointCloud() const {
 	return submaps_->getActiveSubmap().getMap();
 }
 
-Mapper::PointCloud Mapper::getAssembledMap() const {
+Mapper::PointCloud Mapper::getAssembledMapPointCloud() const {
 	PointCloud cloud;
 	const int nSubmaps = submaps_->getSubmaps().size();
 	const int nPoints = submaps_->getTotalNumPoints();
 	cloud.points_.reserve(nPoints);
-	if (getMap().HasColors()) {
+	if (getMapPointCloud().HasColors()) {
 		cloud.colors_.reserve(nPoints);
 	}
-	if (getMap().HasNormals()) {
+	if (getMapPointCloud().HasNormals()) {
 		cloud.normals_.reserve(nPoints);
 	}
 
@@ -267,15 +250,9 @@ const VoxelizedPointCloud& Mapper::getDenseMap() const {
 	return submaps_->getActiveSubmap().getDenseMap();
 }
 
-bool Mapper::isManipulatingMap() const {
-	return isManipulatingMap_;
-}
-
 const TransformInterpolationBuffer& Mapper::getMapToRangeSensorBuffer() const {
 	return mapToRangeSensorBuffer_;
 }
-TransformInterpolationBuffer* Mapper::getMapToRangeSensorBufferPtr() {
-	return &mapToRangeSensorBuffer_;
-}
+
 
 } /* namespace o3d_slam */
