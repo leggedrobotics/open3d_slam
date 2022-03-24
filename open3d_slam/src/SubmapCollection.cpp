@@ -39,12 +39,15 @@ bool SubmapCollection::isEmpty() const {
 	return submaps_.empty();
 }
 
-const SubmapCollection::Submaps& SubmapCollection::getSubmaps() const {
-	return submaps_;
+Submap* SubmapCollection::getSubmapPtr(SubmapId idx) {
+	return &(submaps_.at(idx));
 }
 
-Submap* SubmapCollection::getSubmapPtr(size_t idx) {
-	return &(submaps_.at(idx));
+const Submap &SubmapCollection::getSubmap(SubmapId idx) const{
+	return submaps_.at(idx);
+}
+size_t SubmapCollection::getNumSubmaps() const{
+	return submaps_.size();
 }
 
 SubmapCollection::TimestampedSubmapIds SubmapCollection::popFinishedSubmapIds() {
@@ -66,7 +69,7 @@ size_t SubmapCollection::numLoopClosureCandidates() const {
 size_t SubmapCollection::getTotalNumPoints() const {
 	const int nSubmaps = submaps_.size();
 	return std::accumulate(submaps_.begin(), submaps_.end(), 0, [](size_t sum, const Submap &s) {
-		return sum + s.getMap().points_.size();
+		return sum + s.getMapPointCloud().points_.size();
 	});
 }
 
@@ -93,8 +96,8 @@ void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor, con
 		return;
 	}
 	const size_t closestMapIdx = findClosestSubmap(mapToRangeSensor_);
-	const auto &closestSubmap = submaps_.at(closestMapIdx);
-	const auto &activeSubmap = submaps_.at(activeSubmapIdx_);
+	const Submap &closestSubmap = submaps_.at(closestMapIdx);
+	const Submap &activeSubmap = submaps_.at(activeSubmapIdx_);
 	const Eigen::Vector3d closestSubmapPosition = closestSubmap.getMapToSubmapCenter();
 	const bool isAnotherSubmapWithinRange = (mapToRangeSensor_.translation() - closestSubmapPosition).norm()
 			< params_.submaps_.radius_;
@@ -247,7 +250,7 @@ Constraints SubmapCollection::buildLoopClosureConstraints(
 
 void SubmapCollection::dumpToFile(const std::string &folderPath, const std::string &filename) const {
 	for (size_t i = 0; i < submaps_.size(); ++i) {
-		auto copy = submaps_.at(i).getMap();
+		auto copy = submaps_.at(i).getMapPointCloud();
 		const std::string fullPath = folderPath + "/" + filename + "_" + std::to_string(i) + ".pcd";
 		open3d::io::WritePointCloudToPCD(fullPath, copy, open3d::io::WritePointCloudOption());
 	}

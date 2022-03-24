@@ -26,13 +26,9 @@ Submap::Submap(size_t id, size_t parentId) :
 	colorProjectionPtr_ = std::make_shared<ColorProjection>();
 }
 
-int64 Submap::getId() const {
+size_t Submap::getId() const {
 	return id_;
 //	return toUniversal(creationTime_);
-}
-
-Time Submap::getCreationTime() const {
-	return creationTime_;
 }
 
 size_t Submap::getParentId() const {
@@ -42,7 +38,7 @@ size_t Submap::getParentId() const {
 bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan,
 		const Transform &mapToRangeSensor, const Time &time, bool isPerformCarving) {
 
-	if (map_.points_.empty()) {
+	if (mapCloud_.points_.empty()) {
 		creationTime_ = time;
 	}
 	mapToRangeSensor_ = mapToRangeSensor;
@@ -50,7 +46,7 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 	estimateNormalsIfNeeded(params_.scanMatcher_.kNNnormalEstimation_, transformedCloud.get());
 	if (isPerformCarving) {
 		carvingStatisticsTimer_.startStopwatch();
-		carve(rawScan, mapToRangeSensor, *mapBuilderCropper_, params_.mapBuilder_.carving_, &map_,
+		carve(rawScan, mapToRangeSensor, *mapBuilderCropper_, params_.mapBuilder_.carving_, &mapCloud_,
 				&carvingTimer_);
 		const double timeMeasurement = carvingStatisticsTimer_.elapsedMsecSinceStopwatchStart();
 		carvingStatisticsTimer_.addMeasurementMsec(timeMeasurement);
@@ -61,9 +57,9 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 			carvingStatisticsTimer_.reset();
 		}
 	}
-	map_ += *transformedCloud;
+	mapCloud_ += *transformedCloud;
 	mapBuilderCropper_->setPose(mapToRangeSensor);
-	voxelizeInsideCroppingVolume(*mapBuilderCropper_, params_.mapBuilder_, &map_);
+	voxelizeInsideCroppingVolume(*mapBuilderCropper_, params_.mapBuilder_, &mapCloud_);
 
 	return true;
 }
@@ -80,35 +76,20 @@ bool Submap::insertScanDenseMap(const PointCloud &rawScan, const Transform &mapT
 	denseMapCropper_->setPose(Transform::Identity());
 	auto cropped = denseMapCropper_->crop(colored);
 	auto transformedCloud = o3d_slam::transform(mapToRangeSensor.matrix(), *cropped);
-	voxelizedCloud_.insert(*transformedCloud);
+	denseMap_.insert(*transformedCloud);
 
 	if (isPerformCarving) {
-		carve(rawScan, mapToRangeSensor.translation(), params_.denseMapBuilder_.carving_, &voxelizedCloud_,
+		carve(rawScan, mapToRangeSensor.translation(), params_.denseMapBuilder_.carving_, &denseMap_,
 				&carveDenseMapTimer_);
 	}
-
-//	o3d_slam::voxelize(params_.denseMapBuilder_.mapVoxelSize_, cropped.get());
-//	auto transformedCloud = o3d_slam::transform(mapToRangeSensor.matrix(), *cropped);
-//	denseMapCropper_->setPose(mapToRangeSensor);
-//	if (isPerformCarving) {
-//		carve(rawScan, mapToRangeSensor, *denseMapCropper_, params_.denseMapBuilder_.carving_, &denseMap_,
-//				&carveDenseMapTimer_);
-//	}
-//	denseMap_ += *transformedCloud;
-//	if (++scanCounter_ >= params_.denseMapBuilder_.voxelizeEveryNscans_) {
-//		auto voxelizedDense = voxelizeWithinCroppingVolume(params_.denseMapBuilder_.mapVoxelSize_,
-//				*denseMapCropper_, denseMap_);
-//		denseMap_ = *voxelizedDense;
-//		scanCounter_ = 0;
-//	}
 	return true;
 }
 
 void Submap::transform(const Transform &T) {
 	const Eigen::Matrix4d mat(T.matrix());
-	sparseMap_.Transform(mat);
-	map_.Transform(mat);
-	voxelizedCloud_.transform(T);
+	sparseMapCloud_.Transform(mat);
+	mapCloud_.Transform(mat);
+	denseMap_.transform(T);
 	mapToRangeSensor_ = mapToRangeSensor_ * T;
 	submapCenter_ = T * submapCenter_;
 }
@@ -171,15 +152,15 @@ Eigen::Vector3d Submap::getMapToSubmapCenter() const {
 	return isCenterComputed_ ? submapCenter_ : mapToSubmap_.translation();
 }
 
-const Submap::PointCloud& Submap::getMap() const {
-	return map_;
+const Submap::PointCloud& Submap::getMapPointCloud() const {
+	return mapCloud_;
 }
 const VoxelizedPointCloud& Submap::getDenseMap() const {
-	return voxelizedCloud_;
+	return denseMap_;
 }
 
-const Submap::PointCloud& Submap::getSparseMap() const {
-	return sparseMap_;
+const Submap::PointCloud& Submap::getSparseMapPointCloud() const {
+	return sparseMapCloud_;
 }
 
 void Submap::setMapToSubmapOrigin(const Transform &T) {
@@ -199,12 +180,12 @@ void Submap::update(const MapperParameters &p) {
 				par.croppingMaxZ_);
 	}
 
-	voxelizedCloud_ = std::move(VoxelizedPointCloud(Eigen::Vector3d::Constant(p.denseMapBuilder_.mapVoxelSize_)));
+	denseMap_ = std::move(VoxelizedPointCloud(Eigen::Vector3d::Constant(p.denseMapBuilder_.mapVoxelSize_)));
 
 }
 
 bool Submap::isEmpty() const {
-	return map_.points_.empty();
+	return mapCloud_.points_.empty();
 }
 
 const VoxelMap& Submap::getVoxelMap() const {
@@ -220,17 +201,17 @@ void Submap::computeFeatures() {
 	std::thread computeVoxelMapThread([this]() {
 		Timer t("compute_voxel_submap");
 		voxelMap_.clear();
-		voxelMap_.buildFromCloud(map_);
+		voxelMap_.buildFromCloud(mapCloud_);
 	});
 
 	const auto &p = params_.placeRecognition_;
-	sparseMap_ = *(map_.VoxelDownSample(p.featureVoxelSize_));
-	sparseMap_.EstimateNormals(
+	sparseMapCloud_ = *(mapCloud_.VoxelDownSample(p.featureVoxelSize_));
+	sparseMapCloud_.EstimateNormals(
 			open3d::geometry::KDTreeSearchParamHybrid(p.normalEstimationRadius_, p.normalKnn_));
-	sparseMap_.NormalizeNormals();
-	sparseMap_.OrientNormalsTowardsCameraLocation(Eigen::Vector3d::Zero());
+	sparseMapCloud_.NormalizeNormals();
+	sparseMapCloud_.OrientNormalsTowardsCameraLocation(Eigen::Vector3d::Zero());
 	feature_.reset();
-	feature_ = registration::ComputeFPFHFeature(sparseMap_,
+	feature_ = registration::ComputeFPFHFeature(sparseMapCloud_,
 			open3d::geometry::KDTreeSearchParamHybrid(p.featureRadius_, p.featureKnn_));
 //	std::cout <<"map num points: " << map_.points_.size() << ", sparse map: " << sparseMap_.points_.size() << "\n";
 	computeVoxelMapThread.join();
@@ -243,7 +224,7 @@ const Submap::Feature& Submap::getFeatures() const {
 }
 
 void Submap::computeSubmapCenter() {
-	submapCenter_ = map_.GetCenter();
+	submapCenter_ = mapCloud_.GetCenter();
 	isCenterComputed_ = true;
 }
 

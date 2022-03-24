@@ -45,8 +45,8 @@ Constraint buildConstraint(size_t sourceIdx, size_t targetIdx, const SubmapColle
 		bool isComputeOverlap, double icpMaxCorrespondenceDistance, double voxelSizeOverlapCompute,
 		bool isEstimateInformationMatrix, bool isSkipIcpRefinement) {
 
-	PointCloud source = submaps.getSubmaps().at(sourceIdx).getMap();
-	PointCloud target = submaps.getSubmaps().at(targetIdx).getMap();
+	PointCloud source = submaps.getSubmap(sourceIdx).getMapPointCloud();
+	PointCloud target = submaps.getSubmap(targetIdx).getMapPointCloud();
 	const double mapVoxelSize = getMapVoxelSize(submaps.getParameters().mapBuilder_,
 			voxelSizeCorrespondenceSearchMapVoxelSizeIsZero);
 
@@ -94,14 +94,13 @@ Constraint buildConstraint(size_t sourceIdx, size_t targetIdx, const SubmapColle
 
 void computeOdometryConstraints(const SubmapCollection &submaps,
 		const SubmapCollection::TimestampedSubmapIds &candidates, Constraints *constraints) {
-	const size_t nSubmaps = submaps.getSubmaps().size();
 	const size_t activeSubmapIdx = submaps.getActiveSubmap().getId();
 	for (const auto candidate : candidates) {
 		if (candidate.submapId_ < 1) {
 			continue;
 		}
 		const size_t targetCandidate = candidate.submapId_;
-		const size_t sourceCandidate = submaps.getSubmaps().at(targetCandidate).getParentId();
+		const size_t sourceCandidate = submaps.getSubmap(targetCandidate).getParentId();
 		if (!hasConstraint(sourceCandidate, targetCandidate, *constraints)) {
 			const Constraint c = buildOdometryConstraint(sourceCandidate, targetCandidate, submaps);
 			constraints->emplace_back(std::move(c));
@@ -112,11 +111,10 @@ void computeOdometryConstraints(const SubmapCollection &submaps,
 }
 
 void computeOdometryConstraints(const SubmapCollection &submaps, Constraints *constraints) {
-	const size_t nSubmaps = submaps.getSubmaps().size();
 	const size_t activeSubmapIdx = submaps.getActiveSubmap().getId();
-	for (size_t submapIdx = 1; submapIdx < nSubmaps; ++submapIdx) {
+	for (size_t submapIdx = 1; submapIdx < submaps.getNumSubmaps(); ++submapIdx) {
 		const size_t targetIdx = submapIdx;
-		const size_t sourceIdx = submaps.getSubmaps().at(targetIdx).getParentId();
+		const size_t sourceIdx = submaps.getSubmap(targetIdx).getParentId();
 		if (!hasConstraint(sourceIdx, targetIdx, *constraints) && sourceIdx != activeSubmapIdx
 				&& targetIdx != activeSubmapIdx) {
 			const Constraint c = buildOdometryConstraint(sourceIdx, targetIdx, submaps);

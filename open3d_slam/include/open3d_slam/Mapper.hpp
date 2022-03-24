@@ -29,20 +29,17 @@ public:
 	~Mapper() = default;
 
 	void setMapToRangeSensor(const Transform &t);
-	const PointCloud& getMap() const;
+	const PointCloud& getMapPointCloud() const;
 	const VoxelizedPointCloud& getDenseMap() const;
 	const Submap& getActiveSubmap() const;
 	const SubmapCollection& getSubmaps() const;
 	SubmapCollection* getSubmapsPtr();
-	PointCloud getAssembledMap() const;
+	PointCloud getAssembledMapPointCloud() const;
 	bool addRangeMeasurement(const PointCloud &cloud, const Time &timestamp);
 	void setParameters(const MapperParameters &p);
-	bool isMatchingInProgress() const;
-	bool isManipulatingMap() const;
 	Transform getMapToOdom(const Time &timestamp) const;
 	Transform getMapToRangeSensor(const Time &timestamp) const;
 	const TransformInterpolationBuffer& getMapToRangeSensorBuffer() const;
-	TransformInterpolationBuffer* getMapToRangeSensorBufferPtr();
 	const PointCloud& getPreprocessedScan() const;
 	void loopClosureUpdate(const Transform &loopClosureCorrection);
 private:

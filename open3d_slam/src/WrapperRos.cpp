@@ -143,9 +143,9 @@ void WrapperRos::initialize() {
 	optimizationProblem_ = std::make_shared<o3d_slam::OptimizationProblem>();
 	optimizationProblem_->setParameters(mapperParams_);
 
-	mesher_ = std::make_shared<o3d_slam::Mesher>();
-	o3d_slam::loadParameters(paramFile, &mesherParams_);
-	mesher_->setParameters(mesherParams_);
+//	mesher_ = std::make_shared<o3d_slam::Mesher>();
+//	o3d_slam::loadParameters(paramFile, &mesherParams_);
+//	mesher_->setParameters(mesherParams_);
 
 	loadParameters(paramFile, &visualizationParameters_);
 
@@ -406,9 +406,6 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 	assert_gt(latestLoopClosureConstraint.sourceSubmapIdx_, latestLoopClosureConstraint.targetSubmapIdx_,
 			"Wrapper ros, update submaps and trajectory: ");
 	const auto dT = optimizedTransformations.at(latestLoopClosureConstraint.sourceSubmapIdx_);
-	const Time latestTime = mapper_->getMapToRangeSensorBuffer().latest_time();
-//	const Time lastLoopClosureTime = latestLoopClosureConstraint.timestamp_;
-	const Time lastLoopClosureTime = mapper_->getMapToRangeSensorBuffer().earliest_time();
 
 	std::cout << "Transforming the pose buffer with the delta T from submap "
 			<< latestLoopClosureConstraint.sourceSubmapIdx_ << "the transform is: \n" << asString(dT.dT_)
@@ -433,18 +430,19 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 }
 
 void WrapperRos::mesherWorker() {
-	if (mesherParams_.isComputeMesh_ && !mesherBufffer_.empty() && !mapper_->getMap().points_.empty()) {
-		PointCloud map = mapper_->getMap();
-		o3d_slam::MaxRadiusCroppingVolume cropper(localMapParams_.croppingRadius_);
-		const auto time = mesherBufffer_.pop();
-		const auto timestamp = toRos(time);
-		cropper.setPose(mapper_->getMapToRangeSensor(time));
-		cropper.crop(&map);
-		auto downSampledMap = map.VoxelDownSample(mesherParams_.voxelSize_);
-		mesher_->setCurrentPose(mapper_->getMapToRangeSensor(time));
-		mesher_->buildMeshFromCloud(*downSampledMap);
-		o3d_slam::publishMesh(mesher_->getMesh(), mapFrame, timestamp, meshPub_);
-	}
+//	if (mesherParams_.isComputeMesh_ && !mesherBufffer_.empty() && !mapper_->getMap().points_.empty()) {
+//		PointCloud map = mapper_->getMap();
+//		o3d_slam::MaxRadiusCroppingVolume cropper(localMapParams_.croppingRadius_);
+//		const auto time = mesherBufffer_.pop();
+//		const auto timestamp = toRos(time);
+//		cropper.setPose(mapper_->getMapToRangeSensor(time));
+//		cropper.crop(&map);
+//		auto downSampledMap = map.VoxelDownSample(mesherParams_.voxelSize_);
+//		mesher_->setCurrentPose(mapper_->getMapToRangeSensor(time));
+//		mesher_->buildMeshFromCloud(*downSampledMap);
+//		o3d_slam::publishMesh(mesher_->getMesh(), mapFrame, timestamp, meshPub_);
+//	}
+	throw std::runtime_error("Not suppported at the moment");
 
 }
 
@@ -481,7 +479,7 @@ void WrapperRos::publishMaps(const Time &time) {
 	const auto timestamp = toRos(time);
 	isPublishMapsThreadRunning_ = true;
 	std::thread t([this, timestamp]() {
-		PointCloud map = mapper_->getAssembledMap();
+		PointCloud map = mapper_->getAssembledMapPointCloud();
 		voxelize(visualizationParameters_.assembledMapVoxelSize_, &map);
 		o3d_slam::publishCloud(map, o3d_slam::frames::mapFrame, timestamp, assembledMapPub_);
 		o3d_slam::publishCloud(mapper_->getPreprocessedScan(), o3d_slam::frames::rangeSensorFrame, timestamp, mappingInputPub_);

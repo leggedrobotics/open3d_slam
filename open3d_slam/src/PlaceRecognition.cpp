@@ -45,8 +45,7 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 	const PlaceRecognitionParameters &cfg = params_.placeRecognition_;
 	const auto edgeLengthChecker = CorrespondenceCheckerBasedOnEdgeLength(cfg.correspondenceCheckerEdgeLength_);
 	const auto distanceChecker = CorrespondenceCheckerBasedOnDistance(cfg.correspondenceCheckerDistance_);
-	const SubmapCollection::Submaps &submaps = submapCollection.getSubmaps();
-	const Submap &sourceSubmap = submaps.at(lastFinishedSubmapIdx);
+	const Submap &sourceSubmap = submapCollection.getSubmap(lastFinishedSubmapIdx);
 	const std::vector<size_t> closeSubmapsIdxs = std::move(
 			getLoopClosureCandidatesIdxs(mapToRangeSensor, submapCollection, adjMatrix, lastFinishedSubmapIdx,
 					activeSubmapIdx));
@@ -56,8 +55,8 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 	if (closeSubmapsIdxs.empty()) {
 		return constraints;
 	}
-	const PointCloud sourceSparse = sourceSubmap.getSparseMap();
-	const PointCloud source = sourceSubmap.getMap();
+	const PointCloud sourceSparse = sourceSubmap.getSparseMapPointCloud();
+	const PointCloud source = sourceSubmap.getMapPointCloud();
 	const Submap::Feature sourceFeature = sourceSubmap.getFeatures();
 //#pragma omp parallel for
 	for (int i = 0; i < closeSubmapsIdxs.size(); ++i) {
@@ -71,8 +70,8 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 					<< " since they are adjacent \n";
 			continue;
 		}
-		const Submap &targetSubmap = submaps.at(id);
-		const PointCloud targetSparse = targetSubmap.getSparseMap();
+		const Submap &targetSubmap = submapCollection.getSubmap(id);
+		const PointCloud targetSparse = targetSubmap.getSparseMapPointCloud();
 		const Submap::Feature targetFeature = targetSubmap.getFeatures();
 		RegistrationResult ransacResult;
 		{
@@ -93,7 +92,7 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 			continue;
 		}
 
-		const PointCloud target = targetSubmap.getMap();
+		const PointCloud target = targetSubmap.getMapPointCloud();
 		const double mapVoxelSize = getMapVoxelSize(params_.mapBuilder_,
 				voxelSizeCorrespondenceSearchMapVoxelSizeIsZero);
 
@@ -216,20 +215,19 @@ std::vector<size_t> PlaceRecognition::getLoopClosureCandidatesIdxs(const Transfo
 		const SubmapCollection &submapCollection, const AdjacencyMatrix &adjMatrix, size_t lastFinishedSubmapIdx,
 		size_t activeSubmapIdx) const {
 	std::vector<size_t> idxs;
-	const auto &submaps = submapCollection.getSubmaps();
-	const size_t nSubmaps = submaps.size();
+	const size_t nSubmaps = submapCollection.getNumSubmaps();
 	idxs.reserve(nSubmaps);
 	for (size_t i = 0; i < nSubmaps; ++i) {
 		if (i == activeSubmapIdx) {
 			continue;
 		}
-		const auto id1 = submaps.at(i).getId();
-		const auto id2 = submaps.at(activeSubmapIdx).getId();
+		const auto id1 = submapCollection.getSubmap(i).getId();
+		const auto id2 = submapCollection.getSubmap(activeSubmapIdx).getId();
 		if (adjMatrix.isAdjacent(id1, id2)) {
 			continue;
 		}
 
-		const double distance = (mapToRangeSensor.translation() - submaps.at(i).getMapToSubmapCenter()).norm();
+		const double distance = (mapToRangeSensor.translation() - submapCollection.getSubmap(i).getMapToSubmapCenter()).norm();
 		const bool isTooFar = distance > params_.submaps_.radius_;
 //		std::cout << "distance submap to submap " << i << " : " << distance << std::endl;
 		if (isTooFar) {
