@@ -34,14 +34,12 @@ class SubmapCollection {
 	};
 
 public:
-	using Submaps = std::vector<Submap>;
 	using SubmapId = Submap::SubmapId;
 	using TimestampedSubmapIds = std::vector<TimestampedSubmapId>;
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 	SubmapCollection();
 	~SubmapCollection() = default;
 
-	using PointCloud = open3d::geometry::PointCloud;
 	void setMapToRangeSensor(const Transform &T);
 	const Submap& getActiveSubmap() const;
 	bool insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan,
