@@ -19,6 +19,10 @@ void AdjacencyMatrix::addEdge(SubmapId id1, SubmapId id2) {
 
 bool AdjacencyMatrix::isAdjacent(SubmapId id1, SubmapId id2) const {
 
+	if (id1 == id2){
+		return true;
+	}
+
 	const auto search = adjacency_.find(id1);
 	if (search == adjacency_.end()) {
 		return false;

@@ -88,7 +88,7 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		}
 
 		if (!isRegistrationConsistent(ransacResult.transformation_)) {
-			std::cout << "skipping place recognition \n";
+			std::cout << "skipping place recognition with : "<< ransacResult.correspondence_set_.size() <<" ransac correspondences \n";
 			continue;
 		}
 
