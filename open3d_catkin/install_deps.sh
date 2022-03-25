@@ -44,6 +44,8 @@ dependencies=(
     libtool
     #
     libturbojpeg-dev
+    libfmt-dev
+    libglfw3-dev
 )
 
 $SUDO apt-get update
