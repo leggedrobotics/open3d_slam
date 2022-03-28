@@ -5,8 +5,8 @@ odometry:
     knn_normal_estimation: 4
     max_n_iter: 35
   scan_processing:
-    voxel_size: 0.04
-    downsampling_ratio: 0.5
+    voxel_size: 0.001
+    downsampling_ratio: 0.1
     scan_cropping:
       cropping_radius: 40.0
       min_z: -30.0
@@ -25,12 +25,12 @@ mapping:
     min_refinement_fitness: 0.7
     scan_matching:
       icp_objective: PointToPlane
-      max_correspondence_dist: 0.8
+      max_correspondence_dist: 0.1
       knn_normal_estimation: 5
       max_n_iter: 50
     scan_processing:
-      voxel_size: 0.05
-      downsampling_ratio: 0.2
+      voxel_size: 0.001
+      downsampling_ratio: 0.1
       scan_cropping:
         cropping_radius: 40.0
         min_z: -30.0
@@ -48,10 +48,10 @@ mapping:
       min_z: -50.0
       max_z: 50.0
       cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius
-    map_voxel_size: 0.05
-    voxelize_every_n_scans: 5
+    map_voxel_size: 0.005
+    voxelize_every_n_scans: 1
     space_carving:
-      voxel_size: 0.2
+      voxel_size: 0.001
       max_raytracing_length: 30.0
       truncation_distance: 0.3
       carve_space_every_n_sec: 1000.0
@@ -63,13 +63,13 @@ mapping:
       min_z: -50.0
       max_z: 50.0
       cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius
-    map_voxel_size: 0.01
+    map_voxel_size: 0.001
     voxelize_every_n_scans: 5
     space_carving:
-      voxel_size: 0.2
+      voxel_size: 0.0001
       max_raytracing_length: 5.0
       truncation_distance: 0.3
-      carve_space_every_n_sec: 2.0
+      carve_space_every_n_sec: 1000.0
       min_dot_product_with_normal: 0.1
 
   place_recognition:
@@ -102,7 +102,7 @@ mapping:
     reference_node: 0
 
 local_map:
-  voxel_size: 0.08
+  voxel_size: 0.01
   cropping_radius: 10.0
 
 mesher:
@@ -117,7 +117,7 @@ mesher:
   ball_pivot_radii: [0.5] 
   
 visualization:
-  assembled_map_voxel_size: 0.2
+  assembled_map_voxel_size: 0.001
   submaps_voxel_size: 0.2
   visualize_every_n_msec: 300.0
   

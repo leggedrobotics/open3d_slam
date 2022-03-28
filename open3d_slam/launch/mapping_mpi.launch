@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+    
+    <!-- Open3D Publisher -->
+    <node pkg="tf" type="static_transform_publisher" name="open3d_turn_link" args="0 0 0 0 3.14159 0 /map_o3d /map_o3d_turned 100"/>
+
+    <!-- RViz Launch Config -->
+    <arg name="launch_rviz" default="true" />
+    <arg name="rviz_config" default="$(find  open3d_slam)/rviz/mpi.rviz" />
+
+	<!-- Sensor Config -->
+	<arg name="cloud_topic" default="/camera1/depth/color/points" />
+	<arg name="image_topic" default="/camMainView/image_raw" />
+	<arg name="use_rgb_from_camera" default="false" />
+	<arg name="parameter_file_path" default="$(find open3d_slam)/param/params_realsense.yaml" />
+	<arg name="num_accumulated_range_data" default="1"/>
+	<arg name="is_read_from_rosbag" default="false"/>
+    <arg name="rosbag_filepath" default=""/>
+
+    <!-- Debug -->
+    <arg name="launch_prefix" default="" doc="gdb -ex run --args"/>
+
+	<!-- Rosparams -->
+    <arg name="use_sim_time" default="true"/>
+    <param name="/use_sim_time" value="$(arg use_sim_time)" />
+    
+    <!-- Mapping Node -->
+	<node name="mapping_node" pkg="open3d_slam" type="mapping_node" output="screen" launch-prefix="$(arg launch_prefix)">
+		<param name="cloud_topic" type="string" value="$(arg cloud_topic)" />
+		<param name="image_topic" type="string" value="$(arg image_topic)" />
+		<param name="use_rgb_from_camera" type="bool" value="$(arg use_rgb_from_camera)" />
+		<param name="parameter_file_path" type="string" value="$(arg parameter_file_path)" />
+		<param name="num_accumulated_range_data" value="$(arg num_accumulated_range_data)"/>
+		<param name="is_read_from_rosbag" value="$(arg is_read_from_rosbag)"/>
+		<param name="rosbag_filepath" value="$(arg rosbag_filepath)"/>
+	</node>
+
+    <!-- Launch Visualization -->
+	<include file="$(find open3d_slam)/launch/vis.launch" if="$(arg launch_rviz)">
+        <arg name="rviz_config" value="$(arg rviz_config)"/>
+	</include>
+
+</launch>
