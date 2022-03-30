@@ -36,20 +36,8 @@ VoxelizedPointCloud::VoxelizedPointCloud() :
 		VoxelizedPointCloud(Eigen::Vector3d::Constant(0.25)) {
 }
 
-Eigen::Vector3i VoxelizedPointCloud::getKey(const Eigen::Vector3d &p) const{
-	return getVoxelIdx(p, voxelSize_);
-}
-
 VoxelizedPointCloud::VoxelizedPointCloud(const Eigen::Vector3d &voxelSize) :
-		voxelSize_(voxelSize) {
-}
-
-void VoxelizedPointCloud::clear() {
-	voxels_.clear();
-}
-
-bool VoxelizedPointCloud::empty() const {
-	return voxels_.empty();
+		BASE(voxelSize) {
 }
 
 bool VoxelizedPointCloud::hasColors() const {
@@ -57,14 +45,6 @@ bool VoxelizedPointCloud::hasColors() const {
 }
 bool VoxelizedPointCloud::hasNormals() const {
 	return isHasNormals_;
-}
-
-void VoxelizedPointCloud::removeKey(const Eigen::Vector3i &k){
-	voxels_.erase(k);
-}
-
-size_t VoxelizedPointCloud::size() const{
-	return voxels_.size();
 }
 
 void VoxelizedPointCloud::transform(const Transform &T){
@@ -84,20 +64,9 @@ void VoxelizedPointCloud::transform(const Transform &T){
 		voxels_ = std::move(voxels);
 }
 
-bool VoxelizedPointCloud::hasVoxelContainingPoint(const Eigen::Vector3d &p) const {
-	const auto voxelIdx = getVoxelIdx(p, voxelSize_);
-	const auto search = voxels_.find(voxelIdx);
-	return search != voxels_.end();
-}
-
-bool VoxelizedPointCloud::hasVoxelWithKey(const Eigen::Vector3i &key) const{
-	const auto search = voxels_.find(key);
-	return search != voxels_.end();
-}
-
 void VoxelizedPointCloud::insert(const open3d::geometry::PointCloud &cloud) {
 	for (size_t i = 0; i < cloud.points_.size(); ++i) {
-		const auto voxelIdx = getVoxelIdx(cloud.points_[i], voxelSize_);
+		const auto voxelIdx = getKey(cloud.points_[i]);
 		auto search = voxels_.find(voxelIdx);
 		if (search == voxels_.end()) {
 			auto insertResult = voxels_.insert({voxelIdx,AggregatedVoxel()});

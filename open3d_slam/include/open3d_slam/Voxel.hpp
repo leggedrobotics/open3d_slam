@@ -17,9 +17,7 @@
 namespace o3d_slam {
 
 
-class VoxelWithIdxs {
-
-public:
+struct VoxelWithIdxs {
 	std::map<std::string,std::vector<size_t>> idxs_;
 };
 
@@ -43,11 +41,9 @@ class AggregatedVoxel {
 	friend class VoxelizedPointCloud;
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-	 Eigen::Vector3d getAggregatedPosition() const;
-	 Eigen::Vector3d getAggregatedNormal() const;
-	 Eigen::Vector3d getAggregatedColor() const;
-
+	Eigen::Vector3d getAggregatedPosition() const;
+	Eigen::Vector3d getAggregatedNormal() const;
+	Eigen::Vector3d getAggregatedColor() const;
 
 	int numAggregatedPoints_ = 0;
 	Eigen::Vector3d aggregatedPosition_ = Eigen::Vector3d::Zero();
@@ -59,34 +55,23 @@ private:
 	void aggregatePoint(const Eigen::Vector3d &p);
 	void aggregateNormal(const Eigen::Vector3d &n);
 	void aggregateColor(const Eigen::Vector3d &c);
-
 };
 
-class VoxelizedPointCloud {
+class VoxelizedPointCloud : public VoxelHashMap<AggregatedVoxel> {
+	using BASE = VoxelHashMap<AggregatedVoxel>;
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	VoxelizedPointCloud();
 	VoxelizedPointCloud(const Eigen::Vector3d &voxelSize);
 	void insert(const PointCloud &cloud);
 	PointCloud toPointCloud() const;
-	bool hasVoxelContainingPoint(const Eigen::Vector3d &p) const;
-	bool hasVoxelWithKey(const Eigen::Vector3i &p) const;
-	Eigen::Vector3i getKey(const Eigen::Vector3d &p) const;
-  void removeKey(const Eigen::Vector3i &k);
-
-  size_t size() const;
-	void clear();
-	bool empty() const;
 	bool hasColors() const;
 	bool hasNormals() const;
 	void transform(const Transform &T);
 
 	bool isHasNormals_ =false;
 	bool isHasColors_ =false;
-	Eigen::Vector3d voxelSize_;
-	std::unordered_map<Eigen::Vector3i, AggregatedVoxel, EigenVec3iHash> voxels_;
 	//std::mutex mutex_;
-
 };
 
 } // namespace o3d_slam

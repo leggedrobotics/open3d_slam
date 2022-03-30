@@ -336,7 +336,7 @@ bool SubmapCollection::isSwitchingSubmapsConsistant(const PointCloud &scan,
 		numOverlappingPoints += int(voxelMap.hasVoxelContainingPoint(p));
 	}
 	const double fitness = static_cast<double>(numOverlappingPoints) / scan.points_.size();
-
+	std::cout << "Fitness: " << fitness << std::endl;
 	return fitness > params_.submaps_.adjacencyBasedRevisitingMinFitness_;
 
 }

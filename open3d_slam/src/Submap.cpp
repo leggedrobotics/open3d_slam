@@ -18,7 +18,7 @@ namespace o3d_slam {
 
 namespace {
 namespace registration = open3d::pipelines::registration;
-const std::string layer = "layer";
+const std::string voxelMapLayer = "layer";
 } // namespace
 
 Submap::Submap(size_t id, size_t parentId) :
@@ -172,6 +172,8 @@ void Submap::update(const MapperParameters &p) {
 	mapBuilderCropper_ = croppingVolumeFactory(p.mapBuilder_.cropper_);
 	denseMapCropper_ = croppingVolumeFactory(p.denseMapBuilder_.cropper_);
 	denseMap_ = std::move(VoxelizedPointCloud(Eigen::Vector3d::Constant(p.denseMapBuilder_.mapVoxelSize_)));
+	//todo remove magic
+	voxelMap_ = std::move(VoxelMap(Eigen::Vector3d::Constant(2.5*p.mapBuilder_.mapVoxelSize_)));
 }
 
 bool Submap::isEmpty() const {
@@ -191,7 +193,7 @@ void Submap::computeFeatures() {
 	std::thread computeVoxelMapThread([this]() {
 		Timer t("compute_voxel_submap");
 		voxelMap_.clear();
-		voxelMap_.insertCloud(layer,mapCloud_);
+		voxelMap_.insertCloud(voxelMapLayer,mapCloud_);
 	});
 
 	const auto &p = params_.placeRecognition_;
