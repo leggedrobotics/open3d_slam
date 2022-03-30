@@ -18,6 +18,7 @@ namespace o3d_slam {
 
 namespace {
 namespace registration = open3d::pipelines::registration;
+const std::string layer = "layer";
 } // namespace
 
 Submap::Submap(size_t id, size_t parentId) :
@@ -190,7 +191,7 @@ void Submap::computeFeatures() {
 	std::thread computeVoxelMapThread([this]() {
 		Timer t("compute_voxel_submap");
 		voxelMap_.clear();
-		voxelMap_.buildFromCloud(mapCloud_);
+		voxelMap_.insertCloud(layer,mapCloud_);
 	});
 
 	const auto &p = params_.placeRecognition_;

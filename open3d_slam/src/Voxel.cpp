@@ -12,63 +12,6 @@
 
 namespace o3d_slam {
 
-//std::vector<size_t> Voxel::idxsAsVector() const {
-//	std::vector<size_t> ret;
-//	ret.insert(ret.end(), idxs_.begin(), idxs_.end());
-//	return ret;
-//}
-
-void VoxelMap::buildFromCloud(const open3d::geometry::PointCloud &cloud) {
-	std::vector<size_t> idxs(cloud.points_.size());
-	std::iota(idxs.begin(), idxs.end(), 0);
-	buildFromCloud(cloud, idxs);
-}
-
-VoxelMap::VoxelMap() :
-		VoxelMap(Eigen::Vector3d::Constant(0.25)) {
-}
-
-VoxelMap::VoxelMap(const Eigen::Vector3d &voxelSize) :
-		voxelSize_(voxelSize) {
-}
-
-void VoxelMap::clear() {
-	voxels_.clear();
-}
-
-bool VoxelMap::empty() const {
-	return voxels_.empty();
-}
-
-bool VoxelMap::hasVoxelContainingPoint(const Eigen::Vector3d &p) const {
-	const auto voxelIdx = getVoxelIdx(p, voxelSize_);
-	const auto search = voxels_.find(voxelIdx);
-	return search != voxels_.end();
-}
-
-std::vector<size_t> VoxelMap::getIndicesInVoxel(const Eigen::Vector3d &p) const {
-	const auto voxelIdx = getVoxelIdx(p, voxelSize_);
-	const auto search = voxels_.find(voxelIdx);
-	if (search != voxels_.end()) {
-		return search->second.idxs_;
-	}
-	return std::vector<size_t>();
-}
-
-void VoxelMap::buildFromCloud(const open3d::geometry::PointCloud &cloud, const std::vector<size_t> &idxs) {
-//	Timer t("hash_map_build");
-	voxels_.reserve(idxs.size());
-	for (size_t i = 0; i < idxs.size(); ++i) {
-		const size_t idx = idxs[i];
-		const auto voxelIdx = getVoxelIdx(cloud.points_[idx], voxelSize_);
-		voxels_[voxelIdx].idxs_.emplace_back(idx);
-	}
-}
-
-//////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////
-
  Eigen::Vector3d AggregatedVoxel::getAggregatedPosition() const {
 	return aggregatedPosition_ / (numAggregatedPoints_+1e-4);
 }
@@ -207,15 +150,14 @@ PointCloud VoxelizedPointCloud::toPointCloud() const {
 //////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////
 
-MultiLayerVoxelMap::MultiLayerVoxelMap() :
-		MultiLayerVoxelMap(Eigen::Vector3d::Constant(0.25)) {
+VoxelMap::VoxelMap() :
+		VoxelMap(Eigen::Vector3d::Constant(0.25)) {
 }
-MultiLayerVoxelMap::MultiLayerVoxelMap(const Eigen::Vector3d &voxelSize) :
+VoxelMap::VoxelMap(const Eigen::Vector3d &voxelSize) :
 		voxelSize_(voxelSize) {
 }
 
-void MultiLayerVoxelMap::insertCloud(const std::string &layer, const open3d::geometry::PointCloud &cloud,
-		std::vector<size_t> &idxs) {
+void VoxelMap::insertCloud(const std::string &layer, const open3d::geometry::PointCloud &cloud, const std::vector<size_t> &idxs) {
 	voxels_.reserve(idxs.size());
 	for (size_t i = 0; i < idxs.size(); ++i) {
 		const size_t idx = idxs[i];
@@ -223,19 +165,19 @@ void MultiLayerVoxelMap::insertCloud(const std::string &layer, const open3d::geo
 		voxels_[voxelIdx][layer].idxs_.emplace_back(idx);
 	}
 }
-void MultiLayerVoxelMap::insertCloud(const std::string &layer, const open3d::geometry::PointCloud &cloud) {
+void VoxelMap::insertCloud(const std::string &layer, const open3d::geometry::PointCloud &cloud) {
 	std::vector<size_t> idxs(cloud.points_.size());
 	std::iota(idxs.begin(), idxs.end(), 0);
 	insertCloud(layer, cloud, idxs);
 }
 
-std::vector<size_t> MultiLayerVoxelMap::getIndicesInVoxel(const std::string &layer,
+std::vector<size_t> VoxelMap::getIndicesInVoxel(const std::string &layer,
 		const Eigen::Vector3d &p) const {
 	const auto voxelIdx = getVoxelIdx(p, voxelSize_);
 	return getIndicesInVoxel(layer, voxelIdx);
 }
 
-std::vector<size_t> MultiLayerVoxelMap::getIndicesInVoxel(const std::string &layer,
+std::vector<size_t> VoxelMap::getIndicesInVoxel(const std::string &layer,
 		const Eigen::Vector3i &voxelKey) const {
 	const auto search = voxels_.find(voxelKey);
 	if (search != voxels_.end()) {
@@ -246,7 +188,7 @@ std::vector<size_t> MultiLayerVoxelMap::getIndicesInVoxel(const std::string &lay
 	return std::vector<size_t>();
 }
 
-bool MultiLayerVoxelMap::isVoxelHasLayer(const Eigen::Vector3i &key, const std::string &layer) const {
+bool VoxelMap::isVoxelHasLayer(const Eigen::Vector3i &key, const std::string &layer) const {
 
 	const auto searchVoxel = voxels_.find(key);
 	if (searchVoxel != voxels_.end()) {
@@ -258,6 +200,34 @@ bool MultiLayerVoxelMap::isVoxelHasLayer(const Eigen::Vector3i &key, const std::
 	return false;
 
 }
+
+bool VoxelMap::hasVoxelContainingPoint(const Eigen::Vector3d &p) const {
+	const auto voxelIdx = getVoxelIdx(p, voxelSize_);
+	const auto search = voxels_.find(voxelIdx);
+	return search != voxels_.end();
+}
+
+bool VoxelMap::hasVoxelWithKey(const Eigen::Vector3i &key) const{
+	const auto search = voxels_.find(key);
+	return search != voxels_.end();
+}
+
+
+void VoxelMap::clear() {
+	voxels_.clear();
+}
+
+bool VoxelMap::empty() const {
+	return voxels_.empty();
+}
+
+size_t VoxelMap::size() const{
+	return voxels_.size();
+}
+
+//////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////
 
 Eigen::Vector3i getVoxelIdx(const Eigen::Vector3d &p, const Eigen::Vector3d &voxelSize) {
 	Eigen::Vector3d coord = p.array() / voxelSize.array();
