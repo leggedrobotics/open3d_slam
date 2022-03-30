@@ -85,7 +85,7 @@ void LidarOdometry::setParameters(const OdometryParameters &p) {
 //	cropper_ = std::make_shared<MaxRadiusCroppingVolume>(params_.scanProcessing_.croppingRadius_);
 //	cropper_ = std::make_shared<CylinderCroppingVolume>(params_.scanProcessing_.croppingRadius_,-3.0,3.0);
 	const auto &par = params_.scanProcessing_.cropper_;
-	cropper_ = croppingVolumeFactory(par.cropperName_, par.croppingRadius_, par.croppingMinZ_, par.croppingMaxZ_);
+	cropper_ = croppingVolumeFactory(par);
 }
 
 } // namespace o3d_slam

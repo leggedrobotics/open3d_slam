@@ -42,9 +42,10 @@ static const std::map<std::string, IcpObjective> IcpObjectiveNames {
 };
 
 struct ScanCroppingParameters {
-	double croppingRadius_=20.0;
 	double croppingMinZ_ = -10.0;
 	double croppingMaxZ_ = 10.0;
+	double croppingMinRadius_ = 0.0;
+	double croppingMaxRadius_ = 20.0;
 	std::string cropperName_ = "MaxRadius";
 };
 

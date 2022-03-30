@@ -172,7 +172,8 @@ void loadParameters(const std::string &filename, ScanCroppingParameters *p){
 	loadParameters(basenode["scan_cropping"], p);
 }
 void loadParameters(const YAML::Node &node, ScanCroppingParameters *p){
-	p->croppingRadius_ = node["cropping_radius"].as<double>();
+	p->croppingMaxRadius_ = node["cropping_radius_max"].as<double>();
+	p->croppingMinRadius_ = node["cropping_radius_min"].as<double>();
 	p->croppingMinZ_ = node["min_z"].as<double>();
 	p->croppingMaxZ_ = node["max_z"].as<double>();
 	p->cropperName_ = node["cropper_type"].as<std::string>();

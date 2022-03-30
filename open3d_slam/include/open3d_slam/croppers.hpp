@@ -12,18 +12,23 @@
 #include <open3d/geometry/PointCloud.h>
 #include <map>
 
+
 namespace o3d_slam {
+
+class ScanCroppingParameters;
 
 enum class CroppingVolumeEnum : int{
 	MaxRadius,
 	MinRadius,
-	Cylinder
+	Cylinder,
+	MinMaxRadius
 };
 
 static const std::map<std::string, CroppingVolumeEnum> cropperNames{
 	{"MaxRadius",CroppingVolumeEnum::MaxRadius},
 	{"MinRadius",CroppingVolumeEnum::MinRadius},
-	{"Cylinder",CroppingVolumeEnum::Cylinder}
+	{"Cylinder",CroppingVolumeEnum::Cylinder},
+	{"MinMaxRadius",CroppingVolumeEnum::MinMaxRadius}
 };
 
 
@@ -50,6 +55,18 @@ protected:
 
 	Eigen::Isometry3d pose_=Eigen::Isometry3d::Identity();
 
+};
+
+class MinMaxRadiusCroppingVolume : public CroppingVolume{
+public:
+	MinMaxRadiusCroppingVolume() = default;
+	~MinMaxRadiusCroppingVolume() override= default;
+	MinMaxRadiusCroppingVolume(double radiusMin, double radiusMax);
+	bool isWithinVolume(const Eigen::Vector3d &p) const final;
+	void setParameters(double radiusMin, double radiusMax);
+private:
+	double radiusMin_=0.0;
+	double radiusMax_=1e4;
 };
 
 class MaxRadiusCroppingVolume : public CroppingVolume{
@@ -94,7 +111,7 @@ private:
 
 };
 
-std::unique_ptr<CroppingVolume> croppingVolumeFactory(const std::string &type, double radius, double minZ, double maxZ);
-std::unique_ptr<CroppingVolume> croppingVolumeFactory(CroppingVolumeEnum type, double radius, double minZ, double maxZ);
+std::unique_ptr<CroppingVolume> croppingVolumeFactory(const ScanCroppingParameters &p);
+std::unique_ptr<CroppingVolume> croppingVolumeFactory(CroppingVolumeEnum type, const ScanCroppingParameters &p);
 
 } // namespace o3d_slam

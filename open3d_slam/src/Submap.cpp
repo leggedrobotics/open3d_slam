@@ -168,20 +168,9 @@ void Submap::setMapToSubmapOrigin(const Transform &T) {
 }
 
 void Submap::update(const MapperParameters &p) {
-	{
-		const auto &par = p.mapBuilder_.cropper_;
-		mapBuilderCropper_ = croppingVolumeFactory(par.cropperName_, par.croppingRadius_, par.croppingMinZ_,
-				par.croppingMaxZ_);
-	}
-	{
-		//todo remove magic
-		const auto &par = p.denseMapBuilder_.cropper_;
-		denseMapCropper_ = croppingVolumeFactory(par.cropperName_, 1.2 * par.croppingRadius_, par.croppingMinZ_,
-				par.croppingMaxZ_);
-	}
-
+	mapBuilderCropper_ = croppingVolumeFactory(p.mapBuilder_.cropper_);
+	denseMapCropper_ = croppingVolumeFactory(p.denseMapBuilder_.cropper_);
 	denseMap_ = std::move(VoxelizedPointCloud(Eigen::Vector3d::Constant(p.denseMapBuilder_.mapVoxelSize_)));
-
 }
 
 bool Submap::isEmpty() const {
