@@ -246,8 +246,9 @@ std::vector<size_t> getIdxsOfCarvedPoints(const open3d::geometry::PointCloud &sc
 		const std::vector<size_t> &cloudIdxsSubset, const SpaceCarvingParameters &param) {
 
 	const double stepSize = param.voxelSize_;
-	VoxelMap voxelMap(Eigen::Vector3d::Constant(param.voxelSize_));
-	voxelMap.buildFromCloud(cloud, cloudIdxsSubset);
+	const std::string layer = "layer";
+  VoxelMap voxelMap(Eigen::Vector3d::Constant(param.voxelSize_));
+	voxelMap.insertCloud(layer, cloud, cloudIdxsSubset);
 	std::unordered_set<size_t> setOfIdsToRemove;
 	setOfIdsToRemove.reserve(scan.points_.size());
 #pragma omp parallel for schedule(static)
@@ -260,7 +261,7 @@ std::vector<size_t> getIdxsOfCarvedPoints(const open3d::geometry::PointCloud &sc
 				std::min(length - param.truncationDistance_, param.maxRaytracingLength_));
 		while (distance < maximalPathTraveled) {
 			const Eigen::Vector3d currentPosition = distance * direction + sensorPosition;
-			auto ids = voxelMap.getIndicesInVoxel(currentPosition);
+			auto ids = voxelMap.getIndicesInVoxel(layer, currentPosition);
 			for (const auto id : ids) {
 				bool isRemoveId = true;
 				if (cloud.HasNormals()) {
@@ -272,11 +273,6 @@ std::vector<size_t> getIdxsOfCarvedPoints(const open3d::geometry::PointCloud &sc
 					setOfIdsToRemove.insert(id);
 				}
 			}
-
-//			if (!ids.empty()) {
-//#pragma omp critical
-//					setOfIdsToRemove.insert(ids.begin(), ids.end());
-//			}
 			distance += stepSize;
 		}
 	}
@@ -320,7 +316,7 @@ void computeIndicesOfOverlappingPoints(const open3d::geometry::PointCloud &sourc
 	assert_ge<size_t>(minNumPointsPerVoxel, 1);
 	const std::string targetLayer = "target";
 	const std::string sourceLayer = "source";
-	MultiLayerVoxelMap voxelMap(Eigen::Vector3d::Constant(voxelSize));
+	VoxelMap voxelMap(Eigen::Vector3d::Constant(voxelSize));
 	voxelMap.insertCloud(targetLayer, target);
 	auto sourceTransformed = source;
 	sourceTransformed.Transform(sourceToTarget.matrix());

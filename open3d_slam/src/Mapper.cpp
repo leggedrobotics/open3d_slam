@@ -48,16 +48,9 @@ void Mapper::loopClosureUpdate(const Transform &loopClosureCorrection) {
 void Mapper::update(const MapperParameters &p) {
 	icpCriteria_.max_iteration_ = p.scanMatcher_.maxNumIter_;
 	icpObjective = icpObjectiveFactory(p.scanMatcher_.icpObjective_);
-	{
-		const auto &par = params_.mapBuilder_.cropper_;
-		mapBuilderCropper_ = croppingVolumeFactory(par.cropperName_, par.croppingRadius_, par.croppingMinZ_,
-				par.croppingMaxZ_);
-	}
-	{
-		const auto &par = params_.scanProcessing_.cropper_;
-		scanMatcherCropper_ = croppingVolumeFactory(par.cropperName_, par.croppingRadius_, par.croppingMinZ_,
-				par.croppingMaxZ_);
-	}
+	mapBuilderCropper_ = croppingVolumeFactory(params_.mapBuilder_.cropper_);
+	scanMatcherCropper_ = croppingVolumeFactory(params_.scanProcessing_.cropper_);
+
 	submaps_->setParameters(p);
 }
 

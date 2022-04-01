@@ -8,6 +8,7 @@
 #include <Eigen/Core>
 #include <vector>
 #include "open3d_slam/croppers.hpp"
+#include "open3d_slam/Parameters.hpp"
 #include <utility>
 #include <iostream>
 #ifdef open3d_slam_OPENMP_FOUND
@@ -16,23 +17,25 @@
 
 namespace o3d_slam {
 
-std::unique_ptr<CroppingVolume> croppingVolumeFactory(const std::string &type, double radius, double minZ,
-		double maxZ) {
-	return croppingVolumeFactory(cropperNames.at(type), radius, minZ, maxZ);
+std::unique_ptr<CroppingVolume> croppingVolumeFactory(const ScanCroppingParameters &p) {
+	return croppingVolumeFactory(cropperNames.at(p.cropperName_),p);
 }
-std::unique_ptr<CroppingVolume> croppingVolumeFactory(CroppingVolumeEnum type, double radius, double minZ,
-		double maxZ) {
+std::unique_ptr<CroppingVolume> croppingVolumeFactory(CroppingVolumeEnum type,  const ScanCroppingParameters &p) {
 	switch (type) {
 	case CroppingVolumeEnum::Cylinder: {
-		auto cropper = std::make_unique<CylinderCroppingVolume>(radius, minZ, maxZ);
+		auto cropper = std::make_unique<CylinderCroppingVolume>(p.croppingMaxRadius_, p.croppingMinZ_, p.croppingMaxZ_);
 		return std::move(cropper);
 	}
 	case CroppingVolumeEnum::MinRadius: {
-		auto cropper = std::make_unique<MinRadiusCroppingVolume>(radius);
+		auto cropper = std::make_unique<MinRadiusCroppingVolume>(p.croppingMinRadius_);
 		return std::move(cropper);
 	}
 	case CroppingVolumeEnum::MaxRadius: {
-		auto cropper = std::make_unique<MaxRadiusCroppingVolume>(radius);
+		auto cropper = std::make_unique<MaxRadiusCroppingVolume>(p.croppingMaxRadius_);
+		return std::move(cropper);
+	}
+	case CroppingVolumeEnum::MinMaxRadius: {
+		auto cropper = std::make_unique<MinMaxRadiusCroppingVolume>(p.croppingMinRadius_,p.croppingMaxRadius_);
 		return std::move(cropper);
 	}
 	default:
@@ -128,6 +131,21 @@ void CroppingVolume::crop(PointCloud *cloud) const {
 	//todo improve and speed up
 	auto cropped = crop(*cloud);
 	*cloud = std::move(*cropped);
+}
+
+//////////
+MinMaxRadiusCroppingVolume::MinMaxRadiusCroppingVolume(double radiusMin, double radiusMax) :
+		radiusMin_(radiusMin), radiusMax_(radiusMax) {
+
+}
+
+bool MinMaxRadiusCroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const {
+	const double d = (p - pose_.translation()).norm();
+	return  d <= radiusMax_ && d >= radiusMin_;
+}
+void MinMaxRadiusCroppingVolume::setParameters(double radiusMin, double radiusMax) {
+	radiusMin_ = radiusMin;
+	radiusMax_ = radiusMax;
 }
 
 ///////////////////////////////////////////////
