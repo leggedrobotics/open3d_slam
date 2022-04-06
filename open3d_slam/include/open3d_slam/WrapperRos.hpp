@@ -65,7 +65,7 @@ public:
 	size_t getOdometryBufferSizeLimit() const;
 	size_t getMappingBufferSizeLimit() const;
 	std::pair<PointCloud,Time> getLatestRegisteredCloudTimestampPair() const;
-
+	void finishProcessing();
 
 	bool saveMap(const std::string &directory);
 	bool saveSubmaps(const std::string &directory);
@@ -118,6 +118,7 @@ private:
 	bool isPublishDenseMapThreadRunning_ = false;
 	Timer mapperOnlyTimer_;
 	SavingParameters savingParameters_;
+	Time latestMeasurementTimestamp_;
 };
 
 } // namespace o3d_slam

@@ -40,6 +40,10 @@ size_t Submap::getParentId() const {
 bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan,
 		const Transform &mapToRangeSensor, const Time &time, bool isPerformCarving) {
 
+	if (preProcessedScan.IsEmpty()){
+		return true;
+	}
+
 	if (mapCloud_.points_.empty()) {
 		creationTime_ = time;
 	}

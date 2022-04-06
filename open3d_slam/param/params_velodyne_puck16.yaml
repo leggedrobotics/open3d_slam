@@ -95,7 +95,7 @@ mapping:
     consistancy_check:
       max_drift_roll: 70.0 #deg
       max_drift_pitch: 70.0 # deg
-      max_drift_yaw: 70.0 #deg
+      max_drift_yaw: 370.0 #deg
     
     
     

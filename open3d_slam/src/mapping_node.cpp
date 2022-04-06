@@ -164,8 +164,8 @@ void readRosbag(const rosbag::Bag &bag, const std::string &cloudTopic) {
 	const ros::Time bag_begin_time = view.getBeginTime();
 	const ros::Time bag_end_time = view.getEndTime();
 	std::cout << "Rosbag processing finished. Rosbag duration: " << (bag_end_time - bag_begin_time).toSec()
-			<< " Time elapsed for processing: " << rosbagTimer.elapsedSec() << " sec. \n";
-
+			<< " Time elapsed for processing: " << rosbagTimer.elapsedSec() << " sec. \n \n";
+	mapping->finishProcessing();
 } // end readRosbag
 
 } // namespace

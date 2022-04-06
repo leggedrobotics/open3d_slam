@@ -92,6 +92,12 @@ void SubmapCollection::insertBufferedScans(Submap *submap) {
 }
 
 void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor, const PointCloud &scan) {
+	if (isForceNewSubmapCreation_){
+		createNewSubmap(mapToRangeSensor_);
+		isForceNewSubmapCreation_ = false;
+		return;
+	}
+
 	if (numScansMergedInActiveSubmap_ < params_.submaps_.minNumRangeData_) {
 		return;
 	}
@@ -152,10 +158,20 @@ const Submap& SubmapCollection::getActiveSubmap() const {
 	return submaps_.at(activeSubmapIdx_);
 }
 
+void SubmapCollection::forceNewSubmapCreation(){
+	if (submaps_.empty()){
+		return;
+	}
+	isForceNewSubmapCreation_ = true;
+	insertScan(PointCloud(),PointCloud(), mapToRangeSensor_,timestamp_);
+	isForceNewSubmapCreation_ = false;
+}
+
 bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan,
 		const Transform &mapToRangeSensor, const Time &timestamp) {
 
 	mapToRangeSensor_ = mapToRangeSensor;
+	timestamp_ = timestamp;
 	if (submaps_.empty()) {
 		createNewSubmap(mapToRangeSensor_);
 		submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, true);
