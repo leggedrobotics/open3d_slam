@@ -94,9 +94,9 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 
 		const PointCloud target = targetSubmap.getMapPointCloud();
 		const double mapVoxelSize = getMapVoxelSize(params_.mapBuilder_,
-				voxelSizeCorrespondenceSearchMapVoxelSizeIsZero);
+				magic::voxelSizeCorrespondenceSearchIfMapVoxelSizeIsZero);
 
-		const double voxelSizeForOverlap = voxelExpansionFactorOverlapComputation * mapVoxelSize;
+		const double voxelSizeForOverlap = magic::voxelExpansionFactorOverlapComputation * mapVoxelSize;
 		const size_t minNumPointsPerVoxel = 1;
 		std::vector<size_t> sourceIdxs, targetIdxs;
 		computeIndicesOfOverlappingPoints(source, target, Transform(ransacResult.transformation_),
@@ -108,7 +108,7 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 //		const auto &targetOverlap = target;
 
 		open3d::pipelines::registration::ICPConvergenceCriteria criteria;
-		criteria.max_iteration_ = icpRunUntilConvergenceNumberOfIterations; // i.e. run until convergence
+		criteria.max_iteration_ = magic::icpRunUntilConvergenceNumberOfIterations; // i.e. run until convergence
 		const auto icpResult = open3d::pipelines::registration::RegistrationICP(sourceOverlap, targetOverlap,
 				cfg.maxIcpCorrespondenceDistance_, ransacResult.transformation_,
 				open3d::pipelines::registration::TransformationEstimationPointToPlane(), criteria);

@@ -138,6 +138,9 @@ void readRosbag(const rosbag::Bag &bag, const std::string &cloudTopic) {
 						std::this_thread::sleep_for(std::chrono::milliseconds(20));
 					}
 					ros::spinOnce();
+					if (!ros::ok()){
+						return;
+					}
 				} // end while
 
 				const double elapsedWallTime = rosbagProcessingTimer.elapsedSec();
@@ -151,8 +154,8 @@ void readRosbag(const rosbag::Bag &bag, const std::string &cloudTopic) {
 
 				ros::spinOnce();
 
-			}
-		} // end if
+			} // end if checking for the null ptr
+		} // end if checking for the right topic
 		if (!ros::ok()){
 			return;
 		}
@@ -161,8 +164,8 @@ void readRosbag(const rosbag::Bag &bag, const std::string &cloudTopic) {
 	const ros::Time bag_begin_time = view.getBeginTime();
 	const ros::Time bag_end_time = view.getEndTime();
 	std::cout << "Rosbag processing finished. Rosbag duration: " << (bag_end_time - bag_begin_time).toSec()
-			<< " Time elapsed for processing: " << rosbagTimer.elapsedSec() << " sec. \n";
-
+			<< " Time elapsed for processing: " << rosbagTimer.elapsedSec() << " sec. \n \n";
+	mapping->finishProcessing();
 } // end readRosbag
 
 } // namespace
@@ -218,9 +221,6 @@ int main(int argc, char **argv) {
 		}
 	}
 
-//	ros::AsyncSpinner spinner(4); // Use 4 threads
-//	spinner.start();
-//	ros::waitForShutdown();
 	ros::spin();
 
 	return 0;

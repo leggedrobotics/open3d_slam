@@ -8,6 +8,7 @@
 	<arg name="image_topic" default="/camMainView/image_raw" />
 	<arg name="use_rgb_from_camera" default="false" />
 	<arg name="parameter_file_path" default="$(find open3d_slam)/param/params_ouster_os0_128.yaml"/>
+	<arg name="map_saving_folder" default="$(find open3d_slam)/data/maps/"/>
 	<arg name="num_accumulated_range_data" default="1"/>
 	<arg name="is_read_from_rosbag" default="false"/>
 	<arg name="rosbag_filepath" default=""/>
@@ -33,7 +34,7 @@
 		<param name="num_accumulated_range_data" value="$(arg num_accumulated_range_data)"/>
 		<param name="is_read_from_rosbag" value="$(arg is_read_from_rosbag)"/>
 		<param name="rosbag_filepath" value="$(arg rosbag_filepath)"/>
-
+		<param name="map_saving_folder" value="$(arg map_saving_folder)"/>
 	</node>
 
 

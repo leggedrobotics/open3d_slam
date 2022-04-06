@@ -32,10 +32,10 @@ bool hasConstraint(size_t sourceIdx, size_t targetIdx, const Constraints &constr
 
 Constraint buildOdometryConstraint(size_t sourceIdx, size_t targetIdx, const SubmapCollection &submaps) {
 	const double mapVoxelSize = getMapVoxelSize(submaps.getParameters().mapBuilder_,
-			voxelSizeCorrespondenceSearchMapVoxelSizeIsZero);
+			magic::voxelSizeCorrespondenceSearchIfMapVoxelSizeIsZero);
 	Constraint c = buildConstraint(sourceIdx, targetIdx, submaps, true,
-			voxelExpansionFactorIcpCorrespondenceDistance * mapVoxelSize,
-			voxelExpansionFactorOverlapComputation * mapVoxelSize, true,
+			magic::voxelExpansionFactorIcpCorrespondenceDistance * mapVoxelSize,
+			magic::voxelExpansionFactorOverlapComputation * mapVoxelSize, true,
 			!submaps.getParameters().isRefineOdometryConstraintsBetweenSubmaps_);
 	c.isOdometryConstraint_ = true;
 	return c;
@@ -48,7 +48,7 @@ Constraint buildConstraint(size_t sourceIdx, size_t targetIdx, const SubmapColle
 	PointCloud source = submaps.getSubmap(sourceIdx).getMapPointCloud();
 	PointCloud target = submaps.getSubmap(targetIdx).getMapPointCloud();
 	const double mapVoxelSize = getMapVoxelSize(submaps.getParameters().mapBuilder_,
-			voxelSizeCorrespondenceSearchMapVoxelSizeIsZero);
+			magic::voxelSizeCorrespondenceSearchIfMapVoxelSizeIsZero);
 
 	if (isComputeOverlap) {
 		std::vector<size_t> sourceIdxs, targetIdxs;
@@ -63,7 +63,7 @@ Constraint buildConstraint(size_t sourceIdx, size_t targetIdx, const SubmapColle
 	icpResult.transformation_.setIdentity();
 	if (!isSkipIcpRefinement) {
 		open3d::pipelines::registration::ICPConvergenceCriteria criteria;
-		criteria.max_iteration_ = icpRunUntilConvergenceNumberOfIterations; // i.e. run until convergence
+		criteria.max_iteration_ = magic::icpRunUntilConvergenceNumberOfIterations; // i.e. run until convergence
 		icpResult = open3d::pipelines::registration::RegistrationICP(source, target, icpMaxCorrespondenceDistance,
 				Eigen::Matrix4d::Identity(), open3d::pipelines::registration::TransformationEstimationPointToPlane(),
 				criteria);

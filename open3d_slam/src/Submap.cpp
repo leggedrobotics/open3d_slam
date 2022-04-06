@@ -8,6 +8,7 @@
 #include "open3d_slam/Submap.hpp"
 #include "open3d_slam/helpers.hpp"
 #include "open3d_slam/assert.hpp"
+#include "open3d_slam/magic.hpp"
 
 #include <algorithm>
 #include <numeric>
@@ -38,6 +39,10 @@ size_t Submap::getParentId() const {
 
 bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan,
 		const Transform &mapToRangeSensor, const Time &time, bool isPerformCarving) {
+
+	if (preProcessedScan.IsEmpty()){
+		return true;
+	}
 
 	if (mapCloud_.points_.empty()) {
 		creationTime_ = time;
@@ -173,7 +178,10 @@ void Submap::update(const MapperParameters &p) {
 	denseMapCropper_ = croppingVolumeFactory(p.denseMapBuilder_.cropper_);
 	denseMap_ = std::move(VoxelizedPointCloud(Eigen::Vector3d::Constant(p.denseMapBuilder_.mapVoxelSize_)));
 	//todo remove magic
-	voxelMap_ = std::move(VoxelMap(Eigen::Vector3d::Constant(2.5*p.mapBuilder_.mapVoxelSize_)));
+	voxelMap_ = std::move(
+			VoxelMap(
+					Eigen::Vector3d::Constant(
+							magic::voxelExpansionFactorAdjacencyBasedRevisiting * p.mapBuilder_.mapVoxelSize_)));
 }
 
 bool Submap::isEmpty() const {

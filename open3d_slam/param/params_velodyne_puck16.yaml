@@ -95,7 +95,7 @@ mapping:
     consistancy_check:
       max_drift_roll: 70.0 #deg
       max_drift_pitch: 70.0 # deg
-      max_drift_yaw: 70.0 #deg
+      max_drift_yaw: 370.0 #deg
     
     
     
@@ -125,7 +125,10 @@ visualization:
   submaps_voxel_size: 0.2
   visualize_every_n_msec: 300.0
   
-  
+saving_parameters:
+  save_at_mission_end: true
+  save_map: true
+  save_submaps: true
 
 
   

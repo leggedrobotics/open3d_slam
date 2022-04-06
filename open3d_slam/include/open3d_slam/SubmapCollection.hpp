@@ -62,13 +62,15 @@ public:
 	TimestampedSubmapIds popLoopClosureCandidates();
 
 
-	void dumpToFile(const std::string &folderPath, const std::string &filename) const;
+	bool dumpToFile(const std::string &folderPath, const std::string &filename) const;
 	void transform(const OptimizedTransforms &transformIncrements);
 	void updateAdjacencyMatrix(const Constraints &loopClosureConstraints);
 	const Constraints &getOdometryConstraints() const;
 
 	const MapperParameters &getParameters() const;
 	void setFolderPath(const std::string &folderPath);
+
+	void forceNewSubmapCreation();
 
 private:
 	bool isSwitchingSubmapsConsistant(const PointCloud &scan, size_t newActiveSubmapCandidate, const Transform &mapToRangeSensor) const;
@@ -80,6 +82,7 @@ private:
 	std::vector<size_t> getAllSubmapIdxs() const;
 
 	Transform mapToRangeSensor_ = Transform::Identity();
+	Time timestamp_;
 	std::vector<Submap> submaps_;
 	size_t activeSubmapIdx_ = 0;
 	MapperParameters params_;
@@ -95,7 +98,7 @@ private:
 	Constraints odometryConstraints_;
 	CircularBuffer<ScanTimeTransform> overlapScansBuffer_;
 	std::string savingDataFolderPath_;
-
+	bool isForceNewSubmapCreation_ = false;
 };
 
 } // namespace o3d_slam

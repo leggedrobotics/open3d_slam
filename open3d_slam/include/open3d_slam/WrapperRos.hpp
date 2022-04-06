@@ -26,7 +26,8 @@
 #include "open3d_slam/CircularBuffer.hpp"
 #include "open3d_slam/ThreadSafeBuffer.hpp"
 #include "open3d_slam/Constraint.hpp"
-
+#include "open3d_slam_msgs/SaveMap.h"
+#include "open3d_slam_msgs/SaveSubmaps.h"
 
 namespace o3d_slam {
 
@@ -64,6 +65,12 @@ public:
 	size_t getOdometryBufferSizeLimit() const;
 	size_t getMappingBufferSizeLimit() const;
 	std::pair<PointCloud,Time> getLatestRegisteredCloudTimestampPair() const;
+	void finishProcessing();
+
+	bool saveMap(const std::string &directory);
+	bool saveSubmaps(const std::string &directory);
+	bool saveMapCallback(open3d_slam_msgs::SaveMap::Request &req,open3d_slam_msgs::SaveMap::Response &res);
+	bool saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request &req,open3d_slam_msgs::SaveSubmaps::Response &res);
 
 private:
 
@@ -83,7 +90,7 @@ private:
 	ros::NodeHandlePtr nh_;
 	std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster_;
 	ros::Publisher odometryInputPub_,mappingInputPub_,submapOriginsPub_, assembledMapPub_, denseMapPub_, submapsPub_, meshPub_;
-
+	ros::ServiceServer saveMapSrv_,saveSubmapsSrv_;
 
 	// non ros types
 	CircularBuffer<RegisteredPointCloud> registeredCloudBuffer_;
@@ -100,7 +107,7 @@ private:
 	std::shared_ptr<Mapper> mapper_;
 	std::shared_ptr<SubmapCollection> submaps_;
 	std::shared_ptr<OptimizationProblem> optimizationProblem_;
-	std::string folderPath_;
+	std::string folderPath_, mapSavingFolderPath_;
 	std::thread odometryWorker_, mappingWorker_, loopClosureWorker_, denseMapWorker_;
 	Timer mappingStatisticsTimer_,odometryStatisticsTimer_, visualizationUpdateTimer_, denseMapVisualizationUpdateTimer_, denseMapStatiscticsTimer_;
 	bool isVisualizationFirstTime_ = true;
@@ -110,7 +117,8 @@ private:
 	bool isPublishMapsThreadRunning_ = false;
 	bool isPublishDenseMapThreadRunning_ = false;
 	Timer mapperOnlyTimer_;
-
+	SavingParameters savingParameters_;
+	Time latestMeasurementTimestamp_;
 };
 
 } // namespace o3d_slam

@@ -92,6 +92,12 @@ void SubmapCollection::insertBufferedScans(Submap *submap) {
 }
 
 void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor, const PointCloud &scan) {
+	if (isForceNewSubmapCreation_){
+		createNewSubmap(mapToRangeSensor_);
+		isForceNewSubmapCreation_ = false;
+		return;
+	}
+
 	if (numScansMergedInActiveSubmap_ < params_.submaps_.minNumRangeData_) {
 		return;
 	}
@@ -152,10 +158,20 @@ const Submap& SubmapCollection::getActiveSubmap() const {
 	return submaps_.at(activeSubmapIdx_);
 }
 
+void SubmapCollection::forceNewSubmapCreation(){
+	if (submaps_.empty()){
+		return;
+	}
+	isForceNewSubmapCreation_ = true;
+	insertScan(PointCloud(),PointCloud(), mapToRangeSensor_,timestamp_);
+	isForceNewSubmapCreation_ = false;
+}
+
 bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan,
 		const Transform &mapToRangeSensor, const Time &timestamp) {
 
 	mapToRangeSensor_ = mapToRangeSensor;
+	timestamp_ = timestamp;
 	if (submaps_.empty()) {
 		createNewSubmap(mapToRangeSensor_);
 		submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, true);
@@ -248,12 +264,14 @@ Constraints SubmapCollection::buildLoopClosureConstraints(
 	return retVal;
 }
 
-void SubmapCollection::dumpToFile(const std::string &folderPath, const std::string &filename) const {
+bool SubmapCollection::dumpToFile(const std::string &folderPath, const std::string &filename) const {
+	bool result = true;
 	for (size_t i = 0; i < submaps_.size(); ++i) {
 		auto copy = submaps_.at(i).getMapPointCloud();
 		const std::string fullPath = folderPath + "/" + filename + "_" + std::to_string(i) + ".pcd";
-		open3d::io::WritePointCloudToPCD(fullPath, copy, open3d::io::WritePointCloudOption());
+		result = result && open3d::io::WritePointCloudToPCD(fullPath, copy, open3d::io::WritePointCloudOption());
 	}
+	return result;
 }
 
 void SubmapCollection::transform(const OptimizedTransforms &transformIncrements) {

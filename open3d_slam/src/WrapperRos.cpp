@@ -71,6 +71,18 @@ WrapperRos::~WrapperRos() {
 			<< mapperOnlyTimer_.getAvgMeasurementMsec() << " msec , frequency: "
 			<< 1e3 / mapperOnlyTimer_.getAvgMeasurementMsec() << " Hz \n";
 
+	if (savingParameters_.isSaveAtMissionEnd_){
+		std::cout << "Saving maps .... \n";
+		if (savingParameters_.isSaveMap_){
+			saveMap(mapSavingFolderPath_);
+		}
+		if (savingParameters_.isSaveSubmaps_){
+			saveSubmaps(mapSavingFolderPath_);
+		}
+		std::cout << "All done! \n";
+		std::cout << "Maps saved in " << mapSavingFolderPath_ << "\n";
+
+	}
 }
 
 size_t WrapperRos::getOdometryBufferSize() const {
@@ -108,6 +120,44 @@ std::pair<PointCloud, Time> WrapperRos::getLatestRegisteredCloudTimestampPair() 
 	return {c.raw_.cloud_,c.raw_.time_};
 }
 
+void WrapperRos::finishProcessing() {
+	while (ros::ok()) {
+		if (!mappingBuffer_.empty()) {
+			ROS_INFO_STREAM_THROTTLE(1.0, "Wait for the buffer to be emptied");
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			continue;
+		} else {
+			ROS_INFO_STREAM("Mapping buffer emptied");
+			break;
+		}
+	}
+	std::cout << "Finishing all submaps! \n";
+	submaps_->forceNewSubmapCreation();
+	while (ros::ok()) {
+		if (mapperParams_.isAttemptLoopClosures_) {
+			computeFeaturesIfReady();
+			attemptLoopClosuresIfReady();
+		}
+
+		if (isOptimizedGraphAvailable_) {
+			isOptimizedGraphAvailable_ = false;
+			const auto poseBeforeUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
+			std::cout << "latest pose before update: \n " << asString(poseBeforeUpdate.transform_) << "\n";
+			updateSubmapsAndTrajectory();
+			const auto poseAfterUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
+			std::cout << "latest pose after update: \n " << asString(poseAfterUpdate.transform_) << "\n";
+			publishMaps(latestMeasurementTimestamp_);
+			if (mapperParams_.isDumpSubmapsToFileBeforeAndAfterLoopClosures_) {
+				submaps_->dumpToFile(folderPath_, "after");
+			}
+			break;
+		} else {
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+	}
+	std::cout << "All submaps fnished! \n";
+}
+
 void WrapperRos::initialize() {
 
 	odometryInputPub_ = nh_->advertise<sensor_msgs::PointCloud2>("odom_input", 1, true);
@@ -119,11 +169,14 @@ void WrapperRos::initialize() {
 	submapsPub_ = nh_->advertise<sensor_msgs::PointCloud2>("submaps", 1, true);
 	submapOriginsPub_ = nh_->advertise<visualization_msgs::MarkerArray>("submap_origins", 1, true);
 
+	saveMapSrv_ = nh_->advertiseService("save_map",&WrapperRos::saveMapCallback, this);
+	saveSubmapsSrv_ = nh_->advertiseService("save_submaps",&WrapperRos::saveSubmapsCallback, this);
+
 	//	auto &logger = open3d::utility::Logger::GetInstance();
 	//	logger.SetVerbosityLevel(open3d::utility::VerbosityLevel::Debug);
 
 	folderPath_ = ros::package::getPath("open3d_slam") + "/data/";
-
+	mapSavingFolderPath_ = nh_->param<std::string>("map_saving_folder", folderPath_);
 	const std::string paramFile = nh_->param<std::string>("parameter_file_path", "");
 	std::cout << "loading params from: " << paramFile << "\n";
 
@@ -152,6 +205,8 @@ void WrapperRos::initialize() {
 	// set the verobsity for timing statistics
 	Timer::isDisablePrintInDestructor_ = !mapperParams_.isPrintTimingStatistics_;
 
+	loadParameters(paramFile,&savingParameters_);
+
 }
 
 void WrapperRos::start() {
@@ -172,6 +227,30 @@ void WrapperRos::start() {
 		});
 	}
 
+}
+
+bool WrapperRos::saveMap(const std::string &directory) {
+	PointCloud map = mapper_->getAssembledMapPointCloud();
+	createDirectoryOrNoActionIfExists(directory);
+	const std::string filename = directory + "map.pcd";
+	return saveToFile(filename, map);
+}
+bool WrapperRos::saveSubmaps(const std::string &directory) {
+	createDirectoryOrNoActionIfExists(directory);
+	const bool savingResult = mapper_->getSubmaps().dumpToFile(directory, "submap");
+	return savingResult;
+}
+
+bool WrapperRos::saveMapCallback(open3d_slam_msgs::SaveMap::Request &req,
+		open3d_slam_msgs::SaveMap::Response &res) {
+	const bool savingResult = saveMap(mapSavingFolderPath_);
+	res.statusMessage = savingResult ? "Map saved to: " + mapSavingFolderPath_ : "Error while saving map";
+	return true;
+}
+bool WrapperRos::saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request &req,open3d_slam_msgs::SaveSubmaps::Response &res){
+	const bool savingResult =saveSubmaps(mapSavingFolderPath_);
+	res.statusMessage = savingResult ? "Submaps saved to: " + mapSavingFolderPath_ : "Error while saving submaps";
+	return true;
 }
 
 void WrapperRos::odometryWorker() {
@@ -226,7 +305,7 @@ void WrapperRos::mappingWorker() {
 		}
 		mappingStatisticsTimer_.startStopwatch();
 		const TimestampedPointCloud measurement = mappingBuffer_.pop();
-
+		latestMeasurementTimestamp_ = measurement.time_;
 		if (!odometry_->getBuffer().has(measurement.time_)) {
 			std::cout << "Weird, the odom buffer does not seem to have the transform!!! \n";
 			std::cout << "odom buffer size: " << odometry_->getBuffer().size() << "/"

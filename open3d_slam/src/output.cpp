@@ -14,6 +14,7 @@
 #include <memory>
 #include <Eigen/Dense>
 #include <open3d/io/PointCloudIO.h>
+#include <boost/filesystem.hpp>
 
 namespace o3d_slam {
 
@@ -29,14 +30,19 @@ std::string asString(const Transform &T) {
 
 }
 
-void saveToFile(const std::string &filename, const PointCloud &cloud) {
+bool saveToFile(const std::string &filename, const PointCloud &cloud) {
 	PointCloud copy = cloud;
 	std::string nameWithCorrectSuffix = filename;
 	size_t found = filename.find(".pcd");
 	if (found == std::string::npos) {
 		nameWithCorrectSuffix = filename + ".pcd";
 	}
-	open3d::io::WritePointCloudToPCD(nameWithCorrectSuffix, copy, open3d::io::WritePointCloudOption());
+	return open3d::io::WritePointCloudToPCD(nameWithCorrectSuffix, copy, open3d::io::WritePointCloudOption());
+}
+
+bool createDirectoryOrNoActionIfExists(const std::string &directory){
+	boost::filesystem::path dir(directory);
+	return boost::filesystem::create_directory(dir);
 }
 
 } // namespace o3d_slam

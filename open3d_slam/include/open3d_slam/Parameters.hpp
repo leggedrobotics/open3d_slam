@@ -177,7 +177,14 @@ struct VisualizationParameters {
 	double visualizeEveryNmsec_ = 250.0;
 };
 
+struct SavingParameters {
+	bool isSaveAtMissionEnd_ = false;
+	bool isSaveMap_ = false;
+	bool isSaveSubmaps_ = false;
+};
 
+void loadParameters(const std::string &filename, SavingParameters *p);
+void loadParameters(const YAML::Node &node, SavingParameters *p);
 void loadParameters(const std::string &filename, PlaceRecognitionConsistancyCheckParameters *p);
 void loadParameters(const YAML::Node &node, PlaceRecognitionConsistancyCheckParameters *p);
 void loadParameters(const std::string &filename, PlaceRecognitionParameters *p);
