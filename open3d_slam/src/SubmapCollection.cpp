@@ -248,12 +248,14 @@ Constraints SubmapCollection::buildLoopClosureConstraints(
 	return retVal;
 }
 
-void SubmapCollection::dumpToFile(const std::string &folderPath, const std::string &filename) const {
+bool SubmapCollection::dumpToFile(const std::string &folderPath, const std::string &filename) const {
+	bool result = true;
 	for (size_t i = 0; i < submaps_.size(); ++i) {
 		auto copy = submaps_.at(i).getMapPointCloud();
 		const std::string fullPath = folderPath + "/" + filename + "_" + std::to_string(i) + ".pcd";
-		open3d::io::WritePointCloudToPCD(fullPath, copy, open3d::io::WritePointCloudOption());
+		result = result && open3d::io::WritePointCloudToPCD(fullPath, copy, open3d::io::WritePointCloudOption());
 	}
+	return result;
 }
 
 void SubmapCollection::transform(const OptimizedTransforms &transformIncrements) {

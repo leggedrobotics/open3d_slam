@@ -26,7 +26,9 @@ std::string string_format( const std::string& format, Args ... args )
 
 
 std::string asString(const Transform &T);
-void saveToFile(const std::string &filename, const PointCloud &cloud);
+bool saveToFile(const std::string &filename, const PointCloud &cloud);
 
+//outputs true if directory has been created
+bool createDirectoryOrNoActionIfExists(const std::string &directory);
 
 } // namespace o3d_slam

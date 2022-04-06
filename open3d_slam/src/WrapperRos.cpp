@@ -119,11 +119,14 @@ void WrapperRos::initialize() {
 	submapsPub_ = nh_->advertise<sensor_msgs::PointCloud2>("submaps", 1, true);
 	submapOriginsPub_ = nh_->advertise<visualization_msgs::MarkerArray>("submap_origins", 1, true);
 
+	saveMapSrv_ = nh_->advertiseService("save_map",&WrapperRos::saveMapCallback, this);
+	saveSubmapsSrv_ = nh_->advertiseService("save_submaps",&WrapperRos::saveSubmapsCallback, this);
+
 	//	auto &logger = open3d::utility::Logger::GetInstance();
 	//	logger.SetVerbosityLevel(open3d::utility::VerbosityLevel::Debug);
 
 	folderPath_ = ros::package::getPath("open3d_slam") + "/data/";
-
+	mapSavingFolderPath_ = nh_->param<std::string>("map_saving_folder", folderPath_);
 	const std::string paramFile = nh_->param<std::string>("parameter_file_path", "");
 	std::cout << "loading params from: " << paramFile << "\n";
 
@@ -172,6 +175,23 @@ void WrapperRos::start() {
 		});
 	}
 
+}
+
+
+bool WrapperRos::saveMapCallback(open3d_slam_msgs::SaveMap::Request &req,
+		open3d_slam_msgs::SaveMap::Response &res) {
+	PointCloud map = mapper_->getAssembledMapPointCloud();
+	createDirectoryOrNoActionIfExists(mapSavingFolderPath_);
+	const std::string filename = mapSavingFolderPath_ + "map.pcd";
+	const bool savingResult = saveToFile(filename, map);
+	res.statusMessage = savingResult ? "Saved to: " + filename : "Error while saving map";
+	return true;
+}
+bool WrapperRos::saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request &req,open3d_slam_msgs::SaveSubmaps::Response &res){
+	createDirectoryOrNoActionIfExists(mapSavingFolderPath_);
+	const bool savingResult =mapper_->getSubmaps().dumpToFile(mapSavingFolderPath_, "submap");
+	res.statusMessage = savingResult ? "Submaps saved to: " + mapSavingFolderPath_ : "Error while saving submaps";
+	return true;
 }
 
 void WrapperRos::odometryWorker() {

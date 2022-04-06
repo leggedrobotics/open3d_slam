@@ -62,7 +62,7 @@ public:
 	TimestampedSubmapIds popLoopClosureCandidates();
 
 
-	void dumpToFile(const std::string &folderPath, const std::string &filename) const;
+	bool dumpToFile(const std::string &folderPath, const std::string &filename) const;
 	void transform(const OptimizedTransforms &transformIncrements);
 	void updateAdjacencyMatrix(const Constraints &loopClosureConstraints);
 	const Constraints &getOdometryConstraints() const;
