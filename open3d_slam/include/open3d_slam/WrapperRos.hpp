@@ -66,6 +66,9 @@ public:
 	size_t getMappingBufferSizeLimit() const;
 	std::pair<PointCloud,Time> getLatestRegisteredCloudTimestampPair() const;
 
+
+	bool saveMap(const std::string &directory);
+	bool saveSubmaps(const std::string &directory);
 	bool saveMapCallback(open3d_slam_msgs::SaveMap::Request &req,open3d_slam_msgs::SaveMap::Response &res);
 	bool saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request &req,open3d_slam_msgs::SaveSubmaps::Response &res);
 
@@ -114,7 +117,7 @@ private:
 	bool isPublishMapsThreadRunning_ = false;
 	bool isPublishDenseMapThreadRunning_ = false;
 	Timer mapperOnlyTimer_;
-
+	SavingParameters savingParameters_;
 };
 
 } // namespace o3d_slam

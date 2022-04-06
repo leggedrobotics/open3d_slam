@@ -125,7 +125,10 @@ visualization:
   submaps_voxel_size: 0.2
   visualize_every_n_msec: 300.0
   
-  
+saving_parameters:
+  save_at_mission_end: true
+  save_map: true
+  save_submaps: true
 
 
   

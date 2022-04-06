@@ -9,6 +9,19 @@
 
 namespace o3d_slam {
 
+void loadParameters(const std::string &filename, SavingParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+		if (basenode.IsNull()) {
+			throw std::runtime_error("MapSavingParameters::loadParameters loading failed");
+		}
+		loadParameters(basenode["saving_parameters"], p);
+}
+void loadParameters(const YAML::Node &node, SavingParameters *p){
+	p->isSaveAtMissionEnd_ = node["save_at_mission_end"].as<bool>();
+	p->isSaveMap_ = node["save_map"].as<bool>();
+	p->isSaveSubmaps_ = node["save_submaps"].as<bool>();
+}
+
 void loadParameters(const std::string &filename, PlaceRecognitionConsistancyCheckParameters *p){
 	YAML::Node basenode = YAML::LoadFile(filename);
 		if (basenode.IsNull()) {

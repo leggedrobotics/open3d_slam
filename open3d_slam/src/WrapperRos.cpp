@@ -71,6 +71,18 @@ WrapperRos::~WrapperRos() {
 			<< mapperOnlyTimer_.getAvgMeasurementMsec() << " msec , frequency: "
 			<< 1e3 / mapperOnlyTimer_.getAvgMeasurementMsec() << " Hz \n";
 
+	if (savingParameters_.isSaveAtMissionEnd_){
+		std::cout << "Saving maps .... \n";
+		if (savingParameters_.isSaveMap_){
+			saveMap(mapSavingFolderPath_);
+		}
+		if (savingParameters_.isSaveSubmaps_){
+			saveSubmaps(mapSavingFolderPath_);
+		}
+		std::cout << "All done! \n";
+		std::cout << "Maps saved in " << mapSavingFolderPath_ << "\n";
+
+	}
 }
 
 size_t WrapperRos::getOdometryBufferSize() const {
@@ -155,6 +167,8 @@ void WrapperRos::initialize() {
 	// set the verobsity for timing statistics
 	Timer::isDisablePrintInDestructor_ = !mapperParams_.isPrintTimingStatistics_;
 
+	loadParameters(paramFile,&savingParameters_);
+
 }
 
 void WrapperRos::start() {
@@ -177,19 +191,26 @@ void WrapperRos::start() {
 
 }
 
+bool WrapperRos::saveMap(const std::string &directory) {
+	PointCloud map = mapper_->getAssembledMapPointCloud();
+	createDirectoryOrNoActionIfExists(directory);
+	const std::string filename = directory + "map.pcd";
+	return saveToFile(filename, map);
+}
+bool WrapperRos::saveSubmaps(const std::string &directory) {
+	createDirectoryOrNoActionIfExists(directory);
+	const bool savingResult = mapper_->getSubmaps().dumpToFile(directory, "submap");
+	return savingResult;
+}
 
 bool WrapperRos::saveMapCallback(open3d_slam_msgs::SaveMap::Request &req,
 		open3d_slam_msgs::SaveMap::Response &res) {
-	PointCloud map = mapper_->getAssembledMapPointCloud();
-	createDirectoryOrNoActionIfExists(mapSavingFolderPath_);
-	const std::string filename = mapSavingFolderPath_ + "map.pcd";
-	const bool savingResult = saveToFile(filename, map);
-	res.statusMessage = savingResult ? "Saved to: " + filename : "Error while saving map";
+	const bool savingResult = saveMap(mapSavingFolderPath_);
+	res.statusMessage = savingResult ? "Map saved to: " + mapSavingFolderPath_ : "Error while saving map";
 	return true;
 }
 bool WrapperRos::saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request &req,open3d_slam_msgs::SaveSubmaps::Response &res){
-	createDirectoryOrNoActionIfExists(mapSavingFolderPath_);
-	const bool savingResult =mapper_->getSubmaps().dumpToFile(mapSavingFolderPath_, "submap");
+	const bool savingResult =saveSubmaps(mapSavingFolderPath_);
 	res.statusMessage = savingResult ? "Submaps saved to: " + mapSavingFolderPath_ : "Error while saving submaps";
 	return true;
 }
