@@ -93,7 +93,7 @@ private:
 	ros::NodeHandlePtr nh_;
 	std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster_;
 	ros::Publisher odometryInputPub_,mappingInputPub_,submapOriginsPub_, assembledMapPub_, denseMapPub_, submapsPub_, meshPub_;
-	ros::ServiceServer saveMapSrv_,saveSubmapsSrv_;
+	ros::ServiceServer saveMapSrv_, saveMapTransformedSrv_, saveSubmapsSrv_;
 
 	// non ros types
 	CircularBuffer<RegisteredPointCloud> registeredCloudBuffer_;

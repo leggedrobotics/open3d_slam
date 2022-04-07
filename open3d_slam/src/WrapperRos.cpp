@@ -171,6 +171,7 @@ void WrapperRos::initialize() {
 	submapOriginsPub_ = nh_->advertise<visualization_msgs::MarkerArray>("submap_origins", 1, true);
 
 	saveMapSrv_ = nh_->advertiseService("save_map",&WrapperRos::saveMapCallback, this);
+        saveMapTransformedSrv_ = nh_->advertiseService("save_map_transformed", &WrapperRos::saveMapTransformedCallback, this);
 	saveSubmapsSrv_ = nh_->advertiseService("save_submaps",&WrapperRos::saveSubmapsCallback, this);
 
 	//	auto &logger = open3d::utility::Logger::GetInstance();
