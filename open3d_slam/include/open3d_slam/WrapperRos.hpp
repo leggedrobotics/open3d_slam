@@ -27,6 +27,7 @@
 #include "open3d_slam/ThreadSafeBuffer.hpp"
 #include "open3d_slam/Constraint.hpp"
 #include "open3d_slam_msgs/SaveMap.h"
+#include "open3d_slam_msgs/SaveMapTransformed.h"
 #include "open3d_slam_msgs/SaveSubmaps.h"
 
 namespace o3d_slam {
@@ -68,8 +69,10 @@ public:
 	void finishProcessing();
 
 	bool saveMap(const std::string &directory);
+        bool saveMapTransformed(const std::string &directory, const Transform &transform, std::string frameId);
 	bool saveSubmaps(const std::string &directory);
 	bool saveMapCallback(open3d_slam_msgs::SaveMap::Request &req,open3d_slam_msgs::SaveMap::Response &res);
+        bool saveMapTransformedCallback(open3d_slam_msgs::SaveMapTransformed::Request &req,open3d_slam_msgs::SaveMapTransformed::Response &res);
 	bool saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request &req,open3d_slam_msgs::SaveSubmaps::Response &res);
 
 private:
