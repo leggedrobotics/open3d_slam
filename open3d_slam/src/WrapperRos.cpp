@@ -240,10 +240,10 @@ bool WrapperRos::saveMap(const std::string &directory) {
 
 bool WrapperRos::saveMapTransformed(const std::string &directory, const Transform &transform, std::string frameId){
   PointCloud map = mapper_->getAssembledMapPointCloud();
-  auto transformedPointCloud = o3d_slam::transform(transform.matrix(), map);
+  std::shared_ptr<PointCloud> transformedPointCloudPtr = o3d_slam::transform(transform.matrix(), map);
   createDirectoryOrNoActionIfExists(directory);
   const std::string filename = directory + "map_in_frame_" + frameId + ".pcd";
-  return saveToFile(filename, map);
+  return saveToFile(filename, *transformedPointCloudPtr);
 }
 
 bool WrapperRos::saveSubmaps(const std::string &directory) {
