@@ -33,8 +33,8 @@ mapping:
       voxel_size: 0.4
       downsampling_ratio: 0.5
       scan_cropping:
-      cropping_radius_max: 40.0
-      cropping_radius_min: 0.0
+        cropping_radius_max: 40.0
+        cropping_radius_min: 0.0
         min_z: -30.0
         max_z: 30.0
         cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
