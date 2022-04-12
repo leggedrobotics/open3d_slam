@@ -69,7 +69,7 @@ public:
 	void finishProcessing();
 
 	bool saveMap(const std::string &directory);
-        bool saveMapTransformed(const std::string &directory, const Transform &transform, std::string frameId);
+        bool saveMapTransformed(const std::string &directory, const Transform &transform);
 	bool saveSubmaps(const std::string &directory);
 	bool saveMapCallback(open3d_slam_msgs::SaveMap::Request &req,open3d_slam_msgs::SaveMap::Response &res);
         bool saveMapTransformedCallback(open3d_slam_msgs::SaveMapTransformed::Request &req,open3d_slam_msgs::SaveMapTransformed::Response &res);

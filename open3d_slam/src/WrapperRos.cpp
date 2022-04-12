@@ -238,11 +238,11 @@ bool WrapperRos::saveMap(const std::string &directory) {
 	return saveToFile(filename, map);
 }
 
-bool WrapperRos::saveMapTransformed(const std::string &directory, const Transform &transform, std::string frameId){
+bool WrapperRos::saveMapTransformed(const std::string &directory, const Transform &transform){
   PointCloud map = mapper_->getAssembledMapPointCloud();
   std::shared_ptr<PointCloud> transformedPointCloudPtr = o3d_slam::transform(transform.matrix(), map);
   createDirectoryOrNoActionIfExists(directory);
-  const std::string filename = directory + "map_in_frame_" + frameId + ".pcd";
+  const std::string filename = directory + "transformed_map.pcd";
   return saveToFile(filename, *transformedPointCloudPtr);
 }
 
@@ -264,7 +264,7 @@ bool WrapperRos::saveMapTransformedCallback(open3d_slam_msgs::SaveMapTransformed
         std::string frameId = transformMsg.header.frame_id;
 
         Eigen::Isometry3d transform = tf2::transformToEigen(transformMsg);
-        const bool savingResult = saveMapTransformed(mapSavingFolderPath_, transform, frameId);
+        const bool savingResult = saveMapTransformed(mapSavingFolderPath_, transform);
         res.statusMessage = savingResult ? "Map saved to: " + mapSavingFolderPath_ : "Error while saving map";
         return true;
 }
