@@ -26,6 +26,7 @@
 #include "open3d_slam/Odometry.hpp"
 #include "open3d_conversions/open3d_conversions.h"
 #include <open3d_slam_msgs/PolygonMesh.h>
+#include "tf2_eigen/tf2_eigen.h"
 
 #ifdef open3d_slam_OPENMP_FOUND
 #include <omp.h>
@@ -170,6 +171,7 @@ void WrapperRos::initialize() {
 	submapOriginsPub_ = nh_->advertise<visualization_msgs::MarkerArray>("submap_origins", 1, true);
 
 	saveMapSrv_ = nh_->advertiseService("save_map",&WrapperRos::saveMapCallback, this);
+        saveMapTransformedSrv_ = nh_->advertiseService("save_map_transformed", &WrapperRos::saveMapTransformedCallback, this);
 	saveSubmapsSrv_ = nh_->advertiseService("save_submaps",&WrapperRos::saveSubmapsCallback, this);
 
 	//	auto &logger = open3d::utility::Logger::GetInstance();
@@ -235,6 +237,15 @@ bool WrapperRos::saveMap(const std::string &directory) {
 	const std::string filename = directory + "map.pcd";
 	return saveToFile(filename, map);
 }
+
+bool WrapperRos::saveMapTransformed(const std::string &directory, const Transform &transform){
+  PointCloud map = mapper_->getAssembledMapPointCloud();
+  std::shared_ptr<PointCloud> transformedPointCloudPtr = o3d_slam::transform(transform.matrix(), map);
+  createDirectoryOrNoActionIfExists(directory);
+  const std::string filename = directory + "transformed_map.pcd";
+  return saveToFile(filename, *transformedPointCloudPtr);
+}
+
 bool WrapperRos::saveSubmaps(const std::string &directory) {
 	createDirectoryOrNoActionIfExists(directory);
 	const bool savingResult = mapper_->getSubmaps().dumpToFile(directory, "submap");
@@ -247,6 +258,17 @@ bool WrapperRos::saveMapCallback(open3d_slam_msgs::SaveMap::Request &req,
 	res.statusMessage = savingResult ? "Map saved to: " + mapSavingFolderPath_ : "Error while saving map";
 	return true;
 }
+
+bool WrapperRos::saveMapTransformedCallback(open3d_slam_msgs::SaveMapTransformed::Request &req, open3d_slam_msgs::SaveMapTransformed::Response &res) {
+        geometry_msgs::TransformStamped transformMsg = req.transform;
+        std::string frameId = transformMsg.header.frame_id;
+
+        Eigen::Isometry3d transform = tf2::transformToEigen(transformMsg);
+        const bool savingResult = saveMapTransformed(mapSavingFolderPath_, transform);
+        res.statusMessage = savingResult ? "Map saved to: " + mapSavingFolderPath_ : "Error while saving map";
+        return true;
+}
+
 bool WrapperRos::saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request &req,open3d_slam_msgs::SaveSubmaps::Response &res){
 	const bool savingResult =saveSubmaps(mapSavingFolderPath_);
 	res.statusMessage = savingResult ? "Submaps saved to: " + mapSavingFolderPath_ : "Error while saving submaps";
