@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+
+	<arg name="launch_rviz" default="true" />
+	<arg name="cloud_topic" default="/os1_node/packets_as_clouds" />
+	<arg name="play_delay" default="0.4" />
+	<arg name="play_rate" default="1.0" />
+	<arg name="use_sim_time" default="true" />
+
+	<arg name="parameter_file_path" default="$(find open3d_slam_ros)/param/params_ouster_os1_64.yaml"/>
+	<arg name="bag_filename" default="young_forest.bag" /> 
+	<arg name="bag_filepath" 
+		default="$(find open3d_slam_ros)/data/$(arg bag_filename)" /> 
+
+	<include file="$(find open3d_slam_ros)/launch/mapping.launch">
+		<arg name="cloud_topic" value="$(arg cloud_topic)"/>
+		<arg name="launch_rviz" value="$(arg launch_rviz)"/>
+		<arg name="parameter_file_path" value="$(arg parameter_file_path)"/>
+		<arg name="num_accumulated_range_data" value="32"/>
+		<arg name="use_sim_time" value="$(arg use_sim_time)"/>
+	</include>
+
+	<node pkg="rosbag" type="play" name="rosbag"
+		args="'$(arg bag_filepath)' --delay '$(arg play_delay)' --rate '$(arg play_rate)' --clock -s 0" />
+	<!-- append - -loop for looping -->
+
+</launch>

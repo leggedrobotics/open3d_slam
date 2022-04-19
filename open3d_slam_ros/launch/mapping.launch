@@ -7,8 +7,8 @@
 	<arg name="cloud_topic" default="/ouster_points_self_filtered" />
 	<arg name="image_topic" default="/camMainView/image_raw" />
 	<arg name="use_rgb_from_camera" default="false" />
-	<arg name="parameter_file_path" default="$(find open3d_slam)/param/params_ouster_os0_128.yaml"/>
-	<arg name="map_saving_folder" default="$(find open3d_slam)/data/maps/"/>
+	<arg name="parameter_file_path" default="$(find open3d_slam_ros)/param/params_ouster_os0_128.yaml"/>
+	<arg name="map_saving_folder" default="$(find open3d_slam_ros)/data/maps/"/>
 	<arg name="num_accumulated_range_data" default="1"/>
 	<arg name="is_read_from_rosbag" default="false"/>
 	<arg name="rosbag_filepath" default=""/>
@@ -16,7 +16,7 @@
 
 	<param name="/use_sim_time" value="$(arg use_sim_time)" />
 	
-	<node name="mapping_node" pkg="open3d_slam"
+	<node name="mapping_node" pkg="open3d_slam_ros"
 		type="mapping_node" output="screen" launch-prefix="$(arg launch_prefix)">
 
 		<param name="cloud_topic" type="string"
@@ -39,7 +39,7 @@
 
 
 	<include
-		file="$(find open3d_slam)/launch/vis.launch"
+		file="$(find open3d_slam_ros)/launch/vis.launch"
 		if="$(arg launch_rviz)">
 	</include>
 
