@@ -339,7 +339,7 @@ void computeIndicesOfOverlappingPoints(const open3d::geometry::PointCloud &sourc
 
 Eigen::Vector3d computeCenter(const open3d::geometry::PointCloud &cloud, const std::vector<size_t> &idxs) {
 
-	assert_gt<size_t>(idxs.size(), 0);
+	assert_gt<size_t>(idxs.size(), 0,"you're trying to compute center of a empty pointcloud");
 	Eigen::Vector3d center(0.0, 0.0, 0.0);
 	for (const auto idx : idxs) {
 		center += cloud.points_.at(idx);
