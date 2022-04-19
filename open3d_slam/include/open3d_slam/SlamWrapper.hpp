@@ -81,7 +81,6 @@ protected:
 	// non ros types
 	CircularBuffer<RegisteredPointCloud> registeredCloudBuffer_;
 	CircularBuffer<TimestampedPointCloud> odometryBuffer_, mappingBuffer_;
-	CircularBuffer<Time> mesherBufffer_;
 	ThreadSafeBuffer<TimestampedSubmapId> loopClosureCandidates_;
 	MapperParameters mapperParams_;
 	LocalMapParameters localMapParams_;
@@ -102,7 +101,8 @@ protected:
 	bool isRunWorkers_ = true;
 	Timer mapperOnlyTimer_;
 	SavingParameters savingParameters_;
-	Time latestMeasurementTimestamp_;
+	Time latestScanToMapRefinementTimestamp_;
+	Time latestScanToScanRegistrationTimestamp_;
 };
 
 } // namespace o3d_slam

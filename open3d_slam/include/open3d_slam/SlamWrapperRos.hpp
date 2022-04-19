@@ -27,13 +27,17 @@ class SlamWrapperRos : public SlamWrapper {
 
 public:
 	SlamWrapperRos(ros::NodeHandlePtr nh);
-	~SlamWrapperRos() override = default;
+	~SlamWrapperRos() override;
 
 	bool saveMapCallback(open3d_slam_msgs::SaveMap::Request &req,open3d_slam_msgs::SaveMap::Response &res);
 	bool saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request &req,open3d_slam_msgs::SaveSubmaps::Response &res);
 	void loadParametersAndInitialize() override;
+	void startWorkers() override;
 
 private:
+
+	void tfWorker();
+	void visualizationWorker();
 
 	void publishMaps(const Time &time);
 	void publishDenseMap(const Time &time);
@@ -46,6 +50,10 @@ private:
 	bool isPublishMapsThreadRunning_ = false;
 	bool isVisualizationFirstTime_ = true;
 	bool isPublishDenseMapThreadRunning_ = false;
+	std::thread tfWorker_, visualizationWorker_;
+
+	Time prevPublishedTimeScanToScan_, prevPublishedTimeScanToMap_;
+
 };
 
 } // namespace o3d_slam

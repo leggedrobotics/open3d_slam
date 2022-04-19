@@ -5,7 +5,6 @@
  *      Author: jelavice
  */
 
-
 #include "open3d_slam/SlamWrapperRos.hpp"
 
 #include <chrono>
@@ -38,9 +37,68 @@ using namespace o3d_slam::frames;
 const double timingStatsEveryNsec = 15.0;
 }
 
-SlamWrapperRos::SlamWrapperRos(ros::NodeHandlePtr nh) : BASE(),
-		nh_(nh) {
+SlamWrapperRos::SlamWrapperRos(ros::NodeHandlePtr nh) :
+		BASE(), nh_(nh) {
 	tfBroadcaster_.reset(new tf2_ros::TransformBroadcaster());
+	prevPublishedTimeScanToScan_ = fromUniversal(0);
+	prevPublishedTimeScanToMap_ = fromUniversal(0);
+}
+
+SlamWrapperRos::~SlamWrapperRos() {
+
+	if (tfWorker_.joinable()) {
+		tfWorker_.join();
+		std::cout << "Joined tf worker \n";
+	}
+	if (visualizationWorker_.joinable()) {
+		visualizationWorker_.join();
+		std::cout << "Joined visualization worker \n";
+	}
+}
+
+void SlamWrapperRos::startWorkers() {
+	tfWorker_ = std::thread([this]() {
+		tfWorker();
+	});
+	visualizationWorker_ = std::thread([this]() {
+		visualizationWorker();
+	});
+
+	BASE::startWorkers();
+}
+
+void SlamWrapperRos::tfWorker() {
+
+	ros::Rate r(20.0);
+	while (ros::ok()) {
+
+		if (latestScanToScanRegistrationTimestamp_ != prevPublishedTimeScanToScan_) {
+			const Transform T = odometry_->getOdomToRangeSensor(latestScanToScanRegistrationTimestamp_);
+			ros::Time timestamp = toRos(latestScanToScanRegistrationTimestamp_);
+			o3d_slam::publishTfTransform(T.matrix(), timestamp, odomFrame, rangeSensorFrame,
+					tfBroadcaster_.get());
+			o3d_slam::publishTfTransform(T.matrix(), timestamp, mapFrame, "raw_odom_o3d",
+					tfBroadcaster_.get());
+			prevPublishedTimeScanToScan_ = latestScanToScanRegistrationTimestamp_;
+		}
+
+		if (latestScanToMapRefinementTimestamp_ != prevPublishedTimeScanToMap_) {
+			publishMapToOdomTf(latestScanToMapRefinementTimestamp_);
+			prevPublishedTimeScanToMap_ = latestScanToMapRefinementTimestamp_;
+
+		}
+
+		ros::spinOnce();
+		r.sleep();
+	}
+}
+void SlamWrapperRos::visualizationWorker() {
+	ros::Rate r(20.0);
+	while(ros::ok()){
+
+		ros::spinOnce();
+		r.sleep();
+	}
 }
 
 void SlamWrapperRos::loadParametersAndInitialize() {
@@ -54,8 +112,8 @@ void SlamWrapperRos::loadParametersAndInitialize() {
 	submapsPub_ = nh_->advertise<sensor_msgs::PointCloud2>("submaps", 1, true);
 	submapOriginsPub_ = nh_->advertise<visualization_msgs::MarkerArray>("submap_origins", 1, true);
 
-	saveMapSrv_ = nh_->advertiseService("save_map",&SlamWrapperRos::saveMapCallback, this);
-	saveSubmapsSrv_ = nh_->advertiseService("save_submaps",&SlamWrapperRos::saveSubmapsCallback, this);
+	saveMapSrv_ = nh_->advertiseService("save_map", &SlamWrapperRos::saveMapCallback, this);
+	saveSubmapsSrv_ = nh_->advertiseService("save_submaps", &SlamWrapperRos::saveSubmapsCallback, this);
 
 	//	auto &logger = open3d::utility::Logger::GetInstance();
 	//	logger.SetVerbosityLevel(open3d::utility::VerbosityLevel::Debug);
@@ -73,9 +131,11 @@ bool SlamWrapperRos::saveMapCallback(open3d_slam_msgs::SaveMap::Request &req,
 	res.statusMessage = savingResult ? "Map saved to: " + mapSavingFolderPath_ : "Error while saving map";
 	return true;
 }
-bool SlamWrapperRos::saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request &req,open3d_slam_msgs::SaveSubmaps::Response &res){
-	const bool savingResult =saveSubmaps(mapSavingFolderPath_);
-	res.statusMessage = savingResult ? "Submaps saved to: " + mapSavingFolderPath_ : "Error while saving submaps";
+bool SlamWrapperRos::saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request &req,
+		open3d_slam_msgs::SaveSubmaps::Response &res) {
+	const bool savingResult = saveSubmaps(mapSavingFolderPath_);
+	res.statusMessage =
+			savingResult ? "Submaps saved to: " + mapSavingFolderPath_ : "Error while saving submaps";
 	return true;
 }
 
@@ -83,8 +143,8 @@ void SlamWrapperRos::publishMapToOdomTf(const Time &time) {
 	const auto timestamp = toRos(time);
 	o3d_slam::publishTfTransform(mapper_->getMapToOdom(time).matrix(), timestamp, mapFrame, odomFrame,
 			tfBroadcaster_.get());
-	o3d_slam::publishTfTransform(mapper_->getMapToRangeSensor(time).matrix(), timestamp,
-			mapFrame, "raw_rs_o3d", tfBroadcaster_.get());
+	o3d_slam::publishTfTransform(mapper_->getMapToRangeSensor(time).matrix(), timestamp, mapFrame, "raw_rs_o3d",
+			tfBroadcaster_.get());
 }
 
 void SlamWrapperRos::publishDenseMap(const Time &time) {
@@ -113,7 +173,7 @@ void SlamWrapperRos::publishMaps(const Time &time) {
 		return;
 	}
 
-	if (isPublishMapsThreadRunning_){
+	if (isPublishMapsThreadRunning_) {
 		return;
 	}
 
@@ -140,5 +200,4 @@ void SlamWrapperRos::publishMaps(const Time &time) {
 }
 
 } // namespace o3d_slam
-
 

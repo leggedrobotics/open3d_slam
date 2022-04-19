@@ -250,6 +250,8 @@ void SlamWrapper::odometryWorker() {
 			continue;
 		}
 
+		latestScanToScanRegistrationTimestamp_ = measurement.time_;
+
 //		const auto timestamp = toRos(measurement.time_);
 //		o3d_slam::publishTfTransform(odometry_->getOdomToRangeSensor(measurement.time_).matrix(), timestamp,
 //				odomFrame, rangeSensorFrame, tfBroadcaster_.get());
@@ -283,7 +285,6 @@ void SlamWrapper::mappingWorker() {
 		}
 		mappingStatisticsTimer_.startStopwatch();
 		const TimestampedPointCloud measurement = mappingBuffer_.pop();
-		latestMeasurementTimestamp_ = measurement.time_;
 		if (!odometry_->getBuffer().has(measurement.time_)) {
 			std::cout << "Weird, the odom buffer does not seem to have the transform!!! \n";
 			std::cout << "odom buffer size: " << odometry_->getBuffer().size() << "/"
@@ -309,6 +310,7 @@ void SlamWrapper::mappingWorker() {
 			registeredCloud.sourceFrame_ = frames::rangeSensorFrame;
 			registeredCloud.targetFrame_ = frames::mapFrame;
 			registeredCloudBuffer_.push(registeredCloud);
+			latestScanToMapRefinementTimestamp_ = measurement.time_;
 		}
 
 		if (mapperParams_.isAttemptLoopClosures_) {
