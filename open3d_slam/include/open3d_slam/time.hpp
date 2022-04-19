@@ -81,6 +81,14 @@ ros::Time toRos(Time time);
 
 Time fromRos(const ::ros::Time& time);
 
-double readable(const Time &t);
+void updateFirstMeasurementTime(const Time &t);
+double toSecondsSinceFirstMeasurement(const Time &t);
+
+
+namespace time_internal {
+static Time firstMeasurementTime;
+static bool isFirstMeasurementTimeUpdated = false;
+}
+
 
 } /* namespace o3d_slam */

@@ -71,17 +71,19 @@ void SlamWrapperRos::tfWorker() {
 	ros::WallRate r(20.0);
 	while (ros::ok()) {
 
-		if (latestScanToScanRegistrationTimestamp_ != prevPublishedTimeScanToScan_) {
-			const Transform T = odometry_->getOdomToRangeSensor(latestScanToScanRegistrationTimestamp_);
-			ros::Time timestamp = toRos(latestScanToScanRegistrationTimestamp_);
+		const Time latestScanToScan = latestScanToScanRegistrationTimestamp_;
+		if (latestScanToScan != prevPublishedTimeScanToScan_) {
+			const Transform T = odometry_->getOdomToRangeSensor(latestScanToScan);
+			ros::Time timestamp = toRos(latestScanToScan);
 			o3d_slam::publishTfTransform(T.matrix(), timestamp, odomFrame, rangeSensorFrame, tfBroadcaster_.get());
 			o3d_slam::publishTfTransform(T.matrix(), timestamp, mapFrame, "raw_odom_o3d", tfBroadcaster_.get());
-			prevPublishedTimeScanToScan_ = latestScanToScanRegistrationTimestamp_;
+			prevPublishedTimeScanToScan_ = latestScanToScan;
 		}
 
-		if (latestScanToMapRefinementTimestamp_ != prevPublishedTimeScanToMap_) {
-			publishMapToOdomTf(latestScanToMapRefinementTimestamp_);
-			prevPublishedTimeScanToMap_ = latestScanToMapRefinementTimestamp_;
+		const Time latestScanToMap = latestScanToMapRefinementTimestamp_;
+		if (latestScanToMap != prevPublishedTimeScanToMap_) {
+			publishMapToOdomTf(latestScanToMap);
+			prevPublishedTimeScanToMap_ = latestScanToMap;
 		}
 
 		ros::spinOnce();
@@ -92,15 +94,17 @@ void SlamWrapperRos::visualizationWorker() {
 	ros::WallRate r(20.0);
 	while (ros::ok()) {
 
-		if (odometryInputPub_.getNumSubscribers() > 0 && isTimeValid(latestScanToScanRegistrationTimestamp_)) {
+		const Time scanToScanTimestamp = latestScanToScanRegistrationTimestamp_;
+		if (odometryInputPub_.getNumSubscribers() > 0 && isTimeValid(scanToScanTimestamp)) {
 			const PointCloud odomInput = odometry_->getPreProcessedCloud();
 			o3d_slam::publishCloud(odomInput, o3d_slam::frames::rangeSensorFrame,
-					toRos(latestScanToScanRegistrationTimestamp_), odometryInputPub_);
+					toRos(scanToScanTimestamp), odometryInputPub_);
 		}
 
-		if (isTimeValid(latestScanToMapRefinementTimestamp_)) {
-			publishDenseMap(latestScanToMapRefinementTimestamp_);
-			publishMaps(latestScanToMapRefinementTimestamp_);
+		const Time scanToMapTimestamp = latestScanToMapRefinementTimestamp_;
+		if (isTimeValid(scanToMapTimestamp)) {
+			publishDenseMap(scanToMapTimestamp);
+			publishMaps(scanToMapTimestamp);
 		}
 
 		ros::spinOnce();

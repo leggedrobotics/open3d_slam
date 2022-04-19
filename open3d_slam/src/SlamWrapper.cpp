@@ -93,6 +93,7 @@ size_t SlamWrapper::getMappingBufferSizeLimit() const {
 }
 
 void SlamWrapper::addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp) {
+	updateFirstMeasurementTime(timestamp);
 	const TimestampedPointCloud timestampedCloud { timestamp, cloud };
 	if (!odometryBuffer_.empty()) {
 		const auto latestTime = odometryBuffer_.peek_back().time_;
@@ -277,9 +278,9 @@ void SlamWrapper::mappingWorker() {
 			std::cout << "odom buffer size: " << odometry_->getBuffer().size() << "/"
 					<< odometry_->getBuffer().size_limit() << std::endl;
 			const auto &b = odometry_->getBuffer();
-			std::cout << "earliest: " << readable(b.earliest_time()) << std::endl;
-			std::cout << "latest: " << readable(b.latest_time()) << std::endl;
-			std::cout << "requested: " << readable(measurement.time_) << std::endl;
+			std::cout << "earliest: " << toSecondsSinceFirstMeasurement(b.earliest_time()) << std::endl;
+			std::cout << "latest: " << toSecondsSinceFirstMeasurement(b.latest_time()) << std::endl;
+			std::cout << "requested: " << toSecondsSinceFirstMeasurement(measurement.time_) << std::endl;
 		}
 		const size_t activeSubmapIdx = mapper_->getActiveSubmap().getId();
 		mapperOnlyTimer_.startStopwatch();
