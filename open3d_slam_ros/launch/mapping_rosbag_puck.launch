@@ -12,7 +12,7 @@
 
 	<arg name="parameter_file_path"
 		default="$(find open3d_slam_ros)/param/params_velodyne_puck16.yaml" />
-	<arg name="bag_filename" default="anymal_hph_hoengg.bag" />
+	<arg name="bag_filename" default="rosbags/anymal_hph_hoengg.bag" />
 	<arg name="bag_filepath"
 		default="$(find open3d_slam_ros)/data/$(arg bag_filename)" />
 

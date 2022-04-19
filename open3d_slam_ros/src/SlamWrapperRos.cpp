@@ -33,7 +33,6 @@ namespace o3d_slam {
 
 namespace {
 using namespace o3d_slam::frames;
-const double timingStatsEveryNsec = 15.0;
 }
 
 SlamWrapperRos::SlamWrapperRos(ros::NodeHandlePtr nh) :
