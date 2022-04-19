@@ -5,7 +5,7 @@
  *      Author: jelavice
  */
 #include <open3d/Open3D.h>
-#include "open3d_slam/WrapperRos.hpp"
+#include "open3d_slam/SlamWrapper.hpp"
 #include "open3d_slam/frames.hpp"
 #include "open3d_slam/helpers.hpp"
 #include "open3d_slam/helpers_ros.hpp"
@@ -26,7 +26,7 @@ using namespace o3d_slam;
 ros::NodeHandlePtr nh;
 std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
 ros::Publisher rawCloudPub;
-std::shared_ptr<WrapperRos> mapping;
+std::shared_ptr<SlamWrapper> slam;
 size_t numAccumulatedRangeDataCount = 0;
 size_t numPointCloudsReceived_ = 0;
 size_t numAccumulatedRangeDataDesired = 1;
@@ -58,13 +58,13 @@ void processCloud(const open3d::geometry::PointCloud &cloud, const ros::Time &ti
 		std::cout << "Trying to insert and empyt cloud!!! Skipping the measurement \n";
 		return;
 	}
-	mapping->addRangeScan(accumulatedCloud, fromRos(timestamp));
+	slam->addRangeScan(accumulatedCloud, fromRos(timestamp));
 //	o3d_slam::publishTfTransform(Eigen::Matrix4d::Identity(), timestamp, frames::rangeSensorFrame, frame + "_o3d",
 //			tfBroadcaster.get());
 
 	if (rawCloudPub.getNumSubscribers() > 0) {
 		if (isProcessAsFastAsPossible) {
-			std::pair<PointCloud, Time> cloudTimePair = mapping->getLatestRegisteredCloudTimestampPair();
+			std::pair<PointCloud, Time> cloudTimePair = slam->getLatestRegisteredCloudTimestampPair();
 			const bool isTimeValid = toUniversal(cloudTimePair.second) > 0;
 			const bool isCloudEmpty = cloudTimePair.first.IsEmpty();
 			if (isTimeValid && !isCloudEmpty) {
@@ -126,10 +126,10 @@ void readRosbag(const rosbag::Bag &bag, const std::string &cloudTopic) {
 				}
 //      	std::cout << "reading cloud msg with seq: " << cloud->header.seq << std::endl;
 				while (true) {
-					const bool isOdomBufferFull = mapping->getOdometryBufferSize() + 1
-							>= mapping->getOdometryBufferSizeLimit();
-					const bool isMappingBufferFull = mapping->getMappingBufferSize() + 1
-							>= mapping->getMappingBufferSizeLimit();
+					const bool isOdomBufferFull = slam->getOdometryBufferSize() + 1
+							>= slam->getOdometryBufferSizeLimit();
+					const bool isMappingBufferFull = slam->getMappingBufferSize() + 1
+							>= slam->getMappingBufferSizeLimit();
 
 					if (!isOdomBufferFull && !isMappingBufferFull) {
 						cloudCallback(cloud);
@@ -139,6 +139,7 @@ void readRosbag(const rosbag::Bag &bag, const std::string &cloudTopic) {
 					}
 					ros::spinOnce();
 					if (!ros::ok()){
+						slam->stopWorkers();
 						return;
 					}
 				} // end while
@@ -157,6 +158,7 @@ void readRosbag(const rosbag::Bag &bag, const std::string &cloudTopic) {
 			} // end if checking for the null ptr
 		} // end if checking for the right topic
 		if (!ros::ok()){
+			slam->stopWorkers();
 			return;
 		}
 	} // end foreach
@@ -165,7 +167,7 @@ void readRosbag(const rosbag::Bag &bag, const std::string &cloudTopic) {
 	const ros::Time bag_end_time = view.getEndTime();
 	std::cout << "Rosbag processing finished. Rosbag duration: " << (bag_end_time - bag_begin_time).toSec()
 			<< " Time elapsed for processing: " << rosbagTimer.elapsedSec() << " sec. \n \n";
-	mapping->finishProcessing();
+	slam->finishProcessing();
 } // end readRosbag
 
 } // namespace
@@ -191,9 +193,9 @@ int main(int argc, char **argv) {
 
 	rawCloudPub = nh->advertise<sensor_msgs::PointCloud2>("raw_cloud", 1, true);
 
-	mapping = std::make_shared<WrapperRos>(nh);
-	mapping->initialize();
-	mapping->start();
+	slam = std::make_shared<SlamWrapper>(nh);
+	slam->initialize();
+	slam->startWorkers();
 
 	ros::Subscriber cloudSub;
 	std::unique_ptr<message_filters::Synchronizer<MySyncPolicy>> syncPtr;
@@ -222,6 +224,8 @@ int main(int argc, char **argv) {
 	}
 
 	ros::spin();
+
+	slam->stopWorkers();
 
 	return 0;
 }

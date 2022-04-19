@@ -1,11 +1,11 @@
 /*
- * WrapperRos.cpp
+ * SlamWrapper.cpp
  *
  *  Created on: Nov 23, 2021
  *      Author: jelavice
  */
 
-#include "open3d_slam/WrapperRos.hpp"
+#include "open3d_slam/SlamWrapper.hpp"
 
 #include <chrono>
 #include <open3d/Open3D.h>
@@ -38,7 +38,7 @@ using namespace o3d_slam::frames;
 const double timingStatsEveryNsec = 15.0;
 }
 
-WrapperRos::WrapperRos(ros::NodeHandlePtr nh) :
+SlamWrapper::SlamWrapper(ros::NodeHandlePtr nh) :
 		nh_(nh) {
 	tfBroadcaster_.reset(new tf2_ros::TransformBroadcaster());
 	//todo magic
@@ -48,7 +48,7 @@ WrapperRos::WrapperRos(ros::NodeHandlePtr nh) :
 
 }
 
-WrapperRos::~WrapperRos() {
+SlamWrapper::~SlamWrapper() {
 	if (odometryWorker_.joinable()) {
 		odometryWorker_.join();
 		std::cout << "Joined odometry worker \n";
@@ -85,21 +85,21 @@ WrapperRos::~WrapperRos() {
 	}
 }
 
-size_t WrapperRos::getOdometryBufferSize() const {
+size_t SlamWrapper::getOdometryBufferSize() const {
 	return odometryBuffer_.size();
 }
-size_t WrapperRos::getMappingBufferSize() const {
+size_t SlamWrapper::getMappingBufferSize() const {
 	return mappingBuffer_.size();
 }
 
-size_t WrapperRos::getOdometryBufferSizeLimit() const {
+size_t SlamWrapper::getOdometryBufferSizeLimit() const {
 	return odometryBuffer_.size_limit();
 }
-size_t WrapperRos::getMappingBufferSizeLimit() const {
+size_t SlamWrapper::getMappingBufferSizeLimit() const {
 	return mappingBuffer_.size_limit();
 }
 
-void WrapperRos::addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp) {
+void SlamWrapper::addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp) {
 	const TimestampedPointCloud timestampedCloud { timestamp, cloud };
 	if (!odometryBuffer_.empty()) {
 		const auto latestTime = odometryBuffer_.peek_back().time_;
@@ -111,7 +111,7 @@ void WrapperRos::addRangeScan(const open3d::geometry::PointCloud cloud, const Ti
 	odometryBuffer_.push(timestampedCloud);
 }
 
-std::pair<PointCloud, Time> WrapperRos::getLatestRegisteredCloudTimestampPair() const {
+std::pair<PointCloud, Time> SlamWrapper::getLatestRegisteredCloudTimestampPair() const {
 	if (registeredCloudBuffer_.empty()) {
 		return {PointCloud(),Time()};
 	}
@@ -120,8 +120,8 @@ std::pair<PointCloud, Time> WrapperRos::getLatestRegisteredCloudTimestampPair() 
 	return {c.raw_.cloud_,c.raw_.time_};
 }
 
-void WrapperRos::finishProcessing() {
-	while (ros::ok()) {
+void SlamWrapper::finishProcessing() {
+	while (isRunWorkers_) {
 		if (!mappingBuffer_.empty()) {
 			ROS_INFO_STREAM_THROTTLE(1.0, "Wait for the buffer to be emptied");
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -133,7 +133,7 @@ void WrapperRos::finishProcessing() {
 	}
 	std::cout << "Finishing all submaps! \n";
 	submaps_->forceNewSubmapCreation();
-	while (ros::ok()) {
+	while (isRunWorkers_) {
 		if (mapperParams_.isAttemptLoopClosures_) {
 			computeFeaturesIfReady();
 			attemptLoopClosuresIfReady();
@@ -158,7 +158,7 @@ void WrapperRos::finishProcessing() {
 	std::cout << "All submaps fnished! \n";
 }
 
-void WrapperRos::initialize() {
+void SlamWrapper::initialize() {
 
 	odometryInputPub_ = nh_->advertise<sensor_msgs::PointCloud2>("odom_input", 1, true);
 	mappingInputPub_ = nh_->advertise<sensor_msgs::PointCloud2>("mapping_input", 1, true);
@@ -169,8 +169,8 @@ void WrapperRos::initialize() {
 	submapsPub_ = nh_->advertise<sensor_msgs::PointCloud2>("submaps", 1, true);
 	submapOriginsPub_ = nh_->advertise<visualization_msgs::MarkerArray>("submap_origins", 1, true);
 
-	saveMapSrv_ = nh_->advertiseService("save_map",&WrapperRos::saveMapCallback, this);
-	saveSubmapsSrv_ = nh_->advertiseService("save_submaps",&WrapperRos::saveSubmapsCallback, this);
+	saveMapSrv_ = nh_->advertiseService("save_map",&SlamWrapper::saveMapCallback, this);
+	saveSubmapsSrv_ = nh_->advertiseService("save_submaps",&SlamWrapper::saveSubmapsCallback, this);
 
 	//	auto &logger = open3d::utility::Logger::GetInstance();
 	//	logger.SetVerbosityLevel(open3d::utility::VerbosityLevel::Debug);
@@ -209,7 +209,7 @@ void WrapperRos::initialize() {
 
 }
 
-void WrapperRos::start() {
+void SlamWrapper::startWorkers() {
 	odometryWorker_ = std::thread([this]() {
 		odometryWorker();
 	});
@@ -229,32 +229,36 @@ void WrapperRos::start() {
 
 }
 
-bool WrapperRos::saveMap(const std::string &directory) {
+void SlamWrapper::stopWorkers(){
+	isRunWorkers_ = false;
+}
+
+bool SlamWrapper::saveMap(const std::string &directory) {
 	PointCloud map = mapper_->getAssembledMapPointCloud();
 	createDirectoryOrNoActionIfExists(directory);
 	const std::string filename = directory + "map.pcd";
 	return saveToFile(filename, map);
 }
-bool WrapperRos::saveSubmaps(const std::string &directory) {
+bool SlamWrapper::saveSubmaps(const std::string &directory) {
 	createDirectoryOrNoActionIfExists(directory);
 	const bool savingResult = mapper_->getSubmaps().dumpToFile(directory, "submap");
 	return savingResult;
 }
 
-bool WrapperRos::saveMapCallback(open3d_slam_msgs::SaveMap::Request &req,
+bool SlamWrapper::saveMapCallback(open3d_slam_msgs::SaveMap::Request &req,
 		open3d_slam_msgs::SaveMap::Response &res) {
 	const bool savingResult = saveMap(mapSavingFolderPath_);
 	res.statusMessage = savingResult ? "Map saved to: " + mapSavingFolderPath_ : "Error while saving map";
 	return true;
 }
-bool WrapperRos::saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request &req,open3d_slam_msgs::SaveSubmaps::Response &res){
+bool SlamWrapper::saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request &req,open3d_slam_msgs::SaveSubmaps::Response &res){
 	const bool savingResult =saveSubmaps(mapSavingFolderPath_);
 	res.statusMessage = savingResult ? "Submaps saved to: " + mapSavingFolderPath_ : "Error while saving submaps";
 	return true;
 }
 
-void WrapperRos::odometryWorker() {
-	while (ros::ok()) {
+void SlamWrapper::odometryWorker() {
+	while (isRunWorkers_) {
 		if (odometryBuffer_.empty()) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			continue;
@@ -297,8 +301,8 @@ void WrapperRos::odometryWorker() {
 	} // end while
 
 }
-void WrapperRos::mappingWorker() {
-	while (ros::ok()) {
+void SlamWrapper::mappingWorker() {
+	while (isRunWorkers_) {
 		if (mappingBuffer_.empty()) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			continue;
@@ -367,8 +371,8 @@ void WrapperRos::mappingWorker() {
 	}
 }
 
-void WrapperRos::denseMapWorker() {
-	while (ros::ok()) {
+void SlamWrapper::denseMapWorker() {
+	while (isRunWorkers_) {
 		if (registeredCloudBuffer_.empty()) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			continue;
@@ -395,7 +399,7 @@ void WrapperRos::denseMapWorker() {
 
 }
 
-void WrapperRos::publishMapToOdomTf(const Time &time) {
+void SlamWrapper::publishMapToOdomTf(const Time &time) {
 	const auto timestamp = toRos(time);
 	o3d_slam::publishTfTransform(mapper_->getMapToOdom(time).matrix(), timestamp, mapFrame, odomFrame,
 			tfBroadcaster_.get());
@@ -403,7 +407,7 @@ void WrapperRos::publishMapToOdomTf(const Time &time) {
 			mapFrame, "raw_rs_o3d", tfBroadcaster_.get());
 }
 
-void WrapperRos::computeFeaturesIfReady() {
+void SlamWrapper::computeFeaturesIfReady() {
 	if (submaps_->numFinishedSubmaps() > 0 && !submaps_->isComputingFeatures()) {
 		computeFeaturesResult_ = std::async(std::launch::async, [this]() {
 			const auto finishedSubmapIds = submaps_->popFinishedSubmapIds();
@@ -411,7 +415,7 @@ void WrapperRos::computeFeaturesIfReady() {
 		});
 	}
 }
-void WrapperRos::attemptLoopClosuresIfReady() {
+void SlamWrapper::attemptLoopClosuresIfReady() {
 	const auto timeout = std::chrono::milliseconds(0);
 	if (computeFeaturesResult_.valid()
 			&& computeFeaturesResult_.wait_for(timeout) == std::future_status::ready) {
@@ -422,8 +426,8 @@ void WrapperRos::attemptLoopClosuresIfReady() {
 		}
 	}
 }
-void WrapperRos::loopClosureWorker() {
-	while (ros::ok()) {
+void SlamWrapper::loopClosureWorker() {
+	while (isRunWorkers_) {
 		if (loopClosureCandidates_.empty() || isOptimizedGraphAvailable_) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 			continue;
@@ -466,7 +470,7 @@ void WrapperRos::loopClosureWorker() {
 
 }
 
-void WrapperRos::updateSubmapsAndTrajectory() {
+void SlamWrapper::updateSubmapsAndTrajectory() {
 
 	std::cout << "Updating the maps: \n";
 	const Timer t("submaps_update");
@@ -508,7 +512,7 @@ void WrapperRos::updateSubmapsAndTrajectory() {
 
 }
 
-void WrapperRos::mesherWorker() {
+void SlamWrapper::mesherWorker() {
 //	if (mesherParams_.isComputeMesh_ && !mesherBufffer_.empty() && !mapper_->getMap().points_.empty()) {
 //		PointCloud map = mapper_->getMap();
 //		o3d_slam::MaxRadiusCroppingVolume cropper(localMapParams_.croppingRadius_);
@@ -525,7 +529,7 @@ void WrapperRos::mesherWorker() {
 
 }
 
-void WrapperRos::publishDenseMap(const Time &time) {
+void SlamWrapper::publishDenseMap(const Time &time) {
 	if (denseMapVisualizationUpdateTimer_.elapsedMsec() < visualizationParameters_.visualizeEveryNmsec_) {
 		return;
 	}
@@ -545,7 +549,7 @@ void WrapperRos::publishDenseMap(const Time &time) {
 
 }
 
-void WrapperRos::publishMaps(const Time &time) {
+void SlamWrapper::publishMaps(const Time &time) {
 	if (visualizationUpdateTimer_.elapsedMsec() < visualizationParameters_.visualizeEveryNmsec_
 			&& !isVisualizationFirstTime_) {
 		return;

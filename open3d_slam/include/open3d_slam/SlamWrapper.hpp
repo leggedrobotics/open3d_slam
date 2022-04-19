@@ -1,5 +1,5 @@
 /*
- * WrapperRos.hpp
+ * SlamWrapper.hpp
  *
  *  Created on: Nov 23, 2021
  *      Author: jelavice
@@ -38,7 +38,7 @@ class SubmapCollection;
 class OptimizationProblem;
 
 
-class WrapperRos {
+class SlamWrapper {
 	struct TimestampedPointCloud {
 		Time time_;
 		PointCloud cloud_;
@@ -52,14 +52,15 @@ class WrapperRos {
 	};
 
 public:
-	WrapperRos(ros::NodeHandlePtr nh);
+	SlamWrapper(ros::NodeHandlePtr nh);
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	~WrapperRos();
+	~SlamWrapper();
 
 	void addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp);
 	void initialize();
-	void start();
+	void startWorkers();
+	void stopWorkers();
 	size_t getOdometryBufferSize() const;
 	size_t getMappingBufferSize() const;
 	size_t getOdometryBufferSizeLimit() const;
@@ -116,6 +117,7 @@ private:
 	Constraints lastLoopClosureConstraints_;
 	bool isPublishMapsThreadRunning_ = false;
 	bool isPublishDenseMapThreadRunning_ = false;
+	bool isRunWorkers_ = true;
 	Timer mapperOnlyTimer_;
 	SavingParameters savingParameters_;
 	Time latestMeasurementTimestamp_;
