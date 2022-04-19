@@ -252,19 +252,6 @@ void SlamWrapper::odometryWorker() {
 
 		latestScanToScanRegistrationTimestamp_ = measurement.time_;
 
-//		const auto timestamp = toRos(measurement.time_);
-//		o3d_slam::publishTfTransform(odometry_->getOdomToRangeSensor(measurement.time_).matrix(), timestamp,
-//				odomFrame, rangeSensorFrame, tfBroadcaster_.get());
-//		o3d_slam::publishTfTransform(odometry_->getOdomToRangeSensor(measurement.time_).matrix(), timestamp,
-//				mapFrame, "raw_odom_o3d", tfBroadcaster_.get());
-//
-//		if (odometryInputPub_.getNumSubscribers() > 0) {
-//			auto odomInput = odometry_->getPreProcessedCloud();
-//			std::thread t([this, timestamp, odomInput]() {
-//				o3d_slam::publishCloud(odomInput, o3d_slam::frames::rangeSensorFrame, timestamp, odometryInputPub_);
-//			});
-//			t.detach();
-//		}
 		const double timeMeasurement = odometryStatisticsTimer_.elapsedMsecSinceStopwatchStart();
 		odometryStatisticsTimer_.addMeasurementMsec(timeMeasurement);
 		if (mapperParams_.isPrintTimingStatistics_ && odometryStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {

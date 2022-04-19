@@ -352,6 +352,10 @@ double getMapVoxelSize(const MapBuilderParameters &p, double valueIfZero) {
 	return std::abs(p.mapVoxelSize_) <= 1e-3 ? valueIfZero : p.mapVoxelSize_;
 }
 
+bool isTimeValid(const Time &t){
+	return toUniversal(t) > 0;
+}
+
 
 std::vector<Eigen::Vector3i> getKeysOfCarvedPoints(const open3d::geometry::PointCloud &scan,
 		const VoxelizedPointCloud &cloud, const Eigen::Vector3d &sensorPosition, const SpaceCarvingParameters &param) {

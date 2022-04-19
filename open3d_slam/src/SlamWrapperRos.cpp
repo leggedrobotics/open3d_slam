@@ -10,7 +10,6 @@
 #include <chrono>
 #include <open3d/Open3D.h>
 #include "open3d_conversions/open3d_conversions.h"
-#include <open3d_slam_msgs/PolygonMesh.h>
 #include "open3d_slam/Parameters.hpp"
 #include "open3d_slam/frames.hpp"
 #include "open3d_slam/helpers.hpp"
@@ -69,23 +68,20 @@ void SlamWrapperRos::startWorkers() {
 
 void SlamWrapperRos::tfWorker() {
 
-	ros::Rate r(20.0);
+	ros::WallRate r(20.0);
 	while (ros::ok()) {
 
 		if (latestScanToScanRegistrationTimestamp_ != prevPublishedTimeScanToScan_) {
 			const Transform T = odometry_->getOdomToRangeSensor(latestScanToScanRegistrationTimestamp_);
 			ros::Time timestamp = toRos(latestScanToScanRegistrationTimestamp_);
-			o3d_slam::publishTfTransform(T.matrix(), timestamp, odomFrame, rangeSensorFrame,
-					tfBroadcaster_.get());
-			o3d_slam::publishTfTransform(T.matrix(), timestamp, mapFrame, "raw_odom_o3d",
-					tfBroadcaster_.get());
+			o3d_slam::publishTfTransform(T.matrix(), timestamp, odomFrame, rangeSensorFrame, tfBroadcaster_.get());
+			o3d_slam::publishTfTransform(T.matrix(), timestamp, mapFrame, "raw_odom_o3d", tfBroadcaster_.get());
 			prevPublishedTimeScanToScan_ = latestScanToScanRegistrationTimestamp_;
 		}
 
 		if (latestScanToMapRefinementTimestamp_ != prevPublishedTimeScanToMap_) {
 			publishMapToOdomTf(latestScanToMapRefinementTimestamp_);
 			prevPublishedTimeScanToMap_ = latestScanToMapRefinementTimestamp_;
-
 		}
 
 		ros::spinOnce();
@@ -93,8 +89,19 @@ void SlamWrapperRos::tfWorker() {
 	}
 }
 void SlamWrapperRos::visualizationWorker() {
-	ros::Rate r(20.0);
-	while(ros::ok()){
+	ros::WallRate r(20.0);
+	while (ros::ok()) {
+
+		if (odometryInputPub_.getNumSubscribers() > 0 && isTimeValid(latestScanToScanRegistrationTimestamp_)) {
+			const PointCloud odomInput = odometry_->getPreProcessedCloud();
+			o3d_slam::publishCloud(odomInput, o3d_slam::frames::rangeSensorFrame,
+					toRos(latestScanToScanRegistrationTimestamp_), odometryInputPub_);
+		}
+
+		if (isTimeValid(latestScanToMapRefinementTimestamp_)) {
+			publishDenseMap(latestScanToMapRefinementTimestamp_);
+			publishMaps(latestScanToMapRefinementTimestamp_);
+		}
 
 		ros::spinOnce();
 		r.sleep();
@@ -107,7 +114,6 @@ void SlamWrapperRos::loadParametersAndInitialize() {
 	mappingInputPub_ = nh_->advertise<sensor_msgs::PointCloud2>("mapping_input", 1, true);
 	assembledMapPub_ = nh_->advertise<sensor_msgs::PointCloud2>("assembled_map", 1, true);
 	denseMapPub_ = nh_->advertise<sensor_msgs::PointCloud2>("dense_map", 1, true);
-	meshPub_ = nh_->advertise<open3d_slam_msgs::PolygonMesh>("mesh", 1, true);
 
 	submapsPub_ = nh_->advertise<sensor_msgs::PointCloud2>("submaps", 1, true);
 	submapOriginsPub_ = nh_->advertise<visualization_msgs::MarkerArray>("submap_origins", 1, true);
@@ -151,20 +157,9 @@ void SlamWrapperRos::publishDenseMap(const Time &time) {
 	if (denseMapVisualizationUpdateTimer_.elapsedMsec() < visualizationParameters_.visualizeEveryNmsec_) {
 		return;
 	}
-	if (isPublishDenseMapThreadRunning_) {
-		return;
-	}
-
-	isPublishDenseMapThreadRunning_ = true;
-	std::thread t([this, time]() {
-		const auto denseMap = mapper_->getDenseMap(); //copy
-		const auto timestamp = toRos(time);
-		o3d_slam::publishCloud(denseMap.toPointCloud(), o3d_slam::frames::mapFrame, timestamp, denseMapPub_);
-		denseMapVisualizationUpdateTimer_.reset();
-		isPublishDenseMapThreadRunning_ = false;
-	});
-	t.detach();
-
+	const auto denseMap = mapper_->getDenseMap(); //copy
+	const auto timestamp = toRos(time);
+	o3d_slam::publishCloud(denseMap.toPointCloud(), o3d_slam::frames::mapFrame, timestamp, denseMapPub_);
 }
 
 void SlamWrapperRos::publishMaps(const Time &time) {
@@ -173,28 +168,23 @@ void SlamWrapperRos::publishMaps(const Time &time) {
 		return;
 	}
 
-	if (isPublishMapsThreadRunning_) {
-		return;
-	}
-
 	const auto timestamp = toRos(time);
-	isPublishMapsThreadRunning_ = true;
-	std::thread t([this, timestamp]() {
+	{
 		PointCloud map = mapper_->getAssembledMapPointCloud();
 		voxelize(visualizationParameters_.assembledMapVoxelSize_, &map);
 		o3d_slam::publishCloud(map, o3d_slam::frames::mapFrame, timestamp, assembledMapPub_);
-		o3d_slam::publishCloud(mapper_->getPreprocessedScan(), o3d_slam::frames::rangeSensorFrame, timestamp, mappingInputPub_);
-		o3d_slam::publishSubmapCoordinateAxes(mapper_->getSubmaps(), o3d_slam::frames::mapFrame, timestamp,
-				submapOriginsPub_);
-		if (submapsPub_.getNumSubscribers() > 0) {
-			open3d::geometry::PointCloud cloud;
-			o3d_slam::assembleColoredPointCloud(mapper_->getSubmaps(), &cloud);
-			voxelize(visualizationParameters_.submapVoxelSize_, &cloud);
-			o3d_slam::publishCloud(cloud, o3d_slam::frames::mapFrame, timestamp, submapsPub_);
-		}
-		isPublishMapsThreadRunning_ = false;
-	});
-	t.detach();
+	}
+	o3d_slam::publishCloud(mapper_->getPreprocessedScan(), o3d_slam::frames::rangeSensorFrame, timestamp,
+			mappingInputPub_);
+	o3d_slam::publishSubmapCoordinateAxes(mapper_->getSubmaps(), o3d_slam::frames::mapFrame, timestamp,
+			submapOriginsPub_);
+	if (submapsPub_.getNumSubscribers() > 0) {
+		open3d::geometry::PointCloud cloud;
+		o3d_slam::assembleColoredPointCloud(mapper_->getSubmaps(), &cloud);
+		voxelize(visualizationParameters_.submapVoxelSize_, &cloud);
+		o3d_slam::publishCloud(cloud, o3d_slam::frames::mapFrame, timestamp, submapsPub_);
+	}
+
 	visualizationUpdateTimer_.reset();
 	isVisualizationFirstTime_ = false;
 }

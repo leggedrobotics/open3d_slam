@@ -5,7 +5,6 @@
  *      Author: jelavice
  */
 
-
 #pragma once
 
 #include <ros/ros.h>
@@ -20,8 +19,7 @@
 
 namespace o3d_slam {
 
-
-class SlamWrapperRos : public SlamWrapper {
+class SlamWrapperRos: public SlamWrapper {
 
 	using BASE = SlamWrapper;
 
@@ -29,8 +27,9 @@ public:
 	SlamWrapperRos(ros::NodeHandlePtr nh);
 	~SlamWrapperRos() override;
 
-	bool saveMapCallback(open3d_slam_msgs::SaveMap::Request &req,open3d_slam_msgs::SaveMap::Response &res);
-	bool saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request &req,open3d_slam_msgs::SaveSubmaps::Response &res);
+	bool saveMapCallback(open3d_slam_msgs::SaveMap::Request &req, open3d_slam_msgs::SaveMap::Response &res);
+	bool saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request &req,
+			open3d_slam_msgs::SaveSubmaps::Response &res);
 	void loadParametersAndInitialize() override;
 	void startWorkers() override;
 
@@ -45,13 +44,11 @@ private:
 
 	ros::NodeHandlePtr nh_;
 	std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster_;
-	ros::Publisher odometryInputPub_,mappingInputPub_,submapOriginsPub_, assembledMapPub_, denseMapPub_, submapsPub_, meshPub_;
-	ros::ServiceServer saveMapSrv_,saveSubmapsSrv_;
-	bool isPublishMapsThreadRunning_ = false;
+	ros::Publisher odometryInputPub_, mappingInputPub_, submapOriginsPub_, assembledMapPub_, denseMapPub_,
+			submapsPub_;
+	ros::ServiceServer saveMapSrv_, saveSubmapsSrv_;
 	bool isVisualizationFirstTime_ = true;
-	bool isPublishDenseMapThreadRunning_ = false;
 	std::thread tfWorker_, visualizationWorker_;
-
 	Time prevPublishedTimeScanToScan_, prevPublishedTimeScanToMap_;
 
 };
