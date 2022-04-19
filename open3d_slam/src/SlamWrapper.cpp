@@ -117,11 +117,11 @@ std::pair<PointCloud, Time> SlamWrapper::getLatestRegisteredCloudTimestampPair()
 void SlamWrapper::finishProcessing() {
 	while (isRunWorkers_) {
 		if (!mappingBuffer_.empty()) {
-			ROS_INFO_STREAM_THROTTLE(1.0, "Wait for the buffer to be emptied");
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			std::cout << "  Waiting for the buffer to be emptied \n";
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 			continue;
 		} else {
-			ROS_INFO_STREAM("Mapping buffer emptied");
+			std::cout << "  Mapping buffer emptied \n";
 			break;
 		}
 	}

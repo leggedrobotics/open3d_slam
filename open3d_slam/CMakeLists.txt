@@ -24,14 +24,12 @@ set(SRC_FILES
   src/PlaceRecognition.cpp
   src/OptimizationProblem.cpp
   src/SlamWrapper.cpp
-  src/ColorProjection.cpp
   src/constraint_builders.cpp
   src/output.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   open3d_catkin
-  cv_bridge
 )
    
 

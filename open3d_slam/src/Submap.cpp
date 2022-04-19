@@ -25,7 +25,6 @@ const std::string voxelMapLayer = "layer";
 Submap::Submap(size_t id, size_t parentId) :
 		id_(id), parentId_(parentId) {
 	update(params_);
-	colorProjectionPtr_ = std::make_shared<ColorProjection>();
 }
 
 size_t Submap::getId() const {
@@ -77,10 +76,8 @@ bool Submap::insertScanDenseMap(const PointCloud &rawScan, const Transform &mapT
 		return false;
 	}
 
-
-	auto colored = colorProjectionPtr_->filterColor(rawScan);
 	denseMapCropper_->setPose(Transform::Identity());
-	auto cropped = denseMapCropper_->crop(colored);
+	auto cropped = denseMapCropper_->crop(rawScan);
 	auto transformedCloud = o3d_slam::transform(mapToRangeSensor.matrix(), *cropped);
 	denseMap_.insert(*transformedCloud);
 

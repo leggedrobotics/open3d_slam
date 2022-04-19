@@ -11,7 +11,6 @@
 #include "open3d_slam_ros/helpers_ros.hpp"
 #include "open3d_slam/time.hpp"
 #include "open3d_slam/frames.hpp"
-#include "open3d_slam/ColorProjection.hpp"
 
 #include "open3d_conversions/open3d_conversions.h"
 #include <ros/ros.h>
@@ -32,7 +31,6 @@ size_t numPointCloudsReceived_ = 0;
 size_t numAccumulatedRangeDataDesired = 1;
 open3d::geometry::PointCloud accumulatedCloud;
 o3d_slam::ProjectionParameters projectionParams;
-std::shared_ptr<o3d_slam::ColorProjection> colorProjectionPtr_;
 typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::PointCloud2, sensor_msgs::Image> MySyncPolicy;
 bool isProcessAsFastAsPossible = false;
 
@@ -72,13 +70,7 @@ void processCloud(const open3d::geometry::PointCloud &cloud, const ros::Time &ti
 						toRos(cloudTimePair.second), rawCloudPub);
 			}
 		} else {
-			open3d::geometry::PointCloud rawCloud;
-			if (colorProjectionPtr_ == nullptr) {
-				rawCloud = accumulatedCloud;
-			} else {
-				rawCloud = colorProjectionPtr_->filterColor(accumulatedCloud);
-			}
-
+			open3d::geometry::PointCloud rawCloud= accumulatedCloud;
 			o3d_slam::publishCloud(rawCloud, o3d_slam::frames::rangeSensorFrame, timestamp, rawCloudPub);
 		} // end isProcessAsFastAsPossible
 	} // end rawCloudPub.getNumSubscribers() > 0
@@ -101,11 +93,7 @@ void synchronizeCallback(const sensor_msgs::PointCloud2ConstPtr &cloudMsg,
 	open3d::geometry::PointCloud cloud;
 	open3d_conversions::rosToOpen3d(cloudMsg, cloud, true);
 	const ros::Time timestamp = cloudMsg->header.stamp;
-
-	open3d::geometry::PointCloud coloredCloud = colorProjectionPtr_->projectionAndColor(cloud, imageMsg,
-			projectionParams.K, projectionParams.D, projectionParams.rpy, projectionParams.translation, true);
-
-	processCloud(coloredCloud, timestamp, cloudMsg->header.frame_id);
+	processCloud(cloud, timestamp, cloudMsg->header.frame_id);
 }
 
 void readRosbag(const rosbag::Bag &bag, const std::string &cloudTopic) {
@@ -204,7 +192,6 @@ int main(int argc, char **argv) {
 	if (useCameraRgbFlag) {
 		const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
 		o3d_slam::loadParameters(paramFile, &projectionParams);
-		colorProjectionPtr_ = std::make_shared<o3d_slam::ColorProjection>();
 		syncPtr = std::make_unique<message_filters::Synchronizer<MySyncPolicy>>(MySyncPolicy(50), cloud_sub,
 				image_sub);
 		syncPtr->registerCallback(boost::bind(&synchronizeCallback, _1, _2));

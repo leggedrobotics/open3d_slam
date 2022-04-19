@@ -5,7 +5,7 @@
  *      Author: jelavice
  */
 
-#include "open3d_slam/SlamWrapperRos.hpp"
+#include "open3d_slam_ros/SlamWrapperRos.hpp"
 
 #include <chrono>
 #include <open3d/Open3D.h>
@@ -149,7 +149,7 @@ bool SlamWrapperRos::saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request 
 }
 
 void SlamWrapperRos::publishMapToOdomTf(const Time &time) {
-	const auto timestamp = toRos(time);
+	const ros::Time timestamp = toRos(time);
 	o3d_slam::publishTfTransform(mapper_->getMapToOdom(time).matrix(), timestamp, mapFrame, odomFrame,
 			tfBroadcaster_.get());
 	o3d_slam::publishTfTransform(mapper_->getMapToRangeSensor(time).matrix(), timestamp, mapFrame, "raw_rs_o3d",
@@ -161,7 +161,7 @@ void SlamWrapperRos::publishDenseMap(const Time &time) {
 		return;
 	}
 	const auto denseMap = mapper_->getDenseMap(); //copy
-	const auto timestamp = toRos(time);
+	const ros::Time timestamp = toRos(time);
 	o3d_slam::publishCloud(denseMap.toPointCloud(), o3d_slam::frames::mapFrame, timestamp, denseMapPub_);
 }
 
@@ -171,7 +171,7 @@ void SlamWrapperRos::publishMaps(const Time &time) {
 		return;
 	}
 
-	const auto timestamp = toRos(time);
+	const ros::Time timestamp = toRos(time);
 	{
 		PointCloud map = mapper_->getAssembledMapPointCloud();
 		voxelize(visualizationParameters_.assembledMapVoxelSize_, &map);

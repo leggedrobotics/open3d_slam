@@ -8,7 +8,6 @@
 #include "open3d_slam/Mapper.hpp"
 #include "open3d_slam/frames.hpp"
 #include "open3d_slam/helpers.hpp"
-#include "open3d_slam/helpers_ros.hpp"
 #include "open3d_slam/time.hpp"
 #include "open3d_slam/math.hpp"
 #include "open3d_slam/Voxel.hpp"
@@ -205,7 +204,6 @@ Mapper::PointCloud Mapper::getAssembledMapPointCloud() const {
 
 	for (size_t j = 0; j < submaps_->getNumSubmaps(); ++j) {
 		const PointCloud submap = submaps_->getSubmap(j).getMapPointCloud();
-		const auto color = Color::getColor(j % (Color::numColors_ - 2) + 2);
 		for (size_t i = 0; i < submap.points_.size(); ++i) {
 			cloud.points_.push_back(submap.points_.at(i));
 			if (submap.HasColors()) {
