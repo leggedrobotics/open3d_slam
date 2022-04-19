@@ -25,6 +25,7 @@ set(SRC_FILES
   src/PlaceRecognition.cpp
   src/OptimizationProblem.cpp
   src/SlamWrapper.cpp
+  src/SlamWrapperRos.cpp
   src/ColorProjection.cpp
   src/constraint_builders.cpp
   src/output.cpp

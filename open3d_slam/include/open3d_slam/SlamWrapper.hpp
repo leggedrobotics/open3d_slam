@@ -7,14 +7,6 @@
 
 #pragma once
 
-#include <ros/ros.h>
-#include <ros/package.h>
-
-#include <sensor_msgs/PointCloud2.h>
-
-#include <tf2_ros/transform_broadcaster.h>
-#include <nav_msgs/Odometry.h>
-
 #include <thread>
 #include <future>
 #include <Eigen/Dense>
@@ -26,8 +18,7 @@
 #include "open3d_slam/CircularBuffer.hpp"
 #include "open3d_slam/ThreadSafeBuffer.hpp"
 #include "open3d_slam/Constraint.hpp"
-#include "open3d_slam_msgs/SaveMap.h"
-#include "open3d_slam_msgs/SaveSubmaps.h"
+
 
 namespace o3d_slam {
 
@@ -52,26 +43,28 @@ class SlamWrapper {
 	};
 
 public:
-	SlamWrapper(ros::NodeHandlePtr nh);
+	SlamWrapper();
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	~SlamWrapper();
+	virtual ~SlamWrapper();
 
-	void addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp);
-	void initialize();
-	void startWorkers();
-	void stopWorkers();
+	virtual void addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp);
+	virtual void loadParametersAndInitialize();
+	virtual void startWorkers();
+	virtual void stopWorkers();
+	virtual void finishProcessing();
+
 	size_t getOdometryBufferSize() const;
 	size_t getMappingBufferSize() const;
 	size_t getOdometryBufferSizeLimit() const;
 	size_t getMappingBufferSizeLimit() const;
 	std::pair<PointCloud,Time> getLatestRegisteredCloudTimestampPair() const;
-	void finishProcessing();
-
 	bool saveMap(const std::string &directory);
 	bool saveSubmaps(const std::string &directory);
-	bool saveMapCallback(open3d_slam_msgs::SaveMap::Request &req,open3d_slam_msgs::SaveMap::Response &res);
-	bool saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request &req,open3d_slam_msgs::SaveSubmaps::Response &res);
+	void setDirectoryPath(const std::string &path);
+	void setMapSavingDirectoryPath(const std::string &path);
+	void setParameterFilePath(const std::string &path);
+
 
 private:
 
@@ -81,18 +74,10 @@ private:
 	void computeFeaturesIfReady();
 	void attemptLoopClosuresIfReady();
 	void updateSubmapsAndTrajectory();
-	void mesherWorker();
 	void denseMapWorker();
-	void publishMaps(const Time &time);
-	void publishDenseMap(const Time &time);
-	void publishMapToOdomTf(const Time &time);
 
 
-	ros::NodeHandlePtr nh_;
-	std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster_;
-	ros::Publisher odometryInputPub_,mappingInputPub_,submapOriginsPub_, assembledMapPub_, denseMapPub_, submapsPub_, meshPub_;
-	ros::ServiceServer saveMapSrv_,saveSubmapsSrv_;
-
+protected:
 	// non ros types
 	CircularBuffer<RegisteredPointCloud> registeredCloudBuffer_;
 	CircularBuffer<TimestampedPointCloud> odometryBuffer_, mappingBuffer_;
@@ -103,20 +88,17 @@ private:
 	MesherParameters mesherParams_;
 	VisualizationParameters visualizationParameters_;
 	PointCloud rawCloudPrev_;
+	Constraints lastLoopClosureConstraints_;
 	std::shared_ptr<Mesher> mesher_;
 	std::shared_ptr<LidarOdometry> odometry_;
 	std::shared_ptr<Mapper> mapper_;
 	std::shared_ptr<SubmapCollection> submaps_;
 	std::shared_ptr<OptimizationProblem> optimizationProblem_;
-	std::string folderPath_, mapSavingFolderPath_;
+	std::string folderPath_, mapSavingFolderPath_, paramPath_;
 	std::thread odometryWorker_, mappingWorker_, loopClosureWorker_, denseMapWorker_;
-	Timer mappingStatisticsTimer_,odometryStatisticsTimer_, visualizationUpdateTimer_, denseMapVisualizationUpdateTimer_, denseMapStatiscticsTimer_;
-	bool isVisualizationFirstTime_ = true;
 	std::future<void> computeFeaturesResult_;
+	Timer mappingStatisticsTimer_,odometryStatisticsTimer_, visualizationUpdateTimer_, denseMapVisualizationUpdateTimer_, denseMapStatiscticsTimer_;
 	bool isOptimizedGraphAvailable_ = false;
-	Constraints lastLoopClosureConstraints_;
-	bool isPublishMapsThreadRunning_ = false;
-	bool isPublishDenseMapThreadRunning_ = false;
 	bool isRunWorkers_ = true;
 	Timer mapperOnlyTimer_;
 	SavingParameters savingParameters_;

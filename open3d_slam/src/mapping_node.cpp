@@ -5,7 +5,7 @@
  *      Author: jelavice
  */
 #include <open3d/Open3D.h>
-#include "open3d_slam/SlamWrapper.hpp"
+#include "open3d_slam/SlamWrapperRos.hpp"
 #include "open3d_slam/frames.hpp"
 #include "open3d_slam/helpers.hpp"
 #include "open3d_slam/helpers_ros.hpp"
@@ -193,8 +193,8 @@ int main(int argc, char **argv) {
 
 	rawCloudPub = nh->advertise<sensor_msgs::PointCloud2>("raw_cloud", 1, true);
 
-	slam = std::make_shared<SlamWrapper>(nh);
-	slam->initialize();
+	slam = std::make_shared<SlamWrapperRos>(nh);
+	slam->loadParametersAndInitialize();
 	slam->startWorkers();
 
 	ros::Subscriber cloudSub;
