@@ -83,6 +83,7 @@ Time fromRos(const ::ros::Time& time);
 
 void updateFirstMeasurementTime(const Time &t);
 double toSecondsSinceFirstMeasurement(const Time &t);
+bool isTimeValid(const Time &t);
 
 
 namespace time_internal {

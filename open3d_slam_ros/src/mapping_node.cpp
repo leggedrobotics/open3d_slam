@@ -20,7 +20,6 @@
 namespace {
 using namespace o3d_slam;
 ros::NodeHandlePtr nh;
-std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
 ros::Publisher rawCloudPub;
 std::shared_ptr<SlamWrapper> slam;
 size_t numAccumulatedRangeDataCount = 0;
@@ -52,8 +51,7 @@ void processCloud(const open3d::geometry::PointCloud &cloud, const ros::Time &ti
 		return;
 	}
 	slam->addRangeScan(accumulatedCloud, fromRos(timestamp));
-//	o3d_slam::publishTfTransform(Eigen::Matrix4d::Identity(), timestamp, frames::rangeSensorFrame, frame + "_o3d",
-//			tfBroadcaster.get());
+
 
 	if (rawCloudPub.getNumSubscribers() > 0) {
 		if (isProcessAsFastAsPossible) {
@@ -146,7 +144,6 @@ void readRosbag(const rosbag::Bag &bag, const std::string &cloudTopic) {
 int main(int argc, char **argv) {
 	ros::init(argc, argv, "lidar_odometry_mapping_node");
 	nh.reset(new ros::NodeHandle("~"));
-	tfBroadcaster.reset(new tf2_ros::TransformBroadcaster());
 
 	const std::string cloudTopic = nh->param<std::string>("cloud_topic", "");
 	std::cout << "Cloud topic is given as " << cloudTopic << std::endl;

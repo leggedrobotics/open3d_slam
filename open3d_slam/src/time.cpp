@@ -23,6 +23,11 @@ void updateFirstMeasurementTime(const Time &t) {
 		time_internal::isFirstMeasurementTimeUpdated = true;
 	}
 }
+
+bool isTimeValid(const Time &t){
+	return toUniversal(t) > 0;
+}
+
 double toSecondsSinceFirstMeasurement(const Time &t) {
 	return
 			time_internal::isFirstMeasurementTimeUpdated ? toSeconds(t - time_internal::firstMeasurementTime) : 0.0;

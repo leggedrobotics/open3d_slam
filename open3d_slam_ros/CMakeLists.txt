@@ -9,6 +9,10 @@ add_compile_options(-O2)
 set(SRC_FILES
   src/helpers_ros.cpp
   src/SlamWrapperRos.cpp
+  src/OnlineRangeDataProcessorRos.cpp
+  src/creators.cpp
+  src/DataProcessorRos.cpp
+  src/RosbagRangeDataProcessorRos.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES
