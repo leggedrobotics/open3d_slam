@@ -13,6 +13,7 @@ set(SRC_FILES
   src/creators.cpp
   src/DataProcessorRos.cpp
   src/RosbagRangeDataProcessorRos.cpp
+  src/Color.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES
@@ -26,8 +27,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   tf2_geometry_msgs
   rosbag
 )
-   
-
 
 find_package(Eigen3 REQUIRED)
 find_package(OpenMP QUIET)
