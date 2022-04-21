@@ -15,8 +15,8 @@
 #include "open3d_slam_ros/SlamWrapperRos.hpp"
 namespace o3d_slam {
 
-OnlineRangeDataProcessorRos::OnlineRangeDataProcessorRos(ros::NodeHandlePtr nh, std::shared_ptr<SlamWrapper> slam) :
-		BASE(nh), slam_(slam) {
+OnlineRangeDataProcessorRos::OnlineRangeDataProcessorRos(ros::NodeHandlePtr nh) :
+		BASE(nh) {
 
 }
 

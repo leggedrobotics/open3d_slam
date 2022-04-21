@@ -21,7 +21,7 @@ class RosbagRangeDataProcessorRos : public DataProcessorRos  {
 
 	using BASE = DataProcessorRos;
 public:
-	RosbagRangeDataProcessorRos(ros::NodeHandlePtr nh, std::shared_ptr<SlamWrapper> slam);
+	RosbagRangeDataProcessorRos(ros::NodeHandlePtr nh);
 	~RosbagRangeDataProcessorRos() override = default;
 
 	 void initialize() override;

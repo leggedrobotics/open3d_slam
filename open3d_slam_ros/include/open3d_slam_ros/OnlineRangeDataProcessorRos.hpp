@@ -20,7 +20,7 @@ class OnlineRangeDataProcessorRos : public DataProcessorRos  {
 
 	using BASE = DataProcessorRos;
 public:
-	OnlineRangeDataProcessorRos(ros::NodeHandlePtr nh, std::shared_ptr<SlamWrapper> slam);
+	OnlineRangeDataProcessorRos(ros::NodeHandlePtr nh);
 	~OnlineRangeDataProcessorRos() override = default;
 
 	 void initialize() override;
