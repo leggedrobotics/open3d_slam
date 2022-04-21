@@ -140,7 +140,6 @@ void SlamWrapper::finishProcessing() {
 			updateSubmapsAndTrajectory();
 			const auto poseAfterUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
 			std::cout << "latest pose after update: \n " << asString(poseAfterUpdate.transform_) << "\n";
-//			publishMaps(latestMeasurementTimestamp_);
 			if (mapperParams_.isDumpSubmapsToFileBeforeAndAfterLoopClosures_) {
 				submaps_->dumpToFile(folderPath_, "after");
 			}
@@ -287,8 +286,6 @@ void SlamWrapper::mappingWorker() {
 		const bool mappingResult = mapper_->addRangeMeasurement(measurement.cloud_, measurement.time_);
 		const double timeElapsed = 	mapperOnlyTimer_.elapsedMsecSinceStopwatchStart();
 		mapperOnlyTimer_.addMeasurementMsec(timeElapsed);
-//		publishMapToOdomTf(measurement.time_);
-		//mesherBufffer_.push(measurement.time_);
 
 		if (mappingResult) {
 			RegisteredPointCloud registeredCloud;
@@ -347,8 +344,6 @@ void SlamWrapper::denseMapWorker() {
 
 		mapper_->getSubmapsPtr()->getSubmapPtr(regCloud.submapId_)->insertScanDenseMap(regCloud.raw_.cloud_,
 					regCloud.transform_, regCloud.raw_.time_, true);
-
-//		publishDenseMap(regCloud.raw_.time_);
 
 		const double timeMeasurement = denseMapStatiscticsTimer_.elapsedMsecSinceStopwatchStart();
 		denseMapStatiscticsTimer_.addMeasurementMsec(timeMeasurement);

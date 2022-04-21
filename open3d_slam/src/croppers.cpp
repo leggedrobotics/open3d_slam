@@ -8,9 +8,12 @@
 #include <Eigen/Core>
 #include <vector>
 #include "open3d_slam/croppers.hpp"
+#include "open3d_slam/typedefs.hpp"
+
 #include "open3d_slam/Parameters.hpp"
 #include <utility>
 #include <iostream>
+#include <numeric>
 #ifdef open3d_slam_OPENMP_FOUND
 #include <omp.h>
 #endif
@@ -196,6 +199,75 @@ void CylinderCroppingVolume::setParameters(double radius, double minZ, double ma
 	radius_ = radius;
 	minZ_ = minZ;
 	maxZ_ = maxZ;
+}
+
+
+
+///////////////////////////////////////////////
+///////////////////////////////////////////////
+///////////////////////////////////////////////
+bool ColorRangeCropper::isValidColor(const Eigen::Vector3d &c) const {
+
+	return (rgbMin_.array() <= c.array()).all() && (c.array() <= rgbMax_.array()).all();
+
+}
+
+void ColorRangeCropper::setMinBounds(const Eigen::Vector3d &rgbMin){
+	rgbMin_ = rgbMin;
+}
+void ColorRangeCropper::setMaxBounds(const Eigen::Vector3d &rgbMax){
+	rgbMax_ = rgbMax;
+}
+
+ColorRangeCropper::Indices ColorRangeCropper::getIndicesWithValidColor(const PointCloud &cloud) const {
+	if (!cloud.HasColors()) {
+		Indices idxs(cloud.points_.size(), 0);
+		std::iota(idxs.begin(), idxs.end(), 0);
+		return idxs;
+	}
+	Indices idxs;
+	idxs.reserve(cloud.points_.size());
+	for (size_t i = 0; i < cloud.points_.size(); ++i) {
+		if (isValidColor(cloud.colors_[i])) {
+			idxs.push_back(i);
+		}
+	}
+	return idxs;
+}
+
+std::shared_ptr<PointCloud> ColorRangeCropper::crop(const PointCloud &cloud) const {
+	std::shared_ptr<CroppingVolume::PointCloud> cropped(new PointCloud());
+
+	const int nPoints = cloud.points_.size();
+	if (cloud.HasColors()) {
+		cropped->colors_.reserve(nPoints);
+	} else {
+		*cropped = cloud;
+		return cropped;
+	}
+
+	cropped->points_.reserve(nPoints);
+
+	if (cloud.HasNormals()) {
+		cropped->normals_.reserve(nPoints);
+	}
+
+	for (size_t i = 0; i < nPoints; ++i) {
+		if (isValidColor(cloud.colors_[i])) {
+			cropped->points_.push_back(cloud.points_[i]);
+			cropped->colors_.push_back(cloud.colors_[i]);
+			if (cloud.HasNormals()) {
+				cropped->normals_.push_back(cloud.normals_[i]);
+			}
+		} // end if
+	}
+
+	return cropped;
+}
+void ColorRangeCropper::crop(PointCloud *cloud) const {
+	//todo improve and speed up
+	auto cropped = crop(*cloud);
+	*cloud = std::move(*cropped);
 }
 
 } // namespace o3d_slam

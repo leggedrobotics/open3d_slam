@@ -84,10 +84,9 @@ private:
 	size_t parentId_ = 0;
 	Timer carvingStatisticsTimer_;
 	int scanCounter_ = 0;
-	bool isFirstDenseScan_ = true;
 	VoxelMap voxelMap_;
 	VoxelizedPointCloud denseMap_;
-
+	ColorRangeCropper colorCropper_;
 };
 
 } // namespace o3d_slam

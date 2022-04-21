@@ -71,14 +71,11 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 
 bool Submap::insertScanDenseMap(const PointCloud &rawScan, const Transform &mapToRangeSensor,
 		const Time &time, bool isPerformCarving) {
-	if (isFirstDenseScan_) {
-		isFirstDenseScan_ = false;
-		return false;
-	}
 
 	denseMapCropper_->setPose(Transform::Identity());
 	auto cropped = denseMapCropper_->crop(rawScan);
-	auto transformedCloud = o3d_slam::transform(mapToRangeSensor.matrix(), *cropped);
+	auto validColors = colorCropper_.crop(*cropped);
+	auto transformedCloud = o3d_slam::transform(mapToRangeSensor.matrix(), *validColors);
 	denseMap_.insert(*transformedCloud);
 
 	if (isPerformCarving) {
@@ -174,6 +171,7 @@ void Submap::update(const MapperParameters &p) {
 	mapBuilderCropper_ = croppingVolumeFactory(p.mapBuilder_.cropper_);
 	denseMapCropper_ = croppingVolumeFactory(p.denseMapBuilder_.cropper_);
 	denseMap_ = std::move(VoxelizedPointCloud(Eigen::Vector3d::Constant(p.denseMapBuilder_.mapVoxelSize_)));
+
 	//todo remove magic
 	voxelMap_ = std::move(
 			VoxelMap(
