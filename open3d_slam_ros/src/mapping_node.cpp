@@ -16,9 +16,6 @@
 #include <ros/ros.h>
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
 
 namespace {
 using namespace o3d_slam;
@@ -30,8 +27,6 @@ size_t numAccumulatedRangeDataCount = 0;
 size_t numPointCloudsReceived_ = 0;
 size_t numAccumulatedRangeDataDesired = 1;
 open3d::geometry::PointCloud accumulatedCloud;
-o3d_slam::ProjectionParameters projectionParams;
-typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::PointCloud2, sensor_msgs::Image> MySyncPolicy;
 bool isProcessAsFastAsPossible = false;
 
 void processCloud(const open3d::geometry::PointCloud &cloud, const ros::Time &timestamp,
@@ -63,9 +58,8 @@ void processCloud(const open3d::geometry::PointCloud &cloud, const ros::Time &ti
 	if (rawCloudPub.getNumSubscribers() > 0) {
 		if (isProcessAsFastAsPossible) {
 			std::pair<PointCloud, Time> cloudTimePair = slam->getLatestRegisteredCloudTimestampPair();
-			const bool isTimeValid = toUniversal(cloudTimePair.second) > 0;
 			const bool isCloudEmpty = cloudTimePair.first.IsEmpty();
-			if (isTimeValid && !isCloudEmpty) {
+			if (isTimeValid(cloudTimePair.second) && !isCloudEmpty) {
 				o3d_slam::publishCloud(cloudTimePair.first, o3d_slam::frames::rangeSensorFrame,
 						toRos(cloudTimePair.second), rawCloudPub);
 			}
@@ -83,17 +77,7 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
 	open3d::geometry::PointCloud cloud;
 	open3d_conversions::rosToOpen3d(msg, cloud, false);
 	const ros::Time timestamp = msg->header.stamp;
-
 	processCloud(cloud, timestamp, msg->header.frame_id);
-}
-
-void synchronizeCallback(const sensor_msgs::PointCloud2ConstPtr &cloudMsg,
-		const sensor_msgs::ImageConstPtr &imageMsg) {
-
-	open3d::geometry::PointCloud cloud;
-	open3d_conversions::rosToOpen3d(cloudMsg, cloud, true);
-	const ros::Time timestamp = cloudMsg->header.stamp;
-	processCloud(cloud, timestamp, cloudMsg->header.frame_id);
 }
 
 void readRosbag(const rosbag::Bag &bag, const std::string &cloudTopic) {
@@ -163,17 +147,9 @@ int main(int argc, char **argv) {
 	ros::init(argc, argv, "lidar_odometry_mapping_node");
 	nh.reset(new ros::NodeHandle("~"));
 	tfBroadcaster.reset(new tf2_ros::TransformBroadcaster());
-// Topics
+
 	const std::string cloudTopic = nh->param<std::string>("cloud_topic", "");
 	std::cout << "Cloud topic is given as " << cloudTopic << std::endl;
-	const std::string cameraTopic = nh->param<std::string>("image_topic", "");
-	std::cout << "Camera topic is given as " << cameraTopic << std::endl;
-
-// Subscribers
-	const bool useCameraRgbFlag = nh->param<bool>("use_rgb_from_camera", "");
-	std::cout << "Use RGB from the camera is set to " << useCameraRgbFlag << std::endl;
-	/// if no cameraRgb
-
 	isProcessAsFastAsPossible = nh->param<bool>("is_read_from_rosbag", false);
 	std::cout << "Is process as fast as possible: " << std::boolalpha << isProcessAsFastAsPossible << "\n";
 	numAccumulatedRangeDataDesired = nh->param<int>("num_accumulated_range_data", 1);
@@ -186,16 +162,6 @@ int main(int argc, char **argv) {
 	slam->startWorkers();
 
 	ros::Subscriber cloudSub;
-	std::unique_ptr<message_filters::Synchronizer<MySyncPolicy>> syncPtr;
-	message_filters::Subscriber<sensor_msgs::PointCloud2> cloud_sub(*nh, cloudTopic, 1);
-	message_filters::Subscriber<sensor_msgs::Image> image_sub(*nh, cameraTopic, 1);
-	if (useCameraRgbFlag) {
-		const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
-		o3d_slam::loadParameters(paramFile, &projectionParams);
-		syncPtr = std::make_unique<message_filters::Synchronizer<MySyncPolicy>>(MySyncPolicy(50), cloud_sub,
-				image_sub);
-		syncPtr->registerCallback(boost::bind(&synchronizeCallback, _1, _2));
-	} else {
 		if (!isProcessAsFastAsPossible) {
 			cloudSub = nh->subscribe(cloudTopic, 100, &cloudCallback);
 
@@ -208,7 +174,7 @@ int main(int argc, char **argv) {
 			readRosbag(bag, cloudTopic);
 			bag.close();
 		}
-	}
+
 
 	ros::spin();
 

@@ -21,7 +21,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   tf2_ros
   tf2_geometry_msgs
   rosbag
-  cv_bridge
 )
    
 
@@ -40,7 +39,8 @@ catkin_package(
   INCLUDE_DIRS
     include  
   LIBRARIES
-    yaml-cpp 
+    yaml-cpp
+    ${PROJECT_NAME} 
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS 
@@ -49,7 +49,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIR}list()
+  ${EIGEN3_INCLUDE_DIRS}
   ${YAML_CPP_INCLUDE_DIR}
   ${OpenMP_CXX_INCLUDE_DIRS}
 )

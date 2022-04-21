@@ -8,7 +8,6 @@
 	<arg name="play_rate" default="0.5" />
 	<arg name="use_sim_time" default="true" />
 	<arg name="is_read_from_rosbag" default="false" />
-	<arg name="use_rgb_from_camera" default="false" />
 
 	<arg name="parameter_file_path"
 		default="$(find open3d_slam_ros)/param/params_velodyne_puck16.yaml" />
@@ -23,7 +22,6 @@
 		<arg name="parameter_file_path" value="$(arg parameter_file_path)" />
 		<arg name="is_read_from_rosbag" value="$(arg is_read_from_rosbag)" />
 		<arg name="rosbag_filepath" value="$(arg bag_filepath)" />
-		<arg name="use_rgb_from_camera" value="$(arg use_rgb_from_camera)"/>
 		<arg name="use_sim_time" value="$(arg use_sim_time)"/>
 	</include>
 
