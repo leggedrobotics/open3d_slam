@@ -424,7 +424,33 @@ Eigen::Vector3d computeCenter(const VoxelizedPointCloud &voxels) {
 			++n;
 		}
 	}
-	return center / static_cast<double>(n);
+	return center / static_cast<double>(n+1e-6);
+}
+
+std::shared_ptr<PointCloud> removePointsWithNonFiniteValues(const PointCloud &cloud){
+	std::shared_ptr<CroppingVolume::PointCloud> filtered(new PointCloud());
+	const int nPoints = cloud.points_.size();
+	filtered->points_.reserve(nPoints);
+	if (cloud.HasColors()) {
+		filtered->colors_.reserve(nPoints);
+	}
+	if (cloud.HasNormals()) {
+		filtered->normals_.reserve(nPoints);
+	}
+
+	for (size_t i = 0; i < nPoints; ++i) {
+		if (cloud.points_[i].array().isFinite().all()) {
+			filtered->points_.push_back(cloud.points_[i]);
+			if (cloud.HasColors()) {
+				filtered->colors_.push_back(cloud.colors_[i]);
+			}
+			if (cloud.HasNormals()) {
+				filtered->normals_.push_back(cloud.normals_[i]);
+			}
+		} // end if
+	}
+//	std::cout << "Filter: " << filtered->points_.size() << "/" << nPoints << std::endl;
+	return filtered;
 }
 
 } /* namespace o3d_slam */
