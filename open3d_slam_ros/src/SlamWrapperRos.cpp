@@ -160,7 +160,7 @@ void SlamWrapperRos::publishDenseMap(const Time &time) {
 	if (denseMapVisualizationUpdateTimer_.elapsedMsec() < visualizationParameters_.visualizeEveryNmsec_) {
 		return;
 	}
-	const auto denseMap = mapper_->getDenseMap(); //copy
+	const auto denseMap = mapper_->getActiveSubmap().getDenseMapCopy(); //copy
 	const ros::Time timestamp = toRos(time);
 	o3d_slam::publishCloud(denseMap.toPointCloud(), o3d_slam::frames::mapFrame, timestamp, denseMapPub_);
 }

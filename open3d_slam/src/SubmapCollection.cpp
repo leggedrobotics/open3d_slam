@@ -267,7 +267,7 @@ Constraints SubmapCollection::buildLoopClosureConstraints(
 bool SubmapCollection::dumpToFile(const std::string &folderPath, const std::string &filename) const {
 	bool result = true;
 	for (size_t i = 0; i < submaps_.size(); ++i) {
-		auto copy = submaps_.at(i).getMapPointCloud();
+		auto copy = submaps_.at(i).getMapPointCloudCopy();
 		const std::string fullPath = folderPath + "/" + filename + "_" + std::to_string(i) + ".pcd";
 		result = result && open3d::io::WritePointCloudToPCD(fullPath, copy, open3d::io::WritePointCloudOption());
 	}

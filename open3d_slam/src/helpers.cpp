@@ -230,7 +230,8 @@ void removeByIds(const std::vector<size_t> &ids, open3d::geometry::PointCloud *c
 	if (ids.empty()) {
 		return;
 	}
-	auto trimmedCloud = cloud->SelectByIndex(ids, true);
+	const bool isInvertSelection = true;
+	auto trimmedCloud = cloud->SelectByIndex(ids, isInvertSelection);
 	*cloud = std::move(*trimmedCloud);
 }
 

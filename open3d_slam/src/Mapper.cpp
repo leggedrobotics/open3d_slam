@@ -67,6 +67,14 @@ const SubmapCollection& Mapper::getSubmaps() const {
 	return *submaps_;
 }
 
+const Submap& Mapper::getActiveSubmap() const {
+	return submaps_->getActiveSubmap();
+}
+
+const TransformInterpolationBuffer& Mapper::getMapToRangeSensorBuffer() const {
+	return mapToRangeSensorBuffer_;
+}
+
 SubmapCollection* Mapper::getSubmapsPtr() {
 	return submaps_.get();
 }
@@ -123,7 +131,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		mapToRangeSensorEstimate =  mapToRangeSensorPrev_*odometryMotion ;
 	}
 
-	const PointCloud &activeSubmap = submaps_->getActiveSubmap().getMapPointCloud();
+	const PointCloud &activeSubmapPointCloud = submaps_->getActiveSubmap().getMapPointCloud();
 	std::shared_ptr<PointCloud> narrowCropped, wideCroppedCloud, mapPatch;
 	{
 		Timer timer;
@@ -131,7 +139,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		narrowCropped = scanMatcherCropper_->crop(*wideCroppedCloud);
 		preProcessedScan_ = *narrowCropped;
 		scanMatcherCropper_->setPose(mapToRangeSensor_);
-		mapPatch = scanMatcherCropper_->crop(activeSubmap);
+		mapPatch = scanMatcherCropper_->crop(activeSubmapPointCloud);
 	}
 
 //	std::cout << "preeIcp: " << asString(mapToRangeSensorEstimate) << "\n";
@@ -187,23 +195,20 @@ std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud &raw
 
 }
 
-const Mapper::PointCloud& Mapper::getMapPointCloud() const {
-	return submaps_->getActiveSubmap().getMapPointCloud();
-}
-
 Mapper::PointCloud Mapper::getAssembledMapPointCloud() const {
 	PointCloud cloud;
 	const int nPoints = submaps_->getTotalNumPoints();
+	const Submap &activeSubmap = getActiveSubmap();
 	cloud.points_.reserve(nPoints);
-	if (getMapPointCloud().HasColors()) {
+	if (activeSubmap.getMapPointCloud().HasColors()) {
 		cloud.colors_.reserve(nPoints);
 	}
-	if (getMapPointCloud().HasNormals()) {
+	if (activeSubmap.getMapPointCloud().HasNormals()) {
 		cloud.normals_.reserve(nPoints);
 	}
 
 	for (size_t j = 0; j < submaps_->getNumSubmaps(); ++j) {
-		const PointCloud submap = submaps_->getSubmap(j).getMapPointCloud();
+		const PointCloud submap = submaps_->getSubmap(j).getMapPointCloudCopy();
 		for (size_t i = 0; i < submap.points_.size(); ++i) {
 			cloud.points_.push_back(submap.points_.at(i));
 			if (submap.HasColors()) {
@@ -230,18 +235,6 @@ void Mapper::checkTransformChainingAndPrintResult(bool isCheckTransformChainingA
 		std::cout << "gt computed:  " << asString(start*mapMotion) << "\n";
 		std::cout << "est        : " << asString(start*odomMotion) << "\n\n";
 	}
-}
-
-const Submap& Mapper::getActiveSubmap() const {
-	return submaps_->getActiveSubmap();
-}
-
-const VoxelizedPointCloud& Mapper::getDenseMap() const {
-	return submaps_->getActiveSubmap().getDenseMap();
-}
-
-const TransformInterpolationBuffer& Mapper::getMapToRangeSensorBuffer() const {
-	return mapToRangeSensorBuffer_;
 }
 
 

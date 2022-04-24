@@ -47,7 +47,9 @@ public:
 	Eigen::Vector3d getMapToSubmapCenter() const;
 	void setMapToSubmapOrigin(const Transform &T);
 	const PointCloud& getMapPointCloud() const;
+	PointCloud getMapPointCloudCopy() const;
 	const VoxelizedPointCloud& getDenseMap() const;
+	VoxelizedPointCloud getDenseMapCopy() const;
 	bool isEmpty() const;
 	const Feature& getFeatures() const;
 	const PointCloud& getSparseMapPointCloud() const;
@@ -59,6 +61,8 @@ public:
 	const VoxelMap& getVoxelMap() const;
 	mutable PointCloud toRemove_;
 	mutable PointCloud scanRef_;
+
+	Submap(const Submap &other);
 
 private:
 	void carve(const PointCloud &scan, const Eigen::Vector3d &sensorPosition,
@@ -87,6 +91,8 @@ private:
 	VoxelMap voxelMap_;
 	VoxelizedPointCloud denseMap_;
 	ColorRangeCropper colorCropper_;
+	mutable std::mutex denseMapMutex_;
+	mutable std::mutex mapPointCloudMutex_;
 };
 
 } // namespace o3d_slam

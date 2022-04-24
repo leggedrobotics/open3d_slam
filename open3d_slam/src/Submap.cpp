@@ -51,8 +51,11 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 	estimateNormalsIfNeeded(params_.scanMatcher_.kNNnormalEstimation_, transformedCloud.get());
 	if (isPerformCarving) {
 		carvingStatisticsTimer_.startStopwatch();
-		carve(rawScan, mapToRangeSensor, *mapBuilderCropper_, params_.mapBuilder_.carving_, &mapCloud_,
+		{
+			std::lock_guard<std::mutex> lck(mapPointCloudMutex_);
+			carve(rawScan, mapToRangeSensor, *mapBuilderCropper_, params_.mapBuilder_.carving_, &mapCloud_,
 				&carvingTimer_);
+		}
 		const double timeMeasurement = carvingStatisticsTimer_.elapsedMsecSinceStopwatchStart();
 		carvingStatisticsTimer_.addMeasurementMsec(timeMeasurement);
 		if (carvingStatisticsTimer_.elapsedSec() > 20.0) {
@@ -62,6 +65,7 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 			carvingStatisticsTimer_.reset();
 		}
 	}
+	std::lock_guard<std::mutex> lck(mapPointCloudMutex_);
 	mapCloud_ += *transformedCloud;
 	mapBuilderCropper_->setPose(mapToRangeSensor);
 	voxelizeInsideCroppingVolume(*mapBuilderCropper_, params_.mapBuilder_, &mapCloud_);
@@ -76,9 +80,12 @@ bool Submap::insertScanDenseMap(const PointCloud &rawScan, const Transform &mapT
 	auto cropped = denseMapCropper_->crop(rawScan);
 	auto validColors = colorCropper_.crop(*cropped);
 	auto transformedCloud = o3d_slam::transform(mapToRangeSensor.matrix(), *validColors);
-	denseMap_.insert(*transformedCloud);
-
+	{
+		std::lock_guard<std::mutex> lck(denseMapMutex_);
+		denseMap_.insert(*transformedCloud);
+	}
 	if (isPerformCarving) {
+		std::lock_guard<std::mutex> lck(denseMapMutex_);
 		carve(rawScan, mapToRangeSensor.translation(), params_.denseMapBuilder_.carving_, &denseMap_,
 				&carveDenseMapTimer_);
 	}
@@ -88,8 +95,15 @@ bool Submap::insertScanDenseMap(const PointCloud &rawScan, const Transform &mapT
 void Submap::transform(const Transform &T) {
 	const Eigen::Matrix4d mat(T.matrix());
 	sparseMapCloud_.Transform(mat);
-	mapCloud_.Transform(mat);
-	denseMap_.transform(T);
+	{
+		std::lock_guard<std::mutex> lck(mapPointCloudMutex_);
+		mapCloud_.Transform(mat);
+
+	}
+	{
+		std::lock_guard<std::mutex> lck(denseMapMutex_);
+		denseMap_.transform(T);
+	}
 	mapToRangeSensor_ = mapToRangeSensor_ * T;
 	submapCenter_ = T * submapCenter_;
 }
@@ -144,6 +158,15 @@ void Submap::setParameters(const MapperParameters &mapperParams) {
 	update(mapperParams);
 }
 
+Submap::Submap(const Submap &other) : Submap(other.id_, other.parentId_){
+	//todo copy all the other members as well
+
+	params_ = other.params_;
+	mapToSubmap_ = other.mapToSubmap_;
+	mapToRangeSensor_ = other.mapToRangeSensor_;
+	update(params_);
+}
+
 const Transform& Submap::getMapToSubmapOrigin() const {
 	return mapToSubmap_;
 }
@@ -155,8 +178,19 @@ Eigen::Vector3d Submap::getMapToSubmapCenter() const {
 const Submap::PointCloud& Submap::getMapPointCloud() const {
 	return mapCloud_;
 }
+PointCloud Submap::getMapPointCloudCopy() const {
+	std::lock_guard<std::mutex> lck(mapPointCloudMutex_);
+	auto copy = mapCloud_;
+	return std::move(copy);
+}
 const VoxelizedPointCloud& Submap::getDenseMap() const {
 	return denseMap_;
+}
+
+VoxelizedPointCloud Submap::getDenseMapCopy() const {
+	std::lock_guard<std::mutex> lck(denseMapMutex_);
+	auto copy = denseMap_;
+	return std::move(copy);
 }
 
 const Submap::PointCloud& Submap::getSparseMapPointCloud() const {
@@ -199,8 +233,9 @@ void Submap::computeFeatures() {
 		voxelMap_.insertCloud(voxelMapLayer,mapCloud_);
 	});
 
+	auto mapCopy = getMapPointCloudCopy();
 	const auto &p = params_.placeRecognition_;
-	sparseMapCloud_ = *(mapCloud_.VoxelDownSample(p.featureVoxelSize_));
+	sparseMapCloud_ = *(mapCopy.VoxelDownSample(p.featureVoxelSize_));
 	sparseMapCloud_.EstimateNormals(
 			open3d::geometry::KDTreeSearchParamHybrid(p.normalEstimationRadius_, p.normalKnn_));
 	sparseMapCloud_.NormalizeNormals();
@@ -219,7 +254,8 @@ const Submap::Feature& Submap::getFeatures() const {
 }
 
 void Submap::computeSubmapCenter() {
-	submapCenter_ = mapCloud_.GetCenter();
+	auto mapCopy = getMapPointCloudCopy();
+	submapCenter_ = mapCopy.GetCenter();
 	isCenterComputed_ = true;
 }
 
