@@ -53,4 +53,6 @@ open3d_catkin/src
 open3d_catkin/tmp
 /open3d_slam/data/*
 !/open3d_slam/data/.gitkeep
+/open3d_slam_ros/data/*
+!/open3d_slam_ros/data/.gitkeep
 

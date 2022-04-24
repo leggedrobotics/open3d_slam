@@ -111,6 +111,30 @@ private:
 
 };
 
+
+class ColorRangeCropper {
+
+public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+	using PointCloud = open3d::geometry::PointCloud;
+	using Indices =std::vector<size_t>;
+	ColorRangeCropper() = default;
+	virtual ~ColorRangeCropper() = default;
+
+	void setMinBounds(const Eigen::Vector3d &rgbMin);
+	void setMaxBounds(const Eigen::Vector3d &rgbMax);
+
+	virtual bool isValidColor(const Eigen::Vector3d &c) const;
+	Indices getIndicesWithValidColor(const PointCloud &cloud) const;
+	std::shared_ptr<PointCloud> crop(const PointCloud &cloud) const;
+	void crop(PointCloud *cloud) const;
+
+private:
+	Eigen::Vector3d rgbMin_ = Eigen::Vector3d::Zero();
+	Eigen::Vector3d rgbMax_ = Eigen::Vector3d::Ones();
+};
+
+
 std::unique_ptr<CroppingVolume> croppingVolumeFactory(const ScanCroppingParameters &p);
 std::unique_ptr<CroppingVolume> croppingVolumeFactory(CroppingVolumeEnum type, const ScanCroppingParameters &p);
 

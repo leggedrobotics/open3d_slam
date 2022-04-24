@@ -27,8 +27,8 @@ void TransformInterpolationBuffer::push(const Time &time, const Transform &tf) {
 			std::cerr
 					<< "TransformInterpolationBuffer:: you are trying to push something earlier than the earliest measurement, this should not happen \n";
 			std::cerr << "ingnoring the mesurement \n";
-			std::cerr << "Time: " << time << std::endl;
-			std::cerr << "earliest time: " << earliest_time() << std::endl;
+			std::cerr << "Time: " << toSecondsSinceFirstMeasurement(time) << std::endl;
+			std::cerr << "earliest time: " << toSecondsSinceFirstMeasurement(earliest_time()) << std::endl;
 			return;
 		}
 
@@ -37,7 +37,7 @@ void TransformInterpolationBuffer::push(const Time &time, const Transform &tf) {
 					<< "TransformInterpolationBuffer:: you are trying to push something out of order, this should not happen \n";
 			std::cerr << "ingnoring the mesurement \n";
 			std::cerr << "Time: " << time << std::endl;
-			std::cerr << "latest time: " << latest_time() << std::endl;
+			std::cerr << "latest time: " << toSecondsSinceFirstMeasurement(latest_time()) << std::endl;
 			return;
 		}
 	}
@@ -107,11 +107,11 @@ Transform TransformInterpolationBuffer::lookup(const Time &time) const {
 	const auto start = std::prev(getMeasurement);
 
 //  std::cout << "buffer size: " << size() << "\n";
-//  std::cout << "left time: " << readable(start->time_) << "\n";
-//  std::cout << "right time: " << readable(getMeasurement->time_) << "\n";
-//  std::cout << "query time: " << readable(time) << "\n \n";
+//  std::cout << "left time: " << toSecondsSinceFirstMeasurement(start->time_) << "\n";
+//  std::cout << "right time: " << toSecondsSinceFirstMeasurement(getMeasurement->time_) << "\n";
+//  std::cout << "query time: " << toSecondsSinceFirstMeasurement(time) << "\n \n";
 //  std::cout << "times in buffer: \n";
-//  printTimesCurrentlyInBuffer();
+  printTimesCurrentlyInBuffer();
 
 	return interpolate(*start, *getMeasurement, time).transform_;
 }
@@ -150,7 +150,7 @@ size_t TransformInterpolationBuffer::size() const {
 
 void TransformInterpolationBuffer::printTimesCurrentlyInBuffer() const {
 	for (auto it = transforms_.cbegin(); it != transforms_.cend(); ++it) {
-		std::cout << readable(it->time_) << std::endl;
+		std::cout << toSecondsSinceFirstMeasurement(it->time_) << std::endl;
 	}
 }
 

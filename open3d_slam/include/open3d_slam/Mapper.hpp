@@ -29,8 +29,6 @@ public:
 	~Mapper() = default;
 
 	void setMapToRangeSensor(const Transform &t);
-	const PointCloud& getMapPointCloud() const;
-	const VoxelizedPointCloud& getDenseMap() const;
 	const Submap& getActiveSubmap() const;
 	const SubmapCollection& getSubmaps() const;
 	SubmapCollection* getSubmapsPtr();

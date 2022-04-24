@@ -16,7 +16,6 @@
 #include "open3d_slam/time.hpp"
 #include "open3d_slam/Transform.hpp"
 #include <open3d/pipelines/registration/Feature.h>
-#include "open3d_slam/ColorProjection.hpp"
 #include "open3d_slam/Voxel.hpp"
 
 namespace o3d_slam {
@@ -48,7 +47,9 @@ public:
 	Eigen::Vector3d getMapToSubmapCenter() const;
 	void setMapToSubmapOrigin(const Transform &T);
 	const PointCloud& getMapPointCloud() const;
+	PointCloud getMapPointCloudCopy() const;
 	const VoxelizedPointCloud& getDenseMap() const;
+	VoxelizedPointCloud getDenseMapCopy() const;
 	bool isEmpty() const;
 	const Feature& getFeatures() const;
 	const PointCloud& getSparseMapPointCloud() const;
@@ -60,6 +61,8 @@ public:
 	const VoxelMap& getVoxelMap() const;
 	mutable PointCloud toRemove_;
 	mutable PointCloud scanRef_;
+
+	Submap(const Submap &other);
 
 private:
 	void carve(const PointCloud &scan, const Eigen::Vector3d &sensorPosition,
@@ -84,12 +87,12 @@ private:
 	bool isCenterComputed_ = false;
 	size_t parentId_ = 0;
 	Timer carvingStatisticsTimer_;
-	std::shared_ptr<o3d_slam::ColorProjection> colorProjectionPtr_;
 	int scanCounter_ = 0;
-	bool isFirstDenseScan_ = true;
 	VoxelMap voxelMap_;
 	VoxelizedPointCloud denseMap_;
-
+	ColorRangeCropper colorCropper_;
+	mutable std::mutex denseMapMutex_;
+	mutable std::mutex mapPointCloudMutex_;
 };
 
 } // namespace o3d_slam

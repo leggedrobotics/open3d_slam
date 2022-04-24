@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>open3d_slam</name>
+  <name>open3d_slam_ros</name>
   <version>0.0.0</version>
   <description>Range sensor based mapping</description>
 
@@ -17,7 +17,15 @@
 
 
   <buildtool_depend>catkin</buildtool_depend>
-  <depend>open3d_catkin</depend>
-  <depend>eigen</depend>
+  <depend>roscpp</depend>
+  <depend>roslib</depend>
+  <depend>open3d_conversions</depend>
+  <depend>open3d_slam</depend>
+  <depend>eigen_conversions</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>rosbag</depend>
+ 
 
 </package>

@@ -21,16 +21,16 @@ TimestampedTransform interpolate(const TimestampedTransform& start,
 
   if (time > end.time_ || time < start.time_){
     std::cout << "Interpolator: \n";
-    std::cout << "Start time: " << start.time_ << std::endl;
-    std::cout << "End time: " << end.time_ << std::endl;
-    std::cout << "Query time: " << time << std::endl;
+    std::cout << "Start time: " << toSecondsSinceFirstMeasurement(start.time_) << std::endl;
+    std::cout << "End time: " << toSecondsSinceFirstMeasurement(end.time_) << std::endl;
+    std::cout << "Query time: " << toSecondsSinceFirstMeasurement(time) << std::endl;
     throw std::runtime_error("transform interpolate:: query time is not between start and end time");
   }
 
   if (start.time_ > end.time_){
     std::cout << "Interpolator: \n";
-    std::cout << "Start time: " << start.time_ << std::endl;
-    std::cout << "End time: " << end.time_ << std::endl;
+    std::cout << "Start time: " << toSecondsSinceFirstMeasurement(start.time_) << std::endl;
+    std::cout << "End time: " << toSecondsSinceFirstMeasurement(end.time_) << std::endl;
     throw std::runtime_error("transform interpolate:: start time is greater than end time");
   }
 
