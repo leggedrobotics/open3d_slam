@@ -58,8 +58,8 @@ public:
 	// Returns the current size of the transform buffer.
 	size_t size() const;
 
-	const TimestampedTransform& latest_measurement(int n = 1) const;
-	TimestampedTransform& latest_measurement(int n = 1);
+	const TimestampedTransform& latest_measurement(int offsetFromLastElement = 0) const;
+	TimestampedTransform& latest_measurement(int offsetFromLastElement = 0);
 
 	void printTimesCurrentlyInBuffer() const;
 

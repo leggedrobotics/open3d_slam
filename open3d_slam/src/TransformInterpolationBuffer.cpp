@@ -65,17 +65,17 @@ void TransformInterpolationBuffer::clear() {
 	transforms_.clear();
 }
 
-const TimestampedTransform& TransformInterpolationBuffer::latest_measurement(int n) const {
+const TimestampedTransform& TransformInterpolationBuffer::latest_measurement(int offsetFromLastElement /*=0*/) const {
 	if (empty()) {
 		throw std::runtime_error("TransformInterpolationBuffer:: latest_measurement: Empty buffer");
 	}
-	return *(std::prev(transforms_.end(), n));
+	return *(std::prev(transforms_.end(), offsetFromLastElement+1));
 }
-TimestampedTransform& TransformInterpolationBuffer::latest_measurement(int n) {
+TimestampedTransform& TransformInterpolationBuffer::latest_measurement(int offsetFromLastElement /*=0*/) {
 	if (empty()) {
 		throw std::runtime_error("TransformInterpolationBuffer:: latest_measurement: Empty buffer");
 	}
-	return *(std::prev(transforms_.end(), n));
+	return *(std::prev(transforms_.end(), offsetFromLastElement+1));
 }
 
 bool TransformInterpolationBuffer::has(const Time &time) const {
