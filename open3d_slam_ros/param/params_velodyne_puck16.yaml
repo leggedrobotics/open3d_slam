@@ -3,10 +3,10 @@ odometry:
     icp_objective: PointToPlane
     max_correspondence_dist: 1.0
     knn_normal_estimation: 4
-    max_n_iter: 35
+    max_n_iter: 40
   scan_processing:
     voxel_size: -1.0
-    downsampling_ratio: 0.3
+    downsampling_ratio: 0.45
     scan_cropping:
       cropping_radius_max: 40.0
       cropping_radius_min: 0.0
@@ -31,7 +31,7 @@ mapping:
       max_n_iter: 50
     scan_processing:
       voxel_size: 0.05
-      downsampling_ratio: 0.15
+      downsampling_ratio: 0.2
       scan_cropping:
         cropping_radius_max: 40.0
         cropping_radius_min: 0.0
