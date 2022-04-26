@@ -5,7 +5,7 @@
 	<arg name="launch_rviz" default="true" />
 	<arg name="cloud_topic" default="/velodyne_points" doc="/rslidar_points or /velodyne_points" />
 	<arg name="play_delay" default="0.4" />
-	<arg name="play_rate" default="0.5" />
+	<arg name="play_rate" default="1.0" />
 	<arg name="use_sim_time" default="true" />
 	<arg name="is_read_from_rosbag" default="false" />
 
