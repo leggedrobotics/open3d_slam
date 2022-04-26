@@ -26,6 +26,7 @@ set(SRC_FILES
   src/SlamWrapper.cpp
   src/constraint_builders.cpp
   src/output.cpp
+  src/MotionCompensation.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES

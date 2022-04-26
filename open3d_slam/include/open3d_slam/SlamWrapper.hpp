@@ -27,6 +27,7 @@ class Mapper;
 class Mesher;
 class SubmapCollection;
 class OptimizationProblem;
+class MotionCompensation;
 
 
 class SlamWrapper {
@@ -88,6 +89,7 @@ protected:
 	VisualizationParameters visualizationParameters_;
 	PointCloud rawCloudPrev_;
 	Constraints lastLoopClosureConstraints_;
+	std::shared_ptr<MotionCompensation> motionCompensationOdom_,motionCompensationMap_;
 	std::shared_ptr<Mesher> mesher_;
 	std::shared_ptr<LidarOdometry> odometry_;
 	std::shared_ptr<Mapper> mapper_;

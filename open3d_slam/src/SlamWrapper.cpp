@@ -22,6 +22,7 @@
 #include "open3d_slam/OptimizationProblem.hpp"
 #include "open3d_slam/constraint_builders.hpp"
 #include "open3d_slam/Odometry.hpp"
+#include "open3d_slam/MotionCompensation.hpp"
 
 #ifdef open3d_slam_OPENMP_FOUND
 #include <omp.h>
@@ -39,6 +40,8 @@ SlamWrapper::SlamWrapper() {
 	odometryBuffer_.set_size_limit(30);
 	mappingBuffer_.set_size_limit(30);
 	registeredCloudBuffer_.set_size_limit(30);
+	motionCompensationOdom_ = std::make_shared<MotionCompensation>();
+	motionCompensationMap_ = std::make_shared<MotionCompensation>();
 }
 
 SlamWrapper::~SlamWrapper() {
@@ -94,7 +97,9 @@ size_t SlamWrapper::getMappingBufferSizeLimit() const {
 
 void SlamWrapper::addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp) {
 	updateFirstMeasurementTime(timestamp);
-	const TimestampedPointCloud timestampedCloud { timestamp, cloud };
+
+	auto removedNans = removePointsWithNonFiniteValues(cloud);
+	const TimestampedPointCloud timestampedCloud { timestamp, *removedNans };
 	if (!odometryBuffer_.empty()) {
 		const auto latestTime = odometryBuffer_.peek_back().time_;
 		if (timestamp < latestTime) {
@@ -177,11 +182,23 @@ void SlamWrapper::loadParametersAndInitialize() {
 	odometry_ = std::make_shared<o3d_slam::LidarOdometry>();
 	odometry_->setParameters(odometryParams);
 
+	//todo remove magic
+	const double lidarFrequency = 10.0;
+	int numMeasurementsVelocityEstimation = 3;
+	auto motionComp = std::make_shared<ConstantVelocityMotionCompensation>(odometry_->getBuffer());
+	motionComp->setParameters(lidarFrequency, numMeasurementsVelocityEstimation);
+//	motionCompensationOdom_ = motionComp;
+
+
 	submaps_ = std::make_shared<o3d_slam::SubmapCollection>();
 	submaps_->setFolderPath(folderPath_);
 	mapper_ = std::make_shared<o3d_slam::Mapper>(odometry_->getBuffer(), submaps_);
 	o3d_slam::loadParameters(paramFile, &mapperParams_);
 	mapper_->setParameters(mapperParams_);
+
+	motionComp = std::make_shared<ConstantVelocityMotionCompensation>(mapper_->getMapToRangeSensorBuffer());
+	motionComp->setParameters(lidarFrequency, numMeasurementsVelocityEstimation);
+//	motionCompensationMap_ = motionComp;
 
 	optimizationProblem_ = std::make_shared<o3d_slam::OptimizationProblem>();
 	optimizationProblem_->setParameters(mapperParams_);
@@ -239,7 +256,9 @@ void SlamWrapper::odometryWorker() {
 		}
 		odometryStatisticsTimer_.startStopwatch();
 		const TimestampedPointCloud measurement = odometryBuffer_.pop();
-		const auto isOdomOkay = odometry_->addRangeScan(measurement.cloud_, measurement.time_);
+		auto undistortedCloud = motionCompensationOdom_->undistortInputPointCloud(measurement.cloud_, measurement.time_);
+
+		const auto isOdomOkay = odometry_->addRangeScan(*undistortedCloud, measurement.time_);
 
 		// this ensures that the odom is always ahead of the mapping
 		// so then we can look stuff up in the interpolation buffer
@@ -271,7 +290,15 @@ void SlamWrapper::mappingWorker() {
 			continue;
 		}
 		mappingStatisticsTimer_.startStopwatch();
-		const TimestampedPointCloud measurement = mappingBuffer_.pop();
+		TimestampedPointCloud measurement;
+		{
+			const TimestampedPointCloud raw = mappingBuffer_.pop();
+			auto undistortedCloud =
+					motionCompensationMap_->undistortInputPointCloud(raw.cloud_,
+							raw.time_);
+			measurement.time_ = raw.time_;
+			measurement.cloud_ = *undistortedCloud;
+		}
 		if (!odometry_->getBuffer().has(measurement.time_)) {
 			std::cout << "Weird, the odom buffer does not seem to have the transform!!! \n";
 			std::cout << "odom buffer size: " << odometry_->getBuffer().size() << "/"
