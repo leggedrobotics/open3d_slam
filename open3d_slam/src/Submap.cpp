@@ -78,9 +78,9 @@ bool Submap::insertScanDenseMap(const PointCloud &rawScan, const Transform &mapT
 	}
 
 
-	auto colored = colorProjectionPtr_->filterColor(rawScan);
+//	auto colored = colorProjectionPtr_->filterColor(rawScan);
 	denseMapCropper_->setPose(Transform::Identity());
-	auto cropped = denseMapCropper_->crop(colored);
+	auto cropped = denseMapCropper_->crop(rawScan);
 	auto transformedCloud = o3d_slam::transform(mapToRangeSensor.matrix(), *cropped);
 	denseMap_.insert(*transformedCloud);
 
