@@ -74,4 +74,6 @@ public:
 	//std::mutex mutex_;
 };
 
+std::shared_ptr<PointCloud> removeDuplicatePointsWithinSameVoxels(const open3d::geometry::PointCloud &cloud, const Eigen::Vector3d &voxelSize);
+
 } // namespace o3d_slam

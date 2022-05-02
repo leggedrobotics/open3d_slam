@@ -9,6 +9,7 @@
 #include "open3d_slam/time.hpp"
 #include <numeric>
 #include <iostream>
+#include <unordered_set>
 
 namespace o3d_slam {
 
@@ -166,7 +167,37 @@ bool VoxelMap::isVoxelHasLayer(const Eigen::Vector3i &key, const std::string &la
 		}
 	}
 	return false;
+}
 
+std::shared_ptr<PointCloud> removeDuplicatePointsWithinSameVoxels(const open3d::geometry::PointCloud &cloud, const Eigen::Vector3d &voxelSize){
+
+	std::unordered_set<Eigen::Vector3i, EigenVec3iHash> voxelSet;
+	voxelSet.reserve(cloud.points_.size());
+	auto retVal = std::make_shared<PointCloud>();
+	retVal->points_.reserve(cloud.points_.size());
+	if (cloud.HasNormals()){
+		retVal->normals_.reserve(cloud.points_.size());
+	}
+	if (cloud.HasColors()){
+		retVal->colors_.reserve(cloud.points_.size());
+	}
+
+	for (size_t i =0; i < cloud.points_.size(); ++i){
+		const Eigen::Vector3i voxelIdx = getVoxelIdx(cloud.points_.at(i), voxelSize);
+		const bool hasPointAlready = !voxelSet.insert(voxelIdx).second;
+		if (hasPointAlready){
+			continue;
+		}
+		retVal->points_.push_back(cloud.points_.at(i));
+		if (cloud.HasNormals()){
+			retVal->normals_.push_back(cloud.normals_.at(i));
+		}
+		if (cloud.HasColors()){
+			retVal->colors_.push_back(cloud.colors_.at(i));
+		}
+	}
+
+	return retVal;
 }
 
 } // namespace o3d_slam

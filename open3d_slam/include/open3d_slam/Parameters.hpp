@@ -78,7 +78,7 @@ struct SpaceCarvingParameters{
 	double voxelSize_=0.1;
 	double maxRaytracingLength_ = 20.0;
 	double truncationDistance_ = 0.1;
-	double carveSpaceEveryNsec_ = 1.0;
+	int carveSpaceEveryNscans_ = 10;
 	double minDotProductWithNormal_ = 0.5;
 };
 

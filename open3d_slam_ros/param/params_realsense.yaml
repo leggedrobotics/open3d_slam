@@ -57,7 +57,7 @@ mapping:
       voxel_size: 0.2
       max_raytracing_length: 30.0
       truncation_distance: 0.3
-      carve_space_every_n_sec: 1000.0
+      carve_space_every_n_scans: 100000000
       min_dot_product_with_normal: 0.3
       
   dense_map_builder:
@@ -73,7 +73,7 @@ mapping:
       voxel_size: 0.3
       max_raytracing_length: 5.0
       truncation_distance: 0.3
-      carve_space_every_n_sec: 1.0
+      carve_space_every_n_scans: 10
       min_dot_product_with_normal: 0.1
 
   place_recognition:

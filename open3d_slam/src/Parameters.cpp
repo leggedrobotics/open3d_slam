@@ -307,7 +307,7 @@ void loadParameters(const YAML::Node &n, SpaceCarvingParameters *p){
 	p->voxelSize_ = n["voxel_size"].as<double>();
 	p->maxRaytracingLength_ = n["max_raytracing_length"].as<double>();
 	p->truncationDistance_ = n["truncation_distance"].as<double>();
-	p->carveSpaceEveryNsec_ = n["carve_space_every_n_sec"].as<double>();
+	p->carveSpaceEveryNscans_ = n["carve_space_every_n_scans"].as<int>();
 	p->minDotProductWithNormal_ = n["min_dot_product_with_normal"].as<double>();
 }
 void loadParameters(const std::string &filename, SpaceCarvingParameters *p){
