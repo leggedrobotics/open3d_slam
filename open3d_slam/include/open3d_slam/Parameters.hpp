@@ -183,6 +183,15 @@ struct SavingParameters {
 	bool isSaveSubmaps_ = false;
 };
 
+struct ConstantVelocityMotionCompensationParameters {
+	bool isUndistortInputCloud_ = false;
+	bool isSpinningClockwise_ = true; // otherwise it spins counter clockwise
+	double scanDuration_ = 0.1; // sec
+	int numPosesVelocityEstimation_ = 3;
+};
+
+void loadParameters(const std::string &filename, ConstantVelocityMotionCompensationParameters *p);
+void loadParameters(const YAML::Node &node, ConstantVelocityMotionCompensationParameters *p);
 void loadParameters(const std::string &filename, SavingParameters *p);
 void loadParameters(const YAML::Node &node, SavingParameters *p);
 void loadParameters(const std::string &filename, PlaceRecognitionConsistancyCheckParameters *p);

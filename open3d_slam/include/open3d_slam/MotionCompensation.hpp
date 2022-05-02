@@ -32,7 +32,7 @@ public:
 	ConstantVelocityMotionCompensation(const TransformInterpolationBuffer &buffer);
 	~ConstantVelocityMotionCompensation() override = default;
 
-	void setParameters(double lidarFrequency, int numMeasurementsVelocityEstimation);
+	void setParameters(const ConstantVelocityMotionCompensationParameters &p);
 	std::shared_ptr<PointCloud> undistortInputPointCloud(const PointCloud &input, const Time &timestamp) final;
 
 
@@ -40,9 +40,8 @@ private:
 	double computePhase(double x, double y);
 	void estimateLinearAndAngularVelocity(const Time &timestamp, Eigen::Vector3d *linearVelocity, Eigen::Vector3d *angularVelocity) const;
 
-	int numMeasurementsVelocityEstimation_ = 2;
-	double lidarPeriod_ = 0.1;
 	const TransformInterpolationBuffer &buffer_;
+	ConstantVelocityMotionCompensationParameters params_;
 
 };
 

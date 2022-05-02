@@ -182,23 +182,11 @@ void SlamWrapper::loadParametersAndInitialize() {
 	odometry_ = std::make_shared<o3d_slam::LidarOdometry>();
 	odometry_->setParameters(odometryParams);
 
-	//todo remove magic
-	const double lidarFrequency = 10.0;
-	int numMeasurementsVelocityEstimation = 3;
-	auto motionComp = std::make_shared<ConstantVelocityMotionCompensation>(odometry_->getBuffer());
-	motionComp->setParameters(lidarFrequency, numMeasurementsVelocityEstimation);
-//	motionCompensationOdom_ = motionComp;
-
-
 	submaps_ = std::make_shared<o3d_slam::SubmapCollection>();
 	submaps_->setFolderPath(folderPath_);
 	mapper_ = std::make_shared<o3d_slam::Mapper>(odometry_->getBuffer(), submaps_);
 	o3d_slam::loadParameters(paramFile, &mapperParams_);
 	mapper_->setParameters(mapperParams_);
-
-	motionComp = std::make_shared<ConstantVelocityMotionCompensation>(mapper_->getMapToRangeSensorBuffer());
-	motionComp->setParameters(lidarFrequency, numMeasurementsVelocityEstimation);
-//	motionCompensationMap_ = motionComp;
 
 	optimizationProblem_ = std::make_shared<o3d_slam::OptimizationProblem>();
 	optimizationProblem_->setParameters(mapperParams_);
@@ -209,6 +197,16 @@ void SlamWrapper::loadParametersAndInitialize() {
 	Timer::isDisablePrintInDestructor_ = !mapperParams_.isPrintTimingStatistics_;
 
 	loadParameters(paramFile,&savingParameters_);
+
+	loadParameters(paramFile, &motionCompensationParameters_);
+	if (motionCompensationParameters_.isUndistortInputCloud_){
+		auto motionCompOdom = std::make_shared<ConstantVelocityMotionCompensation>(odometry_->getBuffer());
+		motionCompOdom->setParameters(motionCompensationParameters_);
+		motionCompensationOdom_ = motionCompOdom;
+		auto motionCompMap = std::make_shared<ConstantVelocityMotionCompensation>(mapper_->getMapToRangeSensorBuffer());
+		motionCompMap->setParameters(motionCompensationParameters_);
+		motionCompensationMap_ = motionCompMap;
+	}
 
 }
 

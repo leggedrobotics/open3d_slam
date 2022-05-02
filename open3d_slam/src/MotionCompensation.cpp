@@ -31,15 +31,13 @@ std::shared_ptr<PointCloud> MotionCompensation::undistortInputPointCloud(
 ConstantVelocityMotionCompensation::ConstantVelocityMotionCompensation(
 		const TransformInterpolationBuffer &buffer) :
 		buffer_(buffer){
-
-
 }
 
 void ConstantVelocityMotionCompensation::estimateLinearAndAngularVelocity(
 		const Time &timestamp, Eigen::Vector3d *linearVelocity,
 		Eigen::Vector3d *angularVelocity) const {
 
-	const int offset = numMeasurementsVelocityEstimation_;
+	const int offset = params_.numPosesVelocityEstimation_;
 	if (buffer_.size() <= offset) {
 		linearVelocity->setZero();
 		angularVelocity->setZero();
@@ -68,11 +66,9 @@ void ConstantVelocityMotionCompensation::estimateLinearAndAngularVelocity(
 
 }
 
-void ConstantVelocityMotionCompensation::setParameters(double lidarFrequency, int numMeasurementsVelocityEstimation){
-	numMeasurementsVelocityEstimation_ = numMeasurementsVelocityEstimation;
-	lidarPeriod_ = 1.0 / lidarFrequency;
-	assert_gt(lidarPeriod_, 0.0, "lidar periond should be > 0.0");
-	assert_gt<double>(lidarFrequency,0.0, "lidar Frequency: ");
+void ConstantVelocityMotionCompensation::setParameters(const ConstantVelocityMotionCompensationParameters &p){
+	params_ = p;
+	assert_gt<double>(params_.scanDuration_,0.0, "lidar scanDuration_: ");
 }
 
 
@@ -99,8 +95,8 @@ std::shared_ptr<PointCloud> ConstantVelocityMotionCompensation::undistortInputPo
 	for (int i = 0; i < input.points_.size(); ++i) {
 		const Eigen::Vector3d p = output->points_.at(i);
 		const double phase = computePhase(p.x(), p.y());
-		const Eigen::Vector3d xyz = phase * lidarPeriod_ * linearVelocity;
-		const Eigen::Vector3d rpy = phase * lidarPeriod_ * angularVelocityRpy;
+		const Eigen::Vector3d xyz = phase * params_.scanDuration_ * linearVelocity;
+		const Eigen::Vector3d rpy = phase * params_.scanDuration_ * angularVelocityRpy;
 		const Transform motion = makeTransform(xyz, fromRPY(rpy).normalized());
 		const Transform point = makeTransform(p,
 				Eigen::Quaterniond::Identity());
@@ -115,7 +111,6 @@ std::shared_ptr<PointCloud> ConstantVelocityMotionCompensation::undistortInputPo
 //			pMax = p;
 //		}
 		output->points_.at(i) = motion * p;
-//			output->points_.at(i) = p; //(motion * point).translation();
 	}
 
 //	if (std::fabs(angularVelocityRpy.z()) > 160 * M_PI / 180.0) {
@@ -144,7 +139,13 @@ double ConstantVelocityMotionCompensation::computePhase(double x, double y) {
 	if (angleWrapped == 0.0) {
 		return 0.0;
 	}
-	const double phase = 1.0 - angleWrapped / (2.0 * M_PI);
+	double phase = -5.0;
+
+	if (params_.isSpinningClockwise_){
+		phase = 1.0 - angleWrapped / (2.0 * M_PI);
+	} else {
+		phase = angleWrapped / (2.0 * M_PI);
+	}
 
 	assert_le(phase, 1.0, "phase should be   <= 1.0");
 	assert_ge(phase, 0.0, "phase should be   >= 0.0");

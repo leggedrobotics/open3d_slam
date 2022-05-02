@@ -28,7 +28,7 @@ public:
 	const open3d::geometry::PointCloud &getPreProcessedCloud() const;
 	void setParameters (const OdometryParameters &p);
 	const TransformInterpolationBuffer &getBuffer() const;
-
+	bool  hasProcessedMeasurements() const;
 private:
 
 	TransformInterpolationBuffer odomToRangeSensorBuffer_;
