@@ -163,4 +163,28 @@ void drawAxes(const Eigen::Vector3d &p, const Eigen::Quaterniond &q, double scal
 	tf::quaternionEigenToMsg(q, marker->pose.orientation);
 }
 
+
+ros::Time toRos(Time time) {
+	int64_t uts_timestamp = toUniversal(time);
+	int64_t ns_since_unix_epoch = (uts_timestamp - kUtsEpochOffsetFromUnixEpochInSeconds * 10000000ll) * 100ll;
+	::ros::Time ros_time;
+	if (ns_since_unix_epoch < 0) {
+		std::cerr << "ERROR: nanoseconds since unix epoch is: " << ns_since_unix_epoch
+				<< " which is impossible!!!! \n";
+		std::cerr << "       ROS time will throw you an exception fo sho!!!! \n";
+		std::cerr << "       Are you playing the rosbag with --clock??? \n";
+		std::cerr << "       If yes, did you set use_sim_time to true ??? \n";
+		std::cout << "Universal time: " << uts_timestamp << std::endl;
+	}
+	ros_time.fromNSec(ns_since_unix_epoch);
+	return ros_time;
+}
+
+Time fromRos(const ::ros::Time &time) {
+	// The epoch of the ICU Universal Time Scale is "0001-01-01 00:00:00.0 +0000",
+	// exactly 719162 days before the Unix epoch.
+	return fromUniversal(
+			(time.sec + kUtsEpochOffsetFromUnixEpochInSeconds) * 10000000ll + (time.nsec + 50) / 100); // + 50 to get the rounding correct.
+}
+
 } /* namespace o3d_slam */

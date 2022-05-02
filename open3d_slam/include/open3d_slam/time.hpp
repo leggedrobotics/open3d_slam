@@ -12,7 +12,6 @@
 #include <ostream>
 #include <ratio>
 #include "open3d_slam/typedefs.hpp"
-#include <ros/time.h>
 
 namespace o3d_slam {
 
@@ -76,10 +75,6 @@ int64 toUniversal(Time time);
 std::ostream& operator<<(std::ostream& os, Time time);
 
 std::string toString(const Time &time);
-
-ros::Time toRos(Time time);
-
-Time fromRos(const ::ros::Time& time);
 
 void updateFirstMeasurementTime(const Time &t);
 double toSecondsSinceFirstMeasurement(const Time &t);

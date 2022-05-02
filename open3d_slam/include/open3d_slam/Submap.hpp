@@ -8,7 +8,6 @@
 #pragma once
 
 #include <open3d/geometry/PointCloud.h>
-#include <ros/time.h>
 #include <Eigen/Dense>
 #include <mutex>
 #include "open3d_slam/Parameters.hpp"

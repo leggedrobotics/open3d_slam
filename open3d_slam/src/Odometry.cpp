@@ -4,12 +4,13 @@
  *  Created on: Oct 15, 2021
  *      Author: jelavice
  */
-
 #include "open3d_slam/Odometry.hpp"
 #include "open3d_slam/frames.hpp"
 #include "open3d_slam/helpers.hpp"
 #include "open3d_slam/time.hpp"
 #include "open3d_slam/output.hpp"
+
+#include <iostream>
 
 namespace o3d_slam {
 
