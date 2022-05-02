@@ -11,6 +11,7 @@
 #include "open3d_slam/magic.hpp"
 
 #include <algorithm>
+#include <iostream>
 #include <numeric>
 #include <utility>
 #include <thread>
