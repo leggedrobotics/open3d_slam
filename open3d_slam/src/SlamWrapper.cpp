@@ -131,13 +131,18 @@ void SlamWrapper::finishProcessing() {
 		}
 	}
 	std::cout << "Finishing all submaps! \n";
+	numLatesLoopClosureConstraints_ = -1;
 	submaps_->forceNewSubmapCreation();
 	while (isRunWorkers_) {
 		if (mapperParams_.isAttemptLoopClosures_) {
 			computeFeaturesIfReady();
 			attemptLoopClosuresIfReady();
+		} else {
+			break;
 		}
-
+		if (numLatesLoopClosureConstraints_ == 0){
+			break;
+		}
 		if (isOptimizedGraphAvailable_) {
 			isOptimizedGraphAvailable_ = false;
 			const auto poseBeforeUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
@@ -414,6 +419,7 @@ void SlamWrapper::loopClosureWorker() {
 			Timer t("loop_closing_attempt");
 			const auto lcc = loopClosureCandidates_.popAllElements();
 			loopClosureConstraints = submaps_->buildLoopClosureConstraints(lcc);
+			numLatesLoopClosureConstraints_ = loopClosureConstraints.size();
 		}
 
 		if (loopClosureConstraints.empty()) {

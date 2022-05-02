@@ -106,6 +106,7 @@ protected:
 	Time latestScanToMapRefinementTimestamp_;
 	Time latestScanToScanRegistrationTimestamp_;
 	ConstantVelocityMotionCompensationParameters motionCompensationParameters_;
+	int numLatesLoopClosureConstraints_ = -1;
 };
 
 } // namespace o3d_slam
