@@ -11,7 +11,6 @@
 #include "open3d_slam/math.hpp"
 
 #include <open3d/io/TriangleMeshIO.h>
-#include <ros/package.h>
 
 namespace o3d_slam {
 

@@ -16,6 +16,8 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/buffer.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <ros/time.h>
+#include "open3d_slam/time.hpp"
 
 
 namespace o3d_slam {
@@ -40,5 +42,9 @@ void publishTfTransform(const Eigen::Matrix4d &Mat, const ros::Time &time, const
 		const std::string &childFrame, tf2_ros::TransformBroadcaster *broadcaster);
 bool lookupTransform(const std::string &target_frame, const std::string &source_frame, const ros::Time &time,const tf2_ros::Buffer &tfBuffer,
 		Eigen::Isometry3d *transform);
+
+ros::Time toRos(Time time);
+
+Time fromRos(const ::ros::Time& time);
 
 } /* namespace o3d_slam */
