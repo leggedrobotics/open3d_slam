@@ -86,7 +86,6 @@ struct MapBuilderParameters{
 	double mapVoxelSize_ = 0.03;
 	ScanCroppingParameters cropper_;
 	SpaceCarvingParameters carving_;
-	int voxelizeEveryNscans_ = 1;
 };
 
 struct SubmapParameters{

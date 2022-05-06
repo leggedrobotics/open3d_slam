@@ -234,7 +234,6 @@ void loadParameters(const std::string &filename, MapBuilderParameters *p) {
 }
 void loadParameters(const YAML::Node &node, MapBuilderParameters *p) {
 	p->mapVoxelSize_ = node["map_voxel_size"].as<double>();
-	p->voxelizeEveryNscans_ = node["voxelize_every_n_scans"].as<int>();
 	loadParameters(node["space_carving"], &(p->carving_));
 	loadParameters(node["scan_cropping"], &(p->cropper_));
 }
