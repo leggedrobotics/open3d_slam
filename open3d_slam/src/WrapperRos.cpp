@@ -27,7 +27,7 @@
 #include "open3d_conversions/open3d_conversions.h"
 #include <open3d_slam_msgs/PolygonMesh.h>
 #include "tf2_eigen/tf2_eigen.h"
-
+#include <filesystem>
 #ifdef open3d_slam_OPENMP_FOUND
 #include <omp.h>
 #endif
@@ -179,6 +179,8 @@ void WrapperRos::initialize() {
 
 	folderPath_ = ros::package::getPath("open3d_slam") + "/data/";
 	mapSavingFolderPath_ = nh_->param<std::string>("map_saving_folder", folderPath_);
+        // create the folder if it doesn't exist
+        open3d::utility::filesystem::MakeDirectory(mapSavingFolderPath_);
 	const std::string paramFile = nh_->param<std::string>("parameter_file_path", "");
 	std::cout << "loading params from: " << paramFile << "\n";
 

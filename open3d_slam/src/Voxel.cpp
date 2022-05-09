@@ -20,9 +20,33 @@ const Eigen::Vector3d zero3d = Eigen::Vector3d::Zero();
  Eigen::Vector3d AggregatedVoxel::getAggregatedNormal() const {
 	return numAggregatedPoints_ == 0 ? zero3d : aggregatedNormal_ / (numAggregatedPoints_);
 }
+
  Eigen::Vector3d AggregatedVoxel::getAggregatedColor() const {
-	return numAggregatedPoints_ == 0 ? zero3d : aggregatedColor_ / (numAggregatedPoints_);
+        if (numAggregatedPoints_ == 0) {
+            return zero3d;
+        } else {
+            // return the most frequent color in aggregatedColorDistributionRGB_
+            // pick the argmax of the first row of aggregatedColorDistributionRGB_
+            int maxRedIndex = 0;
+            int maxGreenIndex = 0;
+            int maxBlueIndex = 0;
+            for (int i = 1; i < aggregatedColorDistribution_.rows(); i++) {
+                if (aggregatedColorDistribution_(i, 0) > aggregatedColorDistribution_(maxRedIndex, 0)) {
+                    maxRedIndex = i;
+                }
+                if (aggregatedColorDistribution_(i, 1) > aggregatedColorDistribution_(maxGreenIndex, 1)) {
+                    maxGreenIndex = i;
+                }
+                if (aggregatedColorDistribution_(i, 2) > aggregatedColorDistribution_(maxBlueIndex, 2)) {
+                    maxBlueIndex = i;
+                }
+            }
+            Eigen::Vector3d color = Eigen::Vector3d(maxRedIndex , maxGreenIndex, maxBlueIndex);
+            color /= 255.0;
+            return color;
+        }
 }
+
 void AggregatedVoxel::aggregatePoint(const Eigen::Vector3d &p) {
 	aggregatedPosition_ += p;
 	++numAggregatedPoints_;
@@ -30,8 +54,18 @@ void AggregatedVoxel::aggregatePoint(const Eigen::Vector3d &p) {
 void AggregatedVoxel::aggregateNormal(const Eigen::Vector3d &normal) {
 	aggregatedNormal_ += normal;
 }
+
 void AggregatedVoxel::aggregateColor(const Eigen::Vector3d &c) {
-	aggregatedColor_ += c;
+    // convert c from double to an int and multiply by 255
+    // this is to make sure that the color is in the range [0, 255]
+    // otherwise the histogram will not work
+    int r = c(0) * 255;
+    int g = c(1) * 255;
+    int b = c(2) * 255;
+    // convert the rgb values to a single int
+    aggregatedColorDistribution_(r, 0) += 1;
+    aggregatedColorDistribution_(g, 1) += 1;
+    aggregatedColorDistribution_(b, 2) += 1;
 }
 
 VoxelizedPointCloud::VoxelizedPointCloud() :

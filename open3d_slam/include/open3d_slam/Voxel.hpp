@@ -48,8 +48,11 @@ public:
 	int numAggregatedPoints_ = 0;
 	Eigen::Vector3d aggregatedPosition_ = Eigen::Vector3d::Zero();
 	Eigen::Vector3d aggregatedNormal_ = Eigen::Vector3d::Zero();
-	Eigen::Vector3d aggregatedColor_ = Eigen::Vector3d::Zero();
+        // channel color distribution, rgb initialized to a zero integer matrix of size 256 x 3
+        Eigen::MatrixXi aggregatedColorDistribution_ = Eigen::MatrixXi::Zero(256, 3);
 
+
+        Eigen::Vector3d mostFrequentAggregatedColor_ = Eigen::Vector3d::Zero();
 private:
 	// aggregate point has to be called before aggregate normal and aggregate color!!!!
 	void aggregatePoint(const Eigen::Vector3d &p);
