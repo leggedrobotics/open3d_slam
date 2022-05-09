@@ -7,6 +7,8 @@
 
 #include "open3d_slam/Voxel.hpp"
 #include "open3d_slam/time.hpp"
+#include "open3d_slam/croppers.hpp"
+
 #include <numeric>
 #include <iostream>
 #include <unordered_set>
@@ -90,6 +92,60 @@ void VoxelizedPointCloud::insert(const open3d::geometry::PointCloud &cloud) {
 	}
 }
 
+Eigen::Vector3d VoxelizedPointCloud::getCenter() const {
+	if (empty()) {
+		return Eigen::Vector3d::Zero();
+	}
+	Eigen::Vector3d ret(0.0, 0.0, 0.0);
+	int numPoints = 0;
+	for (const auto &voxel : voxels_) {
+		if (voxel.second.numAggregatedPoints_ > 0) {
+			ret += voxel.second.getAggregatedPosition();
+			numPoints++;
+		}
+	}
+	return ret / static_cast<double>(numPoints);
+}
+
+const AggregatedVoxel * VoxelizedPointCloud::findNNvoxel(const Eigen::Vector3d &p, double dist,Eigen::Vector3i *retKey) const{
+
+	const auto key = getKey(p);
+	auto search = getVoxelPtr(key);
+	if ( search != nullptr){
+		*retKey = key;
+		return search;
+	}
+	const int lower = -2;
+	const int upper = 2;
+	double bestDistance = 1e8;
+	Eigen::Vector3i bestNeighbour;
+	const AggregatedVoxel * bestVoxel = nullptr;
+	for (int i = lower; i < upper; ++i){
+		for (int j = lower; j < upper; ++j){
+			for (int k = lower; k < upper; ++k){
+				if (i==0 && j ==0 && k==0){
+					continue;
+				}
+				const Eigen::Vector3i newKey(key.x() +i, key.y() + j, key.z() + k);
+				auto search = getVoxelPtr(newKey);
+				if (search != nullptr) {
+					const double d = (search->getAggregatedPosition() - p).squaredNorm();
+					if (d < bestDistance) {
+						bestDistance = d;
+						bestVoxel = search;
+						bestNeighbour = newKey;
+					}
+				}
+
+			}
+		}
+	}
+	*retKey = bestNeighbour;
+
+
+	return bestVoxel;
+}
+
 PointCloud VoxelizedPointCloud::toPointCloud() const {
 	if (empty()){
 		return PointCloud();
@@ -110,6 +166,35 @@ PointCloud VoxelizedPointCloud::toPointCloud() const {
 			}
 			if (isHasColors_) {
 				ret.colors_.push_back(voxel.second.getAggregatedColor());
+			}
+		}
+	}
+	return ret;
+}
+
+PointCloud VoxelizedPointCloud::toPointCloud(const CroppingVolume &cropper) const {
+	if (empty()) {
+		return PointCloud();
+	}
+	PointCloud ret;
+	ret.points_.reserve(voxels_.size());
+	if (isHasNormals_) {
+		ret.normals_.reserve(voxels_.size());
+	}
+	if (isHasColors_) {
+		ret.colors_.reserve(voxels_.size());
+	}
+	for (const auto &voxel : voxels_) {
+		if (voxel.second.numAggregatedPoints_ > 0) {
+			const auto p = voxel.second.getAggregatedPosition();
+			if (cropper.isWithinVolume(p)) {
+				ret.points_.push_back(p);
+				if (isHasNormals_) {
+					ret.normals_.push_back(voxel.second.getAggregatedNormal());
+				}
+				if (isHasColors_) {
+					ret.colors_.push_back(voxel.second.getAggregatedColor());
+				}
 			}
 		}
 	}

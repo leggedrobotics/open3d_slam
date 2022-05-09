@@ -177,13 +177,13 @@ static RegistrationResultVoxelized GetRegistrationResultAndCorrespondencesVoxeli
             std::vector<int> indices(1);
             std::vector<double> dists(1);
             const auto &point = source.points_[i];
-            const auto targetKey = target.getKey(point);
-            auto search = target.getVoxelPtr(targetKey);
+            Eigen::Vector3i corrKey;
+            auto search = target.findNNvoxel(point,max_correspondence_distance, &corrKey);
             if (search != nullptr) {
             	const auto err = search->getAggregatedPosition() - source.points_[i];
                 error2_private += err.squaredNorm();
                 CorrespondenceVoxelized corr;
-                corr.targetIdx_ = targetKey;
+                corr.targetIdx_ = corrKey;
                 corr.sourceIdx_ = i;
                 correspondence_set_private.push_back(corr);
             }

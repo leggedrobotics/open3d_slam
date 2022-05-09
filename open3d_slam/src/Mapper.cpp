@@ -25,6 +25,8 @@ namespace o3d_slam {
 namespace {
 namespace registration = open3d::pipelines::registration;
 std::shared_ptr<registration::TransformationEstimation> icpObjective;
+std::shared_ptr<TransformationEstimationPointToPlaneVoxelized> icpObjectiveVoxelized;
+
 const bool isCheckTransformChainingAndPrintResult = false;
 } // namespace
 
@@ -54,6 +56,7 @@ void Mapper::update(const MapperParameters &p) {
 	mapBuilderCropper_ = croppingVolumeFactory(params_.mapBuilder_.cropper_);
 	scanMatcherCropper_ = croppingVolumeFactory(params_.scanProcessing_.cropper_);
 	submaps_->setParameters(p);
+	icpObjectiveVoxelized = std::make_shared<TransformationEstimationPointToPlaneVoxelized>();
 }
 
 Transform Mapper::getMapToOdom(const Time &timestamp) const {
@@ -134,21 +137,26 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		mapToRangeSensorEstimate =  mapToRangeSensorPrev_*odometryMotion ;
 	}
 
-	const PointCloud &activeSubmapPointCloud = submaps_->getActiveSubmap().getMapPointCloud();
-	std::shared_ptr<PointCloud> narrowCropped, wideCroppedCloud, mapPatch;
+//	const PointCloud &activeSubmapPointCloud = submaps_->getActiveSubmap().getMapPointCloud();
+	const auto &map = submaps_->getActiveSubmap().getMap();
+	std::shared_ptr<PointCloud> narrowCropped, wideCroppedCloud;
+	PointCloud mapPatch;
 	{
 		Timer timer;
 		wideCroppedCloud = preProcessScan(rawScan);
 		narrowCropped = scanMatcherCropper_->crop(*wideCroppedCloud);
 		preProcessedScan_ = *narrowCropped;
 		scanMatcherCropper_->setPose(mapToRangeSensor_);
-		mapPatch = scanMatcherCropper_->crop(activeSubmapPointCloud);
+		mapPatch = map.toPointCloud(*scanMatcherCropper_);
 	}
 
 //	std::cout << "preeIcp: " << asString(mapToRangeSensorEstimate) << "\n";
-	const auto result = RegistrationICP(*narrowCropped, *mapPatch,
+	const auto result = RegistrationICP(*narrowCropped, mapPatch,
 			params_.scanMatcher_.maxCorrespondenceDistance_, mapToRangeSensorEstimate.matrix(), *icpObjective,
 			icpCriteria_);
+//	const auto result = registrationICP(*narrowCropped, map,
+//			params_.scanMatcher_.maxCorrespondenceDistance_,*icpObjectiveVoxelized, mapToRangeSensorEstimate.matrix() ,
+//			icpCriteria_);
 //	std::cout << "postIcp: " << asString(Transform(result.transformation_)) << "\n\n";
 	if (result.fitness_ < params_.minRefinementFitness_) {
 		std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
@@ -203,10 +211,10 @@ Mapper::PointCloud Mapper::getAssembledMapPointCloud() const {
 	const int nPoints = submaps_->getTotalNumPoints();
 	const Submap &activeSubmap = getActiveSubmap();
 	cloud.points_.reserve(nPoints);
-	if (activeSubmap.getMapPointCloud().HasColors()) {
+	if (activeSubmap.getMap().hasColors()) {
 		cloud.colors_.reserve(nPoints);
 	}
-	if (activeSubmap.getMapPointCloud().HasNormals()) {
+	if (activeSubmap.getMap().hasNormals()) {
 		cloud.normals_.reserve(nPoints);
 	}
 

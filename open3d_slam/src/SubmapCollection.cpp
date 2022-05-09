@@ -69,7 +69,7 @@ size_t SubmapCollection::numLoopClosureCandidates() const {
 size_t SubmapCollection::getTotalNumPoints() const {
 	const int nSubmaps = submaps_.size();
 	return std::accumulate(submaps_.begin(), submaps_.end(), 0, [](size_t sum, const Submap &s) {
-		return sum + s.getMapPointCloud().points_.size();
+		return sum + s.getMap().size();
 	});
 }
 

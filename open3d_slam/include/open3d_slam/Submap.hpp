@@ -45,8 +45,10 @@ public:
 	const Transform& getMapToSubmapOrigin() const;
 	Eigen::Vector3d getMapToSubmapCenter() const;
 	void setMapToSubmapOrigin(const Transform &T);
-	const PointCloud& getMapPointCloud() const;
+	const VoxelizedPointCloud& getMap() const;
+	VoxelizedPointCloud getMapCopy() const;
 	PointCloud getMapPointCloudCopy() const;
+
 	const VoxelizedPointCloud& getDenseMap() const;
 	VoxelizedPointCloud getDenseMapCopy() const;
 	bool isEmpty() const;
@@ -65,7 +67,7 @@ public:
 
 private:
 	void carve(const PointCloud &scan, const Eigen::Vector3d &sensorPosition,
-			const SpaceCarvingParameters &param, VoxelizedPointCloud *cloud);
+			const SpaceCarvingParameters &param, size_t nScans, VoxelizedPointCloud *cloud);
 	void update(const MapperParameters &mapperParams);
 	void estimateNormalsIfNeeded(int knn, PointCloud *pcl) const;
 	void carve(const PointCloud &rawScan, const Transform &mapToRangeSensor, const CroppingVolume &cropper,
@@ -73,7 +75,8 @@ private:
 	void voxelizeInsideCroppingVolume(const CroppingVolume &cropper, const MapBuilderParameters &param,
 			PointCloud *map) const;
 
-	PointCloud sparseMapCloud_, mapCloud_;
+	VoxelizedPointCloud map_;
+	PointCloud sparseMapCloud_;
 	Transform mapToSubmap_ = Transform::Identity();
 	Transform mapToRangeSensor_ = Transform::Identity();
 	Eigen::Vector3d submapCenter_ = Eigen::Vector3d::Zero();
@@ -93,7 +96,7 @@ private:
 	VoxelizedPointCloud denseMap_;
 	ColorRangeCropper colorCropper_;
 	mutable std::mutex denseMapMutex_;
-	mutable std::mutex mapPointCloudMutex_;
+	mutable std::mutex mapMutex_;
 };
 
 } // namespace o3d_slam

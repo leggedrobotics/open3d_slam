@@ -57,6 +57,7 @@ private:
 	void aggregateColor(const Eigen::Vector3d &c);
 };
 
+class CroppingVolume;
 class VoxelizedPointCloud : public VoxelHashMap<AggregatedVoxel> {
 	using BASE = VoxelHashMap<AggregatedVoxel>;
 public:
@@ -65,9 +66,13 @@ public:
 	VoxelizedPointCloud(const Eigen::Vector3d &voxelSize);
 	void insert(const PointCloud &cloud);
 	PointCloud toPointCloud() const;
+	PointCloud toPointCloud(const CroppingVolume &cropper) const;
+
 	bool hasColors() const;
 	bool hasNormals() const;
 	void transform(const Transform &T);
+	Eigen::Vector3d getCenter() const;
+	const AggregatedVoxel *findNNvoxel(const Eigen::Vector3d &p, double dist, Eigen::Vector3i *retKey) const;
 
 	bool isHasNormals_ =false;
 	bool isHasColors_ =false;
