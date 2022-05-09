@@ -13,6 +13,7 @@
 #include "open3d_slam/Voxel.hpp"
 #include "open3d_slam/assert.hpp"
 #include "open3d_slam/output.hpp"
+#include "open3d_slam/Registration.h"
 
 #include "open3d/utility/Eigen.h"
 #include "open3d/utility/Helper.h"
@@ -145,7 +146,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	}
 
 //	std::cout << "preeIcp: " << asString(mapToRangeSensorEstimate) << "\n";
-	const auto result = open3d::pipelines::registration::RegistrationICP(*narrowCropped, *mapPatch,
+	const auto result = RegistrationICP(*narrowCropped, *mapPatch,
 			params_.scanMatcher_.maxCorrespondenceDistance_, mapToRangeSensorEstimate.matrix(), *icpObjective,
 			icpCriteria_);
 //	std::cout << "postIcp: " << asString(Transform(result.transformation_)) << "\n\n";

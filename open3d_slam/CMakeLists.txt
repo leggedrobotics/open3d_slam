@@ -27,6 +27,8 @@ set(SRC_FILES
   src/constraint_builders.cpp
   src/output.cpp
   src/MotionCompensation.cpp
+  src/TransformationEstimation.cpp
+  src/Registration.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES
