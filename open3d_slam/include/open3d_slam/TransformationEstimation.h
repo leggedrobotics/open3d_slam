@@ -35,6 +35,8 @@
 #include "open3d/pipelines/registration/RobustKernel.h"
 #include "open3d/pipelines/registration/TransformationEstimation.h"
 #include "open3d_slam/typedefs.hpp"
+#include "open3d_slam/Voxel.hpp"
+
 namespace o3d_slam {
 
 
@@ -43,6 +45,16 @@ using CorrespondenceSet = open3d::pipelines::registration::CorrespondenceSet;
 using TransformationEstimationType = open3d::pipelines::registration::TransformationEstimationType;
 using RobustKernel = open3d::pipelines::registration::RobustKernel;
 using L2Loss = open3d::pipelines::registration::L2Loss;
+
+
+
+struct CorrespondenceVoxelized {
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+	int sourceIdx_;
+	Eigen::Vector3i targetIdx_;
+};
+
+using CorrespondenceSetVoxelized = std::vector<CorrespondenceVoxelized>;
 
 /// \class TransformationEstimation
 ///
@@ -146,6 +158,40 @@ public:
             const PointCloud &source,
             const PointCloud &target,
             const CorrespondenceSet &corres) const override;
+
+public:
+    /// shared_ptr to an Abstract RobustKernel that could mutate at runtime.
+    std::shared_ptr<RobustKernel> kernel_ = std::make_shared<L2Loss>();
+
+private:
+    const TransformationEstimationType type_ =
+            TransformationEstimationType::PointToPlane;
+};
+
+class TransformationEstimationPointToPlaneVoxelized {
+public:
+    /// \brief Default Constructor.
+	TransformationEstimationPointToPlaneVoxelized() {}
+    ~TransformationEstimationPointToPlaneVoxelized() {}
+
+    /// \brief Constructor that takes as input a RobustKernel \param kernel Any
+    /// of the implemented statistical robust kernel for outlier rejection.
+    explicit TransformationEstimationPointToPlaneVoxelized(
+            std::shared_ptr<RobustKernel> kernel)
+        : kernel_(std::move(kernel)) {}
+
+public:
+    TransformationEstimationType GetTransformationEstimationType()
+            const {
+        return type_;
+    };
+    double ComputeRMSE(const PointCloud &source,
+                       const VoxelizedPointCloud &target,
+                       const CorrespondenceSetVoxelized &corres) const;
+    Eigen::Matrix4d ComputeTransformation(
+            const PointCloud &source,
+            const VoxelizedPointCloud &target,
+            const CorrespondenceSetVoxelized &corres) const;
 
 public:
     /// shared_ptr to an Abstract RobustKernel that could mutate at runtime.

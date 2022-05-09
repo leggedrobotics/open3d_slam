@@ -107,5 +107,51 @@ Eigen::Matrix4d TransformationEstimationPointToPlane::ComputeTransformation(
     return is_success ? extrinsic : Eigen::Matrix4d::Identity();
 }
 
+double TransformationEstimationPointToPlaneVoxelized::ComputeRMSE(const PointCloud &source,
+        const VoxelizedPointCloud &target,
+        const CorrespondenceSetVoxelized &corres) const {
+    if (corres.empty() || !target.hasNormals()) return 0.0;
+    double err = 0.0, r;
+    for (const CorrespondenceVoxelized &c : corres) {
+    	const auto p = target.getVoxelPtr(c.targetIdx_)->getAggregatedPosition();
+    	const auto n = target.getVoxelPtr(c.targetIdx_)->getAggregatedNormal();
+    	r = (source.points_[c.sourceIdx_] - p).dot(n);
+        err += r * r;
+    }
+    return std::sqrt(err / (double)corres.size());
+}
+
+Eigen::Matrix4d TransformationEstimationPointToPlaneVoxelized::ComputeTransformation(const PointCloud &source,
+        const VoxelizedPointCloud &target,
+        const CorrespondenceSetVoxelized &corres) const {
+    if (corres.empty() || !target.hasNormals())
+        return Eigen::Matrix4d::Identity();
+
+    auto compute_jacobian_and_residual = [&](int i, Eigen::Vector6d &J_r,
+                                             double &r, double &w) {
+    	const auto vt = target.getVoxelPtr(corres[i].targetIdx_)->getAggregatedPosition();
+    	const auto nt = target.getVoxelPtr(corres[i].targetIdx_)->getAggregatedNormal();
+        const Eigen::Vector3d &vs = source.points_[corres[i].sourceIdx_];
+        r = (vs - vt).dot(nt);
+        w = kernel_->Weight(r);
+        J_r.block<3, 1>(0, 0) = vs.cross(nt);
+        J_r.block<3, 1>(3, 0) = nt;
+    };
+
+    Eigen::Matrix6d JTJ;
+    Eigen::Vector6d JTr;
+    double r2;
+    std::tie(JTJ, JTr, r2) =
+            open3d::utility::ComputeJTJandJTr<Eigen::Matrix6d, Eigen::Vector6d>(
+                    compute_jacobian_and_residual, (int)corres.size());
+
+    bool is_success;
+    Eigen::Matrix4d extrinsic;
+    std::tie(is_success, extrinsic) =
+    		open3d::utility::SolveJacobianSystemAndObtainExtrinsicMatrix(JTJ, JTr);
+
+    return is_success ? extrinsic : Eigen::Matrix4d::Identity();
+}
+
 
 }  // namespace

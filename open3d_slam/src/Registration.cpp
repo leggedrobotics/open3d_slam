@@ -33,6 +33,11 @@
 #include "open3d/utility/Logging.h"
 #include "open3d/utility/Parallel.h"
 
+#ifdef open3d_slam_OPENMP_FOUND
+#include <omp.h>
+#endif
+
+
 namespace o3d_slam {
 using KDTreeFlann = open3d::geometry::KDTreeFlann;
 using namespace open3d;
@@ -139,6 +144,111 @@ RegistrationResult RegistrationICP(
         RegistrationResult backup = result;
         result = GetRegistrationResultAndCorrespondences(
                 pcd, target, kdtree, max_correspondence_distance,
+                transformation);
+        if (std::abs(backup.fitness_ - result.fitness_) <
+                    criteria.relative_fitness_ &&
+            std::abs(backup.inlier_rmse_ - result.inlier_rmse_) <
+                    criteria.relative_rmse_) {
+            break;
+        }
+    }
+    return result;
+}
+
+
+static RegistrationResultVoxelized GetRegistrationResultAndCorrespondencesVoxelized(
+        const PointCloud &source,
+        const VoxelizedPointCloud &target,
+        double max_correspondence_distance,
+        const Eigen::Matrix4d &transformation) {
+	RegistrationResultVoxelized result(transformation);
+    if (max_correspondence_distance <= 0.0) {
+        return result;
+    }
+
+    double error2 = 0.0;
+
+#pragma omp parallel
+    {
+        double error2_private = 0.0;
+        CorrespondenceSetVoxelized correspondence_set_private;
+#pragma omp for nowait
+        for (int i = 0; i < (int)source.points_.size(); i++) {
+            std::vector<int> indices(1);
+            std::vector<double> dists(1);
+            const auto &point = source.points_[i];
+            const auto targetKey = target.getKey(point);
+            auto search = target.getVoxelPtr(targetKey);
+            if (search != nullptr) {
+            	const auto err = search->getAggregatedPosition() - source.points_[i];
+                error2_private += err.squaredNorm();
+                CorrespondenceVoxelized corr;
+                corr.targetIdx_ = targetKey;
+                corr.sourceIdx_ = i;
+                correspondence_set_private.push_back(corr);
+            }
+        }
+#pragma omp critical(GetRegistrationResultAndCorrespondencesVoxelized)
+        {
+            for (int i = 0; i < (int)correspondence_set_private.size(); i++) {
+                result.correspondence_set_.push_back(
+                        correspondence_set_private[i]);
+            }
+            error2 += error2_private;
+        }
+    }
+
+    if (result.correspondence_set_.empty()) {
+        result.fitness_ = 0.0;
+        result.inlier_rmse_ = 0.0;
+    } else {
+        size_t corres_number = result.correspondence_set_.size();
+        result.fitness_ = (double)corres_number / (double)source.points_.size();
+        result.inlier_rmse_ = std::sqrt(error2 / (double)corres_number);
+    }
+    return result;
+}
+
+RegistrationResultVoxelized registrationICP(
+        const PointCloud &source,
+        const VoxelizedPointCloud &target,
+        double max_correspondence_distance,
+		const TransformationEstimationPointToPlaneVoxelized &estimation,
+        const Eigen::Matrix4d &init,
+		const ICPConvergenceCriteria &criteria) {
+    if (max_correspondence_distance <= 0.0) {
+        utility::LogError("Invalid max_correspondence_distance.");
+    }
+    if ((estimation.GetTransformationEstimationType() ==
+                 TransformationEstimationType::PointToPlane ||
+         estimation.GetTransformationEstimationType() ==
+                 TransformationEstimationType::ColoredICP) &&
+        (!target.hasNormals())) {
+        utility::LogError(
+                "TransformationEstimationPointToPlane and "
+                "TransformationEstimationColoredICP "
+                "require pre-computed normal vectors for target PointCloud.");
+    }
+
+
+    Eigen::Matrix4d transformation = init;
+    geometry::PointCloud pcd = source;
+    if (!init.isIdentity()) {
+        pcd.Transform(init);
+    }
+    RegistrationResultVoxelized result;
+    result = GetRegistrationResultAndCorrespondencesVoxelized(
+            pcd, target, max_correspondence_distance, transformation);
+    for (int i = 0; i < criteria.max_iteration_; i++) {
+        utility::LogDebug("ICP Iteration #{:d}: Fitness {:.4f}, RMSE {:.4f}", i,
+                          result.fitness_, result.inlier_rmse_);
+        Eigen::Matrix4d update = estimation.ComputeTransformation(
+                pcd, target, result.correspondence_set_);
+        transformation = update * transformation;
+        pcd.Transform(update);
+        RegistrationResultVoxelized backup = result;
+        result = GetRegistrationResultAndCorrespondencesVoxelized(
+                pcd, target, max_correspondence_distance,
                 transformation);
         if (std::abs(backup.fitness_ - result.fitness_) <
                     criteria.relative_fitness_ &&
