@@ -30,7 +30,7 @@ mapping:
       knn_normal_estimation: 5
       max_n_iter: 50
     scan_processing:
-      voxel_size: 0.4
+      voxel_size: 0.1
       downsampling_ratio: 0.5
       scan_cropping:
         cropping_radius_max: 40.0
@@ -47,14 +47,14 @@ mapping:
   map_builder:
     scan_cropping:
       cropping_radius_max: 40.0
-      cropping_radius_min: 0.0
+      cropping_radius_min: 1.0
       min_z: -40.0
       max_z: 40.0
-      cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
-    map_voxel_size: 0.4
+      cropper_type: "MinMaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
+    map_voxel_size: 0.1
     voxelize_every_n_scans: 1 # unused since it doesn't bring anything
     space_carving:
-      voxel_size: 0.3
+      voxel_size: 0.1
       max_raytracing_length: 30.0
       truncation_distance: 0.4
       carve_space_every_n_sec: 2.0
@@ -62,11 +62,11 @@ mapping:
       
   dense_map_builder:
     scan_cropping:
-      cropping_radius_max: 12.0
-      cropping_radius_min: 0.0
+      cropping_radius_max: 40.0
+      cropping_radius_min: 1.0
       min_z: -12.0
       max_z: 12.0
-      cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
+      cropper_type: "MinMaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
     map_voxel_size: 0.1
     voxelize_every_n_scans: 5
     space_carving:
