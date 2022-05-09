@@ -13,14 +13,16 @@
 
 namespace o3d_slam {
 
- Eigen::Vector3d AggregatedVoxel::getAggregatedPosition() const {
-	return aggregatedPosition_ / (numAggregatedPoints_+1e-4);
+const Eigen::Vector3d zero3d(0.0,0.0,0.0);
+
+Eigen::Vector3d AggregatedVoxel::getAggregatedPosition() const {
+	return numAggregatedPoints_ == 0 ? zero3d : aggregatedPosition_ / numAggregatedPoints_;
 }
  Eigen::Vector3d AggregatedVoxel::getAggregatedNormal() const {
-	return aggregatedNormal_ / (numAggregatedPoints_+1e-4);
+	return numAggregatedPoints_ == 0 ? zero3d : aggregatedNormal_ / numAggregatedPoints_;
 }
  Eigen::Vector3d AggregatedVoxel::getAggregatedColor() const {
-	return aggregatedColor_ / (numAggregatedPoints_+1e-4);
+	return numAggregatedPoints_ == 0 ? zero3d : aggregatedColor_ / numAggregatedPoints_;
 }
 void AggregatedVoxel::aggregatePoint(const Eigen::Vector3d &p) {
 	aggregatedPosition_ += p;
