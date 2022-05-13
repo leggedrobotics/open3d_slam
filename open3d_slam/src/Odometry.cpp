@@ -79,6 +79,10 @@ const TransformInterpolationBuffer& LidarOdometry::getBuffer() const {
 	return odomToRangeSensorBuffer_;
 }
 
+bool  LidarOdometry::hasProcessedMeasurements() const{
+	return !odomToRangeSensorBuffer_.empty();
+}
+
 void LidarOdometry::setParameters(const OdometryParameters &p) {
 	params_ = p;
 	icpConvergenceCriteria_.max_iteration_ = p.scanMatcher_.maxNumIter_;

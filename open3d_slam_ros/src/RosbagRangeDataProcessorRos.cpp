@@ -114,7 +114,25 @@ void RosbagRangeDataProcessorRos::readRosbag(const rosbag::Bag &bag) {
 	const ros::Time bag_end_time = view.getEndTime();
 	std::cout << "Rosbag processing finished. Rosbag duration: " << (bag_end_time - bag_begin_time).toSec()
 			<< " Time elapsed for processing: " << rosbagTimer.elapsedSec() << " sec. \n \n";
+	// a bit of a hack, this extra thread listens to ros shutdown
+	// otherwise we might get stuck in a loop
+	bool isProcessingFinished = false;
+	std::thread rosSpinner([&]() {
+		ros::Rate r(20.0);
+		while (true) {
+			if (!ros::ok()) {
+				slam_->stopWorkers();
+				break;
+			}
+			if (isProcessingFinished){
+				break;
+			}
+			r.sleep();
+		}
+	});
 	slam_->finishProcessing();
+	isProcessingFinished = true;
+	rosSpinner.join();
 }
 
 void RosbagRangeDataProcessorRos::cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {

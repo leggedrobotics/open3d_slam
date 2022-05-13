@@ -52,28 +52,26 @@ mapping:
       max_z: 40.0
       cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
     map_voxel_size: 0.4
-    voxelize_every_n_scans: 1 # unused since it doesn't bring anything
     space_carving:
       voxel_size: 0.3
       max_raytracing_length: 30.0
       truncation_distance: 0.4
-      carve_space_every_n_sec: 2.0
+      carve_space_every_n_scans: 10
       min_dot_product_with_normal: 0.3
       
   dense_map_builder:
     scan_cropping:
-      cropping_radius_max: 12.0
+      cropping_radius_max: 25.0
       cropping_radius_min: 0.0
       min_z: -12.0
       max_z: 12.0
       cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
     map_voxel_size: 0.1
-    voxelize_every_n_scans: 5
     space_carving:
       voxel_size: 0.2
-      max_raytracing_length: 15.0
-      truncation_distance: 0.4
-      carve_space_every_n_sec: 1000.0
+      max_raytracing_length: 25.0
+      truncation_distance: 0.3
+      carve_space_every_n_scans: 2
       min_dot_product_with_normal: 0.3
 
   place_recognition:
@@ -113,17 +111,6 @@ Projection:
   D: [-0.044303, 0.006917, -0.000472, -0.000009, 0.000000]
   translation: [0.207, -0.025, 0.213]
   rpy: [-3.11, -1.36, -1.5]
-
-mesher:
-  is_compute_mesh: false
-  voxel_size: 0.2
-  knn_normal_estimation: 4
-  strategy: Poisson # options are AlphaShape, Poisson, BallPivot
-  alpha_shape_alpha: 0.5
-  poisson_depth: 8
-  poisson_min_density: -2.0
-  poisson_scale: 0.8
-  ball_pivot_radii: [0.5] 
 
 visualization:
   assembled_map_voxel_size: 0.1

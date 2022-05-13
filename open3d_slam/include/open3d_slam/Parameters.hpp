@@ -78,7 +78,7 @@ struct SpaceCarvingParameters{
 	double voxelSize_=0.1;
 	double maxRaytracingLength_ = 20.0;
 	double truncationDistance_ = 0.1;
-	double carveSpaceEveryNsec_ = 1.0;
+	int carveSpaceEveryNscans_ = 10;
 	double minDotProductWithNormal_ = 0.5;
 };
 
@@ -86,7 +86,6 @@ struct MapBuilderParameters{
 	double mapVoxelSize_ = 0.03;
 	ScanCroppingParameters cropper_;
 	SpaceCarvingParameters carving_;
-	int voxelizeEveryNscans_ = 1;
 };
 
 struct SubmapParameters{
@@ -183,6 +182,15 @@ struct SavingParameters {
 	bool isSaveSubmaps_ = false;
 };
 
+struct ConstantVelocityMotionCompensationParameters {
+	bool isUndistortInputCloud_ = false;
+	bool isSpinningClockwise_ = true; // otherwise it spins counter clockwise
+	double scanDuration_ = 0.1; // sec
+	int numPosesVelocityEstimation_ = 3;
+};
+
+void loadParameters(const std::string &filename, ConstantVelocityMotionCompensationParameters *p);
+void loadParameters(const YAML::Node &node, ConstantVelocityMotionCompensationParameters *p);
 void loadParameters(const std::string &filename, SavingParameters *p);
 void loadParameters(const YAML::Node &node, SavingParameters *p);
 void loadParameters(const std::string &filename, PlaceRecognitionConsistancyCheckParameters *p);

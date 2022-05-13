@@ -9,25 +9,45 @@
 
 namespace o3d_slam {
 
-void loadParameters(const std::string &filename, SavingParameters *p){
+void loadParameters(const std::string &filename, ConstantVelocityMotionCompensationParameters *p){
 	YAML::Node basenode = YAML::LoadFile(filename);
 		if (basenode.IsNull()) {
-			throw std::runtime_error("MapSavingParameters::loadParameters loading failed");
+			throw std::runtime_error(
+					"Motion compensation params::loadParameters loading failed");
 		}
-		loadParameters(basenode["saving_parameters"], p);
+		if (basenode["motion_compensation"].IsDefined()){
+			loadParameters(basenode["motion_compensation"], p);
+		}
 }
-void loadParameters(const YAML::Node &node, SavingParameters *p){
+void loadParameters(const YAML::Node &node, ConstantVelocityMotionCompensationParameters *p){
+	p->isUndistortInputCloud_ = node["is_undistort_scan"].as<bool>();
+	p->isSpinningClockwise_ = node["is_spinning_clockwise"].as<bool>();
+	p->scanDuration_ = node["scan_duration"].as<double>();
+	p->numPosesVelocityEstimation_ = node["num_poses_vel_estimation"].as<int>();
+}
+
+void loadParameters(const std::string &filename, SavingParameters *p) {
+	YAML::Node basenode = YAML::LoadFile(filename);
+	if (basenode.IsNull()) {
+		throw std::runtime_error(
+				"MapSavingParameters::loadParameters loading failed");
+	}
+	loadParameters(basenode["saving_parameters"], p);
+}
+void loadParameters(const YAML::Node &node, SavingParameters *p) {
 	p->isSaveAtMissionEnd_ = node["save_at_mission_end"].as<bool>();
 	p->isSaveMap_ = node["save_map"].as<bool>();
 	p->isSaveSubmaps_ = node["save_submaps"].as<bool>();
 }
 
-void loadParameters(const std::string &filename, PlaceRecognitionConsistancyCheckParameters *p){
+void loadParameters(const std::string &filename,
+		PlaceRecognitionConsistancyCheckParameters *p) {
 	YAML::Node basenode = YAML::LoadFile(filename);
-		if (basenode.IsNull()) {
-			throw std::runtime_error("PlaceRecognitionParams::loadParameters loading failed");
-		}
-		loadParameters(basenode["consistancy_check"], p);
+	if (basenode.IsNull()) {
+		throw std::runtime_error(
+				"PlaceRecognitionParams::loadParameters loading failed");
+	}
+	loadParameters(basenode["consistancy_check"], p);
 }
 void loadParameters(const YAML::Node &node, PlaceRecognitionConsistancyCheckParameters *p){
 	p->maxDriftPitch_ = node["max_drift_pitch"].as<double>() * params_internal::kDegToRad;
@@ -214,7 +234,6 @@ void loadParameters(const std::string &filename, MapBuilderParameters *p) {
 }
 void loadParameters(const YAML::Node &node, MapBuilderParameters *p) {
 	p->mapVoxelSize_ = node["map_voxel_size"].as<double>();
-	p->voxelizeEveryNscans_ = node["voxelize_every_n_scans"].as<int>();
 	loadParameters(node["space_carving"], &(p->carving_));
 	loadParameters(node["scan_cropping"], &(p->cropper_));
 }
@@ -287,7 +306,7 @@ void loadParameters(const YAML::Node &n, SpaceCarvingParameters *p){
 	p->voxelSize_ = n["voxel_size"].as<double>();
 	p->maxRaytracingLength_ = n["max_raytracing_length"].as<double>();
 	p->truncationDistance_ = n["truncation_distance"].as<double>();
-	p->carveSpaceEveryNsec_ = n["carve_space_every_n_sec"].as<double>();
+	p->carveSpaceEveryNscans_ = n["carve_space_every_n_scans"].as<int>();
 	p->minDotProductWithNormal_ = n["min_dot_product_with_normal"].as<double>();
 }
 void loadParameters(const std::string &filename, SpaceCarvingParameters *p){

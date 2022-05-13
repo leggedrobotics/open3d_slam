@@ -22,6 +22,7 @@
 #include "open3d_slam/OptimizationProblem.hpp"
 #include "open3d_slam/constraint_builders.hpp"
 #include "open3d_slam/Odometry.hpp"
+#include "open3d_slam/MotionCompensation.hpp"
 
 #ifdef open3d_slam_OPENMP_FOUND
 #include <omp.h>
@@ -39,6 +40,8 @@ SlamWrapper::SlamWrapper() {
 	odometryBuffer_.set_size_limit(30);
 	mappingBuffer_.set_size_limit(30);
 	registeredCloudBuffer_.set_size_limit(30);
+	motionCompensationOdom_ = std::make_shared<MotionCompensation>();
+	motionCompensationMap_ = std::make_shared<MotionCompensation>();
 }
 
 SlamWrapper::~SlamWrapper() {
@@ -94,7 +97,9 @@ size_t SlamWrapper::getMappingBufferSizeLimit() const {
 
 void SlamWrapper::addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp) {
 	updateFirstMeasurementTime(timestamp);
-	const TimestampedPointCloud timestampedCloud { timestamp, cloud };
+
+	auto removedNans = removePointsWithNonFiniteValues(cloud);
+	const TimestampedPointCloud timestampedCloud { timestamp, *removedNans };
 	if (!odometryBuffer_.empty()) {
 		const auto latestTime = odometryBuffer_.peek_back().time_;
 		if (timestamp < latestTime) {
@@ -126,13 +131,18 @@ void SlamWrapper::finishProcessing() {
 		}
 	}
 	std::cout << "Finishing all submaps! \n";
+	numLatesLoopClosureConstraints_ = -1;
 	submaps_->forceNewSubmapCreation();
 	while (isRunWorkers_) {
 		if (mapperParams_.isAttemptLoopClosures_) {
 			computeFeaturesIfReady();
 			attemptLoopClosuresIfReady();
+		} else {
+			break;
 		}
-
+		if (numLatesLoopClosureConstraints_ == 0){
+			break;
+		}
 		if (isOptimizedGraphAvailable_) {
 			isOptimizedGraphAvailable_ = false;
 			const auto poseBeforeUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
@@ -193,6 +203,16 @@ void SlamWrapper::loadParametersAndInitialize() {
 
 	loadParameters(paramFile,&savingParameters_);
 
+	loadParameters(paramFile, &motionCompensationParameters_);
+	if (motionCompensationParameters_.isUndistortInputCloud_){
+		auto motionCompOdom = std::make_shared<ConstantVelocityMotionCompensation>(odometry_->getBuffer());
+		motionCompOdom->setParameters(motionCompensationParameters_);
+		motionCompensationOdom_ = motionCompOdom;
+		auto motionCompMap = std::make_shared<ConstantVelocityMotionCompensation>(mapper_->getMapToRangeSensorBuffer());
+		motionCompMap->setParameters(motionCompensationParameters_);
+		motionCompensationMap_ = motionCompMap;
+	}
+
 }
 
 void SlamWrapper::startWorkers() {
@@ -239,7 +259,9 @@ void SlamWrapper::odometryWorker() {
 		}
 		odometryStatisticsTimer_.startStopwatch();
 		const TimestampedPointCloud measurement = odometryBuffer_.pop();
-		const auto isOdomOkay = odometry_->addRangeScan(measurement.cloud_, measurement.time_);
+		auto undistortedCloud = motionCompensationOdom_->undistortInputPointCloud(measurement.cloud_, measurement.time_);
+
+		const auto isOdomOkay = odometry_->addRangeScan(*undistortedCloud, measurement.time_);
 
 		// this ensures that the odom is always ahead of the mapping
 		// so then we can look stuff up in the interpolation buffer
@@ -271,7 +293,15 @@ void SlamWrapper::mappingWorker() {
 			continue;
 		}
 		mappingStatisticsTimer_.startStopwatch();
-		const TimestampedPointCloud measurement = mappingBuffer_.pop();
+		TimestampedPointCloud measurement;
+		{
+			const TimestampedPointCloud raw = mappingBuffer_.pop();
+			auto undistortedCloud =
+					motionCompensationMap_->undistortInputPointCloud(raw.cloud_,
+							raw.time_);
+			measurement.time_ = raw.time_;
+			measurement.cloud_ = *undistortedCloud;
+		}
 		if (!odometry_->getBuffer().has(measurement.time_)) {
 			std::cout << "Weird, the odom buffer does not seem to have the transform!!! \n";
 			std::cout << "odom buffer size: " << odometry_->getBuffer().size() << "/"
@@ -389,6 +419,7 @@ void SlamWrapper::loopClosureWorker() {
 			Timer t("loop_closing_attempt");
 			const auto lcc = loopClosureCandidates_.popAllElements();
 			loopClosureConstraints = submaps_->buildLoopClosureConstraints(lcc);
+			numLatesLoopClosureConstraints_ = loopClosureConstraints.size();
 		}
 
 		if (loopClosureConstraints.empty()) {

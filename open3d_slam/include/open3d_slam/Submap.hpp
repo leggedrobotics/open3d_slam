@@ -65,11 +65,11 @@ public:
 
 private:
 	void carve(const PointCloud &scan, const Eigen::Vector3d &sensorPosition,
-			const SpaceCarvingParameters &param, VoxelizedPointCloud *cloud, Timer *timer);
+			const SpaceCarvingParameters &param, VoxelizedPointCloud *cloud);
 	void update(const MapperParameters &mapperParams);
 	void estimateNormalsIfNeeded(int knn, PointCloud *pcl) const;
 	void carve(const PointCloud &rawScan, const Transform &mapToRangeSensor, const CroppingVolume &cropper,
-			const SpaceCarvingParameters &params, PointCloud *map, Timer *timer) const;
+			const SpaceCarvingParameters &params, PointCloud *map);
 	void voxelizeInsideCroppingVolume(const CroppingVolume &cropper, const MapBuilderParameters &param,
 			PointCloud *map) const;
 
@@ -79,7 +79,9 @@ private:
 	Eigen::Vector3d submapCenter_ = Eigen::Vector3d::Zero();
 	std::shared_ptr<CroppingVolume> denseMapCropper_, mapBuilderCropper_;
 	MapperParameters params_;
-	Timer carveDenseMapTimer_, carvingTimer_, featureTimer_;
+	Timer featureTimer_;
+	size_t nScansInsertedMap_ = 0;
+	size_t nScansInsertedDenseMap_ = 0;
 	std::shared_ptr<Feature> feature_;
 	Time creationTime_;
 	size_t id_ = 0;

@@ -9,17 +9,20 @@
 #include "open3d_slam/time.hpp"
 #include <numeric>
 #include <iostream>
+#include <unordered_set>
 
 namespace o3d_slam {
 
- Eigen::Vector3d AggregatedVoxel::getAggregatedPosition() const {
-	return aggregatedPosition_ / (numAggregatedPoints_+1e-4);
+const Eigen::Vector3d zero3d(0.0,0.0,0.0);
+
+Eigen::Vector3d AggregatedVoxel::getAggregatedPosition() const {
+	return numAggregatedPoints_ == 0 ? zero3d : aggregatedPosition_ / numAggregatedPoints_;
 }
  Eigen::Vector3d AggregatedVoxel::getAggregatedNormal() const {
-	return aggregatedNormal_ / (numAggregatedPoints_+1e-4);
+	return numAggregatedPoints_ == 0 ? zero3d : aggregatedNormal_ / numAggregatedPoints_;
 }
  Eigen::Vector3d AggregatedVoxel::getAggregatedColor() const {
-	return aggregatedColor_ / (numAggregatedPoints_+1e-4);
+	return numAggregatedPoints_ == 0 ? zero3d : aggregatedColor_ / numAggregatedPoints_;
 }
 void AggregatedVoxel::aggregatePoint(const Eigen::Vector3d &p) {
 	aggregatedPosition_ += p;
@@ -166,7 +169,37 @@ bool VoxelMap::isVoxelHasLayer(const Eigen::Vector3i &key, const std::string &la
 		}
 	}
 	return false;
+}
 
+std::shared_ptr<PointCloud> removeDuplicatePointsWithinSameVoxels(const open3d::geometry::PointCloud &cloud, const Eigen::Vector3d &voxelSize){
+
+	std::unordered_set<Eigen::Vector3i, EigenVec3iHash> voxelSet;
+	voxelSet.reserve(cloud.points_.size());
+	auto retVal = std::make_shared<PointCloud>();
+	retVal->points_.reserve(cloud.points_.size());
+	if (cloud.HasNormals()){
+		retVal->normals_.reserve(cloud.points_.size());
+	}
+	if (cloud.HasColors()){
+		retVal->colors_.reserve(cloud.points_.size());
+	}
+
+	for (size_t i =0; i < cloud.points_.size(); ++i){
+		const Eigen::Vector3i voxelIdx = getVoxelIdx(cloud.points_.at(i), voxelSize);
+		const bool hasPointAlready = !voxelSet.insert(voxelIdx).second;
+		if (hasPointAlready){
+			continue;
+		}
+		retVal->points_.push_back(cloud.points_.at(i));
+		if (cloud.HasNormals()){
+			retVal->normals_.push_back(cloud.normals_.at(i));
+		}
+		if (cloud.HasColors()){
+			retVal->colors_.push_back(cloud.colors_.at(i));
+		}
+	}
+
+	return retVal;
 }
 
 } // namespace o3d_slam

@@ -71,7 +71,8 @@ void SlamWrapperRos::tfWorker() {
 	while (ros::ok()) {
 
 		const Time latestScanToScan = latestScanToScanRegistrationTimestamp_;
-		if (latestScanToScan != prevPublishedTimeScanToScan_) {
+		const bool isAlreadyPublished = latestScanToScan == prevPublishedTimeScanToScan_;
+		if (!isAlreadyPublished && odometry_->hasProcessedMeasurements()) {
 			const Transform T = odometry_->getOdomToRangeSensor(latestScanToScan);
 			ros::Time timestamp = toRos(latestScanToScan);
 			o3d_slam::publishTfTransform(T.matrix(), timestamp, odomFrame, rangeSensorFrame, tfBroadcaster_.get());
@@ -80,7 +81,8 @@ void SlamWrapperRos::tfWorker() {
 		}
 
 		const Time latestScanToMap = latestScanToMapRefinementTimestamp_;
-		if (latestScanToMap != prevPublishedTimeScanToMap_) {
+		const bool isScanToMapAlreadyPublished = latestScanToMap == prevPublishedTimeScanToMap_;
+		if (!isScanToMapAlreadyPublished && mapper_->hasProcessedMeasurements()) {
 			publishMapToOdomTf(latestScanToMap);
 			prevPublishedTimeScanToMap_ = latestScanToMap;
 		}

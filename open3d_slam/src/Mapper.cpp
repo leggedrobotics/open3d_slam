@@ -41,7 +41,10 @@ void Mapper::setParameters(const MapperParameters &p) {
 void Mapper::loopClosureUpdate(const Transform &loopClosureCorrection) {
 	mapToRangeSensor_ = loopClosureCorrection * mapToRangeSensor_;
 	mapToRangeSensorPrev_ = loopClosureCorrection * mapToRangeSensorPrev_;
+}
 
+bool Mapper::hasProcessedMeasurements() const {
+	return !mapToRangeSensorBuffer_.empty();
 }
 
 void Mapper::update(const MapperParameters &p) {
@@ -49,7 +52,6 @@ void Mapper::update(const MapperParameters &p) {
 	icpObjective = icpObjectiveFactory(p.scanMatcher_.icpObjective_);
 	mapBuilderCropper_ = croppingVolumeFactory(params_.mapBuilder_.cropper_);
 	scanMatcherCropper_ = croppingVolumeFactory(params_.scanProcessing_.cropper_);
-
 	submaps_->setParameters(p);
 }
 
