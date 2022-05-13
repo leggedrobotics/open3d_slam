@@ -107,8 +107,9 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 
 	//insert first scan
 	if (submaps_->getActiveSubmap().isEmpty()) {
-		auto wideCroppedCloud = preProcessScan(rawScan);
-		submaps_->insertScan(rawScan, *wideCroppedCloud, Transform::Identity(), timestamp);
+		auto processedScan = std::make_shared<PointCloud>();
+		processedScan = preProcessScan(rawScan,*mapBuilderCropper_, 0.05, 0.6);
+		submaps_->insertScan(rawScan, *processedScan, Transform::Identity(), timestamp);
 		mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
 		isMatchingInProgress_ = false;
 		return true;
@@ -143,20 +144,29 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	PointCloud mapPatch;
 	{
 		Timer timer;
-		wideCroppedCloud = preProcessScan(rawScan);
-		narrowCropped = scanMatcherCropper_->crop(*wideCroppedCloud);
+		scanMatcherCropper_->setPose(Transform::Identity());
+		narrowCropped = preProcessScan(rawScan,*scanMatcherCropper_, params_.scanProcessing_.voxelSize_, params_.scanProcessing_.downSamplingRatio_);
 		preProcessedScan_ = *narrowCropped;
 		scanMatcherCropper_->setPose(mapToRangeSensor_);
-		mapPatch = map.toPointCloud(*scanMatcherCropper_);
 	}
 
 //	std::cout << "preeIcp: " << asString(mapToRangeSensorEstimate) << "\n";
-	const auto result = RegistrationICP(*narrowCropped, mapPatch,
-			params_.scanMatcher_.maxCorrespondenceDistance_, mapToRangeSensorEstimate.matrix(), *icpObjective,
-			icpCriteria_);
-//	const auto result = registrationICP(*narrowCropped, map,
-//			params_.scanMatcher_.maxCorrespondenceDistance_,*icpObjectiveVoxelized, mapToRangeSensorEstimate.matrix() ,
+//	const auto result = RegistrationICP(*narrowCropped, mapPatch,
+//			params_.scanMatcher_.maxCorrespondenceDistance_, mapToRangeSensorEstimate.matrix(), *icpObjective,
 //			icpCriteria_);
+
+	std::thread t([&](){
+		mapBuilderCropper_->setPose(Transform::Identity());
+		wideCroppedCloud = std::make_shared<PointCloud>();
+		wideCroppedCloud = preProcessScan(rawScan,*mapBuilderCropper_, 0.02, 0.8);
+		estimateNormalsIfNeeded(wideCroppedCloud.get());
+		wideCroppedCloud->OrientNormalsTowardsCameraLocation();
+	});
+
+	const auto result = registrationICP(*narrowCropped, map,
+			params_.scanMatcher_.maxCorrespondenceDistance_,*icpObjectiveVoxelized, mapToRangeSensorEstimate.matrix() ,
+			icpCriteria_);
+	t.join();
 //	std::cout << "postIcp: " << asString(Transform(result.transformation_)) << "\n\n";
 	if (result.fitness_ < params_.minRefinementFitness_) {
 		std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
@@ -186,22 +196,23 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	return true;
 }
 
-std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud &rawScan) const {
-	mapBuilderCropper_->setPose(Transform::Identity());
-	std::shared_ptr<PointCloud> wideCroppedCloud, voxelized, downsampled;
-	wideCroppedCloud = mapBuilderCropper_->crop(rawScan);
-	if (params_.scanProcessing_.voxelSize_ <= 0.0) {
-		voxelized = wideCroppedCloud;
+std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud &rawScan, const CroppingVolume &cropper, double voxelSize, double downSamplingRatio) const {
+	std::shared_ptr<PointCloud> cropped, voxelized, downsampled;
+	cropped = cropper.crop(rawScan);
+	if (voxelSize <= 0.0) {
+		voxelized = cropped;
 	} else {
-		voxelized = wideCroppedCloud->VoxelDownSample(params_.scanProcessing_.voxelSize_);
+		voxelized = cropped->VoxelDownSample(voxelSize);
 	}
 
-	if (params_.scanProcessing_.downSamplingRatio_ >= 1.0) {
+	if (downSamplingRatio >= 1.0) {
 		downsampled = voxelized;
 	} else {
-		downsampled = voxelized->RandomDownSample(params_.scanProcessing_.downSamplingRatio_);
+		downsampled = voxelized->RandomDownSample(downSamplingRatio);
 	}
-	estimateNormalsIfNeeded(downsampled.get());
+
+//	estimateNormalsIfNeeded(downsampled.get());
+
 	return downsampled;
 
 }

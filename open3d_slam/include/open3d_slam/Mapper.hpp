@@ -42,7 +42,7 @@ public:
 	void loopClosureUpdate(const Transform &loopClosureCorrection);
 	bool hasProcessedMeasurements() const ;
 private:
-	std::shared_ptr<PointCloud> preProcessScan(const PointCloud &scan) const;
+	std::shared_ptr<PointCloud> preProcessScan(const PointCloud &rawScan, const CroppingVolume &cropper, double voxelSize, double downSamplingRatio) const;
 	void update(const MapperParameters &p);
 	void estimateNormalsIfNeeded(PointCloud *pcl) const;
 	void checkTransformChainingAndPrintResult(bool isCheckTransformChainingAndPrintResult) const;

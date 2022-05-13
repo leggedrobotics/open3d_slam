@@ -23,11 +23,11 @@ mapping:
   min_movement_between_mapping_steps: 0.0
   submaps_num_scan_overlap: 10
   scan_to_map_refinement:
-    min_refinement_fitness: 0.7
+    min_refinement_fitness: 0.1
     scan_matching:
       icp_objective: PointToPlane
       max_correspondence_dist: 1.0
-      knn_normal_estimation: 5
+      knn_normal_estimation: 9
       max_n_iter: 50
     scan_processing:
       voxel_size: 0.05
@@ -55,7 +55,7 @@ mapping:
     space_carving:
       voxel_size: 0.2
       max_raytracing_length: 30.0
-      truncation_distance: 0.3
+      truncation_distance: 0.6
       carve_space_every_n_scans: 10
       min_dot_product_with_normal: 0.3
       

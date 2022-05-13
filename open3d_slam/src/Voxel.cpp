@@ -111,6 +111,8 @@ const AggregatedVoxel * VoxelizedPointCloud::findNNvoxel(const Eigen::Vector3d &
 
 	const auto key = getKey(p);
 	auto search = getVoxelPtr(key);
+//	*retKey = key;
+//			return search;
 	if ( search != nullptr){
 		*retKey = key;
 		return search;
