@@ -19,6 +19,12 @@ For compling _open3d_catkin_ please follow the instructions in [open3d_catkin/](
 sudo apt install libgoogle-glog-dev
 ```
 
+### Ros dependencies
+If you want to use _open3d_slam_ros_ consider installing jsk-rviz plugins. We use them to visualize the trajectories. If you don't have them installed, you should still be able to run the package, however with some red letters in the temrinal.
+```bash
+sudo apt install ros-noetic-jsk-rviz-plugins
+```
+
 ## Compilation
 ### Open3d SLAM
 Compiling the _open3d_slam_ libraries can be done via
