@@ -64,7 +64,8 @@ public:
 	void setDirectoryPath(const std::string &path);
 	void setMapSavingDirectoryPath(const std::string &path);
 	void setParameterFilePath(const std::string &path);
-
+	void setInitialMap(PointCloud &initial_map);
+	void setInitialTransform(Eigen::Matrix4d initial_transform);
 
 private:
 

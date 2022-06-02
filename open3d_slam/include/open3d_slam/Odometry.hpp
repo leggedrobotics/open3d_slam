@@ -28,9 +28,10 @@ public:
 	const open3d::geometry::PointCloud &getPreProcessedCloud() const;
 	void setParameters (const OdometryParameters &p);
 	const TransformInterpolationBuffer &getBuffer() const;
-	bool  hasProcessedMeasurements() const;
-private:
+	bool hasProcessedMeasurements() const;
+	void setInitialTransform(Eigen::Matrix4d initial_transform);
 
+private:
 	TransformInterpolationBuffer odomToRangeSensorBuffer_;
 	open3d::geometry::PointCloud cloudPrev_;
 	Transform odomToRangeSensorCumulative_ = Transform::Identity();
@@ -39,6 +40,8 @@ private:
 	open3d::pipelines::registration::ICPConvergenceCriteria icpConvergenceCriteria_;
 	std::shared_ptr<CroppingVolume> cropper_;
 	Time lastMeasurementTimestamp_;
+	Eigen::Matrix4d icpTransform_ = Eigen::Matrix4d::Identity();
+	bool resetIcpTransform_ = false;
 };
 
 } // namespace o3d_slam
