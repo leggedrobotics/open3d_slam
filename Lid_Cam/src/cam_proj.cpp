@@ -13,7 +13,14 @@
 #include <sensor_msgs/point_cloud2_iterator.h>
 #include <sensor_msgs/image_encodings.h>
 #include <open3d/Open3D.h>
+#include <bits/stdc++.h>
+#include <string>
+using namespace std;
 ros::Publisher pub;
+bool get_only_fov = true; 
+open3d::geometry::PointCloud cloud;
+sensor_msgs::Image::Ptr Image_mask (new sensor_msgs::Image ());
+int image_counter = 0;
 namespace o3d_slam {
 
     ColorProjection::ColorProjection() {};
@@ -70,29 +77,44 @@ namespace o3d_slam {
         }
 
        	cloud.colors_ = imageConversion(msg, pos_dimage);
-        // for (int i =0; i<pos_lidar.size();++i)
-        // {
-        //     ROS_INFO_STREAM("New color from " << "test"<< pos_dimage[i].x() << pos_dimage[i].y()); 
-        
-        // }
         open3d::geometry::PointCloud cloud_new;
-        for (int i =0;i<pos_lidar.size();++i)
-        {
-            
-                if(cloud.colors_[i][0] != -1 && cloud.colors_[i][1] != -1 && cloud.colors_[i][2] != -1)
-                {
-                    cloud_new.points_.push_back(rotation.inverse()*cloud.points_[i]+translation);
-                    cloud_new.colors_.push_back(cloud.colors_[i]);
-                    i++;
-                ROS_INFO_STREAM("New color from " << "test"<< pos_dimage[i].x()<< " " << pos_dimage[i].y()); 
 
-                }
+        if(get_only_fov)
+        {
+            for (int i =0;i<pos_lidar.size();++i)
+            {
+                
+                    if(cloud.colors_[i][0] != -1 && cloud.colors_[i][1] != -1 && cloud.colors_[i][2] != -1)
+                    {
+                        cloud_new.points_.push_back(rotation.inverse()*cloud.points_[i]+translation);
+                        cloud_new.colors_.push_back(cloud.colors_[i]);
+                        i++;
+                    // ROS_INFO_STREAM("New color from " << "test"<< pos_dimage[i].x()<< " " << pos_dimage[i].y()); 
+
+                    }
+            }
         }
+        else
+        {
+            for (int i =0;i<pos_lidar.size();++i)
+            {
+                
+                   
+                        cloud_new.points_.push_back(rotation.inverse()*cloud.points_[i]+translation);
+                        cloud_new.colors_.push_back(cloud.colors_[i]);
+                        i++;
+                    // ROS_INFO_STREAM("New color from " << "test"<< pos_dimage[i].x()<< " " << pos_dimage[i].y()); 
+
+            }
+        }
+        
             // ROS_INFO_STREAM("Total filterd Points " << i); 
 
        // depthInfo = getDepth(pos_dimage, depth);
 //          open3d.io.write_point_cloud('out.pcd',cloud);
-        return cloud_new;
+        
+        
+    return cloud_new;
 
     }
 
@@ -157,6 +179,7 @@ namespace o3d_slam {
     std::vector<Eigen::Matrix<double, 3, 1>> ColorProjection::imageConversion(const sensor_msgs::ImageConstPtr &msg, const std::vector<Eigen::Vector2i> pixels) {
     cv_bridge::CvImagePtr cv_ptr;
    	std_msgs::Header msg_header = msg->header;
+
    	std::string frame_id = msg_header.frame_id.c_str();
 	// ROS_INFO_STREAM("New Image from " << frame_id);	
 	   try
@@ -180,11 +203,25 @@ namespace o3d_slam {
         
         // }if()
             if (pixels[i].y() >= 0 && pixels[i].y() < cv_ptr->image.rows && pixels[i].x() >= 0 && pixels[i].x() < cv_ptr->image.cols) {
-                pixelColorscv[i] = cv_ptr->image.at<cv::Vec3b>(pixels[i].y(), pixels[i].x());
-                pixelColors[i].x() = pixelColorscv[i](0);
-                pixelColors[i].y() = pixelColorscv[i](1);
-                pixelColors[i].z() = pixelColorscv[i](2);
-                pixelColors[i] = pixelColors[i] / 255.0;
+                pixelColorscv[i] = cv_ptr->image.at<cv::Vec3b>( pixels[i].y(), pixels[i].x());
+                if(pixelColorscv[i][0] ==1)
+                {
+                pixelColors[i].x() =255;
+                pixelColors[i].y() =255;
+                pixelColors[i].z() =255;
+                pixelColors[i] = pixelColors[i]/ 255.0;
+                }
+                else
+                {
+                pixelColors[i].x() = 0;
+                pixelColors[i].y() = 0;
+                pixelColors[i].z() = 0;
+                }
+                // pixelColors[i].x() = pixelColorscv[i](0);
+                // pixelColors[i].y() = pixelColorscv[i](0);
+                // pixelColors[i].z() = pixelColorscv[i](0);
+                
+
 //                std::cout << "pixelcolor:" << pixelColors[i].transpose() << std::endl;
             }
             else {
@@ -198,10 +235,9 @@ namespace o3d_slam {
 
 
 }
-open3d::geometry::PointCloud cloud;
-sensor_msgs::Image::Ptr Image_mask (new sensor_msgs::Image ());
 //std::shared_ptr<o3d_slam::ColorProjection> colorProjectionPtr_;
 //colorProjectionPtr_ = std::make_shared<o3d_slam::ColorProjection>();
+
 void open3dToRos(const open3d::geometry::PointCloud &pointcloud, sensor_msgs::PointCloud2 &ros_pc2,
 		std::string frame_id) {
 	sensor_msgs::PointCloud2Modifier modifier(ros_pc2);
@@ -279,7 +315,9 @@ open3d::geometry::PointCloud  rosToOpen3d(const sensor_msgs::PointCloud2 &cloud,
 }
 void cloudCallback(const sensor_msgs::PointCloud2 &msg) {
         // ROS_INFO_STREAM("Incoming Point Cloud" << msg.data.size());
-
+        
+        // string header  = msg.header.frame_id;
+        string header = "camMainView";
     	cloud = rosToOpen3d(msg, true);
         Eigen::Vector3d rpy;
         rpy << -3.11, -1.36, -1.5;
@@ -291,19 +329,20 @@ void cloudCallback(const sensor_msgs::PointCloud2 &msg) {
         D <<-0.044303, 0.006917, -0.000472, -0.000009, 0.000000 ;
         std::shared_ptr<o3d_slam::ColorProjection> colorProjectionPtr_;
         colorProjectionPtr_ = std::make_shared<o3d_slam::ColorProjection>();
-    if(cloud.points_.size() >0) 
+    if(image_counter) 
     {   open3d::geometry::PointCloud coloredCloud = colorProjectionPtr_->projectionAndColor(cloud, Image_mask, K, D, rpy, translation, true);
     
     sensor_msgs::PointCloud2 cloud_msg ;
-    open3dToRos(coloredCloud,cloud_msg,"os_sensor");
+    open3dToRos(coloredCloud,cloud_msg,header);
     //cloud_msg.header.stamp = ros::Time::now();
-    ROS_INFO_STREAM("Coloured Point Cloud" << cloud_msg.data.size());
+    // ROS_INFO_STREAM("Coloured Point Cloud" << cloud_msg.data.size());
     cloud_msg.header.stamp =ros::Time::now();
     pub.publish(cloud_msg);
 
 }
 }
 void maskCallback(const sensor_msgs::ImagePtr& msg) {
+  image_counter =1;
   Image_mask->data = msg->data;
   Image_mask->encoding = msg->encoding;
   Image_mask->header = msg->header;
@@ -335,12 +374,12 @@ void maskCallback(const sensor_msgs::ImagePtr& msg) {
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "Cam_Lidar_Project");
-     ros::NodeHandle nh;
-        ros::Subscriber cloudSub;
-        cloudSub = nh.subscribe("/ouster_points_self_filtered", 10, &cloudCallback);
-        ros::Subscriber maskSub;
-        maskSub = nh.subscribe("/camMainView/image_raw", 100, &maskCallback);
-	 pub = nh.advertise<sensor_msgs::PointCloud2>("/output_scan", 1);
+    ros::NodeHandle nh;
+    ros::Subscriber cloudSub;
+    cloudSub = nh.subscribe("/os_cloud_node/points", 10, &cloudCallback);
+    ros::Subscriber maskSub;
+    maskSub = nh.subscribe("/src/mask", 100, &maskCallback);
+    pub = nh.advertise<sensor_msgs::PointCloud2>("/output_scan", 10);
      
       // while (ros::ok())
  // {
