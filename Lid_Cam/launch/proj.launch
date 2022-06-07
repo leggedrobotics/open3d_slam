@@ -3,9 +3,9 @@
 </node> 
 <node pkg="Lid_Cam" name ="mask" type="mask" output ="screen" >
 </node>
-<include file="$(find ouster_ros)/ouster.launch">
+<!-- <include file="$(find ouster_ros)/ouster.launch">
     <arg name="replay" value="true"/>
     <arg name= "metadata" value="/home/rsl/open3d/src/ouster_example/heap.local.json"/>
-</include>
+</include> -->
 
 </launch>
