@@ -75,3 +75,10 @@ target_link_libraries(cam_proj
     ${PROJECT_NAME}
 )
 
+add_executable(mask
+  src/mask.cpp)
+target_link_libraries(mask
+    ${catkin_LIBRARIES}
+    ${PROJECT_NAME}
+)
+
