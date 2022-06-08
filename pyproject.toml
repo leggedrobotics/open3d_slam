@@ -1,8 +1,0 @@
-[build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
-
-[project]
-name = "slam-tutorial"
-authors = [{name = "eaucone", email = "emanuele.aucone@usys.ethz.ch"}]
-dynamic = ["version", "description"]
