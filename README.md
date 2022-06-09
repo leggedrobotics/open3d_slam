@@ -1,4 +1,4 @@
-# Open3D SLAM: A flexible LiDAR-only SLAM System for Educational Purposed
+# Open3D SLAM: A Flexible Pointcloud-based SLAM System for Education
 
 This package contains the code for a open3D SLAM framework.
 
