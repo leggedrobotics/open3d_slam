@@ -18,7 +18,6 @@
 #include "open3d_slam/output.hpp"
 #include "open3d_slam/Mapper.hpp"
 #include "open3d_slam/assert.hpp"
-#include "open3d_slam/Mesher.hpp"
 #include "open3d_slam/OptimizationProblem.hpp"
 #include "open3d_slam/constraint_builders.hpp"
 #include "open3d_slam/Odometry.hpp"

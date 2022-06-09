@@ -12,7 +12,6 @@ set(SRC_FILES
   src/helpers.cpp
   src/time.cpp
   src/math.cpp
-  src/Mesher.cpp
   src/Odometry.cpp
   src/Voxel.cpp
   src/croppers.cpp
