@@ -1,6 +1,6 @@
-SLAM Tutorial - ETH RSS
+Open3d SLAM
 =======================================
 
-Tutorial for LiDAR-based SLAM with Open3DSLAM package. 
+Point cloud based SLAM leveraging Open3d library
 
-ETH Zürich - Robotics Summer School
+ETH Zürich
