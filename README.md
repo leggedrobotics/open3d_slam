@@ -4,7 +4,10 @@ This package contains the code for a open3D SLAM framework.
 
 *Contact:* Edo Jelavic (jelavice@ethz.ch)
 
-![title_img](documentation/o3d_slam.png)
+![title_img](documentation/images/o3d_slam.png)
+
+Documentation (work in progress):
+The documentation can be found here [open3d_slam Documentation](https://open3d-slam.readthedocs.io/en/latest/).
 
 DISCLAIMER  
 This package is still under heavy development. Hence we cannot (yet) guarantee any stability.
