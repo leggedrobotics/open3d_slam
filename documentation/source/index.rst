@@ -16,5 +16,6 @@ Contents
 
 .. toctree::
 
+   algorithm
    usage
    parameters 

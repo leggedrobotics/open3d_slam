@@ -1,233 +1,58 @@
 Parameters
 =====
 
-odometry:
+odometry
 ----
+Parameters below affect scan to scan lidar odometry.
+
+ 
 
   scan_matching:
+    ``icp_objective`` - Which icp objective to use? Default is *PointToPlane*, another option is *PointToPoint*.
+    *PointToPlane* usually has faster convergence.
+    
+    ``max_correspondence_dist``
+    
+    ``knn_normal_estimation``
+    
+    ``max_n_iter``
   
-    icp_objective: PointToPlane
-    
-    max_correspondence_dist: 0.5 #1.0 also works
-    
-    knn_normal_estimation: 4
-    
-    max_n_iter: 40 #25
-    
   scan_processing:
-  
-    voxel_size: 0.15
-    
-    downsampling_ratio: 0.5
+    ``voxel_size``
+      
+    ``downsampling_ratio``
     
     scan_cropping:
-    
-      cropping_radius_max: 40.0
+      ``cropping_radius_max``
       
-      cropping_radius_min: 0.0
+      ``cropping_radius_min``
       
-      min_z: -35.0
+      ``min_z``
       
-      max_z: 35.0
+      ``max_z``
       
-      cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadiusv
+      ``cropper_type``
   
-mapping:
+mapping
 ----
 
-  is_print_timing_information: true
-  
-  is_build_dense_map: true
-  
-  is_attempt_loop_closures: false
-  
-  dump_submaps_to_file_before_after_lc: false
-  
-  is_refine_odometry_constraints_between_submaps: false
-  
-  min_movement_between_mapping_steps: 0.0
-  
-  submaps_num_scan_overlap: 5
-  
-  scan_to_map_refinement:
-  
-    min_refinement_fitness: 0.7
-    
-    scan_matching:
-    
-      icp_objective: PointToPlane
-      
-      max_correspondence_dist: 0.5 #0.8 also works, but can jump
-      
-      knn_normal_estimation: 5
-      
-      max_n_iter: 50
-      
-    scan_processing:
-    
-      voxel_size: 0.4
-      
-      downsampling_ratio: 0.5
-      
-      scan_cropping:
-      
-        cropping_radius_max: 40.0
-        
-        cropping_radius_min: 0.0
-        
-        min_z: -30.0
-        
-        max_z: 30.0
-        
-        cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
 
-  submaps:
+local_map
+----
   
-    size: 30
-    
-    min_num_range_data: 10
-    
-    adjacency_based_revisiting_min_fitness: 0.4
-    
-  map_builder:
+motion_compensation
+----
   
-    scan_cropping:
-    
-      cropping_radius_max: 40.0
-      
-      cropping_radius_min: 0.0
-      
-      min_z: -40.0
-      
-      max_z: 40.0
-      
-      cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
-    
-    map_voxel_size: 0.4
-    
-    space_carving:
-    
-      voxel_size: 0.3
-      
-      max_raytracing_length: 30.0
-      
-      truncation_distance: 0.4
-      
-      carve_space_every_n_scans: 10
-      
-      min_dot_product_with_normal: 0.3
-      
-  dense_map_builder:
   
-    scan_cropping:
-    
-      cropping_radius_max: 25.0
-      
-      cropping_radius_min: 0.0
-      
-      min_z: -12.0
-      
-      max_z: 12.0
-      
-      cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
-    
-    map_voxel_size: 0.1
-    
-    space_carving:
-    
-      voxel_size: 0.2
-      
-      max_raytracing_length: 25.0
-      
-      truncation_distance: 0.3
-      
-      carve_space_every_n_scans: 2
-      
-      min_dot_product_with_normal: 0.3
-
-  place_recognition:
-  
-    feature_map_normal_estimation_radius: 1.0
-    
-    feature_voxel_size: 0.5
-    
-    feature_radius: 2.5
-    
-    feature_knn: 100
-    
-    normal_knn: 10
-    
-    ransac_num_iter: 1000000
-    
-    ransac_probability: 0.99
-    
-    ransac_model_size: 3
-    
-    ransac_max_correspondence_dist: 0.75
-    
-    ransac_correspondence_checker_distance: 0.75
-    
-    ransac_correspondence_checker_edge_length: 0.5
-    
-    ransac_min_corresondence_set_size: 25
-    
-    max_icp_correspondence_distance: 0.3
-    
-    min_icp_refinement_fitness: 0.5
-    
-    dump_aligned_place_recognitions_to_file: false  
-    
-    consistancy_check:
-    
-      max_drift_roll: 70.0 #deg
-      
-      max_drift_pitch: 70.0 # deg
-      
-      max_drift_yaw: 70.0 #deg
-
-  global_optimization:
-  
-    edge_prune_threshold: 0.2
-    
-    loop_closure_preference: 2.0
-    
-    max_correspondence_distance: 10.0
-    
-    reference_node: 0
-    
-local_map:
+visualization
 ----
 
-  voxel_size: 0.08
   
-  cropping_radius: 10.0
-
-Projection:
+saving_parameters
 ----
 
-  K: [767.239452, 0, 814.414996, 0, 767.168172, 597.978256, 0, 0, 1.0]
-  
-  D: [-0.044303, 0.006917, -0.000472, -0.000009, 0.000000]
-  
-  translation: [0.207, -0.025, 0.213]
-  
-  rpy: [-3.11, -1.36, -1.5]
 
-visualization:
-----
 
-  assembled_map_voxel_size: 0.1
   
-  submaps_voxel_size: 0.1
-  
-  visualize_every_n_msec: 300.0
-  
-saving_parameters:
-----
 
-  save_at_mission_end: true
-  
-  save_map: true
-  
-  save_submaps: true
-
+    
