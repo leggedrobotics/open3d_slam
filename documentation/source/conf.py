@@ -2,9 +2,9 @@
 
 # -- Project information
 
-project = 'SLAM Tutorial - ETH  RSS'
-copyright = '2022, Emanuele Aucone'
-author = 'eaucone'
+project = 'open3d_slam'
+copyright = '2022, Emanuele Aucone, Edo Jelavic'
+author = 'eaucone, jelavice'
 
 release = '0.1'
 version = '0.1.0'
