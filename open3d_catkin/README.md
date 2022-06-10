@@ -8,7 +8,17 @@ This package is a catkin wrapper around Open3D.
 
 If no open3d installation is present on the system, _open3d_catkin_ is built by compiling the open3d libraries within the catkin workspace. On a modern desktop computer this takes about 5 minutes. If an Open3D installation exists on the system, this is used instead and wrapped as a catkin package automatically. The latter can be particularly useful if multiple workspaces with this packages are compiled on the computer, or _open3d_catkin_ is intended for longer term usage.
 
-## Mandatory Steps
+## Install Open3d from a PPA
+
+You can install Open3d from a PPA. The PPA contains Open3d and all dependencies.
+First add the PPA to your system:
+```
+sudo add-apt-repository ppa:roehling/open3d
+sudo apt update
+sudo apt install libopen3d-dev
+```
+
+## Build Open3d from source
 
 ### Cmake
 Version >3.18 is required to build open3d_catkin.
