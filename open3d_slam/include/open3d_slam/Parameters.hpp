@@ -146,30 +146,6 @@ struct MapperParameters {
 	bool isRefineOdometryConstraintsBetweenSubmaps_ = false;
 };
 
-struct LocalMapParameters {
-	double voxelSize_ = 0.1;
-	double croppingRadius_ = 10.0;
-};
-
-struct ProjectionParameters {
-    Eigen::Matrix<double, 3, 3, Eigen::RowMajor> K;
-    Eigen::Matrix<double, 5, 1> D;
-    Eigen::Vector3d translation;
-    Eigen::Vector3d rpy;
-};
-
-struct MesherParameters{
-	bool isComputeMesh_ = false;
-	double voxelSize_ = 0.05;
-	MesherStrategy strategy_ = MesherStrategy::AlphaShape;
-	double alphaShapeAlpha_ = 0.5;
-	int poissonDepth_ = 8;
-	double poissonMinDensity_ = 5.0;
-	float poissonScale_=1.1;
-	std::vector<double> ballPivotRadii_ { 0.3, 1.0 };
-	int knnNormalEstimation_ = 4;
-};
-
 struct VisualizationParameters {
 	double assembledMapVoxelSize_ = 0.1;
 	double submapVoxelSize_ = 0.1;
@@ -211,14 +187,8 @@ void loadParameters(const std::string &filename, MapperParameters *p);
 void loadParameters(const YAML::Node &node, MapperParameters *p);
 void loadParameters(const std::string &filename, MapBuilderParameters *p);
 void loadParameters(const YAML::Node &node, MapBuilderParameters *p);
-void loadParameters(const std::string &filename, LocalMapParameters *p);
-void loadParameters(const YAML::Node &node, LocalMapParameters *p);
 void loadParameters(const std::string &filename, OdometryParameters *p);
 void loadParameters(const YAML::Node &node, OdometryParameters *p);
-void loadParameters(const std::string &filename, ProjectionParameters *p);
-void loadParameters(const YAML::Node &node, ProjectionParameters *p);
-void loadParameters(const YAML::Node &n, MesherParameters *p);
-void loadParameters(const std::string &filename, MesherParameters *p);
 void loadParameters(const YAML::Node &n, SpaceCarvingParameters *p);
 void loadParameters(const std::string &filename, SpaceCarvingParameters *p);
 void loadParameters(const std::string &filename, ScanCroppingParameters *p);
