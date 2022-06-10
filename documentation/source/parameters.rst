@@ -155,21 +155,109 @@ Parameters listed below affect scan to map refinement, map building, loop closur
       
       ``min_dot_product_with_normal`` - see map_builder parameters.
 
-local_map
----------
+  place_recognition:
+    ``feature_map_normal_estimation_radius`` - Normal estimation radius for FPFH features.
+    
+    ``feature_voxel_size`` - SI unit meters. Voxel size applied to pointcloud before computing featuers.
+    
+    ``feature_radius`` - Maximal radius for FPFH features.
+    
+    ``feature_knn`` - Maximl number of nearest neighbors for FPFH feature estimation.
+    
+    ``feature_normal_knn`` - Maximal number of nearest neghbors for normal estimation on downsampled pointcloud.
+    
+    ``ransac_num_iter`` - Maximal number of RANSAC iteration.
+    
+    ``ransac_probability`` - RANSAC desired probability of success.
+    
+    ``ransac_model_size`` - Num points in RANSAC model.
+    
+    ``ransac_max_correspondence_dist`` - Maximal correspondence distance for RANSAC. Only used for
+    some checkers, refer to Open3D documentation.
+    
+    ``ransac_correspondence_checker_distance`` - Max point distance for RANSAC filter criteria, see 
+    open3D `documentaion <http://www.open3d.org/docs/release/tutorial/pipelines/global_registration.html>`_ 
+    
+    ``ransac_correspondence_checker_edge_length`` - Max edge length for RANSAC filter criteria, see 
+    open3D `documentaion <http://www.open3d.org/docs/release/tutorial/pipelines/global_registration.html>`_ 
+    
+    ``ransac_min_corresondence_set_size`` - Min number inliers after performing RANSAC registration. If number of
+    inliers is less that this value, then the place recognition is rejected.
+    
+    ``max_icp_correspondence_distance`` - Max corresondence distance for ICP refining global registration.
+    
+    ``min_icp_refinement_fitness`` - Min fitness for ICP refining global registration. If fitness is below this level,
+    then the place recognition is rejected.
+    
+    ``dump_aligned_place_recognitions_to_file``  - If true, then aligned place recognitions will be saved. Useful for
+    debugging.
+    
+    consistancy_check:
+      Simple consistancy check to remove spurious loop closures. If the loop closure would correct
+      submap pose more than any of the thresholds below, it is considered spurious and discarded.
+      
+      ``max_drift_roll`` - SI units degrees.
+      
+      ``max_drift_pitch`` - SI units degrees.
+       
+      ``max_drift_yaw`` - SI units degrees.
+
+  global_optimization:
+    See *GlobalOptimizationOption* class inside open3D for documentation.
+    
+    ``edge_prune_threshold`` - See open3D.
+    
+    ``loop_closure_preference`` - See open3D.
+    
+    ``max_correspondence_distance`` - See open3D.
+    
+    ``reference_node`` - See open3D.
+
   
 motion_compensation
 -------------------
-  
-  
+
+  Motion compensation is based on the constant velocity model. The parameters are specific for lidar that you use,
+  so do not use this unless you are absolutely sure of your Lidar's characteristics.
+
+    ``is_undistort_scan`` - If true, motion compensation is enabled.
+      
+    ``is_spinning_clockwise`` - Set to true if your lidar is spinning clockwise, otherwise *open3d_slam* assumes that
+    it spins counter-clockwise. 
+    
+    ``scan_duration`` - SI unit seconds. Duration of single Lidar scan. 
+    
+    ``num_poses_vel_estimation`` - Motion compensation estimates velocities by donig finite differencing between poses
+    you can use multiple poses for estimation to decrease noise, however this introduces delay into your velocity
+    estimation. The higher this number the more filtering you are applying.
+    
+    
+
 visualization
 -------------
 
+    ``assembled_map_voxel_size`` - SI unit meters. All submaps are assembled into one big map which is then
+    displayed in Rviz. This can be a lot of points for large mps which causes Rviz to crash sometimes. With this
+    parameter you can effectively reduce the number of points.
+    
+    ``submaps_voxel_size`` - SI unit meters. Same as *assembled_map_voxel_size* just in this case the submpas 
+    visualization is affected.
+    
+    ``visualize_every_n_msec`` - After this number of milliseconds has passed the visualization will be performed.
+    This tries to keep the computation at a reasonable level.
+    
   
 saving_parameters
 -----------------
+  All maps are saved in *mapSavingFolderPath_* which is set by the user.
 
-
+    ``save_at_mission_end`` - If true, enable saving maps at the end of the mission. More precisely,
+    when the class *SlamWrapper* goes out of scope.
+    
+    ``save_map`` - If true, saves the assembled full map.
+    
+    ``save_submaps`` - If true saves all the submaps as well.
+      
 
   
 
