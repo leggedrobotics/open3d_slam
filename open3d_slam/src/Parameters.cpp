@@ -68,7 +68,7 @@ void loadParameters(const YAML::Node &node, PlaceRecognitionParameters *p){
 	p->featureVoxelSize_ = node["feature_voxel_size"].as<double>();
 	p->featureRadius_ = node["feature_radius"].as<double>();
 	p->featureKnn_ = node["feature_knn"].as<int>();
-	p->normalKnn_ = node["normal_knn"].as<int>();
+	p->normalKnn_ = node["feature_normal_knn"].as<int>();
 	p->ransacNumIter_ = node["ransac_num_iter"].as<int>();
 	p->ransacProbability_ = node["ransac_probability"].as<double>();
 	p->ransacModelSize_ = node["ransac_model_size"].as<int>();

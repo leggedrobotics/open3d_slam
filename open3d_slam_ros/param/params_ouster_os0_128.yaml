@@ -79,7 +79,7 @@ mapping:
     feature_voxel_size: 0.5
     feature_radius: 2.5
     feature_knn: 100
-    normal_knn: 10
+    feature_normal_knn: 10
     ransac_num_iter: 1000000
     ransac_probability: 0.99
     ransac_model_size: 3
