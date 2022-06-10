@@ -3,8 +3,8 @@
 # -- Project information
 
 project = 'open3d_slam'
-copyright = '2022, Emanuele Aucone, Edo Jelavic'
-author = 'eaucone, jelavice'
+copyright = '2022, open3d_slam authors'
+author = 'see github repository'
 
 release = '0.1'
 version = '0.1.0'

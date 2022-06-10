@@ -45,6 +45,7 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 			params_.scanMatcher_.maxCorrespondenceDistance_, Eigen::Matrix4d::Identity(), *icpObjective_,
 			icpConvergenceCriteria_);
 
+	//todo magic
 	const bool isOdomOkay = result.fitness_ > 0.1;
 	if (!isOdomOkay) {
 		  std::cout << "Odometry failed!!!!! \n";

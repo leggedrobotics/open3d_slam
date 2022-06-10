@@ -1,5 +1,5 @@
 Algorithm
-=====
+=========
 
 
 Open3D SLAM is a pointcloud based SLAM system. It takes pointclouds from various sensor modalities (e.g. LiDAR or depth camera) and produces a 
