@@ -103,9 +103,6 @@ mapping:
     max_correspondence_distance: 10.0
     reference_node: 0
 
-local_map:
-  voxel_size: 0.08
-  cropping_radius: 10.0
 
 motion_compensation:
   is_undistort_scan: false   

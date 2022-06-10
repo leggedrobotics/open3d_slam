@@ -104,10 +104,7 @@ mapping:
     loop_closure_preference: 2.0
     max_correspondence_distance: 10.0
     reference_node: 0
-    
-local_map:
-  voxel_size: 0.08
-  cropping_radius: 10.0
+   
 
 mesher:
   is_compute_mesh: false
