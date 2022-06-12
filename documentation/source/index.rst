@@ -16,6 +16,8 @@ Contents
 
 .. toctree::
 
-   algorithm
+   installation
+   building_from_source
+   system_overview
    usage
    parameters 

@@ -68,7 +68,7 @@ void loadParameters(const YAML::Node &node, PlaceRecognitionParameters *p){
 	p->featureVoxelSize_ = node["feature_voxel_size"].as<double>();
 	p->featureRadius_ = node["feature_radius"].as<double>();
 	p->featureKnn_ = node["feature_knn"].as<int>();
-	p->normalKnn_ = node["normal_knn"].as<int>();
+	p->normalKnn_ = node["feature_normal_knn"].as<int>();
 	p->ransacNumIter_ = node["ransac_num_iter"].as<int>();
 	p->ransacProbability_ = node["ransac_probability"].as<double>();
 	p->ransacModelSize_ = node["ransac_model_size"].as<int>();
@@ -136,52 +136,6 @@ void loadParameters(const std::string &filename, OdometryParameters *p){
 void loadParameters(const YAML::Node &node, OdometryParameters *p){
 	loadParameters(node["scan_matching"], &(p->scanMatcher_) );
 	loadParameters(node["scan_processing"], &(p->scanProcessing_) );
-}
-
-void loadParameters(const std::string &filename, ProjectionParameters *p){
-
-	YAML::Node basenode = YAML::LoadFile(filename);
-
-	if (basenode.IsNull()) {
-			throw std::runtime_error("Projection::loadParameters loading failed");
-	}
-
-	loadParameters(basenode["Projection"], p);
-}
-
-void loadParameters(const YAML::Node &nProj, ProjectionParameters *p){
-	const std::vector<double> vK = nProj["K"].as<std::vector<double> >();
-	p->K(0, 0) = vK[0];
-	p->K(0, 1) = vK[1];
-	p->K(0, 2) = vK[2];
-	p->K(1, 0) = vK[3];
-	p->K(1, 1) = vK[4];
-	p->K(1, 2) = vK[5];
-	p->K(2, 0) = vK[6];
-	p->K(2, 1) = vK[7];
-	p->K(2, 2) = vK[8];
-	const std::vector<double> vD = nProj["D"].as<std::vector<double> >();
-	//      Eigen::Matrix<double, 5, 1> D(vD.data());
-	p->D(0, 0) = vD[0];
-	p->D(1, 0) = vD[1];
-	p->D(2, 0) = vD[2];
-	p->D(3, 0) = vD[3];
-	p->D(4, 0) = vD[4];
-	//    const std::vector<double> vqua = nProj["quaternion"].as<std::vector<double> >();
-	////    Eigen::Quaternion<double> quaternion(vqua.data());
-	//    p->quaternion.w() = vqua[3];
-	//    p->quaternion.x() = vqua[0];
-	//    p->quaternion.y() = vqua[1];
-	//    p->quaternion.z() = vqua[2];
-	const std::vector<double> vtran = nProj["translation"].as<std::vector<double> >();
-	//    Eigen::Vector3d translation(vtran.data());
-	p->translation.x() = vtran[0];
-	p->translation.y() = vtran[1];
-	p->translation.z() = vtran[2];
-	const std::vector<double> vRPY = nProj["rpy"].as<std::vector<double> >();
-	p->rpy.x() = vRPY[0];
-	p->rpy.y() = vRPY[1];
-	p->rpy.z() = vRPY[2];
 }
 
 void loadParameters(const std::string &filename, ScanProcessingParameters *p){
@@ -266,40 +220,6 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	loadParameters(node["submaps"], &(p->submaps_));
 	loadParameters(node["global_optimization"], &(p->globalOptimization_));
 	loadParameters(node["place_recognition"], &(p->placeRecognition_));
-}
-
-void loadParameters(const std::string &filename, LocalMapParameters *p){
-	YAML::Node basenode = YAML::LoadFile(filename);
-	if (basenode.IsNull()) {
-		throw std::runtime_error("Local map::loadParameters loading failed");
-	}
-	loadParameters(basenode["local_map"], p);
-}
-void loadParameters(const YAML::Node &n, LocalMapParameters *p){
-	p->voxelSize_ = n["voxel_size"].as<double>();
-	p->croppingRadius_ = n["cropping_radius"].as<double>();
-}
-
-void loadParameters(const YAML::Node &n, MesherParameters *p) {
-
-	p->strategy_ = mesherStrategyNames.at(n["strategy"].as<std::string>());
-	p->knnNormalEstimation_ = n["knn_normal_estimation"].as<int>();
-	p->voxelSize_=n["voxel_size"].as<double>();
-	p->alphaShapeAlpha_ = n["alpha_shape_alpha"].as<double>();
-	p->poissonDepth_ = n["poisson_depth"].as<int>();
-	p->poissonMinDensity_ = n["poisson_min_density"].as<double>();
-	p->poissonScale_ = n["poisson_scale"].as<double>();
-	p->ballPivotRadii_ = n["ball_pivot_radii"].as<std::vector<double>>();
-	p->isComputeMesh_ = n["is_compute_mesh"].as<bool>();
-
-}
-
-void loadParameters(const std::string &filename, MesherParameters *p) {
-	YAML::Node basenode = YAML::LoadFile(filename);
-	if (basenode.IsNull()) {
-		throw std::runtime_error("MesherParameters::loadParameters loading failed");
-	}
-	loadParameters(basenode["mesher"], p);
 }
 
 void loadParameters(const YAML::Node &n, SpaceCarvingParameters *p){

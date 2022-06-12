@@ -1,10 +1,10 @@
 # Configuration file for the Sphinx documentation builder.
 
 # -- Project information
-
+import m2r2
 project = 'open3d_slam'
-copyright = '2022, Emanuele Aucone, Edo Jelavic'
-author = 'eaucone, jelavice'
+copyright = '2022, open3d_slam authors'
+author = 'see github repository'
 
 release = '0.1'
 version = '0.1.0'
@@ -17,6 +17,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
+    'm2r2',
 ]
 
 intersphinx_mapping = {
@@ -30,6 +31,7 @@ templates_path = ['_templates']
 # -- Options for HTML output
 
 html_theme = 'sphinx_rtd_theme'
+source_suffix = [".rst", ".md"]
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'

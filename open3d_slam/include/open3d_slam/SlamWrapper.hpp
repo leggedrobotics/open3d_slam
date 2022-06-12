@@ -24,7 +24,6 @@ namespace o3d_slam {
 
 class LidarOdometry;
 class Mapper;
-class Mesher;
 class SubmapCollection;
 class OptimizationProblem;
 class MotionCompensation;
@@ -84,13 +83,10 @@ protected:
 	CircularBuffer<TimestampedPointCloud> odometryBuffer_, mappingBuffer_;
 	ThreadSafeBuffer<TimestampedSubmapId> loopClosureCandidates_;
 	MapperParameters mapperParams_;
-	LocalMapParameters localMapParams_;
-	MesherParameters mesherParams_;
 	VisualizationParameters visualizationParameters_;
 	PointCloud rawCloudPrev_;
 	Constraints lastLoopClosureConstraints_;
 	std::shared_ptr<MotionCompensation> motionCompensationOdom_,motionCompensationMap_;
-	std::shared_ptr<Mesher> mesher_;
 	std::shared_ptr<LidarOdometry> odometry_;
 	std::shared_ptr<Mapper> mapper_;
 	std::shared_ptr<SubmapCollection> submaps_;

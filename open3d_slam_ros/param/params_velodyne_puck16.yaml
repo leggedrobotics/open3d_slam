@@ -79,7 +79,7 @@ mapping:
     feature_voxel_size: 0.5
     feature_radius: 2.5
     feature_knn: 100
-    normal_knn: 10
+    feature_normal_knn: 10
     ransac_num_iter: 10000000
     ransac_probability: 0.999
     ransac_model_size: 3
@@ -103,9 +103,6 @@ mapping:
     max_correspondence_distance: 10.0
     reference_node: 0
 
-local_map:
-  voxel_size: 0.08
-  cropping_radius: 10.0
 
 motion_compensation:
   is_undistort_scan: false   
