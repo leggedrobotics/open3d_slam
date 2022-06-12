@@ -3,7 +3,7 @@ Installation
 ============
 
 1. Install the dependencies
-2. Compile using catkin build sytem
+2. Compile using catkin build system
 
 Dependencies
 ------------
@@ -54,5 +54,70 @@ EXPERT WAY: Build open3D from source
 Follow the build from source :ref:`page <build_from_source_ref>`.
 
 
+.. _compilation_ref:
+
 Compilation
 ------------
+
+Compilation of *open3d_catkin* is then really straightforward:
+
+.. code-block:: bash
+
+	catkin build open3d_catkin
+	
+	
+The 3 compilation options are chosen automatically in the following order:
+
+1. *open3d* is installed locally and the *$Open3D_DIR* environment variable is pointing to the installation location. 
+   The success of this is indicated through the message *INFO: Found manually set path to Open3D. Using version located at (some user defined location)*
+2. *open3d* is installed globally. Both of these options should compile within a few seconds.
+3. If none of the before cases holds, *open3d* is automatically pulled locally and compiled inside the workspace. on an Intel i9 12900K this takes roughly 4min 30s.
+
+Usage of open3d_catkin in your project
+--------------------------------------
+
+Usage in your catkin project is then straightforward.
+
+**CMakeLists.txt**
+
+
+.. code-block:: cmake
+
+   set(CATKIN_PACKAGE_DEPENDENCIES
+     open3d_catkin
+   )
+   ...
+   find_package(catkin REQUIRED COMPONENTS
+     ${CATKIN_PACKAGE_DEPENDENCIES}
+   )
+   ...
+   	
+   catkin_package(
+     ...
+     CATKIN_DEPENDS
+       ${CATKIN_PACKAGE_DEPENDENCIES}
+     DEPENDS 
+   )
+   ...
+   include_directories(
+     ${catkin_INCLUDE_DIRS}
+     ...
+   )
+   ...
+   target_link_libraries(${PROJECT_NAME}
+     ${catkin_LIBRARIES}
+     ...
+   )
+
+An example of using ope3d_catkin in other projects can be seen in .
+`../../open3d_slam/CMakeLists.txt <https://github.com/leggedrobotics/open3d_slam/blob/master/open3d_slam/CMakeLists.txt>`__.
+
+Code Usage
+~~~~~~~~~~
+
+Headers from open3d can then be included as usual:
+
+.. code-block:: cpp
+
+   #include <open3d/...>
+

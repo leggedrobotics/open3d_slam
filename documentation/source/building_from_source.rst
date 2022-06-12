@@ -31,6 +31,17 @@ Open3D Dependencies
 
 Execute either the original installation script from open3d `script <https://github.com/isl-org/Open3D/blob/v0.13.0/util/install_deps_ubuntu.sh>`__, or our fetched version via sudo :code:`./install_Deps.sh`
 
+You're done, you can proceed with the compilation step :ref:`here <compilation_ref>`.
+
+
 Optional Step
 -------------
-As an optional step, open3d can be installed, either locally in the home folder or as a global system dependency. For the Open3D installation instructions refer to this `file <../open3d_catkin/install_open3d.md>`__.
+
+Follow this step if you wish to build from source and make a local install.
+
+.. mdinclude:: ../../open3d_catkin/install_open3d.md
+
+
+
+You're done, you can proceed with the compilation step :ref:`here <compilation_ref>`.
+
