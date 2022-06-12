@@ -70,8 +70,19 @@ The 3 compilation options are chosen automatically in the following order:
 
 1. *open3d* is installed locally and the *$Open3D_DIR* environment variable is pointing to the installation location. 
    The success of this is indicated through the message *INFO: Found manually set path to Open3D. Using version located at (some user defined location)*
+   
+
 2. *open3d* is installed globally. Both of these options should compile within a few seconds.
+
+
 3. If none of the before cases holds, *open3d* is automatically pulled locally and compiled inside the workspace. on an Intel i9 12900K this takes roughly 4min 30s.
+
+Once you have build *open3D_catkin* you can build *open3d_slam* and *open3d_slam_ros* if you want ROS support.
+
+.. code-block:: bash
+
+	catkin build open3d_slam
+	catkin build open3d_slam_ros
 
 Usage of open3d_catkin in your project
 --------------------------------------
