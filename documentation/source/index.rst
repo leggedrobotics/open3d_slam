@@ -17,7 +17,7 @@ Contents
 .. toctree::
 
    installation
-   building_from_source
+   open3d_catkin
    system_overview
    usage
    parameters 
