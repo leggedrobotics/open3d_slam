@@ -4,7 +4,7 @@ open3d_slam is a C++ (cpp) library for SLAM with ROS integration.
 
 *Contact:* Edo Jelavic (jelavice@ethz.ch)
 
-![title_img](_images/o3d_slam.png)
+![title_img](documentation/images/o3d_slam.png)
 
 
 The main difference between open3d_slam and other SLAM libraries out there is that open3d_slam was designed
