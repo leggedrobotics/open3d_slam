@@ -17,7 +17,7 @@ Contents
 .. toctree::
 
    installation
-   open3d_catkin
    system_overview
    usage
-   parameters 
+   parameters
+   open3d_catkin 

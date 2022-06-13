@@ -29,7 +29,7 @@ Install with apt:
 3. open3d_catkin
 ~~~~~~~~~~~~~~~~
 
-Follow the instructinos to build :ref:`page <open3d_catkin_ref>`.
+Follow the instructinos to build :ref:`open3d_catkin <open3d_catkin_ref>`.
 
 
 .. _compilation_ref:
@@ -46,3 +46,4 @@ Once you have build *open3D_catkin* you can build *open3d_slam* and *open3d_slam
 	catkin build open3d_slam_ros
 
 
+**You're done with open3d_slam installation**, you can proceed to the usage site.
