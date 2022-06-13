@@ -4,16 +4,22 @@
 
 	<arg name="launch_prefix" default="" doc="gdb -ex run --args"/>
 	<arg name="launch_rviz" default="false" />
-	<arg name="cloud_topic" default="/ouster_points_self_filtered" />
-	<arg name="parameter_file_path" default="$(find open3d_slam_ros)/param/params_ouster_os0_128.yaml"/>
+	<arg name="cloud_topic" default="/rslidar_points" />
+	<arg name="parameter_filename" default="params_robosense_rs16.yaml"/>
+	<arg name="parameter_folder_path" default="$(find open3d_slam_ros)/param/"/>
 	<arg name="map_saving_folder" default="$(find open3d_slam_ros)/data/maps/"/>
 	<arg name="num_accumulated_range_data" default="1"/>
 	<arg name="is_read_from_rosbag" default="false"/>
 	<arg name="rosbag_filepath" default=""/>
 	<arg name="use_sim_time" default="false"/>
 
+
+	<!-- END OF ARGS -->	
+
 	<param name="/use_sim_time" value="$(arg use_sim_time)" />
-	
+	<arg name="rosbag_filepath" 
+		default="$(arg parameter_folder_path)/$(arg parameter_filename)" /> 
+			
 	<node name="mapping_node" pkg="open3d_slam_ros"
 		type="mapping_node" output="screen" launch-prefix="$(arg launch_prefix)">
 
