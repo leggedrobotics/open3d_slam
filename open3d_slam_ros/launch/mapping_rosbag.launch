@@ -2,16 +2,22 @@
 
 <launch>
 
+	<arg name="launch_prefix" default="" doc="gdb -ex run --args"/>
 	<arg name="launch_rviz" default="true" />
 	<arg name="cloud_topic" default="/rslidar_points" />
+	<arg name="parameter_filename" default="params_robosense_rs16.yaml"/>
+	<arg name="parameter_folder_path" default="$(find open3d_slam_ros)/param/"/>
+	<arg name="map_saving_folder" default="$(find open3d_slam_ros)/data/maps/"/>
+	<arg name="num_accumulated_range_data" default="1"/>
+	<arg name="is_read_from_rosbag" default="false"/>
+	<arg name="use_sim_time" default="true"/>
+
 	<arg name="play_delay" default="0.4" />
 	<arg name="play_rate" default="1.0" />
 	<arg name="use_sim_time" default="true" />
 	<arg name="is_read_from_rosbag" default="false"/>
-	<arg name="parameter_file_path" default="$(find open3d_slam_ros)/param/params_robosense_rs16.yaml"/>
 	<arg name="bag_filename" default="wheeled_robot_large_outdoor_area.bag" /> 
-	<arg name="bag_folder_path" 
-		default="$(find open3d_slam_ros)/data/" /> 
+	<arg name="bag_folder_path" default="$(find open3d_slam_ros)/data/"/>
 		
 	<!-- END OF ARGS -->	
 		
@@ -21,7 +27,8 @@
 	<include file="$(find open3d_slam_ros)/launch/mapping.launch">
 		<arg name="cloud_topic" value="$(arg cloud_topic)"/>
 		<arg name="launch_rviz" value="$(arg launch_rviz)"/>
-		<arg name="parameter_file_path" value="$(arg parameter_file_path)"/>
+		<arg name="parameter_filename" value="$(arg parameter_filename)"/>
+		<arg name="parameter_folder_path" value="$(arg parameter_folder_path)"/>
 		<arg name="num_accumulated_range_data" value="1"/>
 		<arg name="use_sim_time" value="$(arg use_sim_time)"/>
 		<arg name="is_read_from_rosbag" value="$(arg is_read_from_rosbag)"/>
