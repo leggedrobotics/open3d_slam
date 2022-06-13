@@ -32,6 +32,7 @@ templates_path = ['_templates']
 
 html_theme = 'sphinx_rtd_theme'
 source_suffix = [".rst", ".md"]
+html_extra_path = ['extra']
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
