@@ -1,15 +1,12 @@
 Open3d SLAM
 ===================================
 
-Point cloud based SLAM leveraging Open3d library
+.. mdinclude:: ../../README.md
 
-ETH Zürich
-
-Check out the :doc:`usage` section for further information about how to install and execute the project.
-
+   
 .. note::
 
-   This project is under active development.
+   This project is under active development. Hence we cannot yet guarantee any API stability.
 
 Contents
 --------
