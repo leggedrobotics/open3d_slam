@@ -6,7 +6,7 @@ This package is a catkin wrapper around Open3D.
 
 ## Overview
 
-If no open3d installation is present on the system, *open3d_catkin* is built by compiling the open3d libraries within the catkin workspace. On a modern desktop computer this takes about 5 minutes. If an Open3D installation exists on the system, this is used instead and wrapped as a catkin package automatically. The latter can be particularly useful if multiple workspaces with this packages are compiled on the computer, or *open3d_catkin* is intended for longer term usage.
+If no Open3D installation is present on the system, *open3d_catkin* is built by compiling the Open3D libraries within the catkin workspace. On a modern desktop computer this takes about 5 minutes. If an Open3D installation exists on the system, this is used instead and wrapped as a catkin package automatically. The latter can be particularly useful if multiple workspaces with this packages are compiled on the computer, or *open3d_catkin* is intended for longer term usage.
 
 ## EASY WAY: Install Open3d from a PPA
 
@@ -43,8 +43,7 @@ Execute either the original installation script from open3d:
 or our fetched version via
 ```sudo ./install_deps.sh```
 
-If you don't want to install open3d locally, skip the next step and
- proceed to the *open3d_catkin* [compilation step](#compilation).
+If you don't want to install open3d locally, skip the next step and proceed to the *open3d_catkin* [compilation step](#compilation).
 
 
 ## Optional Step - Install Open3D Locally
@@ -89,7 +88,7 @@ export Open3D_DIR="$HOME/Programs/open3d_install/lib/cmake/Open3D"
 
 <a name="compilation"></a>
 ## open3d_catkin Compilation
-Compilation of *open3d_catkin* is then really straightforward:
+Once Open3D has been installed, compilation of *open3d_catkin* is then really straightforward:
 ```bash
 catkin build open3d_catkin
 ```

@@ -5,6 +5,10 @@ Installation
 1. Install the dependencies
 2. Compile using catkin build system
 
+or 
+
+run in a docker. In that case, check the instructions for :ref:`docker <docker_ref>`.
+
 Dependencies
 ------------
 

@@ -17,4 +17,5 @@ Contents
    system_overview
    usage
    parameters
-   open3d_catkin 
+   open3d_catkin
+   docker 
