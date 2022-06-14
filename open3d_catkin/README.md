@@ -6,7 +6,7 @@ This package is a catkin wrapper around Open3D.
 
 ## Overview
 
-If no Open3D installation is present on the system, *open3d_catkin* is built by compiling the Open3D libraries within the catkin workspace. On a modern desktop computer this takes about 5 minutes. If an Open3D installation exists on the system, this is used instead and wrapped as a catkin package automatically. The latter can be particularly useful if multiple workspaces with this packages are compiled on the computer, or *open3d_catkin* is intended for longer term usage.
+If no Open3D installation is present on the system, *open3d_catkin* is built by compiling the Open3D libraries within the catkin workspace. On a modern desktop computer this takes about 5 minutes. If an Open3D installation exists on the system, this is used instead and wrapped as a catkin package automatically. The latter can be particularly useful if multiple workspaces with these packages are compiled on the computer, or *open3d_catkin* is intended for longer-term usage.
 
 ## EASY WAY: Install Open3d from a PPA
 
@@ -74,7 +74,7 @@ make install
 
 ### CUDA Support
 If you want to compute with cuda support add the following flag when configuring the cmake `-DBUILD_CUDA_MODULE=ON`. In this case you might have to manually specify the path to your nvcc compiler.
-This can be done by adding the `CMAKE_CUDA_COMPILER:PATH` flag when invoking the cmake; e.g. `-DCMAKE_CUDA_COMPILER:PATH=/usr/local/cuda-11.5/bin/nvcc`. It can still hapen that you get weird include errors in which case you should not use the system eigen, i.e. `-DUSE_SYSTEM_EIGEN3=OFF` 
+This can be done by adding the `CMAKE_CUDA_COMPILER:PATH` flag when invoking the cmake; e.g. `-DCMAKE_CUDA_COMPILER:PATH=/usr/local/cuda-11.5/bin/nvcc`. It can still happen that you get weird include errors in which case you should not use the system eigen, i.e. `-DUSE_SYSTEM_EIGEN3=OFF` 
 
 ### Set Local Paths
 To build the catkin package, the simplest way is to add the sufficient environment variable to your bashrc:
@@ -93,7 +93,7 @@ Once Open3D has been installed, compilation of *open3d_catkin* is then really st
 catkin build open3d_catkin
 ```
 The 3 compilation options are chosen automatically in the following order:
-1. open3d is installed locally and the *$Open3D_DIR* environment variable is pointing to the installation location. The success of this is indicated through the message *INFO: Found manually set path to Open3D. Using version located at (some user specified location)*.
+1. open3d is installed locally and the *$Open3D_DIR* environment variable is pointing to the installation location. The success of this is indicated through the message *INFO: Found manually set path to Open3D. Using version located at (some user-specified location)*.
 _
 2. open3d is installed globally.
 Both of these options should compile within a few seconds.

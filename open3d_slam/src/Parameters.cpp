@@ -41,15 +41,15 @@ void loadParameters(const YAML::Node &node, SavingParameters *p) {
 }
 
 void loadParameters(const std::string &filename,
-		PlaceRecognitionConsistancyCheckParameters *p) {
+		PlaceRecognitionConsistencyCheckParameters *p) {
 	YAML::Node basenode = YAML::LoadFile(filename);
 	if (basenode.IsNull()) {
 		throw std::runtime_error(
 				"PlaceRecognitionParams::loadParameters loading failed");
 	}
-	loadParameters(basenode["consistancy_check"], p);
+	loadParameters(basenode["consistency_check"], p);
 }
-void loadParameters(const YAML::Node &node, PlaceRecognitionConsistancyCheckParameters *p){
+void loadParameters(const YAML::Node &node, PlaceRecognitionConsistencyCheckParameters *p){
 	p->maxDriftPitch_ = node["max_drift_pitch"].as<double>() * params_internal::kDegToRad;
 	p->maxDriftRoll_ =  node["max_drift_roll"].as<double>() * params_internal::kDegToRad;
 	p->maxDriftYaw_ =  node["max_drift_yaw"].as<double>() * params_internal::kDegToRad;
@@ -79,7 +79,7 @@ void loadParameters(const YAML::Node &node, PlaceRecognitionParameters *p){
 	p->maxIcpCorrespondenceDistance_ = node["max_icp_correspondence_distance"].as<double>();
 	p->minRefinementFitness_ = node["min_icp_refinement_fitness"].as<double>();
 	p->isDumpPlaceRecognitionAlignmentsToFile_ = node["dump_aligned_place_recognitions_to_file"].as<bool>();
-	loadParameters(node["consistancy_check"], &(p->consistencyCheck_));
+	loadParameters(node["consistency_check"], &(p->consistencyCheck_));
 }
 
 void loadParameters(const std::string &filename, GlobalOptimizationParameters *p){

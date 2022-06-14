@@ -95,7 +95,7 @@ struct SubmapParameters{
 	double adjacencyBasedRevisitingMinFitness_ = 0.4;
 };
 
-struct PlaceRecognitionConsistancyCheckParameters{
+struct PlaceRecognitionConsistencyCheckParameters{
 	double maxDriftRoll_ = 90.0 * params_internal::kDegToRad;
 	double maxDriftPitch_ = 90.0 * params_internal::kDegToRad;
 	double maxDriftYaw_ = 90.0 * params_internal::kDegToRad;
@@ -117,7 +117,7 @@ struct PlaceRecognitionParameters{
 	double maxIcpCorrespondenceDistance_ = 0.3;
 	double minRefinementFitness_ = 0.7;
 	bool isDumpPlaceRecognitionAlignmentsToFile_ = false;
-	PlaceRecognitionConsistancyCheckParameters consistencyCheck_;
+	PlaceRecognitionConsistencyCheckParameters consistencyCheck_;
 };
 
 struct GlobalOptimizationParameters {
@@ -169,8 +169,8 @@ void loadParameters(const std::string &filename, ConstantVelocityMotionCompensat
 void loadParameters(const YAML::Node &node, ConstantVelocityMotionCompensationParameters *p);
 void loadParameters(const std::string &filename, SavingParameters *p);
 void loadParameters(const YAML::Node &node, SavingParameters *p);
-void loadParameters(const std::string &filename, PlaceRecognitionConsistancyCheckParameters *p);
-void loadParameters(const YAML::Node &node, PlaceRecognitionConsistancyCheckParameters *p);
+void loadParameters(const std::string &filename, PlaceRecognitionConsistencyCheckParameters *p);
+void loadParameters(const YAML::Node &node, PlaceRecognitionConsistencyCheckParameters *p);
 void loadParameters(const std::string &filename, PlaceRecognitionParameters *p);
 void loadParameters(const YAML::Node &node, PlaceRecognitionParameters *p);
 void loadParameters(const std::string &filename, GlobalOptimizationParameters *p);
