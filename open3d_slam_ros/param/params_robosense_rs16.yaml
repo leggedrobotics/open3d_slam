@@ -12,7 +12,7 @@ odometry:
       cropping_radius_min: 0.0
       min_z: -30.0
       max_z: 30.0
-      cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius, MinMaxRadius
+      cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
   
 mapping:
   is_print_timing_information: true
@@ -37,7 +37,7 @@ mapping:
         cropping_radius_min: 0.0
         min_z: -30.0
         max_z: 30.0
-        cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius, MinMaxRadius
+        cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
 
   submaps:
     size: 20
@@ -50,7 +50,7 @@ mapping:
       cropping_radius_min: 0.0
       min_z: -50.0
       max_z: 50.0
-      cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius, MinMaxRadius
+      cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
     map_voxel_size: 0.1
     space_carving:
       voxel_size: 0.2
@@ -65,7 +65,7 @@ mapping:
       cropping_radius_min: 0.0
       min_z: -50.0
       max_z: 50.0
-      cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius, MinMaxRadius
+      cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
     map_voxel_size: 0.0
     space_carving:
       voxel_size: 0.2
