@@ -17,7 +17,7 @@
 	<!-- END OF ARGS -->	
 
 	<param name="/use_sim_time" value="$(arg use_sim_time)" />
-	<arg name="rosbag_filepath" 
+	<arg name="parameter_file_path" 
 		default="$(arg parameter_folder_path)/$(arg parameter_filename)" /> 
 			
 	<node name="mapping_node" pkg="open3d_slam_ros"

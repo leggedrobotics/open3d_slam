@@ -113,7 +113,7 @@ void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor, con
 		}
 		if (adjacencyMatrix_.isAdjacent(closestSubmap.getId(), activeSubmap.getId())
 				&& isSwitchingSubmapsConsistant(scan, closestSubmap.getId(), mapToRangeSensor)) {
-			//todo here we could put a consistancy check
+			//todo here we could put a consistency check
 				activeSubmapIdx_ = closestMapIdx;
 		} else {
 			const bool isTraveledSufficientDistance = (mapToRangeSensor_.translation()
@@ -346,7 +346,7 @@ void SubmapCollection::setFolderPath(const std::string &folderPath) {
 
 bool SubmapCollection::isSwitchingSubmapsConsistant(const PointCloud &scan,
 		size_t newActiveSubmapCandidate, const Transform &mapToRangeSensor) const {
-	//Timer("submap_switch_consistancy_check");
+	//Timer("submap_switch_consistency_check");
 	int numOverlappingPoints = 0;
 	const VoxelMap &voxelMap = submaps_.at(newActiveSubmapCandidate).getVoxelMap();
 	for (int i = 0; i < scan.points_.size(); ++i) {

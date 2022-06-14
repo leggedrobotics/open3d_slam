@@ -22,7 +22,7 @@ Dependencies
 2. Ros dependencies
 ~~~~~~~~~~~~~~~~~~~
 If you want to use open3d_slam_ros consider installing jsk-rviz plugins. We use them to visualize the trajectories. 
-If you don't have them installed, you should still be able to run the package, however with some red letters in the temrinal.
+If you don't have them installed, you should still be able to run the package, however with some red letters in the terminal.
 
 Install with apt:
 
@@ -33,7 +33,7 @@ Install with apt:
 3. open3d_catkin
 ~~~~~~~~~~~~~~~~
 
-Follow the instructinos to build :ref:`open3d_catkin <open3d_catkin_ref>`.
+Follow the instructions to build :ref:`open3d_catkin <open3d_catkin_ref>`.
 
 
 .. _compilation_ref:
@@ -42,7 +42,7 @@ Compilation
 ------------
 
 
-Once you have build *open3D_catkin* you can build *open3d_slam* and *open3d_slam_ros* if you want ROS support.
+Once you have built *open3D_catkin* you can build *open3d_slam* and *open3d_slam_ros* if you want ROS support.
 
 .. code-block:: bash
 

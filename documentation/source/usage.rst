@@ -27,7 +27,7 @@ and start estimating ego motion and build a map.
 
 .. note::
 
-	Make sure you passed the correct path to the paraeters file!!!! In general, different sensors will
+	Make sure you passed the correct path to the parameters file!!!! In general, different sensors will
 	require different parameter tuning.
 	
 	
@@ -59,7 +59,7 @@ You can take a look at the launch file arguments below:
 	Name of the parameter file for the algorithm.
 
 	<arg name="parameter_folder_path" default="$(find open3d_slam_ros)/param/"/>
-	Path to the filder containing parameter file.
+	Path to the folder containing parameter file.
 
 	<arg name="map_saving_folder" default="$(find open3d_slam_ros)/data/maps/"/>
 	Folder where to save maps at the end of the mission or when rosservice is called.
@@ -97,8 +97,8 @@ then set the read_from_rosbag argument to true:
 Reading from rosbag is very useful for building maps offline since the processing can be performed much faster. For example the *wheeled_robot_large_outdoor_area.bag*
 is 663 seconds long, but if we iterate through rosbag we process it in 220 seconds. *legged_robot_large_building.bag* is 3799 seconds long, however we can process it in 484 seconds. 
 
-Another important aspect of iterating throught rosbag is that we can force loop closures for the  last submap, thus
-potentially correcting for the drift. Note that we can not do this in online operatino (or when using rosbag player) since
+Another important aspect of iterating through rosbag is that we can force loop closures for the  last submap, thus
+potentially correcting for the drift. Note that we can not do this in online operation (or when using rosbag player) since
 we do not know when the mapping session is finished. 
 
 
@@ -114,7 +114,7 @@ If you want to play a rosbag with rosbag player then launch with:
 
 	<arg name="is_read_from_rosbag" default="false"/>
 	Whether to iterate through rosbag (if set to true) or launch 
-	the rosbag player (is seto to false).
+	the rosbag player (is set to to false).
 	
 	<arg name="bag_filename" default="wheeled_robot_large_outdoor_area.bag" /> 
 	Name of the rosbag file.

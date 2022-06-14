@@ -12,7 +12,7 @@ Parameters below affect scan to scan lidar odometry.
     *PointToPlane* usually has faster convergence.
     
     ``max_correspondence_dist`` - SI unit meters. Max distance for k-d tree to consider when searching for correspondences inside ICP (in meters). This means
-    that for each point *p* their corresponing poin *q* can be at most *max_correspondence_dist* far away. With large values you will lose
+    that for each point *p* their corresponding point *q* can be at most *max_correspondence_dist* far away. With large values you will lose
     some accuracy, small values will result in less robust scan matching.
     
     ``knn_normal_estimation`` - Number of nearest neighbors used for normal estimation if *PointToPlane* ICP variant is used. If you use
@@ -37,7 +37,7 @@ Parameters below affect scan to scan lidar odometry.
       ``cropping_radius_min`` - SI units meters. Minimal radius of points to keep, any points closer than *cropping_radius_min* meters will
       be dropped.
       
-      ``min_z`` - SI units meters. Minimal height of points to keep, any points with z coordinate less than *min_z* meters will be droopped.
+      ``min_z`` - SI units meters. Minimal height of points to keep, any points with z coordinate less than *min_z* meters will be dropped.
       
       ``max_z`` - SI units meters. Maximal height of points to keep, any points with z coordinate more than *max_z* meters will be droopped.
       
@@ -62,11 +62,11 @@ Parameters listed below affect scan to map refinement, map building, loop closur
   ``min_movement_between_mapping_steps`` - SI unit meters. If translational movement is less than *min_movement_between_mapping_steps* meters, the 
   scan is not merged into the current active submap. 
   
-  ``submaps_num_scan_overlap`` - Number of scans that inserted in both adjacent submaps. The overlaping scans are 
+  ``submaps_num_scan_overlap`` - Number of scans that inserted in both adjacent submaps. The overlapping scans are 
   inserted right after the new submap is created.
 	
   scan_to_map_refinement:
-    Parameter related to scan mathicng.
+    Parameter related to scan matching.
     
     ``min_refinement_fitness`` - Number between 0 and 1. 0 means that scan has no overlap with the submap (poor match most likely), 1.0 means
     that all points in the scan have a nearest neighbor in the submap (good match most likely).
@@ -123,12 +123,12 @@ Parameters listed below affect scan to map refinement, map building, loop closur
       after having merged *carve_space_every_n_scans* in the submap.
       
       ``min_dot_product_with_normal`` - Remove the point only if the dot product of ray (from the origin
-      of the range sensor) and surface normal of the ponit we want to remove are big enough. Intuitively,
+      of the range sensor) and surface normal of the point we want to remove are big enough. Intuitively,
       if the ray is almost parallel to the surface it would cause many points to be removed (we want to avoid this).
       
   dense_map_builder:
     You can build another map in parallel to the main map. This map can be then very dense, which is sometimes
-    nice for visualizatin purposes. For building the dense map, we take the raw scan, crop it and insert it into
+    nice for visualization purposes. For building the dense map, we take the raw scan, crop it and insert it into
     the dense map. No additional pre-processing steps are applied. 
     
     scan_cropping:
@@ -158,13 +158,13 @@ Parameters listed below affect scan to map refinement, map building, loop closur
   place_recognition:
     ``feature_map_normal_estimation_radius`` - Normal estimation radius for FPFH features.
     
-    ``feature_voxel_size`` - SI unit meters. Voxel size applied to pointcloud before computing featuers.
+    ``feature_voxel_size`` - SI unit meters. Voxel size applied to pointcloud before computing features.
     
     ``feature_radius`` - Maximal radius for FPFH features.
     
-    ``feature_knn`` - Maximl number of nearest neighbors for FPFH feature estimation.
+    ``feature_knn`` - Maximal number of nearest neighbors for FPFH feature estimation.
     
-    ``feature_normal_knn`` - Maximal number of nearest neghbors for normal estimation on downsampled pointcloud.
+    ``feature_normal_knn`` - Maximal number of nearest neighbors for normal estimation on downsampled pointcloud.
     
     ``ransac_num_iter`` - Maximal number of RANSAC iteration.
     
@@ -176,15 +176,15 @@ Parameters listed below affect scan to map refinement, map building, loop closur
     some checkers, refer to Open3D documentation.
     
     ``ransac_correspondence_checker_distance`` - Max point distance for RANSAC filter criteria, see 
-    open3D `documentaion <http://www.open3d.org/docs/release/tutorial/pipelines/global_registration.html>`_ 
+    open3D `documentation <http://www.open3d.org/docs/release/tutorial/pipelines/global_registration.html>`_ 
     
     ``ransac_correspondence_checker_edge_length`` - Max edge length for RANSAC filter criteria, see 
-    open3D `documentaion <http://www.open3d.org/docs/release/tutorial/pipelines/global_registration.html>`_ 
+    open3D `documentation <http://www.open3d.org/docs/release/tutorial/pipelines/global_registration.html>`_ 
     
-    ``ransac_min_corresondence_set_size`` - Min number inliers after performing RANSAC registration. If number of
+    ``ransac_min_correspondence_set_size`` - Min number inliers after performing RANSAC registration. If number of
     inliers is less that this value, then the place recognition is rejected.
     
-    ``max_icp_correspondence_distance`` - Max corresondence distance for ICP refining global registration.
+    ``max_icp_correspondence_distance`` - Max correspondence distance for ICP refining global registration.
     
     ``min_icp_refinement_fitness`` - Min fitness for ICP refining global registration. If fitness is below this level,
     then the place recognition is rejected.
@@ -192,8 +192,8 @@ Parameters listed below affect scan to map refinement, map building, loop closur
     ``dump_aligned_place_recognitions_to_file``  - If true, then aligned place recognitions will be saved. Useful for
     debugging.
     
-    consistancy_check:
-      Simple consistancy check to remove spurious loop closures. If the loop closure would correct
+    consistency_check:
+      Simple consistency check to remove spurious loop closures. If the loop closure would correct
       submap pose more than any of the thresholds below, it is considered spurious and discarded.
       
       ``max_drift_roll`` - SI units degrees.
@@ -240,7 +240,7 @@ visualization
     displayed in Rviz. This can be a lot of points for large mps which causes Rviz to crash sometimes. With this
     parameter you can effectively reduce the number of points.
     
-    ``submaps_voxel_size`` - SI unit meters. Same as *assembled_map_voxel_size* just in this case the submpas 
+    ``submaps_voxel_size`` - SI unit meters. Same as *assembled_map_voxel_size* just in this case the submaps 
     visualization is affected.
     
     ``visualize_every_n_msec`` - After this number of milliseconds has passed the visualization will be performed.

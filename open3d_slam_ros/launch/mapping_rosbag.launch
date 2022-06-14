@@ -11,18 +11,15 @@
 	<arg name="num_accumulated_range_data" default="1"/>
 	<arg name="is_read_from_rosbag" default="false"/>
 	<arg name="use_sim_time" default="true"/>
-
 	<arg name="play_delay" default="0.4" />
 	<arg name="play_rate" default="1.0" />
-	<arg name="use_sim_time" default="true" />
-	<arg name="is_read_from_rosbag" default="false"/>
 	<arg name="bag_filename" default="wheeled_robot_large_outdoor_area.bag" /> 
 	<arg name="bag_folder_path" default="$(find open3d_slam_ros)/data/"/>
-		
+	
 	<!-- END OF ARGS -->	
 		
 	<arg name="rosbag_full_path" 
-		default="$(find open3d_slam_ros)/data/$(arg bag_filename)" /> 
+		default="$(arg bag_folder_path)/$(arg bag_filename)" /> 
 
 	<include file="$(find open3d_slam_ros)/launch/mapping.launch">
 		<arg name="cloud_topic" value="$(arg cloud_topic)"/>

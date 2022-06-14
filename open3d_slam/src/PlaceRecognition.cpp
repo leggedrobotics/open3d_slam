@@ -185,7 +185,7 @@ bool PlaceRecognition::isRegistrationConsistent(const Eigen::Matrix4d &mat) cons
 	const double pitch = rpy.y();
 	const double yaw = rpy.z();
 	bool result = true;
-	const PlaceRecognitionConsistancyCheckParameters &p = params_.placeRecognition_.consistencyCheck_;
+	const PlaceRecognitionConsistencyCheckParameters &p = params_.placeRecognition_.consistencyCheck_;
 	if (std::fabs(roll) > p.maxDriftRoll_) {
 		result = false;
 		std::cout << "  PlaceRecognition::isRegistrationConsistent The roll drift is: " << roll * kRadToDeg
