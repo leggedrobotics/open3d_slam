@@ -52,6 +52,10 @@ SlamWrapperRos::~SlamWrapperRos() {
 		visualizationWorker_.join();
 		std::cout << "Joined visualization worker \n";
 	}
+  if (odometryParams_.isPublishOdometryMsgs_ && odomPublisherWorker_.joinable()) {
+      odomPublisherWorker_.join();
+    std::cout << "Joined odom publisher worker \n";
+  }
 }
 
 void SlamWrapperRos::startWorkers() {
@@ -61,9 +65,11 @@ void SlamWrapperRos::startWorkers() {
 	visualizationWorker_ = std::thread([this]() {
 		visualizationWorker();
 	});
-  odomPublisherWorker_ = std::thread([this]() {
+	if (odometryParams_.isPublishOdometryMsgs_){
+    odomPublisherWorker_ = std::thread([this]() {
       odomPublisherWorker();
-  });
+    });
+	}
 
 	BASE::startWorkers();
 }
@@ -90,7 +96,7 @@ void SlamWrapperRos::odomPublisherWorker() {
         if (!isAlreadyPublished && odometry_->hasProcessedMeasurements()) {
             const Transform T = odometry_->getOdomToRangeSensor(latestScanToScan);
             nav_msgs::Odometry odomMsg = getOdomMsg(T,latestScanToScan);
-            scan2scanOdomPublisher_.publish(odomMsg);
+            publishIfSubscriberExists(odomMsg,scan2scanOdomPublisher_);
             prevPublishedTimeScanToScanOdom_ = latestScanToScan;
         }
 
@@ -99,7 +105,7 @@ void SlamWrapperRos::odomPublisherWorker() {
         if (!isScanToMapAlreadyPublished && mapper_->hasProcessedMeasurements()) {
             const Transform T = mapper_->getMapToRangeSensor(latestScanToMap);
             nav_msgs::Odometry odomMsg = getOdomMsg(T,latestScanToMap);
-            scan2mapOdomPublisher_.publish(odomMsg);
+            publishIfSubscriberExists(odomMsg,scan2mapOdomPublisher_);
             prevPublishedTimeScanToMapOdom_ = latestScanToMap;
         }
 

@@ -83,6 +83,7 @@ protected:
 	CircularBuffer<TimestampedPointCloud> odometryBuffer_, mappingBuffer_;
 	ThreadSafeBuffer<TimestampedSubmapId> loopClosureCandidates_;
 	MapperParameters mapperParams_;
+	OdometryParameters odometryParams_;
 	VisualizationParameters visualizationParameters_;
 	PointCloud rawCloudPrev_;
 	Constraints lastLoopClosureConstraints_;

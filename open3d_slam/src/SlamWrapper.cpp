@@ -179,10 +179,9 @@ void SlamWrapper::loadParametersAndInitialize() {
 	const std::string paramFile = paramPath_;
 	std::cout << "loading params from: " << paramFile << "\n";
 
-	OdometryParameters odometryParams;
-	loadParameters(paramFile, &odometryParams);
+	loadParameters(paramFile, &odometryParams_);
 	odometry_ = std::make_shared<o3d_slam::LidarOdometry>();
-	odometry_->setParameters(odometryParams);
+	odometry_->setParameters(odometryParams_);
 
 	submaps_ = std::make_shared<o3d_slam::SubmapCollection>();
 	submaps_->setFolderPath(folderPath_);
