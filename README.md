@@ -25,3 +25,14 @@ The documentation and example datasets can be found here [open3d_slam Documentat
 We provide a catkin wrapper for Open3D such that you can easily use Open3D in your ROS projects. See documentation in
 [open3d_catkin/README.md](https://github.com/leggedrobotics/open3d_slam/tree/master/open3d_catkin).
 
+If you find this work useful, or use it for your research, please consider citing the corresponding work:
+```
+@inproceedings{jelavic2022open3d,
+  title={Open3D SLAM: Point Cloud Based Mapping and Localization for Education},
+  author={Jelavic, Edo and Nubert, Julian and Hutter, Marco},
+  booktitle={Robotic Perception and Mapping: Emerging Techniques, ICRA 2022 Workshop},
+  pages={24},
+  year={2022},
+  organization={ETH Zurich, Robotic Systems Lab}
+}
+```
