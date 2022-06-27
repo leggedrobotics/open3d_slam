@@ -80,7 +80,7 @@ void SlamWrapperRos::odomPublisherWorker() {
 
         auto getOdomMsg = [](const Transform &T, const Time &t){
             ros::Time timestamp = toRos(t);
-            geometry_msgs::TransformStamped transformStamped = o3d_slam::toRos(T.matrix(), timestamp, odomFrame, rangeSensorFrame);
+            geometry_msgs::TransformStamped transformStamped = o3d_slam::toRos(T.matrix(), timestamp, mapFrame, rangeSensorFrame);
             nav_msgs::Odometry odomMsg;
             odomMsg.header = transformStamped.header;
             odomMsg.child_frame_id = transformStamped.child_frame_id;
