@@ -47,7 +47,7 @@ private:
 	std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster_;
 	ros::Publisher odometryInputPub_, mappingInputPub_, submapOriginsPub_, assembledMapPub_, denseMapPub_,
 			submapsPub_;
-	ros::Publisher scan2scanOdomPublisher_, scan2mapOdomPublisher_;
+	ros::Publisher scan2scanTransformPublisher_, scan2scanOdomPublisher_, scan2mapTransformPublisher_, scan2mapOdomPublisher_;
 	ros::ServiceServer saveMapSrv_, saveSubmapsSrv_;
 	bool isVisualizationFirstTime_ = true;
 	std::thread tfWorker_, visualizationWorker_, odomPublisherWorker_;

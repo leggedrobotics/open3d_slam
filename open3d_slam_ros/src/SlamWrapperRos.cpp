@@ -78,16 +78,20 @@ void SlamWrapperRos::odomPublisherWorker() {
     ros::Rate r(500.0);
     while (ros::ok()) {
 
-        auto getOdomMsg = [](const Transform &T, const Time &t){
+				auto getTransformMsg = [](const Transform &T, const Time &t){
             ros::Time timestamp = toRos(t);
-            geometry_msgs::TransformStamped transformStamped = o3d_slam::toRos(T.matrix(), timestamp, mapFrame, rangeSensorFrame);
+            geometry_msgs::TransformStamped transformMsg = o3d_slam::toRos(T.matrix(), timestamp, mapFrame, rangeSensorFrame);
+            return transformMsg;
+        };
+
+				auto getOdomMsg = [](const geometry_msgs::TransformStamped &transformMsg){
             nav_msgs::Odometry odomMsg;
-            odomMsg.header = transformStamped.header;
-            odomMsg.child_frame_id = transformStamped.child_frame_id;
-            odomMsg.pose.pose.orientation = transformStamped.transform.rotation;
-            odomMsg.pose.pose.position.x = transformStamped.transform.translation.x;
-            odomMsg.pose.pose.position.y = transformStamped.transform.translation.y;
-            odomMsg.pose.pose.position.z = transformStamped.transform.translation.z;
+            odomMsg.header = transformMsg.header;
+            odomMsg.child_frame_id = transformMsg.child_frame_id;
+            odomMsg.pose.pose.orientation = transformMsg.transform.rotation;
+            odomMsg.pose.pose.position.x = transformMsg.transform.translation.x;
+            odomMsg.pose.pose.position.y = transformMsg.transform.translation.y;
+            odomMsg.pose.pose.position.z = transformMsg.transform.translation.z;
             return odomMsg;
         };
 
@@ -95,8 +99,10 @@ void SlamWrapperRos::odomPublisherWorker() {
         const bool isAlreadyPublished = latestScanToScan == prevPublishedTimeScanToScanOdom_;
         if (!isAlreadyPublished && odometry_->hasProcessedMeasurements()) {
             const Transform T = odometry_->getOdomToRangeSensor(latestScanToScan);
-            nav_msgs::Odometry odomMsg = getOdomMsg(T,latestScanToScan);
-            publishIfSubscriberExists(odomMsg,scan2scanOdomPublisher_);
+						geometry_msgs::TransformStamped transformMsg = getTransformMsg(T, latestScanToScan);
+            nav_msgs::Odometry odomMsg = getOdomMsg(transformMsg);
+						publishIfSubscriberExists(transformMsg, scan2scanTransformPublisher_);
+            publishIfSubscriberExists(odomMsg, scan2scanOdomPublisher_);
             prevPublishedTimeScanToScanOdom_ = latestScanToScan;
         }
 
@@ -104,8 +110,10 @@ void SlamWrapperRos::odomPublisherWorker() {
         const bool isScanToMapAlreadyPublished = latestScanToMap == prevPublishedTimeScanToMapOdom_;
         if (!isScanToMapAlreadyPublished && mapper_->hasProcessedMeasurements()) {
             const Transform T = mapper_->getMapToRangeSensor(latestScanToMap);
-            nav_msgs::Odometry odomMsg = getOdomMsg(T,latestScanToMap);
-            publishIfSubscriberExists(odomMsg,scan2mapOdomPublisher_);
+						geometry_msgs::TransformStamped transformMsg = getTransformMsg(T, latestScanToMap);
+            nav_msgs::Odometry odomMsg = getOdomMsg(transformMsg);
+						publishIfSubscriberExists(transformMsg, scan2mapTransformPublisher_);
+            publishIfSubscriberExists(odomMsg, scan2mapOdomPublisher_);
             prevPublishedTimeScanToMapOdom_ = latestScanToMap;
         }
 
@@ -175,7 +183,9 @@ void SlamWrapperRos::loadParametersAndInitialize() {
 	saveMapSrv_ = nh_->advertiseService("save_map", &SlamWrapperRos::saveMapCallback, this);
 	saveSubmapsSrv_ = nh_->advertiseService("save_submaps", &SlamWrapperRos::saveSubmapsCallback, this);
 
+	scan2scanTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("scan2scan_transform", 1, true);
 	scan2scanOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2scan_odometry", 1, true);
+	scan2mapTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("scan2map_transform", 1, true);
   scan2mapOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2map_odometry", 1, true);
 
 	//	auto &logger = open3d::utility::Logger::GetInstance();
