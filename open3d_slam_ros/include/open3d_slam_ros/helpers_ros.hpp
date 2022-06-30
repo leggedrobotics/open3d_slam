@@ -47,4 +47,11 @@ ros::Time toRos(Time time);
 
 Time fromRos(const ::ros::Time& time);
 
+template<typename Msg>
+void publishIfSubscriberExists(const Msg &msg, const ros::Publisher &pub){
+    if (pub.getNumSubscribers() > 0){
+        pub.publish(msg);
+    }
+}
+
 } /* namespace o3d_slam */

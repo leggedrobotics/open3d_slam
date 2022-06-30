@@ -136,6 +136,9 @@ void loadParameters(const std::string &filename, OdometryParameters *p){
 void loadParameters(const YAML::Node &node, OdometryParameters *p){
 	loadParameters(node["scan_matching"], &(p->scanMatcher_) );
 	loadParameters(node["scan_processing"], &(p->scanProcessing_) );
+	if (node["is_publish_odometry_msgs"].IsDefined()){
+	    p->isPublishOdometryMsgs_ = node["is_publish_odometry_msgs"].as<bool>();
+	}
 }
 
 void loadParameters(const std::string &filename, ScanProcessingParameters *p){

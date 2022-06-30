@@ -5,7 +5,8 @@ odometry
 --------
 Parameters below affect scan to scan lidar odometry.
 
- 
+    ``is_publish_odometry_msgs`` - Whether to publish odometry msgs as nav_msgs::Odometry on ROS. If true publishes both scan2scan and
+    scan2map odometry. **WARNING**: if loop closures are enabled the scan2map odometry will jump when the loop closes!!!!
 
   scan_matching:
     ``icp_objective`` - Which icp objective to use? Default is *PointToPlane*, another option is *PointToPoint*.

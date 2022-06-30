@@ -65,6 +65,7 @@ struct IcpParameters {
 struct OdometryParameters {
 	IcpParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
+  bool isPublishOdometryMsgs_ = false;
 };
 
 struct MapInconsistencyRemoval {
