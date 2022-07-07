@@ -197,8 +197,8 @@ void SlamWrapper::loadParametersAndInitialize() {
 	// set the verobsity for timing statistics
 	Timer::isDisablePrintInDestructor_ = !mapperParams_.isPrintTimingStatistics_;
 
-	loadParameters(paramFile,&savingParameters_);
-
+	loadParameters(paramFile, &savingParameters_);
+	
 	loadParameters(paramFile, &motionCompensationParameters_);
 	if (motionCompensationParameters_.isUndistortInputCloud_){
 		auto motionCompOdom = std::make_shared<ConstantVelocityMotionCompensation>(odometry_->getBuffer());
@@ -208,7 +208,25 @@ void SlamWrapper::loadParametersAndInitialize() {
 		motionCompMap->setParameters(motionCompensationParameters_);
 		motionCompensationMap_ = motionCompMap;
 	}
+}
 
+void SlamWrapper::setInitialMap(const PointCloud &initialMap) {
+	TimestampedPointCloud measurement{fromUniversal(0), std::move(initialMap)};
+
+	const bool isOdomOkay = odometry_->addRangeScan(measurement.cloud_, measurement.time_);
+	if (!isOdomOkay) {
+		std::cerr << "WARNING: odometry intialization has failed!!!! \n";
+	}
+	
+	const bool mappingResult = mapper_->addRangeMeasurement(measurement.cloud_, measurement.time_);
+	if (!mappingResult) {
+		std::cerr << "WARNING: mapping intialization has failed!!!! \n";
+	}
+}
+
+
+void SlamWrapper::setInitialTransform(const Eigen::Matrix4d initialTransform) {
+	odometry_->setInitialTransform(initialTransform);
 }
 
 void SlamWrapper::startWorkers() {
