@@ -102,8 +102,8 @@ void LidarOdometry::setParameters(const OdometryParameters &p) {
 }
 
 
-void LidarOdometry::setInitialTransform(Eigen::Matrix4d initial_transform) {
-	icpTransform_ = initial_transform;
+void LidarOdometry::setInitialTransform(const Eigen::Matrix4d initialTransform) {
+	icpTransform_ = initialTransform;
 	resetIcpTransform_ = true;
 }
 

@@ -211,8 +211,8 @@ void SlamWrapper::loadParametersAndInitialize() {
 	}
 }
 
-void SlamWrapper::setInitialMap(PointCloud &initial_map) {
-	TimestampedPointCloud measurement{fromUniversal(0), std::move(initial_map)};
+void SlamWrapper::setInitialMap(const PointCloud &initialMap) {
+	TimestampedPointCloud measurement{fromUniversal(0), std::move(initialMap)};
 
 	const bool isOdomOkay = odometry_->addRangeScan(measurement.cloud_, measurement.time_);
 	if (!isOdomOkay) {
@@ -226,8 +226,8 @@ void SlamWrapper::setInitialMap(PointCloud &initial_map) {
 }
 
 
-void SlamWrapper::setInitialTransform(Eigen::Matrix4d initial_transform) {
-	odometry_->setInitialTransform(initial_transform);
+void SlamWrapper::setInitialTransform(const Eigen::Matrix4d initialTransform) {
+	odometry_->setInitialTransform(initialTransform);
 }
 
 void SlamWrapper::startWorkers() {
