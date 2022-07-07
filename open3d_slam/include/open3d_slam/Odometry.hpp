@@ -29,7 +29,7 @@ public:
 	void setParameters (const OdometryParameters &p);
 	const TransformInterpolationBuffer &getBuffer() const;
 	bool hasProcessedMeasurements() const;
-	void setInitialTransform(const Eigen::Matrix4d initialTransform);
+	void setInitialTransform(const Eigen::Matrix4d &initialTransform);
 
 private:
 	TransformInterpolationBuffer odomToRangeSensorBuffer_;
