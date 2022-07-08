@@ -32,7 +32,7 @@ private:
 	 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg);
 	 void readRosbag(const rosbag::Bag &bag);
 
-	std::shared_ptr<SlamWrapper> slam_;
+	// std::shared_ptr<SlamWrapper> slam_;
 	std::string rosbagFilename_;
 };
 
