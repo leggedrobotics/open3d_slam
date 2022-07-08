@@ -10,6 +10,8 @@
 #include "open3d_slam/time.hpp"
 #include <ros/ros.h>
 
+#include "open3d_slam/SlamWrapper.hpp"
+
 namespace o3d_slam {
 
 class DataProcessorRos {
@@ -23,6 +25,7 @@ public:
 	virtual void processMeasurement(const PointCloud &cloud, const Time &timestamp);
 	void accumulateAndProcessRangeData(const PointCloud &cloud, const Time &timestamp);
 	void initCommonRosStuff();
+	std::shared_ptr<SlamWrapper> getSlamPtr();
 
 
 protected:
@@ -32,6 +35,7 @@ protected:
 	PointCloud accumulatedCloud_;
 	ros::Publisher rawCloudPub_;
 	std::string cloudTopic_;
+	std::shared_ptr<SlamWrapper> slam_;
 	ros::NodeHandlePtr nh_;
 
 };

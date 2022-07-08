@@ -26,12 +26,10 @@ public:
 	 void initialize() override;
 	 void startProcessing() override;
 	 void processMeasurement(const PointCloud& cloud, const Time& timestamp) override;
-	 std::shared_ptr<SlamWrapper> getSlamPtr() { return slam_; };
 
 private:
 	 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg);
 
-	std::shared_ptr<SlamWrapper> slam_;
 	ros::Subscriber cloudSubscriber_;
 
 };
