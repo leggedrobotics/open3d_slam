@@ -51,6 +51,33 @@ inline std::pair<Eigen::Vector3d, Eigen::Vector3d> computeVoxelBounds(const open
 	return {voxelMinBound, voxelMaxBound};
 }
 
+inline Eigen::Vector3d getVoxelCenter(const Eigen::Vector3i &key, const Eigen::Vector3d &voxelSize) {
+    return key.cast<double>().array() * voxelSize.array() + voxelSize.array() * 0.5;
+}
+
+inline Eigen::Vector3d getVoxelLowerBound(const Eigen::Vector3i &key, const Eigen::Vector3d &voxelSize) {
+    return key.cast<double>().array() * voxelSize.array();
+}
+
+inline Eigen::Vector3d getVoxelUpperBound(const Eigen::Vector3i &key, const Eigen::Vector3d &voxelSize) {
+    return key.cast<double>().array() * voxelSize.array() + voxelSize.array();
+}
+
+template<typename Scalar>
+inline bool isWithinBounds(const Eigen::Matrix<Scalar,Eigen::Dynamic,1> &val, const Eigen::Matrix<Scalar,Eigen::Dynamic,1> &lower, const Eigen::Matrix<Scalar,Eigen::Dynamic,1> &upper){
+    return (lower.array() <= val.array()).all() && (val.array() <= upper.array()).all();
+}
+
+inline bool isFirstVoxelWithinSecondVoxel(const Eigen::Vector3i &key1, const Eigen::Vector3d &voxelSize1, const Eigen::Vector3i &key2, const Eigen::Vector3d &voxelSize2){
+    const Eigen::Vector3d secondVoxelLowerBound = getVoxelLowerBound(key2, voxelSize2);
+    const Eigen::Vector3d secondVoxelUpperBound = getVoxelUpperBound(key2, voxelSize2);
+    const Eigen::Vector3d firstVoxelCenter = getVoxelCenter(key1, voxelSize1);
+    return isWithinBounds<double>(firstVoxelCenter, secondVoxelLowerBound, secondVoxelUpperBound);
+}
+
+std::vector<Eigen::Vector3i> getSmallerVoxelsWithinBigVoxel(const Eigen::Vector3i &bigVoxelKey, const Eigen::Vector3d &bigVoxelSize, const Eigen::Vector3d &smallVoxelSize);
+std::vector<Eigen::Vector3i> getVoxelsWithinPointNeighborhood(const Eigen::Vector3d &p,
+    double neighborhoodRadius, const Eigen::Vector3d &smallVoxelSize);
 template<typename Voxel>
 class VoxelHashMap {
 public:

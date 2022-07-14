@@ -80,6 +80,7 @@ struct SpaceCarvingParameters{
 	double truncationDistance_ = 0.1;
 	int carveSpaceEveryNscans_ = 10;
 	double minDotProductWithNormal_ = 0.5;
+	double neighborhoodRadiusDenseMap_ = 0.1;
 };
 
 struct MapBuilderParameters{

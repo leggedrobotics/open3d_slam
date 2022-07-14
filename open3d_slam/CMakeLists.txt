@@ -26,6 +26,7 @@ set(SRC_FILES
   src/constraint_builders.cpp
   src/output.cpp
   src/MotionCompensation.cpp
+  src/VoxelHashMap.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES
