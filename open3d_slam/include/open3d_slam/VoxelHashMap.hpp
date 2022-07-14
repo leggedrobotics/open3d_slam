@@ -55,6 +55,10 @@ inline Eigen::Vector3d getVoxelCenter(const Eigen::Vector3i &key, const Eigen::V
     return key.cast<double>().array() * voxelSize.array() + voxelSize.array() * 0.5;
 }
 
+inline Eigen::Vector3d getCenterOfCorrespondingVoxel(const Eigen::Vector3d &p, const Eigen::Vector3d &voxelSize) {
+    return getVoxelCenter(getVoxelIdx(p,voxelSize),voxelSize);
+}
+
 inline Eigen::Vector3d getVoxelLowerBound(const Eigen::Vector3i &key, const Eigen::Vector3d &voxelSize) {
     return key.cast<double>().array() * voxelSize.array();
 }

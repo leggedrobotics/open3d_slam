@@ -12,11 +12,11 @@ namespace o3d_slam {
 
 
 std::vector<Eigen::Vector3i> getVoxelsWithinPointNeighborhood(const Eigen::Vector3d &p,
-    double neighborhoodRadius, const Eigen::Vector3d &smallVoxelSize) {
+    double neighborhoodRadius, const Eigen::Vector3d &voxelSize) {
 
-  const Eigen::Vector3i centerKey = getVoxelIdx(p, smallVoxelSize);
-  const Eigen::Vector3d step = smallVoxelSize;
-  if ((step.array() > neighborhoodRadius).any()){
+  const Eigen::Vector3i centerKey = getVoxelIdx(p, voxelSize);
+  const Eigen::Vector3d step = voxelSize;
+  if (neighborhoodRadius <= 0.0){
     return {centerKey};
   }
 
@@ -27,9 +27,10 @@ std::vector<Eigen::Vector3i> getVoxelsWithinPointNeighborhood(const Eigen::Vecto
   for (double dx = -neighborhoodRadius; dx <= neighborhoodRadius; dx+=step.x()) {
     for (double dy = -neighborhoodRadius; dy <= neighborhoodRadius; dy+=step.y()) {
       for (double dz = -neighborhoodRadius; dz <= neighborhoodRadius; dz+=step.z()) {
-        const Eigen::Vector3d dp(dx, dy, dz);
-        if (dp.norm() <= neighborhoodRadius) {
-          const Eigen::Vector3i key = getVoxelIdx(p + dp, smallVoxelSize);
+        const Eigen::Vector3d testPoint = p + Eigen::Vector3d(dx, dy, dz);
+        const Eigen::Vector3d center = getCenterOfCorrespondingVoxel(testPoint, voxelSize);
+        if ((testPoint - center).norm() <= neighborhoodRadius) {
+          const Eigen::Vector3i key = getVoxelIdx(testPoint, voxelSize);
           retVal.push_back(key);
           if ((key.array() == centerKey.array()).all()){
             isCenterKeyAdded = true;
