@@ -64,7 +64,8 @@ public:
 	void setDirectoryPath(const std::string &path);
 	void setMapSavingDirectoryPath(const std::string &path);
 	void setParameterFilePath(const std::string &path);
-
+	void setInitialMap(const PointCloud &initialMap);
+	void setInitialTransform(const Eigen::Matrix4d initialTransform);
 
 private:
 
@@ -83,6 +84,7 @@ protected:
 	CircularBuffer<TimestampedPointCloud> odometryBuffer_, mappingBuffer_;
 	ThreadSafeBuffer<TimestampedSubmapId> loopClosureCandidates_;
 	MapperParameters mapperParams_;
+	OdometryParameters odometryParams_;
 	VisualizationParameters visualizationParameters_;
 	PointCloud rawCloudPrev_;
 	Constraints lastLoopClosureConstraints_;

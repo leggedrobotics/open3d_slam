@@ -41,15 +41,22 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 		o3d_slam::estimateNormals(params_.scanMatcher_.kNNnormalEstimation_, downSampledCloud.get());
 		downSampledCloud->NormalizeNormals();
 	}
-	auto result = open3d::pipelines::registration::RegistrationICP(cloudPrev_, *downSampledCloud,
-			params_.scanMatcher_.maxCorrespondenceDistance_, Eigen::Matrix4d::Identity(), *icpObjective_,
-			icpConvergenceCriteria_);
+
+	auto result = open3d::pipelines::registration::RegistrationICP(
+		cloudPrev_, *downSampledCloud, params_.scanMatcher_.maxCorrespondenceDistance_,
+		icpTransform_, *icpObjective_, icpConvergenceCriteria_);
+
+	if (resetIcpTransform_)
+	{
+		icpTransform_ = Eigen::Matrix4d::Identity();
+		resetIcpTransform_ = false;
+	}
 
 	//todo magic
 	const bool isOdomOkay = result.fitness_ > 0.1;
 	if (!isOdomOkay) {
 		  std::cout << "Odometry failed!!!!! \n";
-		  std::cout << "Size of the odom buffer: " << odomToRangeSensorBuffer_.size() << std::endl;
+			std::cout << "Size of the odom buffer: " << odomToRangeSensorBuffer_.size() << std::endl;
 			std::cout << "Scan matching time elapsed: " << timer.elapsedMsec() << " msec \n";
 			std::cout << "Fitness: " << result.fitness_ << "\n";
 			std::cout << "RMSE: " << result.inlier_rmse_ << "\n";
@@ -92,6 +99,12 @@ void LidarOdometry::setParameters(const OdometryParameters &p) {
 //	cropper_ = std::make_shared<CylinderCroppingVolume>(params_.scanProcessing_.croppingRadius_,-3.0,3.0);
 	const auto &par = params_.scanProcessing_.cropper_;
 	cropper_ = croppingVolumeFactory(par);
+}
+
+
+void LidarOdometry::setInitialTransform(const Eigen::Matrix4d &initialTransform) {
+	icpTransform_ = initialTransform;
+	resetIcpTransform_ = true;
 }
 
 } // namespace o3d_slam

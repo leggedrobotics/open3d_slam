@@ -23,6 +23,7 @@
 #include "open3d_slam/OptimizationProblem.hpp"
 #include "open3d_slam/constraint_builders.hpp"
 #include "open3d_slam/Odometry.hpp"
+#include "nav_msgs/Odometry.h"
 
 #ifdef open3d_slam_ros_OPENMP_FOUND
 #include <omp.h>
@@ -51,6 +52,10 @@ SlamWrapperRos::~SlamWrapperRos() {
 		visualizationWorker_.join();
 		std::cout << "Joined visualization worker \n";
 	}
+  if (odometryParams_.isPublishOdometryMsgs_ && odomPublisherWorker_.joinable()) {
+      odomPublisherWorker_.join();
+    std::cout << "Joined odom publisher worker \n";
+  }
 }
 
 void SlamWrapperRos::startWorkers() {
@@ -60,8 +65,61 @@ void SlamWrapperRos::startWorkers() {
 	visualizationWorker_ = std::thread([this]() {
 		visualizationWorker();
 	});
+	if (odometryParams_.isPublishOdometryMsgs_){
+    odomPublisherWorker_ = std::thread([this]() {
+      odomPublisherWorker();
+    });
+	}
 
 	BASE::startWorkers();
+}
+
+void SlamWrapperRos::odomPublisherWorker() {
+    ros::Rate r(500.0);
+    while (ros::ok()) {
+
+				auto getTransformMsg = [](const Transform &T, const Time &t){
+            ros::Time timestamp = toRos(t);
+            geometry_msgs::TransformStamped transformMsg = o3d_slam::toRos(T.matrix(), timestamp, mapFrame, rangeSensorFrame);
+            return transformMsg;
+        };
+
+				auto getOdomMsg = [](const geometry_msgs::TransformStamped &transformMsg){
+            nav_msgs::Odometry odomMsg;
+            odomMsg.header = transformMsg.header;
+            odomMsg.child_frame_id = transformMsg.child_frame_id;
+            odomMsg.pose.pose.orientation = transformMsg.transform.rotation;
+            odomMsg.pose.pose.position.x = transformMsg.transform.translation.x;
+            odomMsg.pose.pose.position.y = transformMsg.transform.translation.y;
+            odomMsg.pose.pose.position.z = transformMsg.transform.translation.z;
+            return odomMsg;
+        };
+
+        const Time latestScanToScan = latestScanToScanRegistrationTimestamp_;
+        const bool isAlreadyPublished = latestScanToScan == prevPublishedTimeScanToScanOdom_;
+        if (!isAlreadyPublished && odometry_->hasProcessedMeasurements()) {
+            const Transform T = odometry_->getOdomToRangeSensor(latestScanToScan);
+						geometry_msgs::TransformStamped transformMsg = getTransformMsg(T, latestScanToScan);
+            nav_msgs::Odometry odomMsg = getOdomMsg(transformMsg);
+						publishIfSubscriberExists(transformMsg, scan2scanTransformPublisher_);
+            publishIfSubscriberExists(odomMsg, scan2scanOdomPublisher_);
+            prevPublishedTimeScanToScanOdom_ = latestScanToScan;
+        }
+
+        const Time latestScanToMap = latestScanToMapRefinementTimestamp_;
+        const bool isScanToMapAlreadyPublished = latestScanToMap == prevPublishedTimeScanToMapOdom_;
+        if (!isScanToMapAlreadyPublished && mapper_->hasProcessedMeasurements()) {
+            const Transform T = mapper_->getMapToRangeSensor(latestScanToMap);
+						geometry_msgs::TransformStamped transformMsg = getTransformMsg(T, latestScanToMap);
+            nav_msgs::Odometry odomMsg = getOdomMsg(transformMsg);
+						publishIfSubscriberExists(transformMsg, scan2mapTransformPublisher_);
+            publishIfSubscriberExists(odomMsg, scan2mapOdomPublisher_);
+            prevPublishedTimeScanToMapOdom_ = latestScanToMap;
+        }
+
+        ros::spinOnce();
+        r.sleep();
+    }
 }
 
 void SlamWrapperRos::tfWorker() {
@@ -124,6 +182,11 @@ void SlamWrapperRos::loadParametersAndInitialize() {
 
 	saveMapSrv_ = nh_->advertiseService("save_map", &SlamWrapperRos::saveMapCallback, this);
 	saveSubmapsSrv_ = nh_->advertiseService("save_submaps", &SlamWrapperRos::saveSubmapsCallback, this);
+
+	scan2scanTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("scan2scan_transform", 1, true);
+	scan2scanOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2scan_odometry", 1, true);
+	scan2mapTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("scan2map_transform", 1, true);
+  scan2mapOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2map_odometry", 1, true);
 
 	//	auto &logger = open3d::utility::Logger::GetInstance();
 	//	logger.SetVerbosityLevel(open3d::utility::VerbosityLevel::Debug);

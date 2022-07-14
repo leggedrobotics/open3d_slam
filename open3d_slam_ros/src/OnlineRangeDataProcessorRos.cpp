@@ -24,7 +24,7 @@ void OnlineRangeDataProcessorRos::initialize() {
 	initCommonRosStuff();
 	slam_ = std::make_shared<SlamWrapperRos>(nh_);
 	slam_->loadParametersAndInitialize();
-
+	
 }
 
 void OnlineRangeDataProcessorRos::startProcessing() {

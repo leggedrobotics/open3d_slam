@@ -1,4 +1,5 @@
 odometry:
+  is_publish_odometry_msgs: false
   scan_matching:
     icp_objective: PointToPlane
     max_correspondence_dist: 0.2

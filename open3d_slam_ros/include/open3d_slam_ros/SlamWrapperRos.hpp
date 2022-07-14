@@ -37,6 +37,7 @@ private:
 
 	void tfWorker();
 	void visualizationWorker();
+	void odomPublisherWorker();
 
 	void publishMaps(const Time &time);
 	void publishDenseMap(const Time &time);
@@ -46,10 +47,12 @@ private:
 	std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster_;
 	ros::Publisher odometryInputPub_, mappingInputPub_, submapOriginsPub_, assembledMapPub_, denseMapPub_,
 			submapsPub_;
+	ros::Publisher scan2scanTransformPublisher_, scan2scanOdomPublisher_, scan2mapTransformPublisher_, scan2mapOdomPublisher_;
 	ros::ServiceServer saveMapSrv_, saveSubmapsSrv_;
 	bool isVisualizationFirstTime_ = true;
-	std::thread tfWorker_, visualizationWorker_;
+	std::thread tfWorker_, visualizationWorker_, odomPublisherWorker_;
 	Time prevPublishedTimeScanToScan_, prevPublishedTimeScanToMap_;
+  Time prevPublishedTimeScanToScanOdom_, prevPublishedTimeScanToMapOdom_;
 
 };
 
