@@ -94,6 +94,8 @@ EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	VoxelHashMap(const Eigen::Vector3d &voxelSize) :
 			voxelSize_(voxelSize) {
 	}
+	virtual ~VoxelHashMap() = default;
+
 	bool hasVoxelContainingPoint(const Eigen::Vector3d &p) const {
 		const auto voxelIdx = getVoxelIdx(p, voxelSize_);
 		const auto search = voxels_.find(voxelIdx);
