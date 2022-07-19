@@ -79,6 +79,8 @@ make install # if global installation, add "sudo"
 ```
 
 ### CUDA Support
+NOTE: this is not needed for open3d_slam, but might be helpful if you use open3d_catkin in other projects.
+
 If you want to compute with cuda support add the following flag when configuring the cmake `-DBUILD_CUDA_MODULE=ON`. In this case you might have to manually specify the path to your nvcc compiler.
 This can be done by adding the `CMAKE_CUDA_COMPILER:PATH` flag when invoking the cmake; e.g. `-DCMAKE_CUDA_COMPILER:PATH=/usr/local/cuda-11.5/bin/nvcc`. It can still happen that you get weird include errors in which case you should not use the system eigen, i.e. `-DUSE_SYSTEM_EIGEN3=OFF` 
 
@@ -95,9 +97,14 @@ This is not needed if open3d has been compiled globally (or installed via "apt i
 
 <a name="compilation"></a>
 ## 3 - open3d_catkin Compilation
-Once Open3D has been installed, compilation of *open3d_catkin* is then really straightforward:
+Once Open3D has been installed, compilation of *open3d_catkin* is then really straightforward.
+Make sure you have a catkin workspace with this repository:
 ```bash
-catkin build open3d_catkin
+git clone https://github.com/leggedrobotics/open3d_slam.git
+```
+Then you can build the package in release mode.
+```bash
+catkin build open3d_catkin -DCMAKE_BUILD_TYPE=Release
 ```
 The 3 compilation options are chosen automatically in the following order:
 1. open3d is installed locally and the *$Open3D_DIR* environment variable is pointing to the installation location. The success of this is indicated through the message *INFO: Found manually set path to Open3D. Using version located at (some user-specified location)*.
