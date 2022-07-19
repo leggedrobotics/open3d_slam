@@ -46,8 +46,8 @@ Once you have built *open3D_catkin* you can build *open3d_slam* and *open3d_slam
 
 .. code-block:: bash
 
-	catkin build open3d_slam
-	catkin build open3d_slam_ros
+	catkin build open3d_slam -DCMAKE_BUILD_TYPE=Release
+	catkin build open3d_slam_ros -DCMAKE_BUILD_TYPE=Release
 
 
 **You're done with open3d_slam installation**, you can proceed to the usage site.
