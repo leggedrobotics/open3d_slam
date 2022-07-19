@@ -46,7 +46,7 @@ or our fetched version via
 If you don't want to install open3d locally, skip the next step and proceed to the *open3d_catkin* [compilation step](#compilation).
 
 
-## Optional Step - Install Open3D Locally
+### Build Open3D
 As an optional step, open3d can be installed, either locally in the home folder or as a global system dependency.
 
 Make sure you have installed the correct CMake version (see [above](#CMake))
@@ -67,9 +67,9 @@ Create a build directory and build from source:
 ```bash   
 mkdir build
 cd build 
-cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_SYSTEM_EIGEN3=OFF -DGLIBCXX_USE_CXX11_ABI=ON -DBUILD_PYTHON_MODULE=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/Programs/open3d_install ..
+cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_SYSTEM_EIGEN3=OFF -DGLIBCXX_USE_CXX11_ABI=ON -DBUILD_PYTHON_MODULE=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/Programs/open3d_install .. # If global install is desired, remove the -DCMAKE_INSTALL_PREFIX-var
 make -j$(nproc)
-make install
+make install # if global installation, add "sudo"
 ```
 
 ### CUDA Support
@@ -77,7 +77,7 @@ If you want to compute with cuda support add the following flag when configuring
 This can be done by adding the `CMAKE_CUDA_COMPILER:PATH` flag when invoking the cmake; e.g. `-DCMAKE_CUDA_COMPILER:PATH=/usr/local/cuda-11.5/bin/nvcc`. It can still happen that you get weird include errors in which case you should not use the system eigen, i.e. `-DUSE_SYSTEM_EIGEN3=OFF` 
 
 ### Set Local Paths
-To build the catkin package, the simplest way is to add the sufficient environment variable to your bashrc:
+If open3d has been installed locally, the simplest way to build the catkin package is to add the sufficient environment variable to your bashrc:
 ```bash
 export Open3D_DIR="<your install prefix>/lib/cmake/Open3D"
 ```
@@ -85,6 +85,7 @@ E.g.
 ```bash 
 export Open3D_DIR="$HOME/Programs/open3d_install/lib/cmake/Open3D"
 ```
+This is not needed if open3d has been compiled globally (or installed via "apt install").
 
 <a name="compilation"></a>
 ## open3d_catkin Compilation
