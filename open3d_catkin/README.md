@@ -4,11 +4,13 @@ This package is a catkin wrapper around Open3D.
 
 *Contact:* Julian Nubert (nubertj@ethz.ch)
 
-## Overview
+## 1 - Overview
 
 If no Open3D installation is present on the system, *open3d_catkin* is built by compiling the Open3D libraries within the catkin workspace. On a modern desktop computer this takes about 5 minutes. If an Open3D installation exists on the system, this is used instead and wrapped as a catkin package automatically. The latter can be particularly useful if multiple workspaces with these packages are compiled on the computer, or *open3d_catkin* is intended for longer-term usage.
 
-## EASY WAY: Install Open3d from a PPA
+## 2.A - EASY WAY: Install Open3d from a PPA
+
+Execute EITHER this step OR 2.B.
 
 You can install Open3d from a PPA. The PPA contains Open3d and all dependencies.
 First add the PPA to your system:
@@ -20,7 +22,9 @@ sudo apt install libopen3d-dev
 
 Proceed to the *open3d_catkin* [compilation step](#compilation).
 
-## EXPERT WAY: Build Open3d from source
+## 2.B - EXPERT WAY: Build Open3d from source
+
+Execute EITHER this step OR 2.A. This step can lead to better performance, removes the need for the required PPA and can potentially be build with CUDA support.
 
 <a name="CMake"></a>
 ### CMake
@@ -90,7 +94,7 @@ export Open3D_DIR="$HOME/Programs/open3d_install/lib/cmake/Open3D"
 This is not needed if open3d has been compiled globally (or installed via "apt install").
 
 <a name="compilation"></a>
-## open3d_catkin Compilation
+## 3 - open3d_catkin Compilation
 Once Open3D has been installed, compilation of *open3d_catkin* is then really straightforward:
 ```bash
 catkin build open3d_catkin
@@ -102,7 +106,7 @@ _
 Both of these options should compile within a few seconds.
 3. If none of the before cases holds, open3d is automatically pulled locally and compiled inside the workspace.  on an Intel i9 12900K this takes roughly _4min 30s_.
 
-## Usage of open3d_catkin in your project
+## 4 - Usage of open3d_catkin in your project
 Usage in your catkin project is then straightforward.
 
 ### CMakeLists.txt
