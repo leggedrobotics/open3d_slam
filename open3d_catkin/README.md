@@ -12,7 +12,7 @@ If no Open3D installation is present on the system, *open3d_catkin* is built by 
 
 You can install Open3d from a PPA. The PPA contains Open3d and all dependencies.
 First add the PPA to your system:
-```
+```bash
 sudo add-apt-repository ppa:roehling/open3d
 sudo apt update
 sudo apt install libopen3d-dev
@@ -30,7 +30,7 @@ For installation, do:
 * Download the latest tar archive from https://cmake.org/download/
 * ```tar -xf cmake-<version>-rc4.tar.gz```, where ```<version>``` can for example be _3.23.1_.
 * Then install this cmake version by doing
-```
+```bash
 cd cmake-<version>-rc4.tar.gz
 ./configure
 make -j12
@@ -41,7 +41,9 @@ sudo make install
 Execute either the original installation script from open3d: 
 [script](https://github.com/isl-org/Open3D/blob/v0.13.0/util/install_deps_ubuntu.sh),
 or our fetched version via
-```sudo ./install_deps.sh```
+```bash
+sudo ./install_deps.sh
+```
 
 If you don't want to install open3d locally, skip the next step and proceed to the *open3d_catkin* [compilation step](#compilation).
 
