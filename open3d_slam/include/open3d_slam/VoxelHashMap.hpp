@@ -87,7 +87,8 @@ class VoxelHashMap {
 public:
 EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using Voxel_t = Voxel;
+  using Voxel_t = Voxel;
+  using ContainerImpl_t = std::unordered_map<Eigen::Vector3i, Voxel_t, EigenVec3iHash>;
 	VoxelHashMap() :
 			VoxelHashMap(Eigen::Vector3d::Constant(0.25)) {
 	}
@@ -147,12 +148,10 @@ EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 		return voxelSize_;
 	}
 
-	std::unordered_map<Eigen::Vector3i, Voxel, EigenVec3iHash> voxels_;
+  ContainerImpl_t voxels_;
 protected:
 	Eigen::Vector3d voxelSize_;
 
 };
-
-
 } // namespace o3d_slam
 
