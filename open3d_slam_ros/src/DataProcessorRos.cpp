@@ -29,6 +29,10 @@ namespace o3d_slam {
 	void DataProcessorRos::processMeasurement(const PointCloud &cloud, const Time &timestamp) {
 		std::cout << "Warning you have not implemented processMeasurement!!! \n";
 	}
+	
+	std::shared_ptr<SlamWrapper> DataProcessorRos::getSlamPtr() {
+		return slam_;
+	}
 
 	void DataProcessorRos::accumulateAndProcessRangeData(const PointCloud &cloud, const Time &timestamp) {
 		accumulatedCloud_ += cloud;
