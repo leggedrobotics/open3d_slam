@@ -42,9 +42,11 @@ public:
 	CroppingVolume() = default;
 	virtual ~CroppingVolume() = default;
 
-
+  virtual void setScaling(double scaling);
+  void setIsInvertVolume(bool val);
 	void setPose(const Eigen::Isometry3d &pose);
-	virtual bool isWithinVolume(const Eigen::Vector3d &p) const;
+	bool isWithinVolume(const Eigen::Vector3d &p) const;
+
 	Indices getIndicesWithinVolume(const PointCloud &cloud) const;
 	std::shared_ptr<PointCloud> crop(const PointCloud &cloud) const;
 	std::shared_ptr<PointCloud> cropMultiThreaded(const PointCloud &cloud) const;
@@ -52,9 +54,9 @@ public:
 
 
 protected:
-
+  virtual bool isWithinVolumeImpl(const Eigen::Vector3d &p) const;
 	Eigen::Isometry3d pose_=Eigen::Isometry3d::Identity();
-
+	bool isInvertVolume_ = false;
 };
 
 class MinMaxRadiusCroppingVolume : public CroppingVolume{
@@ -62,9 +64,9 @@ public:
 	MinMaxRadiusCroppingVolume() = default;
 	~MinMaxRadiusCroppingVolume() override= default;
 	MinMaxRadiusCroppingVolume(double radiusMin, double radiusMax);
-	bool isWithinVolume(const Eigen::Vector3d &p) const final;
 	void setParameters(double radiusMin, double radiusMax);
 private:
+  bool isWithinVolumeImpl(const Eigen::Vector3d &p) const final;
 	double radiusMin_=0.0;
 	double radiusMax_=1e4;
 };
@@ -74,9 +76,9 @@ public:
 	MaxRadiusCroppingVolume() = default;
 	~MaxRadiusCroppingVolume() override= default;
 	MaxRadiusCroppingVolume(double radius);
-	bool isWithinVolume(const Eigen::Vector3d &p) const final;
 	void setParameters(double radius);
 private:
+  bool isWithinVolumeImpl(const Eigen::Vector3d &p) const final;
 	double radius_=1e6;
 
 };
@@ -87,10 +89,10 @@ public:
 	MinRadiusCroppingVolume(double radius);
 	~MinRadiusCroppingVolume() override = default;
 
-	bool isWithinVolume(const Eigen::Vector3d &p) const final;
 	void setParameters(double radius);
 
 private:
+  bool isWithinVolumeImpl(const Eigen::Vector3d &p) const final;
 	double radius_=0.0;
 
 };
@@ -101,10 +103,12 @@ public:
 	CylinderCroppingVolume(double radius, double minZ, double maxZ);
 	~CylinderCroppingVolume() override = default;
 	void setParameters(double radius, double minZ, double maxZ);
-	bool isWithinVolume(const Eigen::Vector3d &p) const final;
 
 
 private:
+  bool isWithinVolumeImpl(const Eigen::Vector3d &p) const final;
+
+
 	double radius_=1e6;
 	double minZ_ = -1e3;
 	double maxZ_ = 1e3;
