@@ -69,7 +69,7 @@ mapping:
       cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius, MinMaxRadius
     map_voxel_size: 0.01
     space_carving:
-      voxel_size: 0.3
+      neigborhood_radius_for_removal: 0.15
       max_raytracing_length: 5.0
       truncation_distance: 0.3
       carve_space_every_n_scans: 10

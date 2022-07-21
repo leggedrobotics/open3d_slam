@@ -46,9 +46,18 @@ std::unique_ptr<CroppingVolume> croppingVolumeFactory(CroppingVolumeEnum type,  
 	}
 }
 
-bool CroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const {
+bool CroppingVolume::isWithinVolumeImpl(const Eigen::Vector3d &p) const {
 	return true;
 }
+
+bool CroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const {
+  return isInvertVolume_ ? !isWithinVolumeImpl(p) : isWithinVolumeImpl(p);
+}
+
+void CroppingVolume::setIsInvertVolume(bool val){
+  isInvertVolume_ = val;
+}
+
 
 void CroppingVolume::setPose(const Eigen::Isometry3d &pose) {
 	pose_ = pose;
@@ -136,13 +145,17 @@ void CroppingVolume::crop(PointCloud *cloud) const {
 	*cloud = std::move(*cropped);
 }
 
+void CroppingVolume::setScaling(double scaling){
+  //nothing by default
+}
+
 //////////
 MinMaxRadiusCroppingVolume::MinMaxRadiusCroppingVolume(double radiusMin, double radiusMax) :
 		radiusMin_(radiusMin), radiusMax_(radiusMax) {
 
 }
 
-bool MinMaxRadiusCroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const {
+bool MinMaxRadiusCroppingVolume::isWithinVolumeImpl(const Eigen::Vector3d &p) const {
 	const double d = (p - pose_.translation()).norm();
 	return  d <= radiusMax_ && d >= radiusMin_;
 }
@@ -159,7 +172,7 @@ MaxRadiusCroppingVolume::MaxRadiusCroppingVolume(double radius) :
 		radius_(radius) {
 }
 
-bool MaxRadiusCroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const {
+bool MaxRadiusCroppingVolume::isWithinVolumeImpl(const Eigen::Vector3d &p) const {
 	return (p - pose_.translation()).norm() <= radius_;
 }
 void MaxRadiusCroppingVolume::setParameters(double radius) {
@@ -174,7 +187,7 @@ MinRadiusCroppingVolume::MinRadiusCroppingVolume(double radius) :
 		radius_(radius) {
 }
 
-bool MinRadiusCroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const {
+bool MinRadiusCroppingVolume::isWithinVolumeImpl(const Eigen::Vector3d &p) const {
 	return (p - pose_.translation()).norm() >= radius_;
 }
 
@@ -191,7 +204,7 @@ CylinderCroppingVolume::CylinderCroppingVolume(double radius, double minZ, doubl
 
 }
 
-bool CylinderCroppingVolume::isWithinVolume(const Eigen::Vector3d &p) const {
+bool CylinderCroppingVolume::isWithinVolumeImpl(const Eigen::Vector3d &p) const {
 	return p.z() >= minZ_ && p.z() <= maxZ_ && (p - pose_.translation()).head<2>().norm() <= radius_;
 }
 

@@ -23,6 +23,6 @@ using uint32 = uint32_t;
 using uint64 = uint64_t;
 using Matrix6d = Eigen::Matrix<double, 6, 6>;
 using PointCloud = open3d::geometry::PointCloud;
-
+using PointCloudPtr = std::shared_ptr<PointCloud>;
 
 } //namespace o3d_slam

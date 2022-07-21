@@ -226,7 +226,12 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 }
 
 void loadParameters(const YAML::Node &n, SpaceCarvingParameters *p){
-	p->voxelSize_ = n["voxel_size"].as<double>();
+  if (n["voxel_size"].IsDefined()){
+    p->voxelSize_ = n["voxel_size"].as<double>();
+  }
+  if (n["neigborhood_radius_for_removal"].IsDefined()){
+      p->neighborhoodRadiusDenseMap_ = n["neigborhood_radius_for_removal"].as<double>();
+    }
 	p->maxRaytracingLength_ = n["max_raytracing_length"].as<double>();
 	p->truncationDistance_ = n["truncation_distance"].as<double>();
 	p->carveSpaceEveryNscans_ = n["carve_space_every_n_scans"].as<int>();

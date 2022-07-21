@@ -51,18 +51,52 @@ inline std::pair<Eigen::Vector3d, Eigen::Vector3d> computeVoxelBounds(const open
 	return {voxelMinBound, voxelMaxBound};
 }
 
+inline Eigen::Vector3d getVoxelCenter(const Eigen::Vector3i &key, const Eigen::Vector3d &voxelSize) {
+    return key.cast<double>().array() * voxelSize.array() + voxelSize.array() * 0.5;
+}
+
+inline Eigen::Vector3d getCenterOfCorrespondingVoxel(const Eigen::Vector3d &p, const Eigen::Vector3d &voxelSize) {
+    return getVoxelCenter(getVoxelIdx(p,voxelSize),voxelSize);
+}
+
+inline Eigen::Vector3d getVoxelLowerBound(const Eigen::Vector3i &key, const Eigen::Vector3d &voxelSize) {
+    return key.cast<double>().array() * voxelSize.array();
+}
+
+inline Eigen::Vector3d getVoxelUpperBound(const Eigen::Vector3i &key, const Eigen::Vector3d &voxelSize) {
+    return key.cast<double>().array() * voxelSize.array() + voxelSize.array();
+}
+
+template<typename Scalar>
+inline bool isWithinBounds(const Eigen::Matrix<Scalar,Eigen::Dynamic,1> &val, const Eigen::Matrix<Scalar,Eigen::Dynamic,1> &lower, const Eigen::Matrix<Scalar,Eigen::Dynamic,1> &upper){
+    return (lower.array() <= val.array()).all() && (val.array() <= upper.array()).all();
+}
+
+inline bool isFirstVoxelWithinSecondVoxel(const Eigen::Vector3i &key1, const Eigen::Vector3d &voxelSize1, const Eigen::Vector3i &key2, const Eigen::Vector3d &voxelSize2){
+    const Eigen::Vector3d secondVoxelLowerBound = getVoxelLowerBound(key2, voxelSize2);
+    const Eigen::Vector3d secondVoxelUpperBound = getVoxelUpperBound(key2, voxelSize2);
+    const Eigen::Vector3d firstVoxelCenter = getVoxelCenter(key1, voxelSize1);
+    return isWithinBounds<double>(firstVoxelCenter, secondVoxelLowerBound, secondVoxelUpperBound);
+}
+
+std::vector<Eigen::Vector3i> getSmallerVoxelsWithinBigVoxel(const Eigen::Vector3i &bigVoxelKey, const Eigen::Vector3d &bigVoxelSize, const Eigen::Vector3d &smallVoxelSize);
+std::vector<Eigen::Vector3i> getVoxelsWithinPointNeighborhood(const Eigen::Vector3d &p,
+    double neighborhoodRadius, const Eigen::Vector3d &smallVoxelSize);
 template<typename Voxel>
 class VoxelHashMap {
 public:
 EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	using Voxel_t = Voxel;
+  using Voxel_t = Voxel;
+  using ContainerImpl_t = std::unordered_map<Eigen::Vector3i, Voxel_t, EigenVec3iHash>;
 	VoxelHashMap() :
 			VoxelHashMap(Eigen::Vector3d::Constant(0.25)) {
 	}
 	VoxelHashMap(const Eigen::Vector3d &voxelSize) :
 			voxelSize_(voxelSize) {
 	}
+	virtual ~VoxelHashMap() = default;
+
 	bool hasVoxelContainingPoint(const Eigen::Vector3d &p) const {
 		const auto voxelIdx = getVoxelIdx(p, voxelSize_);
 		const auto search = voxels_.find(voxelIdx);
@@ -114,12 +148,10 @@ EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 		return voxelSize_;
 	}
 
-	std::unordered_map<Eigen::Vector3i, Voxel, EigenVec3iHash> voxels_;
+  ContainerImpl_t voxels_;
 protected:
 	Eigen::Vector3d voxelSize_;
 
 };
-
-
 } // namespace o3d_slam
 

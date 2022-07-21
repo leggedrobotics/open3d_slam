@@ -9,6 +9,7 @@
 #include "open3d_slam/helpers.hpp"
 #include "open3d_slam/assert.hpp"
 #include "open3d_slam/magic.hpp"
+#include "open3d_slam/typedefs.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -129,8 +130,8 @@ void Submap::carve(const PointCloud &scan, const Eigen::Vector3d &sensorPosition
 	if (cloud->empty() || !(nScansInsertedDenseMap_ % param.carveSpaceEveryNscans_ == 1)) {
 			return;
 		}
-//	auto croppedScan = removeDuplicatePointsWithinSameVoxels(scan, Eigen::Vector3d::Constant(params_.denseMapBuilder_.mapVoxelSize_));
-	std::vector<Eigen::Vector3i> keysToRemove = getKeysOfCarvedPoints(scan, *cloud, sensorPosition, param);
+	const PointCloudPtr croppedScanPtr = removeDuplicatePointsWithinSameVoxels(scan, Eigen::Vector3d::Constant(params_.denseMapBuilder_.mapVoxelSize_));
+	std::vector<Eigen::Vector3i> keysToRemove = getKeysOfCarvedPoints(*croppedScanPtr, *cloud, sensorPosition, param);
 	for (const auto &k : keysToRemove){
 		cloud->removeKey(k);
 	}

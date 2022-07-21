@@ -357,33 +357,37 @@ double getMapVoxelSize(const MapBuilderParameters &p, double valueIfZero) {
 
 
 std::vector<Eigen::Vector3i> getKeysOfCarvedPoints(const open3d::geometry::PointCloud &scan,
-		const VoxelizedPointCloud &cloud, const Eigen::Vector3d &sensorPosition, const SpaceCarvingParameters &param) {
+    const VoxelizedPointCloud &cloud, const Eigen::Vector3d &sensorPosition, const SpaceCarvingParameters &param) {
 
-	const double stepSize = param.voxelSize_;
-	std::unordered_set<Eigen::Vector3i,EigenVec3iHash> setOfIdsToRemove;
-	setOfIdsToRemove.reserve(scan.points_.size());
+  const double stepSize = 2.0 * param.neighborhoodRadiusDenseMap_;
+  std::unordered_set<Eigen::Vector3i, EigenVec3iHash> setOfIdsToRemove;
+  setOfIdsToRemove.reserve(scan.points_.size());
 #pragma omp parallel for schedule(static)
-	for (size_t i = 0; i < scan.points_.size(); ++i) {
-		const Eigen::Vector3d &p = scan.points_[i];
-		const double length = (p - sensorPosition).norm();
-		const Eigen::Vector3d direction = (p - sensorPosition) / length;
-		double distance = 0.0;
-		const double maximalPathTraveled = std::max(param.voxelSize_,
-				std::min(length - param.truncationDistance_, param.maxRaytracingLength_));
-		while (distance < maximalPathTraveled) {
-			const Eigen::Vector3d currentPosition = distance * direction + sensorPosition;
-			const Eigen::Vector3i key = cloud.getKey(currentPosition);
-			//todo also check the dot product
-			if (cloud.hasVoxelWithKey(key)){
+  for (size_t i = 0; i < scan.points_.size(); ++i) {
+    const Eigen::Vector3d &p = scan.points_[i];
+    const double length = (p - sensorPosition).norm();
+    const Eigen::Vector3d direction = (p - sensorPosition) / length;
+    double distance = 0.0;
+    const double maximalPathTraveled = std::max(stepSize,
+        std::min(length - param.truncationDistance_, param.maxRaytracingLength_));
+    while (distance < maximalPathTraveled) {
+      const Eigen::Vector3d currentPosition = distance * direction + sensorPosition;
+      const auto voxelsToBeFlushed = getVoxelsWithinPointNeighborhood(currentPosition,
+          param.neighborhoodRadiusDenseMap_, cloud.getVoxelSize());
+      //todo also check the dot product
+      for (const auto &key : voxelsToBeFlushed) {
+        if (cloud.hasVoxelWithKey(key)) {
 #pragma omp critical
-					setOfIdsToRemove.insert(key);
-			}
-			distance += stepSize;
-		}
-	}
-	std::vector<Eigen::Vector3i> vecOfIdsToRemove;
-	vecOfIdsToRemove.insert(vecOfIdsToRemove.end(), setOfIdsToRemove.begin(), setOfIdsToRemove.end());
-	return vecOfIdsToRemove;
+          setOfIdsToRemove.insert(key);
+        }
+      }
+
+      distance += stepSize;
+    }
+  }
+  std::vector<Eigen::Vector3i> vecOfIdsToRemove;
+  vecOfIdsToRemove.insert(vecOfIdsToRemove.end(), setOfIdsToRemove.begin(), setOfIdsToRemove.end());
+  return vecOfIdsToRemove;
 }
 
 PointCloud getPointCloudWithinCroppingVolume(const CroppingVolume &croppingVolume,
