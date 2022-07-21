@@ -146,7 +146,9 @@ Parameters listed below affect scan to map refinement, map building, loop closur
     ``map_voxel_size`` - see map_builder parameters.
     
     space_carving:
-      ``voxel_size`` - see map_builder parameters.
+      ``neigborhood_radius_for_removal`` - SI units meter. When raytracing from the sensor origin at every step, we will look
+      for voxel centers that are *neigborhood_radius_for_removal* avay from the current point and erase them from
+      the map.
       
       ``max_raytracing_length`` - see map_builder parameters.
       
