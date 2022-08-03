@@ -142,8 +142,6 @@ struct MapperParameters {
 	ScanProcessingParameters scanProcessing_;
 	double minMovementBetweenMappingSteps_ = 0.0;
 	double minRefinementFitness_ = 0.7;
-	double maxTranslationError_ = 0.3;
-	double maxAngleError_ = M_PI / 18.0;
 	MapBuilderParameters mapBuilder_;
 	MapBuilderParameters denseMapBuilder_;
 	size_t numScansOverlap_ = 3;

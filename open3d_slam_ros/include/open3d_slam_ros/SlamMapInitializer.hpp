@@ -1,8 +1,8 @@
 /*
- * OnlineDataProcessorRos.hpp
+ * SlamMapInitializer.hpp
  *
- *  Created on: Apr 21, 2022
- *      Author: jelavice
+ *  Created on: Jun 16, 2022
+ *      Author: lukaszpi
  */
 
 #pragma once
