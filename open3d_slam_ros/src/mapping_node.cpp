@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
 	ros::NodeHandlePtr nh(new ros::NodeHandle("~"));
 
 	const bool isProcessAsFastAsPossible = nh->param<bool>("is_read_from_rosbag", false);
-	const bool isInitializeMap = true; //nh->param<bool>("mapping/is_initialize_map", true);
+	const bool isInitializeMap = nh->param<bool>("is_initialize_map", false);
 	std::cout << "Is process as fast as possible: " << std::boolalpha << isProcessAsFastAsPossible << "\n";
 	std::cout << "Initialize map: " << std::boolalpha << isInitializeMap << "\n";
 

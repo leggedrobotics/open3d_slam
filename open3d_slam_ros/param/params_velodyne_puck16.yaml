@@ -1,11 +1,11 @@
 odometry:
   is_publish_odometry_msgs: false
-  min_refinement_fitness: 0.
+  min_refinement_fitness: 0.1
   scan_matching:
     icp_objective: PointToPlane
     max_correspondence_dist: 1.0
     knn_normal_estimation: 4
-    max_n_iter: 40
+    max_n_iter: 50
   scan_processing:
     voxel_size: -1.0
     downsampling_ratio: 0.45
@@ -17,7 +17,6 @@ odometry:
       cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
   
 mapping:
-  is_initialize_map: true
   is_print_timing_information: true
   is_build_dense_map: false
   is_attempt_loop_closures: true
@@ -30,7 +29,7 @@ mapping:
     scan_matching:
       icp_objective: PointToPlane
       max_correspondence_dist: 0.8
-      knn_normal_estimation: 4
+      knn_normal_estimation: 5
       max_n_iter: 50
     scan_processing:
       voxel_size: 0.05
@@ -42,7 +41,7 @@ mapping:
         max_z: 30.0
         cropper_type: "MaxRadius" #otions are Cylinder, MaxRadius, MinRadius, MinMaxRadius
   map_intialization:
-    initialize_map: true
+    initialize_map: false
     max_translation_error: 0.5
     max_angle_error: 0.314
 
