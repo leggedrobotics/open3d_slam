@@ -30,11 +30,9 @@ SlamMapInitializer::SlamMapInitializer(std::shared_ptr<SlamWrapper> slamPtr, ros
 void SlamMapInitializer::initialize() {
   PointCloud raw_map;
 
-  std::cerr << "intializing" << std::endl;
-  frameId_ = nh_->param<std::string>("mapping/initial_map/map_frame_id", "");
-	meshResourcePath_ = nh_->param<std::string>("mapping/initial_map/map_mesh_path", "");
-  pcdFilePath_ = nh_->param<std::string>("mapping/initial_map/map_pointcloud_path", "");
-  std::cerr << "intializing" << std::endl;
+  frameId_ = nh_->param<std::string>("initial_map/map_frame_id", "");
+  meshResourcePath_ = nh_->param<std::string>("initial_map/map_mesh_path", "");
+  pcdFilePath_ = nh_->param<std::string>("initial_map/map_pointcloud_path", "");
 
 
   initialized_.store(false);
@@ -45,10 +43,6 @@ void SlamMapInitializer::initialize() {
 	{
 		std::cerr << "[Error] Initialization pointcloud not loaded" << std::endl;
   }
-
-  std::cerr << "Empty mesh? " << raw_map.IsEmpty() << std::endl;
-  std::cerr << "Has points? " << raw_map.HasPoints() << std::endl;
-
   
   while (!initialized_.load())
   {
@@ -58,7 +52,7 @@ void SlamMapInitializer::initialize() {
   
 }
 
-void SlamMapInitializer::cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
+void SlamMapInitializer::cloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg) {
 	open3d::geometry::PointCloud cloud;
 	open3d_conversions::rosToOpen3d(msg, cloud, false);
   const Time timestamp = fromRos(msg->header.stamp);
