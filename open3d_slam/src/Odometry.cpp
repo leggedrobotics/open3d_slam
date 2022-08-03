@@ -46,7 +46,7 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 		icpTransform_, *icpObjective_, icpConvergenceCriteria_);
 
 	//todo magic
-	const bool isOdomOkay = result.fitness_ > params_.minRefinementFitness_;
+	const bool isOdomOkay = result.fitness_ > params_.minAcceptableFitness_;
 	if (!isOdomOkay) {
 		  std::cout << "Odometry failed!!!!! \n";
 			std::cout << "Size of the odom buffer: " << odomToRangeSensorBuffer_.size() << std::endl;

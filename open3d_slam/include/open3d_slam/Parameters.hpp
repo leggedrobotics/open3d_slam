@@ -65,7 +65,7 @@ struct IcpParameters {
 struct OdometryParameters {
 	IcpParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
-	double minRefinementFitness_ = 0.1;
+	double minAcceptableFitness_ = 0.1;
 	bool isPublishOdometryMsgs_ = false;
 };
 

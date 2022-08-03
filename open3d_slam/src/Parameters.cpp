@@ -136,7 +136,7 @@ void loadParameters(const std::string &filename, OdometryParameters *p){
 void loadParameters(const YAML::Node &node, OdometryParameters *p){
 	loadParameters(node["scan_matching"], &(p->scanMatcher_) );
 	loadParameters(node["scan_processing"], &(p->scanProcessing_) );
-	p->minRefinementFitness_ = node["min_refinement_fitness"].as<double>();
+	p->minAcceptableFitness_ = node["min_acceptable_fitness"].as<double>();
 	if (node["is_publish_odometry_msgs"].IsDefined()){
 	    p->isPublishOdometryMsgs_ = node["is_publish_odometry_msgs"].as<bool>();
 	}

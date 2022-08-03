@@ -1,6 +1,6 @@
 odometry:
   is_publish_odometry_msgs: false
-  min_refinement_fitness: 0.1
+  min_acceptable_fitness: 0.1
   scan_matching:
     icp_objective: PointToPlane
     max_correspondence_dist: 1.0
