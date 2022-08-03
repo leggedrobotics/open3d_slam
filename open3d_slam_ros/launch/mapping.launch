@@ -10,6 +10,7 @@
 	<arg name="map_saving_folder" default="$(find open3d_slam_ros)/data/maps/"/>
 	<arg name="num_accumulated_range_data" default="1"/>
 	<arg name="is_read_from_rosbag" default="false"/>
+	<arg name="is_initialize_map" default="false"/>
 	<arg name="rosbag_filepath" default=""/>
 	<arg name="use_sim_time" default="false"/>
 
@@ -27,6 +28,7 @@
 		<param name="parameter_file_path" type="string" value="$(arg parameter_file_path)" />
 		<param name="num_accumulated_range_data" value="$(arg num_accumulated_range_data)"/>
 		<param name="is_read_from_rosbag" value="$(arg is_read_from_rosbag)"/>
+		<param name="is_initialize_map" value="$(arg is_initialize_map)"/>
 		<param name="rosbag_filepath" value="$(arg rosbag_filepath)"/>
 		<param name="map_saving_folder" value="$(arg map_saving_folder)"/>
 	</node>

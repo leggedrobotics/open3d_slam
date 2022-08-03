@@ -1,5 +1,6 @@
 odometry:
   is_publish_odometry_msgs: true
+  min_acceptable_fitness: 0.1
   scan_matching:
     icp_objective: PointToPlane
     max_correspondence_dist: 1.0
@@ -39,11 +40,10 @@ mapping:
         min_z: -30.0
         max_z: 30.0
         cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
-  is_initialize_map: false
-  initial_map:
-    map_frame_id: velodyne
-    map_mesh_path: package://rosp_control/config/paris1.dae
-    map_pointcloud_path: $(find rosp_control)/config/paris.pcd
+  map_intialization:
+    initialize_map: false
+    max_translation_error: 0.5
+    max_angle_error: 0.314
 
   submaps:
     size: 20

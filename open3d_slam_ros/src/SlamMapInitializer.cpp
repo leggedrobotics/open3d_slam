@@ -30,11 +30,9 @@ SlamMapInitializer::SlamMapInitializer(std::shared_ptr<SlamWrapper> slamPtr, ros
 void SlamMapInitializer::initialize() {
   PointCloud raw_map;
 
-  std::cerr << "intializing" << std::endl;
-  frameId_ = nh_->param<std::string>("mapping/initial_map/map_frame_id", "");
-	meshResourcePath_ = nh_->param<std::string>("mapping/initial_map/map_mesh_path", "");
-  pcdFilePath_ = nh_->param<std::string>("mapping/initial_map/map_pointcloud_path", "");
-  std::cerr << "intializing" << std::endl;
+  frameId_ = nh_->param<std::string>("initial_map/map_frame_id", "");
+  meshResourcePath_ = nh_->param<std::string>("initial_map/map_mesh_path", "");
+  pcdFilePath_ = nh_->param<std::string>("initial_map/map_pointcloud_path", "");
 
 
   initialized_.store(false);
@@ -45,10 +43,6 @@ void SlamMapInitializer::initialize() {
 	{
 		std::cerr << "[Error] Initialization pointcloud not loaded" << std::endl;
   }
-
-  std::cerr << "Empty mesh? " << raw_map.IsEmpty() << std::endl;
-  std::cerr << "Has points? " << raw_map.HasPoints() << std::endl;
-
   
   while (!initialized_.load())
   {
@@ -58,7 +52,7 @@ void SlamMapInitializer::initialize() {
   
 }
 
-void SlamMapInitializer::cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
+void SlamMapInitializer::cloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg) {
 	open3d::geometry::PointCloud cloud;
 	open3d_conversions::rosToOpen3d(msg, cloud, false);
   const Time timestamp = fromRos(msg->header.stamp);
@@ -80,6 +74,9 @@ void SlamMapInitializer::interactiveMarkerCallback(const visualization_msgs::Int
 	geometry_msgs::Pose pose = msg->pose;
 	tf::poseMsgToEigen(pose, init_transform);
 	
+  std::cout << "Initial Header" << msg->header << std::endl;
+  std::cout << "Initial Pose" << pose << std::endl;
+  // TODO(lukaszpi): transform to appropriate tf
   slamPtr_->setInitialTransform(init_transform.matrix());
   initialized_.store(true);
 }
@@ -91,13 +88,14 @@ visualization_msgs::InteractiveMarker SlamMapInitializer::createInteractiveMarke
   interactiveMarker.name = "Initial Pose";
   interactiveMarker.scale = 0.5;
   interactiveMarker.description = "Right click to initialize slam map";
-  interactiveMarker.pose.position.x = -1.0;
-  interactiveMarker.pose.position.y = -3.0;
-  interactiveMarker.pose.position.z = -1.0;
-  interactiveMarker.pose.orientation.x = 0.0;
+  // TODO(lukaszpi): Load intial map from config file
+  interactiveMarker.pose.position.x = -2.1;
+  interactiveMarker.pose.position.y = 2.2;
+  interactiveMarker.pose.position.z = 0.2;
+  interactiveMarker.pose.orientation.x = 1.0;
   interactiveMarker.pose.orientation.y = 0.0;
   interactiveMarker.pose.orientation.z = 0.0;
-  interactiveMarker.pose.orientation.w = 1.0;
+  interactiveMarker.pose.orientation.w = 0.0;
 
   // create a mesh marker
   const auto meshMarker = [&meshResourcePath_ = meshResourcePath_]() {

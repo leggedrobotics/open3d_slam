@@ -1,8 +1,8 @@
 /*
- * OnlineDataProcessorRos.hpp
+ * SlamMapInitializer.hpp
  *
- *  Created on: Apr 21, 2022
- *      Author: jelavice
+ *  Created on: Jun 16, 2022
+ *      Author: lukaszpi
  */
 
 #pragma once
@@ -34,8 +34,8 @@ private:
 	void initInterectiveMarker();
 	void interactiveMarkerCallback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& msg);
 	visualization_msgs::InteractiveMarker createInteractiveMarker() const;
-	
-  interactive_markers::MenuHandler menuHandler_;
+  
+	interactive_markers::MenuHandler menuHandler_;
   interactive_markers::InteractiveMarkerServer server_;
 	std::shared_ptr<SlamWrapper> slamPtr_;
 	ros::Subscriber cloudSubscriber_;

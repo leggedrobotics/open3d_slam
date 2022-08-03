@@ -1,5 +1,6 @@
 odometry:
   is_publish_odometry_msgs: false
+  min_acceptable_fitness: 0.1
   scan_matching:
     icp_objective: PointToPlane
     max_correspondence_dist: 1.0
@@ -13,7 +14,7 @@ odometry:
       cropping_radius_min: 0.0
       min_z: -3.0
       max_z: 2.0
-      cropper_type: "Cylinder" #otions are Cylinder, MaxRadius, MinRadius, MinMaxRadius
+      cropper_type: "Cylinder" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
     
   
 mapping:
@@ -39,12 +40,11 @@ mapping:
         cropping_radius_min: 0.0
         min_z: -3.0
         max_z: 1.0
-        cropper_type: "Cylinder" #otions are Cylinder, MaxRadius, MinRadius, MinMaxRadius
-  is_initialize_map: false
-  initial_map:
-    map_frame_id: velodyne
-    map_mesh_path: package://rosp_control/config/paris1.dae
-    map_pointcloud_path: $(find rosp_control)/config/paris.pcd
+        cropper_type: "Cylinder" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
+  map_intialization:
+    initialize_map: false
+    max_translation_error: 0.5
+    max_angle_error: 0.314
 
   submaps:
     size: 10
@@ -57,7 +57,7 @@ mapping:
       cropping_radius_min: 0.0
       min_z: -3.0
       max_z: 3.0
-      cropper_type: "Cylinder" #otions are Cylinder, MaxRadius, MinRadius, MinMaxRadius
+      cropper_type: "Cylinder" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
     map_voxel_size: 0.1
     space_carving:
       voxel_size: 0.1
@@ -72,7 +72,7 @@ mapping:
       cropping_radius_min: 0.0
       min_z: -3.0
       max_z: 3.0
-      cropper_type: "Cylinder" #otions are Cylinder, MaxRadius, MinRadius, MinMaxRadius
+      cropper_type: "Cylinder" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
     map_voxel_size: 0.08
     space_carving:
       neigborhood_radius_for_removal: 0.1

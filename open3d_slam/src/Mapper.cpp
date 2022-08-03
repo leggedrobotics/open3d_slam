@@ -96,14 +96,13 @@ const PointCloud& Mapper::getPreprocessedScan() const {
 	return preProcessedScan_;
 }
 
-bool Mapper::addRangeMeasurement(const Mapper::PointCloud& rawScan, const Time& timestamp) {
+bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &timestamp) {
 	isMatchingInProgress_ = true;
 	scanMatcherCropper_->setPose(Transform::Identity());
 	submaps_->setMapToRangeSensor(mapToRangeSensor_);
 
 	//insert first scan
 	if (submaps_->getActiveSubmap().isEmpty()) {
-		std::cout << "Mapper intialized" << std::endl;
 		auto wideCroppedCloud = preProcessScan(rawScan);
 		submaps_->insertScan(rawScan, *wideCroppedCloud, Transform::Identity(), timestamp);
 		mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
@@ -162,10 +161,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud& rawScan, const Time& 
 		if (rejectDistantTransform(mapToRangeSensorEstimate, Transform(result.transformation_))) {
 			return false;
 		}
-		else {
-			params_.mapInitialization_.initializeMap_ = true;
-		}
-
+		params_.mapInitialization_.initializeMap_ = false;
 	}
 
 	// update transforms

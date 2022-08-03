@@ -6,11 +6,12 @@
  */
 
 #pragma once
-#include "open3d_slam/typedefs.hpp"
-#include "open3d_slam/time.hpp"
 #include <ros/ros.h>
 
+#include "open3d_slam/time.hpp"
+#include "open3d_slam/typedefs.hpp"
 #include "open3d_slam/SlamWrapper.hpp"
+
 
 namespace o3d_slam {
 
