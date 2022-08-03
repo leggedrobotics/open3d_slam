@@ -21,7 +21,6 @@ LidarOdometry::LidarOdometry() {
 
 bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, const Time &timestamp) {
 	if (cloudPrev_.IsEmpty()) {
-		std::cout << "Odom intialized" << std::endl;
 		cloudPrev_ = cloud;
 		odomToRangeSensorBuffer_.push(timestamp, odomToRangeSensorCumulative_);
 		lastMeasurementTimestamp_ = timestamp;
