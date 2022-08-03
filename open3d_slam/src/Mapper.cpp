@@ -96,13 +96,14 @@ const PointCloud& Mapper::getPreprocessedScan() const {
 	return preProcessedScan_;
 }
 
-bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &timestamp) {
+bool Mapper::addRangeMeasurement(const Mapper::PointCloud& rawScan, const Time& timestamp) {
 	isMatchingInProgress_ = true;
 	scanMatcherCropper_->setPose(Transform::Identity());
 	submaps_->setMapToRangeSensor(mapToRangeSensor_);
 
 	//insert first scan
 	if (submaps_->getActiveSubmap().isEmpty()) {
+		std::cout << "Mapper intialized" << std::endl;
 		auto wideCroppedCloud = preProcessScan(rawScan);
 		submaps_->insertScan(rawScan, *wideCroppedCloud, Transform::Identity(), timestamp);
 		mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
@@ -144,17 +145,27 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		mapPatch = scanMatcherCropper_->crop(activeSubmapPointCloud);
 	}
 
-//	std::cout << "preeIcp: " << asString(mapToRangeSensorEstimate) << "\n";
 	const auto result = open3d::pipelines::registration::RegistrationICP(*narrowCropped, *mapPatch,
 			params_.scanMatcher_.maxCorrespondenceDistance_, mapToRangeSensorEstimate.matrix(), *icpObjective,
 			icpCriteria_);
-//	std::cout << "postIcp: " << asString(Transform(result.transformation_)) << "\n\n";
-	if (result.fitness_ < params_.minRefinementFitness_) {
-		std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
-		std::cout << "preeIcp: " << asString(mapToRangeSensor_) << "\n";
-		std::cout << "postIcp: " << asString(Transform(result.transformation_)) << "\n\n";
-		isMatchingInProgress_ = false;
-		return false;
+
+	if (!params_.mapInitialization_.initializeMap_) {
+		if (result.fitness_ < params_.minRefinementFitness_) {
+			std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
+			std::cout << "preeIcp: " << asString(mapToRangeSensorEstimate) << "\n";
+			std::cout << "postIcp: " << asString(Transform(result.transformation_)) << "\n\n";
+			isMatchingInProgress_ = false;
+			return false;
+		}
+	}
+	else {
+		if (rejectDistantTransform(mapToRangeSensorEstimate, Transform(result.transformation_))) {
+			return false;
+		}
+		else {
+			params_.mapInitialization_.initializeMap_ = true;
+		}
+
 	}
 
 	// update transforms
@@ -177,7 +188,25 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	return true;
 }
 
-std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud &rawScan) const {
+bool Mapper::rejectDistantTransform(Transform preeIcp, Transform postIcp) const
+{
+	Transform transform = preeIcp.inverse() * postIcp;
+
+	if (transform.translation().norm() > params_.mapInitialization_.maxTranslationError_ &&
+			Eigen::AngleAxisd(transform.rotation()).angle() > params_.mapInitialization_.maxAngleError_)
+	{
+		std::cout << "preeIcp: " << asString(preeIcp) << "\n";
+		std::cout << "postIcp: " << asString(postIcp) << "\n\n";
+		std::cout << "Distance between " << transform.translation().norm() << "\n";
+		std::cout << "Angle between " << Eigen::AngleAxisd(transform.rotation()).angle() << "\n";
+		std::cout << "Rejecting " << std::endl;
+		return true;
+	}
+	return false;
+}
+
+
+std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud& rawScan) const {
 	mapBuilderCropper_->setPose(Transform::Identity());
 	std::shared_ptr<PointCloud> wideCroppedCloud, voxelized, downsampled;
 	wideCroppedCloud = mapBuilderCropper_->crop(rawScan);

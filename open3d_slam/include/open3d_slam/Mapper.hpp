@@ -40,12 +40,14 @@ public:
 	const TransformInterpolationBuffer& getMapToRangeSensorBuffer() const;
 	const PointCloud& getPreprocessedScan() const;
 	void loopClosureUpdate(const Transform &loopClosureCorrection);
-	bool hasProcessedMeasurements() const ;
+	bool hasProcessedMeasurements() const;
+	
 private:
 	std::shared_ptr<PointCloud> preProcessScan(const PointCloud &scan) const;
 	void update(const MapperParameters &p);
 	void estimateNormalsIfNeeded(PointCloud *pcl) const;
 	void checkTransformChainingAndPrintResult(bool isCheckTransformChainingAndPrintResult) const;
+	bool rejectDistantTransform(Transform preeIcp, Transform postIcp) const;
 
 	bool isMatchingInProgress_ = false;
 	bool isManipulatingMap_ = false;

@@ -40,7 +40,11 @@ mapping:
         min_z: -3.0
         max_z: 1.0
         cropper_type: "Cylinder" #otions are Cylinder, MaxRadius, MinRadius, MinMaxRadius
-      
+  is_initialize_map: false
+  initial_map:
+    map_frame_id: velodyne
+    map_mesh_path: package://rosp_control/config/paris1.dae
+    map_pointcloud_path: $(find rosp_control)/config/paris.pcd
 
   submaps:
     size: 10

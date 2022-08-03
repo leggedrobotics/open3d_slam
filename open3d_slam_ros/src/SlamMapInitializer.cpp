@@ -5,18 +5,18 @@
  *      Author: lukaszpi
  */
 
-#include "open3d_conversions/open3d_conversions.h"
 #include <ros/ros.h>
-#include <sensor_msgs/PointCloud2.h>
-#include "open3d_slam_ros/helpers_ros.hpp"
-#include "open3d_slam/time.hpp"
-#include "open3d_slam/frames.hpp"
-#include "open3d_slam_ros/SlamMapInitializer.hpp"
-#include "open3d_slam_ros/SlamWrapperRos.hpp"
+#include <eigen_conversions/eigen_msg.h>
 #include <geometry_msgs/Transform.h>
 #include <geometry_msgs/Pose.h>
-#include <eigen_conversions/eigen_msg.h>
+#include <sensor_msgs/PointCloud2.h>
 
+#include "open3d_conversions/open3d_conversions.h"
+#include "open3d_slam/frames.hpp"
+#include "open3d_slam/time.hpp"
+#include "open3d_slam_ros/helpers_ros.hpp"
+#include "open3d_slam_ros/SlamMapInitializer.hpp"
+#include "open3d_slam_ros/SlamWrapperRos.hpp"
 
 
 namespace o3d_slam {
@@ -30,10 +30,12 @@ SlamMapInitializer::SlamMapInitializer(std::shared_ptr<SlamWrapper> slamPtr, ros
 void SlamMapInitializer::initialize() {
   PointCloud raw_map;
 
-  
-	frameId_ = nh_->param<std::string>("map_frame_id", "");
-	meshResourcePath_ = nh_->param<std::string>("map_mesh_path", "");
-	pcdFilePath_ = nh_->param<std::string>("map_pointcloud_path", "");
+  std::cerr << "intializing" << std::endl;
+  frameId_ = nh_->param<std::string>("mapping/initial_map/map_frame_id", "");
+	meshResourcePath_ = nh_->param<std::string>("mapping/initial_map/map_mesh_path", "");
+  pcdFilePath_ = nh_->param<std::string>("mapping/initial_map/map_pointcloud_path", "");
+  std::cerr << "intializing" << std::endl;
+
 
   initialized_.store(false);
 
@@ -43,13 +45,16 @@ void SlamMapInitializer::initialize() {
 	{
 		std::cerr << "[Error] Initialization pointcloud not loaded" << std::endl;
   }
-  
-  slamPtr_->setInitialMap(raw_map);
+
+  std::cerr << "Empty mesh? " << raw_map.IsEmpty() << std::endl;
+  std::cerr << "Has points? " << raw_map.HasPoints() << std::endl;
+
   
   while (!initialized_.load())
   {
     ros::spinOnce();
   }
+  slamPtr_->setInitialMap(raw_map);
   
 }
 
@@ -61,7 +66,7 @@ void SlamMapInitializer::cloudCallback(const sensor_msgs::PointCloud2ConstPtr &m
 }
 
 void SlamMapInitializer::initInterectiveMarker() {
-  menuHandler_.insert("Initialize SLAM", boost::bind(&SlamMapInitializer::interactiveMarkerCallback, this, _1));
+  menuHandler_.insert("Initialize SLAM map", boost::bind(&SlamMapInitializer::interactiveMarkerCallback, this, _1));
 
   auto interactiveMarker = createInteractiveMarker();
 
@@ -85,7 +90,7 @@ visualization_msgs::InteractiveMarker SlamMapInitializer::createInteractiveMarke
   interactiveMarker.header.stamp = ros::Time::now();
   interactiveMarker.name = "Initial Pose";
   interactiveMarker.scale = 0.5;
-  interactiveMarker.description = "Right click to send command";
+  interactiveMarker.description = "Right click to initialize slam map";
   interactiveMarker.pose.position.x = -1.0;
   interactiveMarker.pose.position.y = -3.0;
   interactiveMarker.pose.position.z = -1.0;
@@ -94,7 +99,7 @@ visualization_msgs::InteractiveMarker SlamMapInitializer::createInteractiveMarke
   interactiveMarker.pose.orientation.z = 0.0;
   interactiveMarker.pose.orientation.w = 1.0;
 
-  // create a grey box marker
+  // create a mesh marker
   const auto meshMarker = [&meshResourcePath_ = meshResourcePath_]() {
     visualization_msgs::Marker marker;
 		marker.type = visualization_msgs::Marker::MESH_RESOURCE;
@@ -106,7 +111,7 @@ visualization_msgs::InteractiveMarker SlamMapInitializer::createInteractiveMarke
     return marker;
   }();
 
-  // create a non-interactive control which contains the box
+  // create a non-interactive control which contains the mesh
   visualization_msgs::InteractiveMarkerControl boxControl;
   boxControl.always_visible = 1;
   boxControl.markers.push_back(meshMarker);
@@ -115,7 +120,7 @@ visualization_msgs::InteractiveMarker SlamMapInitializer::createInteractiveMarke
   // add the control to the interactive marker
   interactiveMarker.controls.push_back(boxControl);
 
-  // create a control which will move the box
+  // create a control which will move the mesh
   // this control does not contain any markers,
   // which will cause RViz to insert two arrows
   visualization_msgs::InteractiveMarkerControl control;
@@ -155,7 +160,6 @@ visualization_msgs::InteractiveMarker SlamMapInitializer::createInteractiveMarke
   
   return interactiveMarker;
 }
-
 
 } // namespace o3d_slam
 

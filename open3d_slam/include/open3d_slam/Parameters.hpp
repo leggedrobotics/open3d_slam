@@ -65,7 +65,8 @@ struct IcpParameters {
 struct OdometryParameters {
 	IcpParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
-  bool isPublishOdometryMsgs_ = false;
+	double minRefinementFitness_ = 0.1;
+	bool isPublishOdometryMsgs_ = false;
 };
 
 struct MapInconsistencyRemoval {
@@ -130,11 +131,19 @@ struct GlobalOptimizationParameters {
 };
 
 
+struct  MapInitializationParameters{
+	double maxTranslationError_ = 0.3;
+	double maxAngleError_ = M_PI / 18.0;
+	bool initializeMap_ = false;
+};
+
 struct MapperParameters {
 	IcpParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
 	double minMovementBetweenMappingSteps_ = 0.0;
 	double minRefinementFitness_ = 0.7;
+	double maxTranslationError_ = 0.3;
+	double maxAngleError_ = M_PI / 18.0;
 	MapBuilderParameters mapBuilder_;
 	MapBuilderParameters denseMapBuilder_;
 	size_t numScansOverlap_ = 3;
@@ -142,6 +151,7 @@ struct MapperParameters {
 	SubmapParameters submaps_;
 	PlaceRecognitionParameters placeRecognition_;
 	GlobalOptimizationParameters globalOptimization_;
+	MapInitializationParameters mapInitialization_;
 	bool isAttemptLoopClosures_ = true;
 	bool isDumpSubmapsToFileBeforeAndAfterLoopClosures_ = false;
 	bool isPrintTimingStatistics_ = true;

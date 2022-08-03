@@ -21,6 +21,7 @@ LidarOdometry::LidarOdometry() {
 
 bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, const Time &timestamp) {
 	if (cloudPrev_.IsEmpty()) {
+		std::cout << "Odom intialized" << std::endl;
 		cloudPrev_ = cloud;
 		odomToRangeSensorBuffer_.push(timestamp, odomToRangeSensorCumulative_);
 		lastMeasurementTimestamp_ = timestamp;
@@ -41,19 +42,12 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 		o3d_slam::estimateNormals(params_.scanMatcher_.kNNnormalEstimation_, downSampledCloud.get());
 		downSampledCloud->NormalizeNormals();
 	}
-
 	auto result = open3d::pipelines::registration::RegistrationICP(
 		cloudPrev_, *downSampledCloud, params_.scanMatcher_.maxCorrespondenceDistance_,
 		icpTransform_, *icpObjective_, icpConvergenceCriteria_);
 
-	if (resetIcpTransform_)
-	{
-		icpTransform_ = Eigen::Matrix4d::Identity();
-		resetIcpTransform_ = false;
-	}
-
 	//todo magic
-	const bool isOdomOkay = result.fitness_ > 0.1;
+	const bool isOdomOkay = result.fitness_ > params_.minRefinementFitness_;
 	if (!isOdomOkay) {
 		  std::cout << "Odometry failed!!!!! \n";
 			std::cout << "Size of the odom buffer: " << odomToRangeSensorBuffer_.size() << std::endl;
@@ -68,6 +62,12 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 			cloudPrev_ = std::move(*downSampledCloud);
 		}
 		return isOdomOkay;
+	}
+
+	if (resetIcpTransform_)
+	{
+		icpTransform_ = Eigen::Matrix4d::Identity();
+		resetIcpTransform_ = false;
 	}
 	odomToRangeSensorCumulative_.matrix() *= result.transformation_.inverse();
 	cloudPrev_ = std::move(*downSampledCloud);
