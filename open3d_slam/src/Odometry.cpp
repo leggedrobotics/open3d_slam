@@ -27,6 +27,7 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 		return true;
 	}
 
+
 	if (timestamp < lastMeasurementTimestamp_) {
 			std::cerr << "\n\n !!!!! LIDAR ODOMETRY WARNING: Measurements came out of order!!!! \n\n";
 			return false;
@@ -34,19 +35,40 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 
 	const o3d_slam::Timer timer;
 	auto croppedCloud = cropper_->crop(cloud);
-	o3d_slam::voxelize(params_.scanProcessing_.voxelSize_, croppedCloud.get());
-	auto downSampledCloud = croppedCloud->RandomDownSample(params_.scanProcessing_.downSamplingRatio_);
-
+	// TODO(lukaszpi): create initialization settings for map initialization
+	double voxel_size = params_.scanProcessing_.voxelSize_;
+	double ratio = params_.scanProcessing_.downSamplingRatio_;
+	if(resetIcpTransform_)
+	{
+		voxel_size = 0.05;
+		ratio = 1.0;
+	}
+	o3d_slam::voxelize(voxel_size, croppedCloud.get());
+	auto downSampledCloud = croppedCloud->RandomDownSample(ratio);
+	
 	if (params_.scanMatcher_.icpObjective_ == o3d_slam::IcpObjective::PointToPlane) {
 		o3d_slam::estimateNormals(params_.scanMatcher_.kNNnormalEstimation_, downSampledCloud.get());
 		downSampledCloud->NormalizeNormals();
 	}
-	auto result = open3d::pipelines::registration::RegistrationICP(
-		cloudPrev_, *downSampledCloud, params_.scanMatcher_.maxCorrespondenceDistance_,
-		icpTransform_, *icpObjective_, icpConvergenceCriteria_);
 
+	open3d::pipelines::registration::ICPConvergenceCriteria temp_criteria = icpConvergenceCriteria_;
+	double max_correspondance_distance = params_.scanMatcher_.maxCorrespondenceDistance_;
+	if(resetIcpTransform_)
+	{
+		temp_criteria.max_iteration_ = 50;
+		max_correspondance_distance = 0.2;
+	}
+	
+	auto result = open3d::pipelines::registration::RegistrationICP(
+		cloudPrev_, *downSampledCloud, max_correspondance_distance,
+		icpTransform_, *icpObjective_, temp_criteria);
+
+	if(resetIcpTransform_)
+	{
+		std::cout << "\n\nMY Transform: \n" << asString(Transform(result.transformation_)) << "\n" << std::endl;
+	}
 	//todo magic
-	const bool isOdomOkay = result.fitness_ > params_.minAcceptableFitness_;
+	const bool isOdomOkay = result.fitness_ > params_.minAcceptableFitness_ || resetIcpTransform_;
 	if (!isOdomOkay) {
 		  std::cout << "Odometry failed!!!!! \n";
 			std::cout << "Size of the odom buffer: " << odomToRangeSensorBuffer_.size() << std::endl;
