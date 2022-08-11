@@ -31,7 +31,6 @@ Submap::Submap(size_t id, size_t parentId) :
 
 size_t Submap::getId() const {
 	return id_;
-//	return toUniversal(creationTime_);
 }
 
 size_t Submap::getParentId() const {
@@ -45,9 +44,6 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 		return true;
 	}
 
-	if (mapCloud_.points_.empty()) {
-		creationTime_ = time;
-	}
 	mapToRangeSensor_ = mapToRangeSensor;
 	auto transformedCloud = o3d_slam::transform(mapToRangeSensor.matrix(), preProcessedScan);
 	estimateNormalsIfNeeded(params_.scanMatcher_.kNNnormalEstimation_, transformedCloud.get());
@@ -158,13 +154,31 @@ void Submap::setParameters(const MapperParameters &mapperParams) {
 	update(mapperParams);
 }
 
-Submap::Submap(const Submap &other) : Submap(other.id_, other.parentId_){
-	//todo copy all the other members as well
+Submap::Submap(const Submap &other) :
+    Submap(other.id_, other.parentId_) {
 
-	params_ = other.params_;
-	mapToSubmap_ = other.mapToSubmap_;
-	mapToRangeSensor_ = other.mapToRangeSensor_;
-	update(params_);
+  colorCropper_ = other.colorCropper_;
+  denseMap_ = other.denseMap_;
+  voxelMap_ = other.voxelMap_;
+  scanCounter_ = other.scanCounter_;
+  carvingStatisticsTimer_ = other.carvingStatisticsTimer_;
+  parentId_ = other.parentId_;
+  isCenterComputed_ = other.isCenterComputed_;
+  id_ = other.id_;
+  feature_ = other.feature_;
+  nScansInsertedDenseMap_ = other.nScansInsertedDenseMap_;
+  nScansInsertedMap_ = other.nScansInsertedMap_;
+  featureTimer_ = other.featureTimer_;
+  params_ = other.params_;
+  denseMapCropper_ = other.denseMapCropper_;
+  mapBuilderCropper_ = other.mapBuilderCropper_;
+  submapCenter_ = other.submapCenter_;
+  mapToRangeSensor_ = other.mapToRangeSensor_;
+  mapToSubmap_ = other.mapToSubmap_;
+  mapCloud_ = other.mapCloud_;
+  sparseMapCloud_ = other.sparseMapCloud_;
+
+//	update(params_);
 }
 
 const Transform& Submap::getMapToSubmapOrigin() const {
@@ -228,7 +242,7 @@ void Submap::computeFeatures() {
 	}
 
 	std::thread computeVoxelMapThread([this]() {
-		Timer t("compute_voxel_submap");
+//		Timer t("compute_voxel_submap");
 		voxelMap_.clear();
 		voxelMap_.insertCloud(voxelMapLayer,mapCloud_);
 	});
@@ -240,10 +254,8 @@ void Submap::computeFeatures() {
 			open3d::geometry::KDTreeSearchParamHybrid(p.normalEstimationRadius_, p.normalKnn_));
 	sparseMapCloud_.NormalizeNormals();
 	sparseMapCloud_.OrientNormalsTowardsCameraLocation(Eigen::Vector3d::Zero());
-	feature_.reset();
 	feature_ = registration::ComputeFPFHFeature(sparseMapCloud_,
 			open3d::geometry::KDTreeSearchParamHybrid(p.featureRadius_, p.featureKnn_));
-//	std::cout <<"map num points: " << map_.points_.size() << ", sparse map: " << sparseMap_.points_.size() << "\n";
 	computeVoxelMapThread.join();
 	featureTimer_.reset();
 }

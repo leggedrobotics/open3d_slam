@@ -140,6 +140,7 @@ std::shared_ptr<open3d::geometry::PointCloud> voxelizeWithinCroppingVolume(doubl
 	}
 
 	const Eigen::Vector3d voxelSize = Eigen::Vector3d(voxel_size, voxel_size, voxel_size);
+  const InverseVoxelSize invVoxelSize = fromVoxelSize(voxelSize);
 //	const auto voxelBounds = computeVoxelBounds(cloud, voxelSize);
 //	const Eigen::Vector3d voxelMinBound = voxelBounds.first;
 //	const Eigen::Vector3d voxelMaxBound = voxelBounds.second;
@@ -161,7 +162,7 @@ std::shared_ptr<open3d::geometry::PointCloud> voxelizeWithinCroppingVolume(doubl
 	voxelindex_to_accpoint.reserve(cloud.points_.size());
 	for (size_t i = 0; i < cloud.points_.size(); i++) {
 		if (croppingVolume.isWithinVolume(cloud.points_[i])) {
-			const Eigen::Vector3i voxelIdx = getVoxelIdx(cloud.points_[i], voxelSize);
+			const Eigen::Vector3i voxelIdx = getVoxelIdx(cloud.points_[i], invVoxelSize);
 			voxelindex_to_accpoint[voxelIdx].AddPoint(cloud, i);
 		} else {
 			output->points_.emplace_back(std::move(cloud.points_[i]));

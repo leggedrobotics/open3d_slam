@@ -26,7 +26,7 @@
 namespace o3d_slam {
 
 SubmapCollection::SubmapCollection() {
-	submaps_.reserve(100);
+	submaps_.reserve(500);
 	createNewSubmap(mapToRangeSensor_);
 	overlapScansBuffer_.set_size_limit(5);
 }
@@ -217,12 +217,13 @@ void SubmapCollection::setParameters(const MapperParameters &p) {
 void SubmapCollection::computeFeatures(const TimestampedSubmapIds &finishedSubmapIds) {
 	std::lock_guard<std::mutex> lck(featureComputationMutex_);
 	isComputingFeatures_ = true;
-	Timer timer("submap_finishing_total");
+	Timer timer("submap_finishing feature + constraint comp: ");
 
 	auto featureComputation = [&]() {
-		Timer t("feature computation");
+//		Timer t("feature computation");
 		for (const auto &id : finishedSubmapIds) {
 			std::cout << "computing features for submap: " << id.submapId_ << std::endl;
+//			std::cout << "submap size: " << submaps_.at(id.submapId_).getMapPointCloud().points_.size() << std::endl;
 			submaps_.at(id.submapId_).computeFeatures();
 			loopClosureCandidatesIdxs_.push(id);
 		}
@@ -231,7 +232,7 @@ void SubmapCollection::computeFeatures(const TimestampedSubmapIds &finishedSubma
 	std::thread t(featureComputation);
 
 	{
-		Timer t("odometry_constraint_computation");
+//		Timer t("odometry_constraint_computation");
 		computeOdometryConstraints(*this, finishedSubmapIds, &odometryConstraints_);
 	}
 

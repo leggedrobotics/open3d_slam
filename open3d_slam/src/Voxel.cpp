@@ -183,9 +183,9 @@ std::shared_ptr<PointCloud> removeDuplicatePointsWithinSameVoxels(const open3d::
 	if (cloud.HasColors()){
 		retVal->colors_.reserve(cloud.points_.size());
 	}
-
+	const InverseVoxelSize invVoxelSize = fromVoxelSize(voxelSize);
 	for (size_t i =0; i < cloud.points_.size(); ++i){
-		const Eigen::Vector3i voxelIdx = getVoxelIdx(cloud.points_.at(i), voxelSize);
+		const Eigen::Vector3i voxelIdx = getVoxelIdx(cloud.points_.at(i), invVoxelSize);
 		const bool hasPointAlready = !voxelSet.insert(voxelIdx).second;
 		if (hasPointAlready){
 			continue;
