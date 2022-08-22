@@ -148,7 +148,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 			params_.scanMatcher_.maxCorrespondenceDistance_, mapToRangeSensorEstimate.matrix(), *icpObjective,
 			icpCriteria_);
 
-	if (!params_.mapInitialization_.initializeMap_) {
+	if (!params_.initializeMap_) {
 		if (result.fitness_ < params_.minRefinementFitness_) {
 			std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
 			std::cout << "preeIcp: " << asString(mapToRangeSensorEstimate) << "\n";
@@ -161,7 +161,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		if (rejectDistantTransform(mapToRangeSensorEstimate, Transform(result.transformation_))) {
 			return false;
 		}
-		params_.mapInitialization_.initializeMap_ = false;
+		params_.initializeMap_ = false;
 	}
 
 	// update transforms
@@ -188,8 +188,8 @@ bool Mapper::rejectDistantTransform(Transform preeIcp, Transform postIcp) const
 {
 	Transform transform = preeIcp.inverse() * postIcp;
 
-	if (transform.translation().norm() > params_.mapInitialization_.maxTranslationError_ &&
-			Eigen::AngleAxisd(transform.rotation()).angle() > params_.mapInitialization_.maxAngleError_)
+	if (transform.translation().norm() > params_.mapInitializationRejection_.maxTranslationError_ &&
+			Eigen::AngleAxisd(transform.rotation()).angle() > params_.mapInitializationRejection_.maxAngleError_)
 	{
 		std::cout << "preeIcp: " << asString(preeIcp) << "\n";
 		std::cout << "postIcp: " << asString(postIcp) << "\n\n";

@@ -137,10 +137,9 @@ struct GlobalOptimizationParameters {
 };
 
 
-struct  MapInitializationParameters{
+struct  MapInitializingRejectionParameters{
 	double maxTranslationError_ = 0.3;
 	double maxAngleError_ = M_PI / 18.0;
-	bool initializeMap_ = false;
 };
 
 struct MapperParameters {
@@ -155,11 +154,12 @@ struct MapperParameters {
 	SubmapParameters submaps_;
 	PlaceRecognitionParameters placeRecognition_;
 	GlobalOptimizationParameters globalOptimization_;
-	MapInitializationParameters mapInitialization_;
+	MapInitializingRejectionParameters mapInitializationRejection_;
 	bool isAttemptLoopClosures_ = true;
 	bool isDumpSubmapsToFileBeforeAndAfterLoopClosures_ = false;
 	bool isPrintTimingStatistics_ = true;
 	bool isRefineOdometryConstraintsBetweenSubmaps_ = false;
+	bool initializeMap_ = false;
 };
 
 struct VisualizationParameters {
@@ -206,6 +206,7 @@ void loadParameters(const YAML::Node &node, MapBuilderParameters *p);
 void loadParameters(const std::string &filename, OdometryParameters *p);
 void loadParameters(const YAML::Node &node, OdometryParameters *p);
 void loadParameters(const YAML::Node &node, MapInitializingParameters *p);
+void loadParameters(const YAML::Node &node, MapInitializingRejectionParameters *p);
 void loadParameters(const YAML::Node &n, SpaceCarvingParameters *p);
 void loadParameters(const std::string &filename, SpaceCarvingParameters *p);
 void loadParameters(const std::string &filename, ScanCroppingParameters *p);

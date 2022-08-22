@@ -35,7 +35,6 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 	const o3d_slam::Timer timer;
 	auto croppedCloud = cropper_->crop(cloud);
 
-	// TODO(lukaszpi): create initialization settings for map initialization
 	double &voxel_size = params_.scanProcessing_.voxelSize_;
 	double &ratio  = params_.scanProcessing_.downSamplingRatio_;
 	double &max_correspondance_distance = params_.scanMatcher_.maxCorrespondenceDistance_;

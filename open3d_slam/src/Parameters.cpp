@@ -151,6 +151,11 @@ void loadParameters(const YAML::Node& node, MapInitializingParameters* p) {
 	loadParameters(node["scan_processing"], &(p->scanProcessing_) );
 }
 
+void loadParameters(const YAML::Node& node, MapInitializingRejectionParameters* p) {
+	p->maxTranslationError_ = node["max_translation_error"].as<double>();
+	p->maxAngleError_ = node["max_angle_error"].as<double>();
+}
+
 void loadParameters(const std::string& filename, ScanProcessingParameters* p) {
 	YAML::Node basenode = YAML::LoadFile(filename);
 	if (basenode.IsNull()) {
@@ -204,12 +209,6 @@ void loadParameters(const YAML::Node &node, MapBuilderParameters *p) {
 	loadParameters(node["space_carving"], &(p->carving_));
 	loadParameters(node["scan_cropping"], &(p->cropper_));
 }
-void loadParameters(const YAML::Node &node, MapInitializationParameters *p) {
-	p->maxTranslationError_ = node["max_translation_error"].as<double>();
-	p->maxAngleError_ = node["max_angle_error"].as<double>();
-	p->initializeMap_ = node["initialize_map"].as<bool>();
-}
-
 
 void loadParameters(const std::string &filename, MapperParameters *p) {
 	YAML::Node basenode = YAML::LoadFile(filename);
@@ -220,7 +219,8 @@ void loadParameters(const std::string &filename, MapperParameters *p) {
 
 	loadParameters(basenode["mapping"], p);
 }
-void loadParameters(const YAML::Node &node, MapperParameters *p) {
+
+void loadParameters(const YAML::Node& node, MapperParameters* p) {
 	p->isBuildDenseMap_ = node["is_build_dense_map"].as<bool>();
 	p->isAttemptLoopClosures_ = node["is_attempt_loop_closures"].as<bool>();
 	p->minMovementBetweenMappingSteps_ = node["min_movement_between_mapping_steps"].as<double>();
@@ -229,9 +229,10 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	p->isDumpSubmapsToFileBeforeAndAfterLoopClosures_ = node["dump_submaps_to_file_before_after_lc"].as<bool>();
 	p->isPrintTimingStatistics_ = node["is_print_timing_information"].as<bool>();
 	p->isRefineOdometryConstraintsBetweenSubmaps_ = node["is_refine_odometry_constraints_between_submaps"].as<bool>();
+	p->initializeMap_ = node["initialize_map"].as<bool>();
 	loadParameters(node["scan_to_map_refinement"]["scan_matching"],&(p->scanMatcher_));
 	loadParameters(node["scan_to_map_refinement"]["scan_processing"],&(p->scanProcessing_));
-	loadParameters(node["map_intialization"],&(p->mapInitialization_));
+	loadParameters(node["map_initialization_rejection"],&(p->mapInitializationRejection_));
 	if(p->isBuildDenseMap_){
 		loadParameters(node["dense_map_builder"],&(p->denseMapBuilder_));
 	}
