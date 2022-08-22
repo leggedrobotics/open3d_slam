@@ -62,11 +62,9 @@ struct IcpParameters {
 	IcpObjective icpObjective_ = IcpObjective::PointToPoint;
 };
 
-struct OdometryParameters {
+struct MapInitializingParameters {
 	IcpParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
-	double minAcceptableFitness_ = 0.1;
-	bool isPublishOdometryMsgs_ = false;
 };
 
 struct MapInconsistencyRemoval {
@@ -74,6 +72,14 @@ struct MapInconsistencyRemoval {
 	int minPointsPerVoxel_ = 2;
 	int numPointsWithHighestErrorToRemove_ = 50;
 	double minErrorThresholdForRemoval_ = 1.0;
+};
+
+struct OdometryParameters {
+	IcpParameters scanMatcher_;
+	ScanProcessingParameters scanProcessing_;
+	MapInitializingParameters mapInitializing_;
+	double minAcceptableFitness_ = 0.1;
+	bool isPublishOdometryMsgs_ = false;
 };
 
 struct SpaceCarvingParameters{
@@ -199,6 +205,7 @@ void loadParameters(const std::string &filename, MapBuilderParameters *p);
 void loadParameters(const YAML::Node &node, MapBuilderParameters *p);
 void loadParameters(const std::string &filename, OdometryParameters *p);
 void loadParameters(const YAML::Node &node, OdometryParameters *p);
+void loadParameters(const YAML::Node &node, MapInitializingParameters *p);
 void loadParameters(const YAML::Node &n, SpaceCarvingParameters *p);
 void loadParameters(const std::string &filename, SpaceCarvingParameters *p);
 void loadParameters(const std::string &filename, ScanCroppingParameters *p);

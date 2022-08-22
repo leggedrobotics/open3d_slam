@@ -27,7 +27,6 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 		return true;
 	}
 
-
 	if (timestamp < lastMeasurementTimestamp_) {
 			std::cerr << "\n\n !!!!! LIDAR ODOMETRY WARNING: Measurements came out of order!!!! \n\n";
 			return false;
@@ -35,14 +34,20 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 
 	const o3d_slam::Timer timer;
 	auto croppedCloud = cropper_->crop(cloud);
+
 	// TODO(lukaszpi): create initialization settings for map initialization
-	double voxel_size = params_.scanProcessing_.voxelSize_;
-	double ratio = params_.scanProcessing_.downSamplingRatio_;
-	if(resetIcpTransform_)
-	{
-		voxel_size = 0.05;
-		ratio = 1.0;
+	double &voxel_size = params_.scanProcessing_.voxelSize_;
+	double &ratio  = params_.scanProcessing_.downSamplingRatio_;
+	double &max_correspondance_distance = params_.scanMatcher_.maxCorrespondenceDistance_;
+	Eigen::Matrix4d icpTransform = Eigen::Matrix4d::Identity();
+
+	if (isInitMap_) {
+		voxel_size = params_.mapInitializing_.scanProcessing_.voxelSize_;
+		ratio = params_.mapInitializing_.scanProcessing_.downSamplingRatio_;
+		max_correspondance_distance = params_.mapInitializing_.scanMatcher_.maxCorrespondenceDistance_;
+		icpTransform = mapInitTransform_;
 	}
+	
 	o3d_slam::voxelize(voxel_size, croppedCloud.get());
 	auto downSampledCloud = croppedCloud->RandomDownSample(ratio);
 	
@@ -51,24 +56,12 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 		downSampledCloud->NormalizeNormals();
 	}
 
-	open3d::pipelines::registration::ICPConvergenceCriteria temp_criteria = icpConvergenceCriteria_;
-	double max_correspondance_distance = params_.scanMatcher_.maxCorrespondenceDistance_;
-	if(resetIcpTransform_)
-	{
-		temp_criteria.max_iteration_ = 50;
-		max_correspondance_distance = 0.2;
-	}
-	
 	auto result = open3d::pipelines::registration::RegistrationICP(
 		cloudPrev_, *downSampledCloud, max_correspondance_distance,
-		icpTransform_, *icpObjective_, temp_criteria);
+		icpTransform, *icpObjective_, icpConvergenceCriteria_);
 
-	if(resetIcpTransform_)
-	{
-		std::cout << "\n\nMY Transform: \n" << asString(Transform(result.transformation_)) << "\n" << std::endl;
-	}
 	//todo magic
-	const bool isOdomOkay = result.fitness_ > params_.minAcceptableFitness_ || resetIcpTransform_;
+	const bool isOdomOkay = result.fitness_ > params_.minAcceptableFitness_;
 	if (!isOdomOkay) {
 		  std::cout << "Odometry failed!!!!! \n";
 			std::cout << "Size of the odom buffer: " << odomToRangeSensorBuffer_.size() << std::endl;
@@ -85,10 +78,9 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 		return isOdomOkay;
 	}
 
-	if (resetIcpTransform_)
+	if (isInitMap_)
 	{
-		icpTransform_ = Eigen::Matrix4d::Identity();
-		resetIcpTransform_ = false;
+		isInitMap_ = false;
 	}
 	odomToRangeSensorCumulative_.matrix() *= result.transformation_.inverse();
 	cloudPrev_ = std::move(*downSampledCloud);
@@ -124,8 +116,8 @@ void LidarOdometry::setParameters(const OdometryParameters &p) {
 
 
 void LidarOdometry::setInitialTransform(const Eigen::Matrix4d &initialTransform) {
-	icpTransform_ = initialTransform;
-	resetIcpTransform_ = true;
+	mapInitTransform_ = initialTransform;
+	isInitMap_ = true;
 }
 
 } // namespace o3d_slam

@@ -41,7 +41,8 @@ private:
 	std::shared_ptr<CroppingVolume> cropper_;
 	Time lastMeasurementTimestamp_;
 	Eigen::Matrix4d icpTransform_ = Eigen::Matrix4d::Identity();
-	bool resetIcpTransform_ = false;
+	Eigen::Matrix4d mapInitTransform_;
+	bool isInitMap_ = false;
 };
 
 } // namespace o3d_slam

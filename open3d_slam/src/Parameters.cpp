@@ -133,16 +133,25 @@ void loadParameters(const std::string &filename, OdometryParameters *p){
 	}
 	loadParameters(basenode["odometry"], p);
 }
-void loadParameters(const YAML::Node &node, OdometryParameters *p){
+
+void loadParameters(const YAML::Node& node, OdometryParameters* p) {
 	loadParameters(node["scan_matching"], &(p->scanMatcher_) );
 	loadParameters(node["scan_processing"], &(p->scanProcessing_) );
 	p->minAcceptableFitness_ = node["min_acceptable_fitness"].as<double>();
 	if (node["is_publish_odometry_msgs"].IsDefined()){
 	    p->isPublishOdometryMsgs_ = node["is_publish_odometry_msgs"].as<bool>();
 	}
+	if (node["map_initializing"].IsDefined()){
+	    loadParameters(node["map_initializing"], &(p->mapInitializing_) );
+	}
 }
 
-void loadParameters(const std::string &filename, ScanProcessingParameters *p){
+void loadParameters(const YAML::Node& node, MapInitializingParameters* p) {
+	loadParameters(node["scan_matching"], &(p->scanMatcher_) );
+	loadParameters(node["scan_processing"], &(p->scanProcessing_) );
+}
+
+void loadParameters(const std::string& filename, ScanProcessingParameters* p) {
 	YAML::Node basenode = YAML::LoadFile(filename);
 	if (basenode.IsNull()) {
 		throw std::runtime_error("ScanProcessingParameters::loadParameters loading failed");
