@@ -134,29 +134,31 @@ void loadParameters(const std::string &filename, OdometryParameters *p){
 	loadParameters(basenode["odometry"], p);
 }
 
-void loadParameters(const YAML::Node& node, OdometryParameters* p) {
+void loadParameters(const YAML::Node &node, OdometryParameters *p) {
+	loadParameters(node["scan_to_scan_tools"], &(p->scanToScanToolsParams_) );
+	if (node["map_initializing_tools"].IsDefined()){
+	    loadParameters(node["map_initializing_tools"], &(p->mapInitializingToolsParams_) );
+	}
+	if (node["is_publish_odometry_msgs"].IsDefined()) {
+		p->isPublishOdometryMsgs_ = node["is_publish_odometry_msgs"].as<bool>();
+	}
+	if (node["is_map_initializing"].IsDefined()) {
+		p->isMapInitializing_ = node["is_map_initializing"].as<bool>();
+	}
+}
+
+void loadParameters(const YAML::Node &node, OdometryToolsParameters *p) {
 	loadParameters(node["scan_matching"], &(p->scanMatcher_) );
 	loadParameters(node["scan_processing"], &(p->scanProcessing_) );
 	p->minAcceptableFitness_ = node["min_acceptable_fitness"].as<double>();
-	if (node["is_publish_odometry_msgs"].IsDefined()){
-	    p->isPublishOdometryMsgs_ = node["is_publish_odometry_msgs"].as<bool>();
-	}
-	if (node["map_initializing"].IsDefined()){
-	    loadParameters(node["map_initializing"], &(p->mapInitializing_) );
-	}
 }
 
-void loadParameters(const YAML::Node& node, MapInitializingParameters* p) {
-	loadParameters(node["scan_matching"], &(p->scanMatcher_) );
-	loadParameters(node["scan_processing"], &(p->scanProcessing_) );
-}
-
-void loadParameters(const YAML::Node& node, MapInitializingRejectionParameters* p) {
+void loadParameters(const YAML::Node &node, DistantTransformRejectingParameters *p) {
 	p->maxTranslationError_ = node["max_translation_error"].as<double>();
 	p->maxAngleError_ = node["max_angle_error"].as<double>();
 }
 
-void loadParameters(const std::string& filename, ScanProcessingParameters* p) {
+void loadParameters(const std::string &filename, ScanProcessingParameters *p) {
 	YAML::Node basenode = YAML::LoadFile(filename);
 	if (basenode.IsNull()) {
 		throw std::runtime_error("ScanProcessingParameters::loadParameters loading failed");
@@ -220,7 +222,7 @@ void loadParameters(const std::string &filename, MapperParameters *p) {
 	loadParameters(basenode["mapping"], p);
 }
 
-void loadParameters(const YAML::Node& node, MapperParameters* p) {
+void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	p->isBuildDenseMap_ = node["is_build_dense_map"].as<bool>();
 	p->isAttemptLoopClosures_ = node["is_attempt_loop_closures"].as<bool>();
 	p->minMovementBetweenMappingSteps_ = node["min_movement_between_mapping_steps"].as<double>();
@@ -229,12 +231,12 @@ void loadParameters(const YAML::Node& node, MapperParameters* p) {
 	p->isDumpSubmapsToFileBeforeAndAfterLoopClosures_ = node["dump_submaps_to_file_before_after_lc"].as<bool>();
 	p->isPrintTimingStatistics_ = node["is_print_timing_information"].as<bool>();
 	p->isRefineOdometryConstraintsBetweenSubmaps_ = node["is_refine_odometry_constraints_between_submaps"].as<bool>();
-	p->initializeMap_ = node["initialize_map"].as<bool>();
+	p->isMapInitializing_ = node["is_map_initializing"].as<bool>();
 	loadParameters(node["scan_to_map_refinement"]["scan_matching"],&(p->scanMatcher_));
 	loadParameters(node["scan_to_map_refinement"]["scan_processing"],&(p->scanProcessing_));
 	loadParameters(node["map_initialization_rejection"],&(p->mapInitializationRejection_));
 	if(p->isBuildDenseMap_){
-		loadParameters(node["dense_map_builder"],&(p->denseMapBuilder_));
+		loadParameters(node["dense_map_builder"], &(p->denseMapBuilder_));
 	}
 	loadParameters(node["map_builder"], &(p->mapBuilder_));
 	loadParameters(node["submaps"], &(p->submaps_));
@@ -242,17 +244,17 @@ void loadParameters(const YAML::Node& node, MapperParameters* p) {
 	loadParameters(node["place_recognition"], &(p->placeRecognition_));
 }
 
-void loadParameters(const YAML::Node &n, SpaceCarvingParameters *p){
-  if (n["voxel_size"].IsDefined()){
-    p->voxelSize_ = n["voxel_size"].as<double>();
+void loadParameters(const YAML::Node &node, SpaceCarvingParameters *p){
+  if (node["voxel_size"].IsDefined()){
+    p->voxelSize_ = node["voxel_size"].as<double>();
   }
-  if (n["neigborhood_radius_for_removal"].IsDefined()){
-      p->neighborhoodRadiusDenseMap_ = n["neigborhood_radius_for_removal"].as<double>();
+  if (node["neigborhood_radius_for_removal"].IsDefined()){
+      p->neighborhoodRadiusDenseMap_ = node["neigborhood_radius_for_removal"].as<double>();
     }
-	p->maxRaytracingLength_ = n["max_raytracing_length"].as<double>();
-	p->truncationDistance_ = n["truncation_distance"].as<double>();
-	p->carveSpaceEveryNscans_ = n["carve_space_every_n_scans"].as<int>();
-	p->minDotProductWithNormal_ = n["min_dot_product_with_normal"].as<double>();
+	p->maxRaytracingLength_ = node["max_raytracing_length"].as<double>();
+	p->truncationDistance_ = node["truncation_distance"].as<double>();
+	p->carveSpaceEveryNscans_ = node["carve_space_every_n_scans"].as<int>();
+	p->minDotProductWithNormal_ = node["min_dot_product_with_normal"].as<double>();
 }
 void loadParameters(const std::string &filename, SpaceCarvingParameters *p){
 	YAML::Node basenode = YAML::LoadFile(filename);

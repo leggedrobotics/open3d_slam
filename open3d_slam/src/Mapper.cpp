@@ -148,20 +148,18 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 			params_.scanMatcher_.maxCorrespondenceDistance_, mapToRangeSensorEstimate.matrix(), *icpObjective,
 			icpCriteria_);
 
-	if (!params_.initializeMap_) {
-		if (result.fitness_ < params_.minRefinementFitness_) {
+	if (params_.isMapInitializing_) {
+		if (rejectDistantTransform(mapToRangeSensorEstimate, Transform(result.transformation_), params_.mapInitializationRejection_)) {
+			return false;
+		}
+		params_.isMapInitializing_ = false;
+	}
+	else if (result.fitness_ < params_.minRefinementFitness_) {
 			std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
 			std::cout << "preeIcp: " << asString(mapToRangeSensorEstimate) << "\n";
 			std::cout << "postIcp: " << asString(Transform(result.transformation_)) << "\n\n";
 			isMatchingInProgress_ = false;
 			return false;
-		}
-	}
-	else {
-		if (rejectDistantTransform(mapToRangeSensorEstimate, Transform(result.transformation_))) {
-			return false;
-		}
-		params_.initializeMap_ = false;
 	}
 
 	// update transforms
@@ -184,25 +182,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	return true;
 }
 
-bool Mapper::rejectDistantTransform(Transform preeIcp, Transform postIcp) const
-{
-	Transform transform = preeIcp.inverse() * postIcp;
-
-	if (transform.translation().norm() > params_.mapInitializationRejection_.maxTranslationError_ &&
-			Eigen::AngleAxisd(transform.rotation()).angle() > params_.mapInitializationRejection_.maxAngleError_)
-	{
-		std::cout << "preeIcp: " << asString(preeIcp) << "\n";
-		std::cout << "postIcp: " << asString(postIcp) << "\n\n";
-		std::cout << "Distance between " << transform.translation().norm() << "\n";
-		std::cout << "Angle between " << Eigen::AngleAxisd(transform.rotation()).angle() << "\n";
-		std::cout << "Rejecting " << std::endl;
-		return true;
-	}
-	return false;
-}
-
-
-std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud& rawScan) const {
+std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud &rawScan) const {
 	mapBuilderCropper_->setPose(Transform::Identity());
 	std::shared_ptr<PointCloud> wideCroppedCloud, voxelized, downsampled;
 	wideCroppedCloud = mapBuilderCropper_->crop(rawScan);
@@ -219,7 +199,6 @@ std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud& raw
 	}
 	estimateNormalsIfNeeded(downsampled.get());
 	return downsampled;
-
 }
 
 Mapper::PointCloud Mapper::getAssembledMapPointCloud() const {

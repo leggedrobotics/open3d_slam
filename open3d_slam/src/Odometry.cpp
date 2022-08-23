@@ -14,9 +14,22 @@
 
 namespace o3d_slam {
 
+
+void LidarOdometryTools::setParameters(const OdometryToolsParameters &p) {
+	params_ = p;
+	icpConvergenceCriteria_.max_iteration_ = p.scanMatcher_.maxNumIter_;
+	icpObjective_ = icpObjectiveFactory(p.scanMatcher_.icpObjective_);
+//	cropper_ = std::make_shared<MaxRadiusCroppingVolume>(params_.scanProcessing_.croppingRadius_);
+//	cropper_ = std::make_shared<CylinderCroppingVolume>(params_.scanProcessing_.croppingRadius_,-3.0,3.0);
+	const auto &par = p.scanProcessing_.cropper_;
+	cropper_ = croppingVolumeFactory(par);
+}
+
 LidarOdometry::LidarOdometry() {
-	icpObjective_ = icpObjectiveFactory(IcpObjective::PointToPlane);
-	cropper_ = std::make_shared<CroppingVolume>();
+	scanToScanOdomTools_.icpObjective_ = icpObjectiveFactory(IcpObjective::PointToPlane);
+	scanToScanOdomTools_.cropper_ = std::make_shared<CroppingVolume>();
+	mapInitializingOdomTools_.icpObjective_ = icpObjectiveFactory(IcpObjective::PointToPlane);
+	mapInitializingOdomTools_.cropper_ = std::make_shared<CroppingVolume>();
 }
 
 bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, const Time &timestamp) {
@@ -33,34 +46,23 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 	}
 
 	const o3d_slam::Timer timer;
-	auto croppedCloud = cropper_->crop(cloud);
+	LidarOdometryTools &tools = isMapInitializing_ ? mapInitializingOdomTools_ : scanToScanOdomTools_;
+	auto croppedCloud = tools.cropper_->crop(cloud);
 
-	double &voxel_size = params_.scanProcessing_.voxelSize_;
-	double &ratio  = params_.scanProcessing_.downSamplingRatio_;
-	double &max_correspondance_distance = params_.scanMatcher_.maxCorrespondenceDistance_;
-	Eigen::Matrix4d icpTransform = Eigen::Matrix4d::Identity();
-
-	if (isInitMap_) {
-		voxel_size = params_.mapInitializing_.scanProcessing_.voxelSize_;
-		ratio = params_.mapInitializing_.scanProcessing_.downSamplingRatio_;
-		max_correspondance_distance = params_.mapInitializing_.scanMatcher_.maxCorrespondenceDistance_;
-		icpTransform = mapInitTransform_;
-	}
+	o3d_slam::voxelize(tools.params_.scanProcessing_.voxelSize_, croppedCloud.get());
+	auto downSampledCloud = croppedCloud->RandomDownSample(tools.params_.scanProcessing_.downSamplingRatio_);
 	
-	o3d_slam::voxelize(voxel_size, croppedCloud.get());
-	auto downSampledCloud = croppedCloud->RandomDownSample(ratio);
-	
-	if (params_.scanMatcher_.icpObjective_ == o3d_slam::IcpObjective::PointToPlane) {
-		o3d_slam::estimateNormals(params_.scanMatcher_.kNNnormalEstimation_, downSampledCloud.get());
+	if (tools.params_.scanMatcher_.icpObjective_ == o3d_slam::IcpObjective::PointToPlane) {
+		o3d_slam::estimateNormals(tools.params_.scanMatcher_.kNNnormalEstimation_, downSampledCloud.get());
 		downSampledCloud->NormalizeNormals();
 	}
 
 	auto result = open3d::pipelines::registration::RegistrationICP(
-		cloudPrev_, *downSampledCloud, max_correspondance_distance,
-		icpTransform, *icpObjective_, icpConvergenceCriteria_);
+		cloudPrev_, *downSampledCloud, tools.params_.scanMatcher_.maxCorrespondenceDistance_,
+		tools.icpTransform_, *tools.icpObjective_, tools.icpConvergenceCriteria_);
 
 	//todo magic
-	const bool isOdomOkay = result.fitness_ > params_.minAcceptableFitness_;
+	const bool isOdomOkay = result.fitness_ > tools.params_.minAcceptableFitness_;
 	if (!isOdomOkay) {
 		  std::cout << "Odometry failed!!!!! \n";
 			std::cout << "Size of the odom buffer: " << odomToRangeSensorBuffer_.size() << std::endl;
@@ -77,9 +79,9 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 		return isOdomOkay;
 	}
 
-	if (isInitMap_)
+	if (isMapInitializing_)
 	{
-		isInitMap_ = false;
+		isMapInitializing_ = false;
 	}
 	odomToRangeSensorCumulative_.matrix() *= result.transformation_.inverse();
 	cloudPrev_ = std::move(*downSampledCloud);
@@ -103,20 +105,16 @@ bool  LidarOdometry::hasProcessedMeasurements() const{
 	return !odomToRangeSensorBuffer_.empty();
 }
 
-void LidarOdometry::setParameters(const OdometryParameters &p) {
-	params_ = p;
-	icpConvergenceCriteria_.max_iteration_ = p.scanMatcher_.maxNumIter_;
-	icpObjective_ = icpObjectiveFactory(params_.scanMatcher_.icpObjective_);
-//	cropper_ = std::make_shared<MaxRadiusCroppingVolume>(params_.scanProcessing_.croppingRadius_);
-//	cropper_ = std::make_shared<CylinderCroppingVolume>(params_.scanProcessing_.croppingRadius_,-3.0,3.0);
-	const auto &par = params_.scanProcessing_.cropper_;
-	cropper_ = croppingVolumeFactory(par);
+void LidarOdometry::setParameters(const OdometryParameters& p) {
+	isMapInitializing_ = p.isMapInitializing_;
+	scanToScanOdomTools_.setParameters(p.scanToScanToolsParams_);
+	if (isMapInitializing_) {
+		mapInitializingOdomTools_.setParameters(p.mapInitializingToolsParams_);
+	}
 }
 
-
 void LidarOdometry::setInitialTransform(const Eigen::Matrix4d &initialTransform) {
-	mapInitTransform_ = initialTransform;
-	isInitMap_ = true;
+	mapInitializingOdomTools_.icpTransform_ = initialTransform;
 }
 
 } // namespace o3d_slam

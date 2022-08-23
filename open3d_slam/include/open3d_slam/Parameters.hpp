@@ -62,9 +62,9 @@ struct IcpParameters {
 	IcpObjective icpObjective_ = IcpObjective::PointToPoint;
 };
 
-struct MapInitializingParameters {
-	IcpParameters scanMatcher_;
-	ScanProcessingParameters scanProcessing_;
+struct  DistantTransformRejectingParameters{
+	double maxTranslationError_ = 0.3;
+	double maxAngleError_ = M_PI / 18.0;
 };
 
 struct MapInconsistencyRemoval {
@@ -74,11 +74,16 @@ struct MapInconsistencyRemoval {
 	double minErrorThresholdForRemoval_ = 1.0;
 };
 
-struct OdometryParameters {
+struct OdometryToolsParameters {
 	IcpParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
-	MapInitializingParameters mapInitializing_;
 	double minAcceptableFitness_ = 0.1;
+};
+
+struct OdometryParameters {
+	OdometryToolsParameters scanToScanToolsParams_;
+	OdometryToolsParameters mapInitializingToolsParams_;
+	bool isMapInitializing_ = false;
 	bool isPublishOdometryMsgs_ = false;
 };
 
@@ -137,10 +142,6 @@ struct GlobalOptimizationParameters {
 };
 
 
-struct  MapInitializingRejectionParameters{
-	double maxTranslationError_ = 0.3;
-	double maxAngleError_ = M_PI / 18.0;
-};
 
 struct MapperParameters {
 	IcpParameters scanMatcher_;
@@ -154,12 +155,12 @@ struct MapperParameters {
 	SubmapParameters submaps_;
 	PlaceRecognitionParameters placeRecognition_;
 	GlobalOptimizationParameters globalOptimization_;
-	MapInitializingRejectionParameters mapInitializationRejection_;
+	DistantTransformRejectingParameters mapInitializationRejection_;
 	bool isAttemptLoopClosures_ = true;
 	bool isDumpSubmapsToFileBeforeAndAfterLoopClosures_ = false;
 	bool isPrintTimingStatistics_ = true;
 	bool isRefineOdometryConstraintsBetweenSubmaps_ = false;
-	bool initializeMap_ = false;
+	bool isMapInitializing_ = false;
 };
 
 struct VisualizationParameters {
@@ -205,11 +206,11 @@ void loadParameters(const std::string &filename, MapBuilderParameters *p);
 void loadParameters(const YAML::Node &node, MapBuilderParameters *p);
 void loadParameters(const std::string &filename, OdometryParameters *p);
 void loadParameters(const YAML::Node &node, OdometryParameters *p);
-void loadParameters(const YAML::Node &node, MapInitializingParameters *p);
-void loadParameters(const YAML::Node &node, MapInitializingRejectionParameters *p);
-void loadParameters(const YAML::Node &n, SpaceCarvingParameters *p);
+void loadParameters(const YAML::Node &node, OdometryToolsParameters *p);
+void loadParameters(const YAML::Node &node, DistantTransformRejectingParameters *p);
+void loadParameters(const YAML::Node &node, SpaceCarvingParameters *p);
 void loadParameters(const std::string &filename, SpaceCarvingParameters *p);
-void loadParameters(const std::string &filename, ScanCroppingParameters *p);
 void loadParameters(const YAML::Node &node, ScanCroppingParameters *p);
+void loadParameters(const std::string &filename, ScanCroppingParameters *p);
 
 } // namespace o3d_slam

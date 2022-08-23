@@ -58,6 +58,8 @@ PointCloud getPointCloudWithinCroppingVolume(const CroppingVolume &croppingVolum
 std::vector<Eigen::Vector3i> getKeysOfCarvedPoints(const PointCloud &scan,
 		const VoxelizedPointCloud &cloud, const Eigen::Vector3d &sensorPosition, const SpaceCarvingParameters &param);
 
-std::shared_ptr<PointCloud> removePointsWithNonFiniteValues(const PointCloud &in);
+std::shared_ptr<PointCloud> removePointsWithNonFiniteValues(const PointCloud& in);
+
+bool rejectDistantTransform(const Transform &transform1, const Transform &transform2, const DistantTransformRejectingParameters &params);
 
 } /* namespace o3d_slam */

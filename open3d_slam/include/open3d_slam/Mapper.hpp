@@ -47,7 +47,6 @@ private:
 	void update(const MapperParameters &p);
 	void estimateNormalsIfNeeded(PointCloud *pcl) const;
 	void checkTransformChainingAndPrintResult(bool isCheckTransformChainingAndPrintResult) const;
-	bool rejectDistantTransform(Transform preeIcp, Transform postIcp) const;
 
 	bool isMatchingInProgress_ = false;
 	bool isManipulatingMap_ = false;
