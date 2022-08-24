@@ -6,13 +6,19 @@ This package is a catkin wrapper around Open3D.
 
 ## 1 - Overview
 
-If no Open3D installation is present on the system, *open3d_catkin* is built by compiling the Open3D libraries within the catkin workspace. On a modern desktop computer this takes about 5 minutes. If an Open3D installation exists on the system, this is used instead and wrapped as a catkin package automatically. The latter can be particularly useful if multiple workspaces with these packages are compiled on the computer, or *open3d_catkin* is intended for longer-term usage.
+If no Open3D installation is present on the system, *open3d_catkin* is built by compiling the Open3D libraries within the catkin workspace. On a modern desktop computer this takes about 5 minutes. 
+If an Open3D installation exists on the system, this is used instead and wrapped as a catkin package automatically. The latter can be particularly useful if multiple workspaces with these packages are compiled on the computer, or *open3d_catkin* is intended for longer-term usage. There are two ways to install Open3D:
+1. From a PPA ([Section 2](#ppa)) or
+By compiling it locally or globally from source ([Section 3](#from_source)). This can be done either explicitly as shown in
+2. [Section 2.1](#explicit_compilation), or
+3. Open3D will automatically be be compiled in the catkin workspace as shown in [Section 2.2](#automatic_compilation).
 
-## 2.A - EASY WAY: Install Open3d from a PPA
+<a name="ppa"></a>
+## 2 - Install Open3d from a PPA
 
-Execute EITHER this step OR 2.B.
+**Execute EITHER this step OR [Section 3](#from_source) for compiling Open3D from source.**
 
-You can install Open3d from a PPA. The PPA contains Open3d and all dependencies.
+You can install Open3d from a PPA. The PPA contains Open3d and all dependencies needed to run open3d_slam, but if additional functionality or optimized performance is required [Section 3](#from_source) might be more suitable.
 First add the PPA to your system:
 ```bash
 sudo add-apt-repository ppa:roehling/open3d
@@ -20,42 +26,56 @@ sudo apt update
 sudo apt install libopen3d-dev
 ```
 
-Proceed to the *open3d_catkin* [compilation step](#compilation).
+Next, proceed to the *open3d_catkin* [compilation step](#catkin_compilation).
 
-## 2.B - EXPERT WAY: Build Open3d from source
+<a name="from_source"></a>
+## 3 - Build Open3d from source
 
-Execute EITHER this step OR 2.A. This step can lead to better performance, removes the need for the required PPA and can potentially be build with CUDA support.
+This is only needed if [Section 2](#ppa) was NOT installed.
+
+Building Open3D from source can lead to better performance, removes the need for the required PPA and can potentially be build with CUDA support. On an Intel i9 12900K this roughly takes 4-5 minutes.
+
+<a name="requirements"></a>
+### 3.0 - Requirements
 
 <a name="CMake"></a>
-### CMake
+#### 3.0.1 - CMake
 
-#### Version >3.18 is required to build open3d_catkin.
+For compiling Open3D from source, CMake ersion >3.18 is required.
 For installation, do:
-* Download the latest tar archive from https://cmake.org/download/
-* ```tar -xf cmake-<version>-rc4.tar.gz```, where ```<version>``` can for example be _3.23.1_.
+* Download the latest **source distribution** tar archive from [https://cmake.org/download/](https://cmake.org/download/) for your operating system (e.g. _cmake-3.24.1.tar.gz_).
+* Extract it by doing ```tar -xf cmake-<version>.tar.gz```, where ```<version>``` can for example be _3.24.1_.
 * Then install this cmake version by doing
 ```bash
 cd cmake-<version>-rc4.tar.gz
 ./configure
-make -j12
+make -j$(nproc)
 sudo make install
 ```
 
-### Open3D Dependencies
-Execute either the original installation script from open3d: 
-[script](https://github.com/isl-org/Open3D/blob/v0.13.0/util/install_deps_ubuntu.sh),
-or our fetched version via
+#### 3.0.2 - Additional Dependencies
+Execute either the original installation script from open3d:
+* [script](https://github.com/isl-org/Open3D/blob/v0.15.1/util/install_deps_ubuntu.sh)
+* and execute `sudo apt install libfmt-dev libglfw3-dev`
+OR
+* our [fetched script version](https://github.com/leggedrobotics/open3d_slam/blob/master/open3d_catkin/install_deps.sh) via
 ```bash
 sudo ./install_deps.sh
 ```
 
-If you don't want to install open3d locally, skip the next step and proceed to the *open3d_catkin* [compilation step](#compilation).
+#### 3.0.3 - CUDA Support
+NOTE: this is not needed for open3d_slam, but might be helpful if you use open3d_catkin in other projects.
+
+If you want to compute with cuda support add the following flag when configuring the cmake `-DBUILD_CUDA_MODULE=ON`. In this case you might have to manually specify the path to your nvcc compiler.
+This can be done by adding the `CMAKE_CUDA_COMPILER:PATH` flag when invoking the cmake; e.g. `-DCMAKE_CUDA_COMPILER:PATH=/usr/local/cuda-11.5/bin/nvcc`. It can still happen that you get weird include errors in which case you should not use the system eigen, i.e. `-DUSE_SYSTEM_EIGEN3=OFF` 
 
 
-### Build Open3D
+<a name="explicit_compilation"></a>
+### 3.1 - Explicit Compilation of Open3D
+
+**NOTE: This step is optional. If no explicit compilation is performed, automatically Section [Section 3.2](#automatic_compilation) is used to automaticall compile open3D in the workspace.**
+
 As an optional step, open3d can be installed, either locally in the home folder or as a global system dependency.
-
-Make sure you have installed the correct CMake version (see [above](#CMake))
 
 Clone the following repository:  
 ```bash
@@ -73,29 +93,36 @@ Create a build directory and build from source:
 ```bash   
 mkdir build
 cd build 
-cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_SYSTEM_EIGEN3=OFF -DGLIBCXX_USE_CXX11_ABI=ON -DBUILD_PYTHON_MODULE=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/Programs/open3d_install .. # If global install is desired, remove the -DCMAKE_INSTALL_PREFIX-var
+cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_SYSTEM_EIGEN3=OFF -DGLIBCXX_USE_CXX11_ABI=ON -DBUILD_PYTHON_MODULE=OFF -DCMAKE_INSTALL_PREFIX:PATH=${HOME}/.local .. # If global install is desired, remove the -DCMAKE_INSTALL_PREFIX-var
 make -j$(nproc)
 make install # if global installation, add "sudo"
 ```
 
-### CUDA Support
-NOTE: this is not needed for open3d_slam, but might be helpful if you use open3d_catkin in other projects.
-
-If you want to compute with cuda support add the following flag when configuring the cmake `-DBUILD_CUDA_MODULE=ON`. In this case you might have to manually specify the path to your nvcc compiler.
-This can be done by adding the `CMAKE_CUDA_COMPILER:PATH` flag when invoking the cmake; e.g. `-DCMAKE_CUDA_COMPILER:PATH=/usr/local/cuda-11.5/bin/nvcc`. It can still happen that you get weird include errors in which case you should not use the system eigen, i.e. `-DUSE_SYSTEM_EIGEN3=OFF` 
-
 ### Set Local Paths
-If open3d has been installed locally, the simplest way to build the catkin package is to add the sufficient environment variable to your bashrc:
+If open3d has been installed locally, the simplest way to build the catkin package is to add the sufficient environment variable to your bashrc, i.e. either
 ```bash
 export Open3D_DIR="<your install prefix>/lib/cmake/Open3D"
 ```
-E.g.
+, e.g.
 ```bash 
-export Open3D_DIR="$HOME/Programs/open3d_install/lib/cmake/Open3D"
+export Open3D_DIR="$HOME/.local/lib/cmake/Open3D"
 ```
-This is not needed if open3d has been compiled globally (or installed via "apt install").
+OR
+```bash
+export CMAKE_PREFIX_PATH=$HOME/.local/:$CMAKE_PREFIX_PATH
+export LD_LIBRARY_PATH=$HOME/.local/lib/:$LD_LIBRARY_PATH
+export LIBRARY_PATH=${LIBRARY_PATH}:${LD_LIBRARY_PATH}
+```
 
-<a name="compilation"></a>
+Next, proceed to the *open3d_catkin* [compilation step](#catkin_compilation).
+
+<a name="automatic_compilation"></a>
+### 3.2 - Automatic Compilation of Open3D
+For this part, no additional steps are required, just proceed to [Section 4](#compilation).
+
+Next, proceed to the *open3d_catkin* [compilation step](#catkin_compilation).
+
+<a name="catkin_compilation"></a>
 ## 3 - open3d_catkin Compilation
 Once Open3D has been installed, compilation of *open3d_catkin* is then really straightforward.
 Make sure you have a catkin workspace with this repository:
