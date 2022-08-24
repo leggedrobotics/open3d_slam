@@ -11,6 +11,7 @@ If an Open3D installation exists on the system, this is used instead and wrapped
 1. From a PPA ([Section 2](#ppa)) or
 
 By compiling it locally or globally from source ([Section 3](#from_source)). This can be done either explicitly as shown in
+
 2. [Section 3.1](#explicit_compilation), or
 3. Open3D will automatically be be compiled in the catkin workspace as shown in [Section 3.2](#automatic_compilation).
 
