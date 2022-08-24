@@ -26,12 +26,12 @@ First add the PPA to your system:
 sudo add-apt-repository ppa:roehling/open3d
 sudo apt update
 ```
-, then install the library
+Then install the library
 ```bash
 sudo apt install libopen3d-dev
 ```
 
-Next, proceed to the *open3d_catkin* [compilation step](#catkin_compilation).
+Next, proceed to the *open3d_catkin* compilation step in [Section 4](#catkin_compilation).
 
 <a name="from_source"></a>
 ## 3 - Build Open3d from source
@@ -46,11 +46,11 @@ Building Open3D from source can lead to better performance, removes the need for
 <a name="CMake"></a>
 #### 3.0.1 - CMake
 
-For compiling Open3D from source, CMake ersion >3.18 is required.
+For compiling Open3D from source, **CMake version >3.18** is required.
 For installation, do:
-* Download the latest **source distribution** tar archive from [https://cmake.org/download/](https://cmake.org/download/) for your operating system (e.g. _cmake-3.24.1.tar.gz_).
-* Extract it by doing ```tar -xf cmake-<version>.tar.gz```, where ```<version>``` can for example be _3.24.1_.
-* Then install this cmake version by doing
+1. Download the latest **source distribution** tar archive from [https://cmake.org/download/](https://cmake.org/download/) for your operating system (e.g. *cmake-3.24.1.tar.gz*).
+2. Extract it by doing ```tar -xf cmake-<version>.tar.gz```, where ```<version>``` can for example be _3.24.1_.
+3. Then install this cmake version by doing
 ```bash
 cd cmake-<version>-rc4.tar.gz
 ./configure
@@ -142,6 +142,8 @@ As introduced before, the 3 compilation options are chosen automatically in the 
 2. open3d is installed globally.
 Both of these options should compile within a few seconds.
 3. If none of the before cases holds, open3d is automatically pulled locally and compiled inside the workspace.
+
+The actual compilation of *open3d_slam* and *open3d_slam_ros* should require less than a minute.
 
 ## 5 - Usage of open3d_catkin in your project
 Usage in your catkin project is then straightforward.
