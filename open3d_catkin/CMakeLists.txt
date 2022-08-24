@@ -23,7 +23,7 @@ if(NOT WIN32)
   set(Magenta     "${Esc}[35m")
 endif()
 
-# Check whether variable is set
+# 1 - Check whether variable is set -----------------------------------------------------------
 if(DEFINED ENV{Open3D_DIR})
   set(Open3D_DIR ENV{Open3D_DIR})
   find_package(Open3D CONFIG REQUIRED)
@@ -39,21 +39,23 @@ if(DEFINED ENV{Open3D_DIR})
   DEPENDS
     Open3D 
   )
-# Check whether open3d is installed
+# 2 - Check whether open3d is installed -------------------------------------------------------
 elseif(Open3D_FOUND)
   message("${BoldMagenta}INFO: Found Open3D.${ColourReset}")
+  message("Open3D libraries: ${Open3D_LIBRARIES}")
+  message("${Open3D_INCLUDE_DIRS}")
 
   catkin_package(
     INCLUDE_DIRS 
       ${Open3D_INCLUDE_DIRS}
     LIBRARIES 
-      ${Open3D_LIBRARIES} 
+      ${Open3D_LIBRARIES}
     CATKIN_DEPENDS
       ${CATKIN_PACKAGE_DEPENDENCIES}
     DEPENDS
       Open3D 
   )
-# Compile in catkin workspace
+# 3 - Compile in catkin workspace -------------------------------------------------------------
 else()
   message("${BoldMagenta}INFO: Neither variable Open3d_DIR is set, nor could Open3D be found, hence compiling in workspace.${ColourReset}")
 
@@ -77,7 +79,6 @@ else()
          -DGLIBCXX_USE_CXX11_ABI=ON
          -DBUILD_PYTHON_MODULE=OFF
          -DCMAKE_INSTALL_PREFIX=${CATKIN_DEVEL_PREFIX}
-    #CMAKE_COMMAND cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_SYSTEM_EIGEN3=OFF -DGLIBCXX_USE_CXX11_ABI=ON -DBUILD_PYTHON_MODULE=OFF -DCMAKE_INSTALL_PREFIX=$ENV{HOME}/Programs/open3d_install "${CMAKE_SOURCE_DIR}/open3d"
     INSTALL_COMMAND make install && bash "-c" "cp -r ${CMAKE_SOURCE_DIR}/tmp/fmt/include/ ${CATKIN_DEVEL_PREFIX} && cp ${CMAKE_SOURCE_DIR}/tmp/fmt/lib/*.a ${CATKIN_DEVEL_PREFIX}/lib/"
   )
 

@@ -10,10 +10,10 @@ If no Open3D installation is present on the system, *open3d_catkin* is built by 
 If an Open3D installation exists on the system, this is used instead and wrapped as a catkin package automatically. The latter can be particularly useful if multiple workspaces with these packages are compiled on the computer, or *open3d_catkin* is intended for longer-term usage. There are two ways to install Open3D:
 1. From a PPA ([Section 2](#ppa)) or
 
-By compiling it locally or globally from source ([Section 3](#from_source)). This can be done either explicitly as shown in
+By compiling it locally or globally from source ([Section 3](#from_source)). This can be done by executing [Step 3.0](#requirements) **and** either 
 
-2. [Section 3.1](#explicit_compilation), or
-3. Open3D will automatically be be compiled in the catkin workspace as shown in [Section 3.2](#automatic_compilation).
+2. explicitly as shown in [Section 3.1](#explicit_compilation), or
+3. automatically compiled in the catkin workspace as shown in [Section 3.2](#automatic_compilation).
 
 <a name="ppa"></a>
 ## 2 - Install Open3d from a PPA
@@ -42,6 +42,7 @@ Building Open3D from source can lead to better performance, removes the need for
 
 <a name="requirements"></a>
 ### 3.0 - Requirements
+The requirements in Section 3.0 have to be installed for any open-source installation.
 
 <a name="CMake"></a>
 #### 3.0.1 - CMake
@@ -61,10 +62,9 @@ sudo make install
 #### 3.0.2 - Additional Dependencies
 Execute either the original installation script from open3d:
 * [script](https://github.com/isl-org/Open3D/blob/v0.15.1/util/install_deps_ubuntu.sh)
-* and execute `sudo apt install libfmt-dev libglfw3-dev`
 
 OR
-* run our [modified installation script](https://github.com/leggedrobotics/open3d_slam/blob/master/open3d_catkin/install_deps.sh) via
+* run our [fetched installation script](https://github.com/leggedrobotics/open3d_slam/blob/master/open3d_catkin/install_deps.sh) (they are the same) via
 ```bash
 sudo ./install_deps.sh
 ```
@@ -100,6 +100,10 @@ cd build
 cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_SYSTEM_EIGEN3=OFF -DGLIBCXX_USE_CXX11_ABI=ON -DBUILD_PYTHON_MODULE=OFF -DCMAKE_INSTALL_PREFIX:PATH=${HOME}/.local .. # If global install is desired, remove the -DCMAKE_INSTALL_PREFIX-var
 make -j$(nproc)
 make install # if global installation, add "sudo"
+```
+This will move all *open3d* includes and libraries to the correct location. In order to also make the required fmt libraries available, run the following
+```bash
+sudo apt install libfmt-dev
 ```
 
 ### Set Local Paths
