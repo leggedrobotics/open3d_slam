@@ -13,6 +13,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
+#include "open3d_slam_ros/Parameters.hpp"
 #include "open3d_slam/SlamWrapper.hpp"
 #include <visualization_msgs/InteractiveMarker.h>
 #include <visualization_msgs/InteractiveMarkerFeedback.h>
@@ -26,8 +27,8 @@ class SlamMapInitializer{
 public:
 	SlamMapInitializer(std::shared_ptr<SlamWrapper> slamPtr, ros::NodeHandlePtr nh);
 	~SlamMapInitializer() = default;
-
-	void initialize();
+	
+	void initialize(const MapInitializingParameters params);
 
 private:
 	void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg);
@@ -40,9 +41,7 @@ private:
 	std::shared_ptr<SlamWrapper> slamPtr_;
 	ros::Subscriber cloudSubscriber_;
 	std::atomic_bool initialized_;
-	std::string frameId_;
-	std::string meshResourcePath_;
-	std::string pcdFilePath_;
+	MapInitializingParameters mapInitializerParams_;
 	ros::NodeHandlePtr nh_;
 
 };

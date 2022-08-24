@@ -167,6 +167,10 @@ void SlamWrapper::setMapSavingDirectoryPath(const std::string &path){
 	mapSavingFolderPath_ = path;
 }
 
+std::string SlamWrapper::getParameterFilePath() const {
+	return paramPath_;
+}
+
 void SlamWrapper::setParameterFilePath(const std::string &path){
 	paramPath_ = path;
 }

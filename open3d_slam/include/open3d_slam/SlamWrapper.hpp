@@ -58,6 +58,7 @@ public:
 	size_t getMappingBufferSize() const;
 	size_t getOdometryBufferSizeLimit() const;
 	size_t getMappingBufferSizeLimit() const;
+	std::string getParameterFilePath() const;
 	std::pair<PointCloud,Time> getLatestRegisteredCloudTimestampPair() const;
 	bool saveMap(const std::string &directory);
 	bool saveSubmaps(const std::string &directory);

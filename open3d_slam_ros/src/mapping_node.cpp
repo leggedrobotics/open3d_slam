@@ -6,6 +6,7 @@
  */
 #include <open3d/Open3D.h>
 #include "open3d_slam_ros/creators.hpp"
+#include "open3d_slam_ros/Parameters.hpp"
 #include "open3d_slam_ros/SlamMapInitializer.hpp"
 
 
@@ -15,19 +16,22 @@ int main(int argc, char **argv) {
 	ros::init(argc, argv, "lidar_odometry_mapping_node");
 	ros::NodeHandlePtr nh(new ros::NodeHandle("~"));
 
+	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
+	NodeParameters params;
+	loadParameters(paramFile, &params);
+
 	const bool isProcessAsFastAsPossible = nh->param<bool>("is_read_from_rosbag", false);
-	const bool isInitializeMap = nh->param<bool>("is_initialize_map", false);
 	std::cout << "Is process as fast as possible: " << std::boolalpha << isProcessAsFastAsPossible << "\n";
-	std::cout << "Initialize map: " << std::boolalpha << isInitializeMap << "\n";
+	std::cout << "Initialize map: " << std::boolalpha << params.isInitializeMap_ << "\n";
 
 	std::shared_ptr<DataProcessorRos> dataProcessor = dataProcessorFactory(nh, isProcessAsFastAsPossible);
 
 	dataProcessor->initialize();
-	
-	if (isInitializeMap) {
+
+	if (params.isInitializeMap_) {
 		std::shared_ptr<SlamWrapper> slam = dataProcessor->getSlamPtr();
 		std::shared_ptr<SlamMapInitializer> slamMapInitializer = std::make_shared<SlamMapInitializer>(slam, nh);
-		slamMapInitializer->initialize();
+		slamMapInitializer->initialize(params.MapInitializing_);
 	}
 
 	dataProcessor->startProcessing();

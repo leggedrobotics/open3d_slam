@@ -27,19 +27,15 @@ SlamMapInitializer::SlamMapInitializer(std::shared_ptr<SlamWrapper> slamPtr, ros
   nh_(nh){
 }
 
-void SlamMapInitializer::initialize() {
+void SlamMapInitializer::initialize(const MapInitializingParameters params) {
+  mapInitializerParams_ = params;
   PointCloud raw_map;
-
-  frameId_ = nh_->param<std::string>("initial_map/map_frame_id", "");
-  meshResourcePath_ = nh_->param<std::string>("initial_map/map_mesh_path", "");
-  pcdFilePath_ = nh_->param<std::string>("initial_map/map_pointcloud_path", "");
-
 
   initialized_.store(false);
 
   initInterectiveMarker();
   
-  if (!open3d::io::ReadPointCloud(pcdFilePath_, raw_map))
+  if (!open3d::io::ReadPointCloud(mapInitializerParams_.pcdFilePath_, raw_map))
 	{
 		std::cerr << "[Error] Initialization pointcloud not loaded" << std::endl;
   }
@@ -83,7 +79,7 @@ void SlamMapInitializer::interactiveMarkerCallback(const visualization_msgs::Int
 
 visualization_msgs::InteractiveMarker SlamMapInitializer::createInteractiveMarker() const {
 	visualization_msgs::InteractiveMarker interactiveMarker;
-  interactiveMarker.header.frame_id = frameId_;
+  interactiveMarker.header.frame_id = mapInitializerParams_.frameId_;
   interactiveMarker.header.stamp = ros::Time::now();
   interactiveMarker.name = "Initial Pose";
   interactiveMarker.scale = 0.5;
@@ -98,10 +94,10 @@ visualization_msgs::InteractiveMarker SlamMapInitializer::createInteractiveMarke
   interactiveMarker.pose.orientation.w = 0.0;
 
   // create a mesh marker
-  const auto meshMarker = [&meshResourcePath_ = meshResourcePath_]() {
+  const auto meshMarker = [&meshFilePath_ = mapInitializerParams_.meshFilePath_]() {
     visualization_msgs::Marker marker;
 		marker.type = visualization_msgs::Marker::MESH_RESOURCE;
-		marker.mesh_resource = meshResourcePath_;
+		marker.mesh_resource = meshFilePath_;
     marker.color.r = 0.5;
     marker.color.g = 0.5;
     marker.color.b = 0.5;
