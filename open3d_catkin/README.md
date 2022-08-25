@@ -92,19 +92,20 @@ Then, update the submodules:
 ```bash
 git submodule update --init --recursive
 ```
+Since we will use system install of the fmt libraries, run the following
+```bash
+sudo apt install libfmt-dev
+```
 
 Create a build directory and build from source:
 ```bash   
 mkdir build
 cd build 
-cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_SYSTEM_EIGEN3=OFF -DGLIBCXX_USE_CXX11_ABI=ON -DBUILD_PYTHON_MODULE=OFF -DCMAKE_INSTALL_PREFIX:PATH=${HOME}/.local .. # If global install is desired, remove the -DCMAKE_INSTALL_PREFIX-var
+cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_SYSTEM_EIGEN3=OFF -DUSE_SYSTEM_FMT=ON -DGLIBCXX_USE_CXX11_ABI=ON -DBUILD_PYTHON_MODULE=OFF -DCMAKE_INSTALL_PREFIX:PATH=${HOME}/.local .. # If global install is desired, remove the -DCMAKE_INSTALL_PREFIX-var
 make -j$(nproc)
 make install # if global installation, add "sudo"
 ```
-This will move all *open3d* includes and libraries to the correct location. In order to also make the required fmt libraries available, run the following
-```bash
-sudo apt install libfmt-dev
-```
+This will move all *open3d* includes and libraries to the correct location. 
 
 ### Set Local Paths
 If open3d has been installed locally, the simplest way to build the catkin package is to add the sufficient environment variable to your bashrc, i.e. either
