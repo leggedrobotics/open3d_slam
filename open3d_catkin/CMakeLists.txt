@@ -28,10 +28,13 @@ if(DEFINED ENV{Open3D_DIR})
   set(Open3D_DIR ENV{Open3D_DIR})
   find_package(Open3D CONFIG REQUIRED)
   message("${BoldMagenta}INFO: Found manually set path to Open3D. Using version located at $ENV{Open3D_DIR}.${ColourReset}")
-
+  set(Open3D_INCLUDE_DIR_MAN "${Open3D_DIR}/../../../include/")
+  message("include path: ${Open3D_INCLUDE_DIRS} , ${Open3D_INCLUDE_DIR_MAN}")
+  message("libs: ${Open3D_LIBRARIES}")
   catkin_package(
   INCLUDE_DIRS 
     ${Open3D_INCLUDE_DIRS}
+    ${Open3D_INCLUDE_DIR_MAN}
   LIBRARIES 
     ${Open3D_LIBRARIES} 
   CATKIN_DEPENDS
