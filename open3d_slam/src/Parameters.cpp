@@ -129,9 +129,11 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	p->isRefineOdometryConstraintsBetweenSubmaps_ = node["is_refine_odometry_constraints_between_submaps"].as<bool>();
 	p->isMapInitializing_ = node["is_map_initializing"].as<bool>();
 	loadParameters(node["scan_to_map_refinement"]["scan_matching"],&(p->scanMatcher_));
-	loadParameters(node["scan_to_map_refinement"]["scan_processing"],&(p->scanProcessing_));
-	loadParameters(node["map_initialization_rejection"],&(p->mapInitializationRejection_));
-	if(p->isBuildDenseMap_){
+	loadParameters(node["scan_to_map_refinement"]["scan_processing"], &(p->scanProcessing_));
+	if (node["map_initialization_rejection"].IsDefined()) {
+		loadParameters(node["map_initialization_rejection"], &(p->mapInitializationRejection_));
+	}
+	if (p->isBuildDenseMap_) {
 		loadParameters(node["dense_map_builder"], &(p->denseMapBuilder_));
 	}
 	loadParameters(node["map_builder"], &(p->mapBuilder_));

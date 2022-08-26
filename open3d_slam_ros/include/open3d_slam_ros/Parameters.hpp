@@ -2,7 +2,7 @@
  * Parameters.hpp
  *
  *  Created on: Aug 24, 2022
- *      Author: Lukasz Pietrasik
+ *      Author: lukaszpi
  */
 
 #pragma once
@@ -10,13 +10,12 @@
 #include <string>
 #include <iostream>
 
-#include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Quaternion.h>
 
 
 namespace o3d_slam {
-
 
 struct MapInitializingParameters {
   std::string frameId_ = "";
@@ -26,16 +25,14 @@ struct MapInitializingParameters {
 };
 
 struct NodeParameters {
-  // TODO(lukaszpi): Add rest of parameters
   bool isInitializeMap_ = false;
   MapInitializingParameters MapInitializing_;
 };
 
 // TODO(lukaszpi): Use template from open3d_slam
-void loadParameters(const std::string& filename, MapInitializingParameters* p);
-void loadParameters(const YAML::Node &node, MapInitializingParameters *p);
 void loadParameters(const std::string& filename, NodeParameters* p);
 void loadParameters(const YAML::Node &node, NodeParameters *p);
+void loadParameters(const YAML::Node &node, MapInitializingParameters *p);
 void loadParameters(const YAML::Node &node, geometry_msgs::Pose *p);
 void loadParameters(const YAML::Node &node, geometry_msgs::Point *p);
 void loadParameters(const YAML::Node &node, geometry_msgs::Quaternion *p);
