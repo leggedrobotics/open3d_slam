@@ -34,15 +34,17 @@ void SlamMapInitializer::initialize(const MapInitializingParameters params) {
   initialized_.store(false);
 
   initInterectiveMarker();
-  
+  std::cout << "Loading pointloud from: " << mapInitializerParams_.pcdFilePath_ << "\n";
   if (!open3d::io::ReadPointCloud(mapInitializerParams_.pcdFilePath_, raw_map))
 	{
 		std::cerr << "[Error] Initialization pointcloud not loaded" << std::endl;
   }
   
+  ros::Rate r(100);
   while (!initialized_.load())
   {
     ros::spinOnce();
+    r.sleep();
   }
   slamPtr_->setInitialMap(raw_map);
   
@@ -68,7 +70,7 @@ void SlamMapInitializer::initInterectiveMarker() {
 void SlamMapInitializer::interactiveMarkerCallback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& msg) {
   Eigen::Affine3d init_transform;
 	tf::poseMsgToEigen(msg->pose, init_transform);
-  std::cout << "Initial Pose" << msg->pose << std::endl;
+  std::cout << "Initial Pose \n" << msg->pose << std::endl;
   slamPtr_->setInitialTransform(init_transform.matrix());
   initialized_.store(true);
 }

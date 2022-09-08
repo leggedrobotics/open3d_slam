@@ -32,6 +32,7 @@ int main(int argc, char **argv) {
 		std::shared_ptr<SlamWrapper> slam = dataProcessor->getSlamPtr();
 		std::shared_ptr<SlamMapInitializer> slamMapInitializer = std::make_shared<SlamMapInitializer>(slam, nh);
 		slamMapInitializer->initialize(params.MapInitializing_);
+		std::cout << "Finished setting initial map! \n";
 	}
 
 	dataProcessor->startProcessing();
