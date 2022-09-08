@@ -45,6 +45,14 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 	}
 
 	mapToRangeSensor_ = mapToRangeSensor;
+
+	if (params_.isUseInitialMap_ && mapCloud_.IsEmpty()){
+		std::lock_guard<std::mutex> lck(mapPointCloudMutex_);
+		mapCloud_ = rawScan;
+		estimateNormalsIfNeeded(params_.scanMatcher_.kNNnormalEstimation_, &mapCloud_);
+		return true;
+	}
+
 	auto transformedCloud = o3d_slam::transform(mapToRangeSensor.matrix(), preProcessedScan);
 	estimateNormalsIfNeeded(params_.scanMatcher_.kNNnormalEstimation_, transformedCloud.get());
 	if (isPerformCarving) {

@@ -14,6 +14,8 @@
 #include "open3d_conversions/open3d_conversions.h"
 #include "open3d_slam/frames.hpp"
 #include "open3d_slam/time.hpp"
+#include "open3d_slam/helpers.hpp"
+
 #include "open3d_slam_ros/helpers_ros.hpp"
 #include "open3d_slam_ros/SlamMapInitializer.hpp"
 #include "open3d_slam_ros/SlamWrapperRos.hpp"
@@ -33,18 +35,32 @@ void SlamMapInitializer::initialize(const MapInitializingParameters params) {
 
   initialized_.store(false);
 
-  initInterectiveMarker();
+
   std::cout << "Loading pointloud from: " << mapInitializerParams_.pcdFilePath_ << "\n";
   if (!open3d::io::ReadPointCloud(mapInitializerParams_.pcdFilePath_, raw_map))
 	{
 		std::cerr << "[Error] Initialization pointcloud not loaded" << std::endl;
   }
-  
-  ros::Rate r(100);
-  while (!initialized_.load())
+
   {
-    ros::spinOnce();
-    r.sleep();
+    std::cout << "Calculating normals for the initial map!" << std::endl;
+    const auto &p = slamPtr_->getMapperParameters();
+    const int knn = p.scanMatcher_.kNNnormalEstimation_;
+    Timer t("initial map normal estimation");
+    if (!raw_map.HasNormals() && p.scanMatcher_.icpObjective_ == o3d_slam::IcpObjective::PointToPlane) {
+    		estimateNormals(p.scanMatcher_.kNNnormalEstimation_, &raw_map);
+    		raw_map.NormalizeNormals(); //todo, dunno if I need this
+    	}
+    std::cout << "Normals estimated! \n" << std::endl;
+  }
+  if (params.isUseInteractiveMarker_){
+    initInterectiveMarker();
+    ros::Rate r(100);
+    while (!initialized_.load())
+    {
+      ros::spinOnce();
+      r.sleep();
+    }
   }
   slamPtr_->setInitialMap(raw_map);
   

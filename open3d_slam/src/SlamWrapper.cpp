@@ -80,6 +80,10 @@ SlamWrapper::~SlamWrapper() {
 	}
 }
 
+const MapperParameters &SlamWrapper::getMapperParameters() const{
+	return mapperParams_;
+}
+
 size_t SlamWrapper::getOdometryBufferSize() const {
 	return odometryBuffer_.size();
 }
@@ -217,10 +221,10 @@ void SlamWrapper::loadParametersAndInitialize() {
 void SlamWrapper::setInitialMap(const PointCloud &initialMap) {
 	TimestampedPointCloud measurement{fromUniversal(0), std::move(initialMap)};
 
-	const bool isOdomOkay = odometry_->addRangeScan(measurement.cloud_, measurement.time_);
-	if (!isOdomOkay) {
-		std::cerr << "WARNING: odometry intialization has failed!!!! \n";
-	}
+//	const bool isOdomOkay = odometry_->addRangeScan(measurement.cloud_, measurement.time_);
+//	if (!isOdomOkay) {
+//		std::cerr << "WARNING: odometry intialization has failed!!!! \n";
+//	}
 	
 	const bool mappingResult = mapper_->addRangeMeasurement(measurement.cloud_, measurement.time_);
 	if (!mappingResult) {
@@ -230,7 +234,8 @@ void SlamWrapper::setInitialMap(const PointCloud &initialMap) {
 
 
 void SlamWrapper::setInitialTransform(const Eigen::Matrix4d initialTransform) {
-	odometry_->setInitialTransform(initialTransform);
+//	odometry_->setInitialTransform(initialTransform);
+	mapper_->setMapToRangeSensor(Transform(initialTransform));
 }
 
 void SlamWrapper::startWorkers() {

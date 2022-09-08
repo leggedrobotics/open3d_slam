@@ -103,9 +103,13 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 
 	//insert first scan
 	if (submaps_->getActiveSubmap().isEmpty()) {
-		auto wideCroppedCloud = preProcessScan(rawScan);
-		submaps_->insertScan(rawScan, *wideCroppedCloud, Transform::Identity(), timestamp);
-		mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
+		if (params_.isUseInitialMap_){
+			submaps_->insertScan(rawScan, rawScan, Transform::Identity(), timestamp);
+		} else {
+			auto wideCroppedCloud = preProcessScan(rawScan);
+			submaps_->insertScan(rawScan, *wideCroppedCloud, Transform::Identity(), timestamp);
+			mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
+		}
 		isMatchingInProgress_ = false;
 		return true;
 	}
@@ -150,13 +154,15 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 			params_.scanMatcher_.maxCorrespondenceDistance_, mapToRangeSensorEstimate.matrix(), *icpObjective,
 			icpCriteria_);
 
-	if (params_.isMapInitializing_) {
-		if (rejectDistantTransform(mapToRangeSensorEstimate, Transform(result.transformation_), params_.mapInitializationRejection_)) {
-			return false;
-		}
-		params_.isMapInitializing_ = false;
-	}
-	else if (result.fitness_ < params_.minRefinementFitness_) {
+	//todo see how to handle this
+//	if (params_.isUseInitialMap_) {
+//		if (rejectDistantTransform(mapToRangeSensorEstimate, Transform(result.transformation_), params_.mapInitializationRejection_)) {
+//			return false;
+//		}
+//		params_.isUseInitialMap_ = false;
+//	}
+
+	if (result.fitness_ < params_.minRefinementFitness_) {
 			std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
 			std::cout << "preeIcp: " << asString(mapToRangeSensorEstimate) << "\n";
 			std::cout << "postIcp: " << asString(Transform(result.transformation_)) << "\n\n";

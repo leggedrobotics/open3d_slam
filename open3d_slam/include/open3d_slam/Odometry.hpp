@@ -15,17 +15,6 @@
 #include "open3d_slam/TransformInterpolationBuffer.hpp"
 
 namespace o3d_slam {
-struct LidarOdometryTools {
-
-	void setParameters(const OdometryToolsParameters& p);
-
-	OdometryToolsParameters params_;
-	std::shared_ptr<open3d::pipelines::registration::TransformationEstimation> icpObjective_;
-	open3d::pipelines::registration::ICPConvergenceCriteria icpConvergenceCriteria_;
-	std::shared_ptr<CroppingVolume> cropper_;
-	Eigen::Matrix4d icpTransform_ = Eigen::Matrix4d::Identity();
-};
-
 class LidarOdometry {
 
 public:
@@ -43,14 +32,16 @@ public:
 	void setInitialTransform(const Eigen::Matrix4d &initialTransform);
 
 private:
-
 	TransformInterpolationBuffer odomToRangeSensorBuffer_;
 	open3d::geometry::PointCloud cloudPrev_;
 	Transform odomToRangeSensorCumulative_ = Transform::Identity();
-	LidarOdometryTools scanToScanOdomTools_;
-	LidarOdometryTools mapInitializingOdomTools_;
-	bool isMapInitializing_ = false;
+	OdometryParameters params_;
+	std::shared_ptr<open3d::pipelines::registration::TransformationEstimation> icpObjective_;
+	open3d::pipelines::registration::ICPConvergenceCriteria icpConvergenceCriteria_;
+	std::shared_ptr<CroppingVolume> cropper_;
 	Time lastMeasurementTimestamp_;
+	Eigen::Matrix4d icpTransform_ = Eigen::Matrix4d::Identity();
+	bool resetIcpTransform_ = false;
 };
 
 } // namespace o3d_slam

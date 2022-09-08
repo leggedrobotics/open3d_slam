@@ -54,6 +54,7 @@ public:
 	virtual void stopWorkers();
 	virtual void finishProcessing();
 
+	const MapperParameters &getMapperParameters() const;
 	size_t getOdometryBufferSize() const;
 	size_t getMappingBufferSize() const;
 	size_t getOdometryBufferSizeLimit() const;

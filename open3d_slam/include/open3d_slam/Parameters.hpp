@@ -77,17 +77,10 @@ struct MapInconsistencyRemoval {
 	double minErrorThresholdForRemoval_ = 1.0;
 };
 
-struct OdometryToolsParameters {
+struct OdometryParameters {
 	IcpParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
-	double minAcceptableFitness_ = 0.1;
-};
-
-struct OdometryParameters {
-	OdometryToolsParameters scanToScanToolsParams_;
-	OdometryToolsParameters mapInitializingToolsParams_;
-	bool isMapInitializing_ = false;
-	bool isPublishOdometryMsgs_ = false;
+  bool isPublishOdometryMsgs_ = false;
 };
 
 struct SpaceCarvingParameters{
@@ -163,7 +156,7 @@ struct MapperParameters {
 	bool isDumpSubmapsToFileBeforeAndAfterLoopClosures_ = false;
 	bool isPrintTimingStatistics_ = true;
 	bool isRefineOdometryConstraintsBetweenSubmaps_ = false;
-	bool isMapInitializing_ = false;
+	bool isUseInitialMap_ = false;
 };
 
 struct VisualizationParameters {
@@ -198,7 +191,6 @@ const std::map<std::type_index, std::string> typeKeywordMap{
 	{std::type_index(typeid(MapperParameters)), "mapping"},
 	{std::type_index(typeid(MapBuilderParameters)), "map_builder"},
 	{std::type_index(typeid(OdometryParameters)), "odometry"},
-	{std::type_index(typeid(OdometryToolsParameters)), "odometry_tools"},
 	{std::type_index(typeid(DistantTransformRejectingParameters)), "distant_transform_rejection"},
 	{std::type_index(typeid(SpaceCarvingParameters)), "space_carving"},
 	{std::type_index(typeid(ScanCroppingParameters)), "scan_cropping"},
@@ -234,7 +226,6 @@ void loadParameters(const YAML::Node &node, IcpParameters *p);
 void loadParameters(const YAML::Node &node, MapperParameters *p);
 void loadParameters(const YAML::Node &node, MapBuilderParameters *p);
 void loadParameters(const YAML::Node &node, OdometryParameters *p);
-void loadParameters(const YAML::Node &node, OdometryToolsParameters *p);
 void loadParameters(const YAML::Node &node, DistantTransformRejectingParameters *p);
 void loadParameters(const YAML::Node &node, SpaceCarvingParameters *p);
 void loadParameters(const YAML::Node &node, ScanCroppingParameters *p);

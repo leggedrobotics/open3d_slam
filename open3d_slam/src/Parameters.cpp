@@ -68,23 +68,19 @@ void loadParameters(const YAML::Node &n, IcpParameters *p) {
 	p->maxNumIter_ = n["max_n_iter"].as<int>();
 }
 
-void loadParameters(const YAML::Node &node, OdometryParameters *p) {
-	loadParameters(node["scan_to_scan_tools"], &(p->scanToScanToolsParams_) );
-	if (node["map_initializing_tools"].IsDefined()){
-	    loadParameters(node["map_initializing_tools"], &(p->mapInitializingToolsParams_) );
+void loadParameters(const std::string &filename, OdometryParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+	if (basenode.IsNull()) {
+		throw std::runtime_error("Odometry::loadParameters loading failed");
 	}
-	if (node["is_publish_odometry_msgs"].IsDefined()) {
-		p->isPublishOdometryMsgs_ = node["is_publish_odometry_msgs"].as<bool>();
-	}
-	if (node["is_map_initializing"].IsDefined()) {
-		p->isMapInitializing_ = node["is_map_initializing"].as<bool>();
-	}
+	loadParameters(basenode["odometry"], p);
 }
-
-void loadParameters(const YAML::Node &node, OdometryToolsParameters *p) {
+void loadParameters(const YAML::Node &node, OdometryParameters *p){
 	loadParameters(node["scan_matching"], &(p->scanMatcher_) );
 	loadParameters(node["scan_processing"], &(p->scanProcessing_) );
-	p->minAcceptableFitness_ = node["min_acceptable_fitness"].as<double>();
+	if (node["is_publish_odometry_msgs"].IsDefined()){
+	    p->isPublishOdometryMsgs_ = node["is_publish_odometry_msgs"].as<bool>();
+	}
 }
 
 void loadParameters(const YAML::Node &node, DistantTransformRejectingParameters *p) {
@@ -127,7 +123,7 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	p->isDumpSubmapsToFileBeforeAndAfterLoopClosures_ = node["dump_submaps_to_file_before_after_lc"].as<bool>();
 	p->isPrintTimingStatistics_ = node["is_print_timing_information"].as<bool>();
 	p->isRefineOdometryConstraintsBetweenSubmaps_ = node["is_refine_odometry_constraints_between_submaps"].as<bool>();
-	p->isMapInitializing_ = node["is_map_initializing"].as<bool>();
+	p->isUseInitialMap_ = node["is_map_initializing"].as<bool>();
 	loadParameters(node["scan_to_map_refinement"]["scan_matching"],&(p->scanMatcher_));
 	loadParameters(node["scan_to_map_refinement"]["scan_processing"], &(p->scanProcessing_));
 	if (node["map_initialization_rejection"].IsDefined()) {

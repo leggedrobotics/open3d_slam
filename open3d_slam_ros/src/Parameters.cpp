@@ -34,6 +34,7 @@ void loadParameters(const YAML::Node& node, MapInitializingParameters* p) {
 	p->frameId_ = node["frame_id"].as<std::string>();
 	p->meshFilePath_ = node["mesh_file_path"].as<std::string>();
 	p->pcdFilePath_ = node["pcd_file_path"].as<std::string>();
+	p->isUseInteractiveMarker_ = node["is_use_interactive_maerker"].as<bool>();
 	if (node["marker_pose"].IsDefined()) {
 		loadParameters(node["marker_pose"], &(p->initialMarkerPose_));
 	}
