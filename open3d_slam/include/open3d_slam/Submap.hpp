@@ -83,7 +83,6 @@ private:
 	size_t nScansInsertedMap_ = 0;
 	size_t nScansInsertedDenseMap_ = 0;
 	std::shared_ptr<Feature> feature_;
-	Time creationTime_;
 	size_t id_ = 0;
 	bool isCenterComputed_ = false;
 	size_t parentId_ = 0;

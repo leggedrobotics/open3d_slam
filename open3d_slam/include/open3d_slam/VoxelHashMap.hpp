@@ -28,10 +28,27 @@ struct EigenVec3iHash {
   static constexpr size_t sl2 = sl * sl;
 
   std::size_t operator()(const Eigen::Vector3i& index) const {
+    // same a OpenVDB
+//    return ((1 << 20) - 1) & (index.x() * 73856093 ^ index.y() * 19349663 ^ index.z() * 83492791);
     return static_cast<unsigned int>(index.x() + index.y() * sl +
                                      index.z() * sl2);
   }
 };
+
+struct InverseVoxelSize {
+  double invSizeX_ = 1.0 / 0.1;
+  double invSizeY_ = 1.0 / 0.1;
+  double invSizeZ_ = 1.0 / 0.1;
+};
+
+inline InverseVoxelSize fromVoxelSize(const Eigen::Vector3d &voxSize){
+  return InverseVoxelSize{1.0 / voxSize.x(), 1.0 / voxSize.y(), 1.0 / voxSize.z()};
+}
+
+inline Eigen::Vector3i getVoxelIdx(const Eigen::Vector3d &p, const InverseVoxelSize &invSize) {
+  return Eigen::Vector3i(int(std::floor(p.x() * invSize.invSizeX_)),
+      int(std::floor(p.y() * invSize.invSizeY_)), int(std::floor(p.z() * invSize.invSizeZ_)));
+}
 
 inline Eigen::Vector3i getVoxelIdx(const Eigen::Vector3d &p, const Eigen::Vector3d &voxelSize) {
 	Eigen::Vector3d coord = p.array() / voxelSize.array();
@@ -92,13 +109,14 @@ EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	VoxelHashMap() :
 			VoxelHashMap(Eigen::Vector3d::Constant(0.25)) {
 	}
-	VoxelHashMap(const Eigen::Vector3d &voxelSize) :
-			voxelSize_(voxelSize) {
-	}
+  VoxelHashMap(const Eigen::Vector3d &voxelSize) :
+      voxelSize_(voxelSize) {
+    inverseVoxelSize_ = fromVoxelSize(voxelSize);
+  }
 	virtual ~VoxelHashMap() = default;
 
 	bool hasVoxelContainingPoint(const Eigen::Vector3d &p) const {
-		const auto voxelIdx = getVoxelIdx(p, voxelSize_);
+		const auto voxelIdx = getVoxelIdx(p, inverseVoxelSize_);
 		const auto search = voxels_.find(voxelIdx);
 		return search != voxels_.end();
 	}
@@ -116,7 +134,7 @@ EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 		return voxels_.empty();
 	}
 	Eigen::Vector3i getKey(const Eigen::Vector3d &p) const {
-		return getVoxelIdx(p, voxelSize_);
+		return getVoxelIdx(p, inverseVoxelSize_);
 	}
 	void removeKey(const Eigen::Vector3i &k) {
 		voxels_.erase(k);
@@ -128,7 +146,7 @@ EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	}
 
 	Voxel *getVoxelContainingPointPtr(const Eigen::Vector3d &p) {
-		const Eigen::Vector3i key = getVoxelIdx(p, voxelSize_);
+		const Eigen::Vector3i key = getVoxelIdx(p, inverseVoxelSize_);
 		auto search = voxels_.find(key);
 		return search != voxels_.end() ? &(search->second) : nullptr;
 	}
@@ -139,7 +157,7 @@ EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	}
 
 	const Voxel *getVoxelContainingPointPtr(const Eigen::Vector3d &p) const {
-		const Eigen::Vector3i key = getVoxelIdx(p, voxelSize_);
+		const Eigen::Vector3i key = getVoxelIdx(p, inverseVoxelSize_);
 		const auto search = voxels_.find(key);
 		return search != voxels_.end() ? &(search->second) : nullptr;
 	}
@@ -151,6 +169,7 @@ EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   ContainerImpl_t voxels_;
 protected:
 	Eigen::Vector3d voxelSize_;
+	InverseVoxelSize inverseVoxelSize_;
 
 };
 } // namespace o3d_slam

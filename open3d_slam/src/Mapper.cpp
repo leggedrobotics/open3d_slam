@@ -142,6 +142,8 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		preProcessedScan_ = *narrowCropped;
 		scanMatcherCropper_->setPose(mapToRangeSensor_);
 		mapPatch = scanMatcherCropper_->crop(activeSubmapPointCloud);
+		assert_gt<int>(mapPatch->points_.size(),0,"map patch size is zero");
+		assert_gt<int>(narrowCropped->points_.size(),0,"narrow cropped size is zero");
 	}
 
 	const auto result = open3d::pipelines::registration::RegistrationICP(*narrowCropped, *mapPatch,
