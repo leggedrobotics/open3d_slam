@@ -84,6 +84,9 @@ const MapperParameters &SlamWrapper::getMapperParameters() const{
 	return mapperParams_;
 }
 
+MapperParameters *SlamWrapper::getMapperParametersPtr(){
+	return mapper_->getParametersPtr();
+}
 size_t SlamWrapper::getOdometryBufferSize() const {
 	return odometryBuffer_.size();
 }

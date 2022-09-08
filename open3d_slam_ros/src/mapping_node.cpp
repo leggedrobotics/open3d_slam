@@ -17,21 +17,21 @@ int main(int argc, char **argv) {
 	ros::NodeHandlePtr nh(new ros::NodeHandle("~"));
 
 	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
-	NodeParameters params;
+	MapperParametersWithInitialization params;
 	loadParameters(paramFile, &params);
 
 	const bool isProcessAsFastAsPossible = nh->param<bool>("is_read_from_rosbag", false);
 	std::cout << "Is process as fast as possible: " << std::boolalpha << isProcessAsFastAsPossible << "\n";
-	std::cout << "Initialize map: " << std::boolalpha << params.isInitializeMap_ << "\n";
+	std::cout << "Initialize map: " << std::boolalpha << params.isUseInitialMap_ << "\n";
 
 	std::shared_ptr<DataProcessorRos> dataProcessor = dataProcessorFactory(nh, isProcessAsFastAsPossible);
 
 	dataProcessor->initialize();
 
-	if (params.isInitializeMap_) {
+	if (params.isUseInitialMap_) {
 		std::shared_ptr<SlamWrapper> slam = dataProcessor->getSlamPtr();
 		std::shared_ptr<SlamMapInitializer> slamMapInitializer = std::make_shared<SlamMapInitializer>(slam, nh);
-		slamMapInitializer->initialize(params.MapInitializing_);
+		slamMapInitializer->initialize(params.mapInitParameters_);
 		std::cout << "Finished setting initial map! \n";
 	}
 

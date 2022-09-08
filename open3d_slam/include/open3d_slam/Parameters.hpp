@@ -70,13 +70,6 @@ struct  DistantTransformRejectingParameters{
 	double maxAngleError_ = M_PI / 18.0;
 };
 
-struct MapInconsistencyRemoval {
-	Eigen::Vector3d voxelSize_{0.5,0.5,0.5};
-	int minPointsPerVoxel_ = 2;
-	int numPointsWithHighestErrorToRemove_ = 50;
-	double minErrorThresholdForRemoval_ = 1.0;
-};
-
 struct OdometryParameters {
 	IcpParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
@@ -157,6 +150,7 @@ struct MapperParameters {
 	bool isPrintTimingStatistics_ = true;
 	bool isRefineOdometryConstraintsBetweenSubmaps_ = false;
 	bool isUseInitialMap_ = false;
+  bool isMergeScansIntoMap_ = true;
 };
 
 struct VisualizationParameters {

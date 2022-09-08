@@ -55,6 +55,8 @@ public:
 	virtual void finishProcessing();
 
 	const MapperParameters &getMapperParameters() const;
+	MapperParameters *getMapperParametersPtr();
+
 	size_t getOdometryBufferSize() const;
 	size_t getMappingBufferSize() const;
 	size_t getOdometryBufferSizeLimit() const;

@@ -9,7 +9,7 @@
 
 namespace o3d_slam {
 
-void loadParameters(const std::string& filename, NodeParameters *p)
+void loadParameters(const std::string& filename, MapperParametersWithInitialization *p)
 {
 	YAML::Node basenode = YAML::LoadFile(filename);
 	if (basenode.IsNull()) {
@@ -18,15 +18,17 @@ void loadParameters(const std::string& filename, NodeParameters *p)
 		throw std::runtime_error(error_msg);
 	}
 
-	if (basenode["ros_node"].IsDefined()) {
-		loadParameters(basenode["ros_node"], p);
+	loadParameters(filename,static_cast<MapperParameters*>(p));
+
+	if (basenode["mapping"].IsDefined()) {
+		loadParameters(basenode["mapping"], p);
 	}
 }
 
-void loadParameters(const YAML::Node& node, NodeParameters* p) {
-	p->isInitializeMap_ = node["is_initialize_map"].as<bool>();
+void loadParameters(const YAML::Node& node, MapperParametersWithInitialization* p) {
+	std::cout << "here \n";
 	if (node["map_intializer"].IsDefined()){
-	  loadParameters(node["map_intializer"], &(p->MapInitializing_) );
+	  loadParameters(node["map_intializer"], &(p->mapInitParameters_) );
 	}
 }
 
@@ -34,9 +36,9 @@ void loadParameters(const YAML::Node& node, MapInitializingParameters* p) {
 	p->frameId_ = node["frame_id"].as<std::string>();
 	p->meshFilePath_ = node["mesh_file_path"].as<std::string>();
 	p->pcdFilePath_ = node["pcd_file_path"].as<std::string>();
-	p->isUseInteractiveMarker_ = node["is_use_interactive_maerker"].as<bool>();
-	if (node["marker_pose"].IsDefined()) {
-		loadParameters(node["marker_pose"], &(p->initialMarkerPose_));
+	p->isUseInteractiveMarker_ = node["is_use_interactive_marker"].as<bool>();
+	if (node["init_pose"].IsDefined()) {
+		loadParameters(node["init_pose"], &(p->initialMarkerPose_));
 	}
 }
 

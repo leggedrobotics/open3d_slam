@@ -38,6 +38,10 @@ void Mapper::setParameters(const MapperParameters &p) {
 	update(p);
 }
 
+MapperParameters *Mapper::getParametersPtr(){
+	return &params_;
+}
+
 void Mapper::loopClosureUpdate(const Transform &loopClosureCorrection) {
 	mapToRangeSensor_ = loopClosureCorrection * mapToRangeSensor_;
 	mapToRangeSensorPrev_ = loopClosureCorrection * mapToRangeSensorPrev_;
@@ -173,9 +177,16 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	// update transforms
 	mapToRangeSensor_.matrix() = result.transformation_;
 	mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
+	submaps_->setMapToRangeSensor(mapToRangeSensor_);
+
+	if (!params_.isMergeScansIntoMap_){
+		lastMeasurementTimestamp_ = timestamp;
+		mapToRangeSensorPrev_ = mapToRangeSensor_;
+		isMatchingInProgress_ = false;
+		return false;
+	}
 
 	// concatenate registered cloud into map
-	submaps_->setMapToRangeSensor(mapToRangeSensor_);
 	const Transform sensorMotion = mapToRangeSensorLastScanInsertion_.inverse() * mapToRangeSensor_;
 	const bool isMovedTooLittle = sensorMotion.translation().norm() < params_.minMovementBetweenMappingSteps_;
 	if (!isMovedTooLittle) {

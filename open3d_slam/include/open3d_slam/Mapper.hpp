@@ -35,6 +35,7 @@ public:
 	PointCloud getAssembledMapPointCloud() const;
 	bool addRangeMeasurement(const PointCloud &cloud, const Time &timestamp);
 	void setParameters(const MapperParameters &p);
+	MapperParameters *getParametersPtr();
 	Transform getMapToOdom(const Time &timestamp) const;
 	Transform getMapToRangeSensor(const Time &timestamp) const;
 	const TransformInterpolationBuffer& getMapToRangeSensorBuffer() const;

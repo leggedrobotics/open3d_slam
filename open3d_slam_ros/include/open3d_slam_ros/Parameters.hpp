@@ -13,9 +13,11 @@
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Quaternion.h>
-
+#include "open3d_slam/Parameters.hpp"
 
 namespace o3d_slam {
+
+
 
 struct MapInitializingParameters {
   std::string frameId_ = "";
@@ -25,14 +27,16 @@ struct MapInitializingParameters {
 	bool isUseInteractiveMarker_= false;
 };
 
-struct NodeParameters {
-  bool isInitializeMap_ = false;
-  MapInitializingParameters MapInitializing_;
+//todo move these guys
+struct MapperParametersWithInitialization : public MapperParameters  {
+	MapInitializingParameters mapInitParameters_;
 };
 
+
+
 // TODO(lukaszpi): Use template from open3d_slam
-void loadParameters(const std::string& filename, NodeParameters* p);
-void loadParameters(const YAML::Node &node, NodeParameters *p);
+void loadParameters(const std::string& filename, MapperParametersWithInitialization* p);
+void loadParameters(const YAML::Node &node, MapperParametersWithInitialization *p);
 void loadParameters(const YAML::Node &node, MapInitializingParameters *p);
 void loadParameters(const YAML::Node &node, geometry_msgs::Pose *p);
 void loadParameters(const YAML::Node &node, geometry_msgs::Point *p);
