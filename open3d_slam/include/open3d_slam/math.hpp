@@ -8,6 +8,7 @@
 #pragma once
 #include <Eigen/Dense>
 #include <vector>
+#include "open3d_slam/Transform.hpp"
 
 
 namespace o3d_slam {
@@ -21,6 +22,11 @@ double calcStandardDeviation(const std::vector<double> &data);
 Eigen::Quaterniond fromRPY(double roll, double pitch, double yaw);
 Eigen::Vector3d toRPY(const Eigen::Quaterniond &q);
 Eigen::Quaterniond fromRPY(const Eigen::Vector3d &rpy);
+Transform fromXYZandRPY(const Eigen::Vector3d &xyz, const Eigen::Vector3d &rpy);
+Transform fromXYZandRPY(const Eigen::Vector3d &xyz, double roll, double pitch, double yaw);
+Transform fromXYZandRPY(double x, double y, double z, double roll, double pitch, double yaw);
+Transform fromXYZandQuaternion(double x, double y, double z, const Eigen::Quaterniond &q);
+Transform fromXYZandQuaternion(const Eigen::Vector3d &xyz, const Eigen::Quaterniond &q);
 
 template<typename T>
 inline T getRollFromQuat(T w, T x, T y, T z)

@@ -15,6 +15,7 @@
 #include "open3d_slam/frames.hpp"
 #include "open3d_slam/time.hpp"
 #include "open3d_slam/helpers.hpp"
+#include "open3d_slam/output.hpp"
 
 #include "open3d_slam_ros/helpers_ros.hpp"
 #include "open3d_slam_ros/SlamMapInitializer.hpp"
@@ -29,7 +30,7 @@ SlamMapInitializer::SlamMapInitializer(std::shared_ptr<SlamWrapper> slamPtr, ros
   nh_(nh){
 }
 
-void SlamMapInitializer::initialize(const MapInitializingParameters params) {
+void SlamMapInitializer::initialize(const MapInitializingParameters &params) {
   mapInitializerParams_ = params;
   PointCloud raw_map;
 
@@ -53,6 +54,10 @@ void SlamMapInitializer::initialize(const MapInitializingParameters params) {
     	}
     std::cout << "Normals estimated! \n" << std::endl;
   }
+  Transform initPose;
+	tf::poseMsgToEigen(params.initialMarkerPose_, initPose);
+  slamPtr_->setInitialTransform(initPose.matrix());
+  std::cout << "init pose: " << asString(initPose) << std::endl;
   if (params.isUseInteractiveMarker_){
     initInterectiveMarker();
     ros::Rate r(100);

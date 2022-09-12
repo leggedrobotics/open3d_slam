@@ -88,6 +88,9 @@ SubmapCollection* Mapper::getSubmapsPtr() {
 void Mapper::setMapToRangeSensor(const Transform &t) {
 	mapToRangeSensor_ = t;
 }
+void Mapper::setMapToRangeSensorPrev(const Transform &t){
+	mapToRangeSensorPrev_ = t;
+}
 
 void Mapper::estimateNormalsIfNeeded(PointCloud *pcl) const {
 	if (!pcl->HasNormals() && params_.scanMatcher_.icpObjective_ == o3d_slam::IcpObjective::PointToPlane) {
@@ -183,7 +186,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		lastMeasurementTimestamp_ = timestamp;
 		mapToRangeSensorPrev_ = mapToRangeSensor_;
 		isMatchingInProgress_ = false;
-		return false;
+		return true;
 	}
 
 	// concatenate registered cloud into map

@@ -239,6 +239,8 @@ void SlamWrapper::setInitialMap(const PointCloud &initialMap) {
 void SlamWrapper::setInitialTransform(const Eigen::Matrix4d initialTransform) {
 //	odometry_->setInitialTransform(initialTransform);
 	mapper_->setMapToRangeSensor(Transform(initialTransform));
+	mapper_->setMapToRangeSensorPrev(Transform(initialTransform));
+
 }
 
 void SlamWrapper::startWorkers() {

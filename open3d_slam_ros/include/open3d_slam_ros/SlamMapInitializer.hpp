@@ -28,7 +28,7 @@ public:
 	SlamMapInitializer(std::shared_ptr<SlamWrapper> slamPtr, ros::NodeHandlePtr nh);
 	~SlamMapInitializer() = default;
 	
-	void initialize(const MapInitializingParameters params);
+	void initialize(const MapInitializingParameters &params);
 
 private:
 	void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg);

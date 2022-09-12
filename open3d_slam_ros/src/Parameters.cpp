@@ -6,8 +6,12 @@
  */
 
 #include "open3d_slam_ros/Parameters.hpp"
+#include "open3d_slam/math.hpp"
 
 namespace o3d_slam {
+namespace{
+ const double kDegToRad = M_PI / 180.0;
+}
 
 void loadParameters(const std::string& filename, MapperParametersWithInitialization *p)
 {
@@ -64,18 +68,22 @@ void loadParameters(const YAML::Node& node, geometry_msgs::Point* p) {
 }
 
 void loadParameters(const YAML::Node& node, geometry_msgs::Quaternion* p) {
-	if (node["x"].IsDefined()){
-	  p->x = node["x"].as<float>();
+	double roll(0.0),pitch(0.0),yaw(0.0);
+	if (node["roll"].IsDefined()){
+	  roll = node["roll"].as<double>() * kDegToRad;
 	}
-	if (node["y"].IsDefined()) {
-		p->y = node["y"].as<float>();
+	if (node["pitch"].IsDefined()) {
+		pitch = node["pitch"].as<double>() * kDegToRad;
 	}
-	if (node["z"].IsDefined()){
-	  p->z = node["z"].as<float>();
+	if (node["yaw"].IsDefined()){
+	  yaw = node["yaw"].as<double>() * kDegToRad;
 	}
-	if (node["w"].IsDefined()){
-	  p->w = node["w"].as<float>();
-	}
+	const Eigen::Quaterniond q = fromRPY(roll,pitch,yaw);
+	p->x = q.x();
+	p->y = q.y();
+	p->z = q.z();
+	p->w = q.w();
+
 }
 
 } // namespace o3d_slam

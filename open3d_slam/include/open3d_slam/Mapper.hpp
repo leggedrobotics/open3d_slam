@@ -29,6 +29,8 @@ public:
 	~Mapper() = default;
 
 	void setMapToRangeSensor(const Transform &t);
+	void setMapToRangeSensorPrev(const Transform &t);
+
 	const Submap& getActiveSubmap() const;
 	const SubmapCollection& getSubmaps() const;
 	SubmapCollection* getSubmapsPtr();
