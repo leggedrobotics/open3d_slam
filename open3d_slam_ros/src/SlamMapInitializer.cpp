@@ -24,18 +24,25 @@
 
 namespace o3d_slam {
 
+const double sqrt2= std::sqrt(2.0);
+
 SlamMapInitializer::SlamMapInitializer(std::shared_ptr<SlamWrapper> slamPtr, ros::NodeHandlePtr nh) :
   server_("initialization_pose"),
   slamPtr_(slamPtr),
   nh_(nh){
 }
 
+SlamMapInitializer::~SlamMapInitializer(){
+	if (initWorker_.joinable()) {
+		initWorker_.join();
+		std::cout << "Joined mapInitializer worker \n";
+	}
+}
+
 void SlamMapInitializer::initialize(const MapInitializingParameters &params) {
   mapInitializerParams_ = params;
   PointCloud raw_map;
-
   initialized_.store(false);
-
 
   std::cout << "Loading pointloud from: " << mapInitializerParams_.pcdFilePath_ << "\n";
   if (!open3d::io::ReadPointCloud(mapInitializerParams_.pcdFilePath_, raw_map))
@@ -58,28 +65,33 @@ void SlamMapInitializer::initialize(const MapInitializingParameters &params) {
 	tf::poseMsgToEigen(params.initialMarkerPose_, initPose);
   slamPtr_->setInitialTransform(initPose.matrix());
   std::cout << "init pose: " << asString(initPose) << std::endl;
-  if (params.isUseInteractiveMarker_){
-    initInterectiveMarker();
-    ros::Rate r(100);
-    while (!initialized_.load())
-    {
-      ros::spinOnce();
-      r.sleep();
-    }
-  }
   slamPtr_->setInitialMap(raw_map);
-  
+  if (params.isUseInteractiveMarker_){
+    initInteractiveMarker();
+    initWorker_ = std::thread([this]() {
+  		initializeWorker();
+  	});
+    std::cout << "started interactive marker worker \n";
+  } else {
+		std::cout << "Finished setting initial map! \n";
+  }
+
+}
+void SlamMapInitializer::initializeWorker() {
+	ros::Rate r(20);
+	const bool isMergeScansIntoMap = slamPtr_->getMapperParameters().isMergeScansIntoMap_;
+	slamPtr_->getMapperParametersPtr()->isMergeScansIntoMap_ = false;
+	while (ros::ok() && !initialized_.load()) {
+		ros::spinOnce();
+		r.sleep();
+	}
+	slamPtr_->getMapperParametersPtr()->isMergeScansIntoMap_ = isMergeScansIntoMap;
+	std::cout << "Finished setting initial map! \n";
 }
 
-void SlamMapInitializer::cloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg) {
-	open3d::geometry::PointCloud cloud;
-	open3d_conversions::rosToOpen3d(msg, cloud, false);
-  const Time timestamp = fromRos(msg->header.stamp);
-  slamPtr_->addRangeScan(cloud, timestamp);
-}
-
-void SlamMapInitializer::initInterectiveMarker() {
-  menuHandler_.insert("Initialize SLAM map", boost::bind(&SlamMapInitializer::interactiveMarkerCallback, this, _1));
+void SlamMapInitializer::initInteractiveMarker() {
+  menuHandler_.insert("Initialize SLAM map", boost::bind(&SlamMapInitializer::initMapCallback, this, _1));
+  menuHandler_.insert("Set Pose", boost::bind(&SlamMapInitializer::setPoseCallback, this, _1));
 
   auto interactiveMarker = createInteractiveMarker();
 
@@ -88,11 +100,15 @@ void SlamMapInitializer::initInterectiveMarker() {
   server_.applyChanges();
 }
 
-void SlamMapInitializer::interactiveMarkerCallback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& msg) {
-  Eigen::Affine3d init_transform;
+void SlamMapInitializer::setPoseCallback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& msg) {
+  Eigen::Isometry3d init_transform;
 	tf::poseMsgToEigen(msg->pose, init_transform);
-  std::cout << "Initial Pose \n" << msg->pose << std::endl;
+  std::cout << "Initial Pose \n" << asString(init_transform) << std::endl;
   slamPtr_->setInitialTransform(init_transform.matrix());
+}
+
+void SlamMapInitializer::initMapCallback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& msg) {
+  std::cout << "Map initialized" << std::endl;
   initialized_.store(true);
 }
 
@@ -102,25 +118,28 @@ visualization_msgs::InteractiveMarker SlamMapInitializer::createInteractiveMarke
   interactiveMarker.header.stamp = ros::Time::now();
   interactiveMarker.name = "Initial Pose";
   interactiveMarker.scale = 0.5;
-  interactiveMarker.description = "Right click to initialize slam map";
+  interactiveMarker.description = "Right click to see options";
   interactiveMarker.pose = mapInitializerParams_.initialMarkerPose_;
 
   // create a mesh marker
-  const auto meshMarker = [&meshFilePath_ = mapInitializerParams_.meshFilePath_]() {
+  const auto arrowMarker = []() {
     visualization_msgs::Marker marker;
-		marker.type = visualization_msgs::Marker::MESH_RESOURCE;
-		marker.mesh_resource = meshFilePath_;
+		marker.type = visualization_msgs::Marker::ARROW;
     marker.color.r = 0.5;
     marker.color.g = 0.5;
     marker.color.b = 0.5;
-    marker.color.a = 0.5;
+    marker.color.a = 1.0;
+    marker.scale.x = 0.5;
+    marker.scale.y = 0.15;
+    marker.scale.z = 0.15;
+    marker.pose.position.x = -0.25;
     return marker;
   }();
 
   // create a non-interactive control which contains the mesh
   visualization_msgs::InteractiveMarkerControl boxControl;
   boxControl.always_visible = 1;
-  boxControl.markers.push_back(meshMarker);
+  boxControl.markers.push_back(arrowMarker);
   boxControl.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_ROTATE_3D;
 
   // add the control to the interactive marker
@@ -130,9 +149,8 @@ visualization_msgs::InteractiveMarker SlamMapInitializer::createInteractiveMarke
   // this control does not contain any markers,
   // which will cause RViz to insert two arrows
   visualization_msgs::InteractiveMarkerControl control;
-
-  control.orientation.w = 1;
-  control.orientation.x = 1;
+  control.orientation.w = 1.0 / sqrt2;
+  control.orientation.x = 1.0 / sqrt2;
   control.orientation.y = 0;
   control.orientation.z = 0;
   control.name = "rotate_x";
@@ -142,9 +160,9 @@ visualization_msgs::InteractiveMarker SlamMapInitializer::createInteractiveMarke
   control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
   interactiveMarker.controls.push_back(control);
 
-  control.orientation.w = 1;
+  control.orientation.w = 1.0 / sqrt2;
   control.orientation.x = 0;
-  control.orientation.y = 1;
+  control.orientation.y = 1.0 / sqrt2;
   control.orientation.z = 0;
   control.name = "rotate_z";
   control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
@@ -153,10 +171,10 @@ visualization_msgs::InteractiveMarker SlamMapInitializer::createInteractiveMarke
   control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
   interactiveMarker.controls.push_back(control);
 
-  control.orientation.w = 1;
+  control.orientation.w = 1.0 / sqrt2;
   control.orientation.x = 0;
   control.orientation.y = 0;
-  control.orientation.z = 1;
+  control.orientation.z = 1.0 / sqrt2;
   control.name = "rotate_y";
   control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
   interactiveMarker.controls.push_back(control);

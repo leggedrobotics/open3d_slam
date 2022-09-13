@@ -238,9 +238,7 @@ void SlamWrapper::setInitialMap(const PointCloud &initialMap) {
 
 void SlamWrapper::setInitialTransform(const Eigen::Matrix4d initialTransform) {
 //	odometry_->setInitialTransform(initialTransform);
-	mapper_->setMapToRangeSensor(Transform(initialTransform));
-	mapper_->setMapToRangeSensorPrev(Transform(initialTransform));
-
+	mapper_->setMapToRangeSensorInitial(Transform(initialTransform));
 }
 
 void SlamWrapper::startWorkers() {
@@ -294,7 +292,6 @@ void SlamWrapper::odometryWorker() {
 		// this ensures that the odom is always ahead of the mapping
 		// so then we can look stuff up in the interpolation buffer
 		mappingBuffer_.push(measurement);
-
 		if (!isOdomOkay) {
 			std::cerr << "WARNING: odometry has failed!!!! \n";
 			continue;

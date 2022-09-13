@@ -26,23 +26,24 @@ class SlamMapInitializer{
 
 public:
 	SlamMapInitializer(std::shared_ptr<SlamWrapper> slamPtr, ros::NodeHandlePtr nh);
-	~SlamMapInitializer() = default;
+	~SlamMapInitializer();
 	
 	void initialize(const MapInitializingParameters &params);
 
 private:
-	void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg);
-	void initInterectiveMarker();
-	void interactiveMarkerCallback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& msg);
+	void initInteractiveMarker();
+	void setPoseCallback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& msg);
+	void initMapCallback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& msg);
+	void initializeWorker();
 	visualization_msgs::InteractiveMarker createInteractiveMarker() const;
   
 	interactive_markers::MenuHandler menuHandler_;
   interactive_markers::InteractiveMarkerServer server_;
 	std::shared_ptr<SlamWrapper> slamPtr_;
-	ros::Subscriber cloudSubscriber_;
 	std::atomic_bool initialized_;
 	MapInitializingParameters mapInitializerParams_;
 	ros::NodeHandlePtr nh_;
+	std::thread initWorker_;
 
 };
 

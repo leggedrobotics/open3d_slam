@@ -22,17 +22,16 @@ int main(int argc, char **argv) {
 
 	const bool isProcessAsFastAsPossible = nh->param<bool>("is_read_from_rosbag", false);
 	std::cout << "Is process as fast as possible: " << std::boolalpha << isProcessAsFastAsPossible << "\n";
-	std::cout << "Initialize map: " << std::boolalpha << params.isUseInitialMap_ << "\n";
+	std::cout << "Is use a map for initialization: " << std::boolalpha << params.isUseInitialMap_ << "\n";
 
 	std::shared_ptr<DataProcessorRos> dataProcessor = dataProcessorFactory(nh, isProcessAsFastAsPossible);
-
 	dataProcessor->initialize();
 
+	std::shared_ptr<SlamMapInitializer> slamMapInitializer;
 	if (params.isUseInitialMap_) {
 		std::shared_ptr<SlamWrapper> slam = dataProcessor->getSlamPtr();
-		std::shared_ptr<SlamMapInitializer> slamMapInitializer = std::make_shared<SlamMapInitializer>(slam, nh);
+		slamMapInitializer = std::make_shared<SlamMapInitializer>(slam, nh);
 		slamMapInitializer->initialize(params.mapInitParameters_);
-		std::cout << "Finished setting initial map! \n";
 	}
 
 	dataProcessor->startProcessing();

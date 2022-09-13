@@ -29,8 +29,7 @@ public:
 	~Mapper() = default;
 
 	void setMapToRangeSensor(const Transform &t);
-	void setMapToRangeSensorPrev(const Transform &t);
-
+	void setMapToRangeSensorInitial(const Transform &t);
 	const Submap& getActiveSubmap() const;
 	const SubmapCollection& getSubmaps() const;
 	SubmapCollection* getSubmapsPtr();
@@ -51,8 +50,6 @@ private:
 	void estimateNormalsIfNeeded(PointCloud *pcl) const;
 	void checkTransformChainingAndPrintResult(bool isCheckTransformChainingAndPrintResult) const;
 
-	bool isMatchingInProgress_ = false;
-	bool isManipulatingMap_ = false;
 	Time lastMeasurementTimestamp_;
 	Transform mapToRangeSensor_ = Transform::Identity();
 	Transform mapToRangeSensorPrev_ = Transform::Identity();
@@ -67,6 +64,7 @@ private:
 	const TransformInterpolationBuffer &odomToRangeSensorBuffer_;
 	TransformInterpolationBuffer mapToRangeSensorBuffer_;
 	open3d::geometry::PointCloud preProcessedScan_;
+	bool isNewInitialValueSet_ = false;
 
 };
 

@@ -88,8 +88,10 @@ SubmapCollection* Mapper::getSubmapsPtr() {
 void Mapper::setMapToRangeSensor(const Transform &t) {
 	mapToRangeSensor_ = t;
 }
-void Mapper::setMapToRangeSensorPrev(const Transform &t){
+void Mapper::setMapToRangeSensorInitial(const Transform &t){
 	mapToRangeSensorPrev_ = t;
+	mapToRangeSensor_ = t;
+	isNewInitialValueSet_ = true;
 }
 
 void Mapper::estimateNormalsIfNeeded(PointCloud *pcl) const {
@@ -104,7 +106,6 @@ const PointCloud& Mapper::getPreprocessedScan() const {
 }
 
 bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &timestamp) {
-	isMatchingInProgress_ = true;
 	scanMatcherCropper_->setPose(Transform::Identity());
 	submaps_->setMapToRangeSensor(mapToRangeSensor_);
 
@@ -117,13 +118,11 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 			submaps_->insertScan(rawScan, *wideCroppedCloud, Transform::Identity(), timestamp);
 			mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
 		}
-		isMatchingInProgress_ = false;
 		return true;
 	}
 
 	if (timestamp < lastMeasurementTimestamp_) {
 		std::cerr << "\n\n !!!!! MAPER WARNING: Measurements came out of order!!!! \n\n";
-		isMatchingInProgress_ = false;
 		return false;
 	}
 
@@ -161,19 +160,18 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 			params_.scanMatcher_.maxCorrespondenceDistance_, mapToRangeSensorEstimate.matrix(), *icpObjective,
 			icpCriteria_);
 
-	//todo see how to handle this
-//	if (params_.isUseInitialMap_) {
-//		if (rejectDistantTransform(mapToRangeSensorEstimate, Transform(result.transformation_), params_.mapInitializationRejection_)) {
-//			return false;
-//		}
-//		params_.isUseInitialMap_ = false;
-//	}
+
+	if (isNewInitialValueSet_){
+		mapToRangeSensorPrev_ = mapToRangeSensor_;
+		mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
+		isNewInitialValueSet_ = false;
+		return true;
+	}
 
 	if (result.fitness_ < params_.minRefinementFitness_) {
 			std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
 			std::cout << "preeIcp: " << asString(mapToRangeSensorEstimate) << "\n";
 			std::cout << "postIcp: " << asString(Transform(result.transformation_)) << "\n\n";
-			isMatchingInProgress_ = false;
 			return false;
 	}
 
@@ -185,7 +183,6 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	if (!params_.isMergeScansIntoMap_){
 		lastMeasurementTimestamp_ = timestamp;
 		mapToRangeSensorPrev_ = mapToRangeSensor_;
-		isMatchingInProgress_ = false;
 		return true;
 	}
 
@@ -200,7 +197,6 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 
 	lastMeasurementTimestamp_ = timestamp;
 	mapToRangeSensorPrev_ = mapToRangeSensor_;
-	isMatchingInProgress_ = false;
 	return true;
 }
 

@@ -30,7 +30,6 @@ void loadParameters(const std::string& filename, MapperParametersWithInitializat
 }
 
 void loadParameters(const YAML::Node& node, MapperParametersWithInitialization* p) {
-	std::cout << "here \n";
 	if (node["map_intializer"].IsDefined()){
 	  loadParameters(node["map_intializer"], &(p->mapInitParameters_) );
 	}
@@ -78,7 +77,7 @@ void loadParameters(const YAML::Node& node, geometry_msgs::Quaternion* p) {
 	if (node["yaw"].IsDefined()){
 	  yaw = node["yaw"].as<double>() * kDegToRad;
 	}
-	const Eigen::Quaterniond q = fromRPY(roll,pitch,yaw);
+	const Eigen::Quaterniond q = fromRPY(roll,pitch,yaw).normalized();
 	p->x = q.x();
 	p->y = q.y();
 	p->z = q.z();
