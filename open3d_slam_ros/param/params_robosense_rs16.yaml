@@ -51,7 +51,6 @@ mapping:
   map_intializer:
     is_use_interactive_marker: false
     frame_id: "map_o3d"
-    mesh_file_path: ""
     pcd_file_path: "/home/jelavice/catkin_workspaces/open3d_ws/src/open3d_slam/open3d_slam_ros/data/maps/wangen.pcd"
     init_pose:
       position:

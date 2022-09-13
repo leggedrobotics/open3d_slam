@@ -22,7 +22,6 @@ namespace o3d_slam {
 struct MapInitializingParameters {
   std::string frameId_ = "";
   geometry_msgs::Pose initialMarkerPose_;
-  std::string meshFilePath_ = "";
 	std::string pcdFilePath_ = "";
 	bool isUseInteractiveMarker_= false;
 };
