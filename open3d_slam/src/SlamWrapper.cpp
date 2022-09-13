@@ -223,12 +223,6 @@ void SlamWrapper::loadParametersAndInitialize() {
 
 void SlamWrapper::setInitialMap(const PointCloud &initialMap) {
 	TimestampedPointCloud measurement{fromUniversal(0), std::move(initialMap)};
-
-//	const bool isOdomOkay = odometry_->addRangeScan(measurement.cloud_, measurement.time_);
-//	if (!isOdomOkay) {
-//		std::cerr << "WARNING: odometry intialization has failed!!!! \n";
-//	}
-	
 	const bool mappingResult = mapper_->addRangeMeasurement(measurement.cloud_, measurement.time_);
 	if (!mappingResult) {
 		std::cerr << "WARNING: mapping intialization has failed!!!! \n";
@@ -237,7 +231,7 @@ void SlamWrapper::setInitialMap(const PointCloud &initialMap) {
 
 
 void SlamWrapper::setInitialTransform(const Eigen::Matrix4d initialTransform) {
-//	odometry_->setInitialTransform(initialTransform);
+	odometry_->setInitialTransform(initialTransform);
 	mapper_->setMapToRangeSensorInitial(Transform(initialTransform));
 }
 
