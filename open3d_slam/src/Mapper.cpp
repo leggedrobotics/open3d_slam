@@ -136,7 +136,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 
 	Transform mapToRangeSensorEstimate =  mapToRangeSensorPrev_;
 
-	if (isOdomOkay){
+	if (isOdomOkay && !isNewInitialValueSet_){
 		const Transform odomToRangeSensor = getTransform(timestamp, odomToRangeSensorBuffer_);
 		const Transform odomToRangeSensorPrev = getTransform(lastMeasurementTimestamp_, odomToRangeSensorBuffer_);
 		const Transform odometryMotion = odomToRangeSensorPrev.inverse()*odomToRangeSensor;

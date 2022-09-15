@@ -62,9 +62,9 @@ void SlamMapInitializer::initialize(const MapInitializingParameters &params) {
   }
   Transform initPose;
 	tf::poseMsgToEigen(params.initialMarkerPose_, initPose);
+  slamPtr_->setInitialMap(raw_map);
   slamPtr_->setInitialTransform(initPose.matrix());
   std::cout << "init pose: " << asString(initPose) << std::endl;
-  slamPtr_->setInitialMap(raw_map);
   if (params.isUseInteractiveMarker_){
     initInteractiveMarker();
     initWorker_ = std::thread([this]() {

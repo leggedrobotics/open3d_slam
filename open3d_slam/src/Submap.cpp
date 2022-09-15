@@ -49,6 +49,7 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 	if (params_.isUseInitialMap_ && mapCloud_.IsEmpty()){
 		std::lock_guard<std::mutex> lck(mapPointCloudMutex_);
 		mapCloud_ = rawScan;
+		voxelize(params_.mapBuilder_.mapVoxelSize_, &mapCloud_);
 		estimateNormalsIfNeeded(params_.scanMatcher_.kNNnormalEstimation_, &mapCloud_);
 		return true;
 	}

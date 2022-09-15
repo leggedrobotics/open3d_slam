@@ -111,6 +111,7 @@ void LidarOdometry::setInitialTransform(const Eigen::Matrix4d &initialTransform)
 	// if I leave it like this it is always continuous, but starts always from the
 	// origin
 	initialTransform_ = initialTransform;
+	odomToRangeSensorCumulative_ = Transform(initialTransform);
 	isInitialTransformSet_ = true;
 }
 
