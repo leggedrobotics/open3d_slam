@@ -1,18 +1,8 @@
-#!/bin/bash
-
-#=============================================================================
-# Copyright (C) 2022, Robotic Systems Lab, ETH Zurich
-# All rights reserved.
-# http://www.rsl.ethz.ch
-#
-# This software is distributed WITHOUT ANY WARRANTY; without even the
-# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the License for more information.
-#=============================================================================
-# Authors: Julian Nubert, nubertj@ethz.ch
-#          Edo Jelavic, jelavice@ethz.ch
-#          Marco Tranzatto, marcot@ethz.ch
-#=============================================================================
+#!/usr/bin/env bash
+# Install Open3D build dependencies from Ubuntu repositories
+# CUDA (v10.1) and CUDNN (v7.6.5) are optional dependencies and are not
+# installed here
+# Use: install_deps_ubuntu.sh [ assume-yes ]
 
 set -ev
 
@@ -34,6 +24,8 @@ dependencies=(
     libc++abi-7-dev
     ninja-build
     libxi-dev
+    # OpenBLAS build-from-source deps
+    gfortran
     # ML deps
     libtbb-dev
     # Headless rendering deps
@@ -42,10 +34,6 @@ dependencies=(
     libudev-dev
     autoconf
     libtool
-    #
-    libturbojpeg-dev
-    libfmt-dev
-    libglfw3-dev
 )
 
 $SUDO apt-get update
