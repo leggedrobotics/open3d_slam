@@ -38,7 +38,7 @@ std::unique_ptr<CroppingVolume> croppingVolumeFactory(CroppingVolumeEnum type,  
 		return std::move(cropper);
 	}
 	case CroppingVolumeEnum::MinMaxRadius: {
-		auto cropper = std::make_unique<MinMaxRadiusCroppingVolume>(p.croppingMinRadius_,p.croppingMaxRadius_);
+		auto cropper = std::make_unique<MinMaxRadiusCroppingVolume>(p.croppingMinRadius_,p.croppingMaxRadius_, p.croppingMinZ_, p.croppingMaxZ_);
 		return std::move(cropper);
 	}
 	default:
@@ -150,18 +150,20 @@ void CroppingVolume::setScaling(double scaling){
 }
 
 //////////
-MinMaxRadiusCroppingVolume::MinMaxRadiusCroppingVolume(double radiusMin, double radiusMax) :
-		radiusMin_(radiusMin), radiusMax_(radiusMax) {
+MinMaxRadiusCroppingVolume::MinMaxRadiusCroppingVolume(double radiusMin, double radiusMax, double minZ, double maxZ) :
+		radiusMin_(radiusMin), radiusMax_(radiusMax), minZ_(minZ), maxZ_(maxZ) {
 
 }
 
 bool MinMaxRadiusCroppingVolume::isWithinVolumeImpl(const Eigen::Vector3d &p) const {
 	const double d = (p - pose_.translation()).norm();
-	return  d <= radiusMax_ && d >= radiusMin_;
+	return  d <= radiusMax_ && d >= radiusMin_ && p.z() >= minZ_ && p.z() <= maxZ_;
 }
-void MinMaxRadiusCroppingVolume::setParameters(double radiusMin, double radiusMax) {
+void MinMaxRadiusCroppingVolume::setParameters(double radiusMin, double radiusMax, double minZ, double maxZ) {
 	radiusMin_ = radiusMin;
 	radiusMax_ = radiusMax;
+	minZ_ = minZ;
+	maxZ_ = maxZ;
 }
 
 ///////////////////////////////////////////////

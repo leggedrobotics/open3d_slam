@@ -63,12 +63,14 @@ class MinMaxRadiusCroppingVolume : public CroppingVolume{
 public:
 	MinMaxRadiusCroppingVolume() = default;
 	~MinMaxRadiusCroppingVolume() override= default;
-	MinMaxRadiusCroppingVolume(double radiusMin, double radiusMax);
-	void setParameters(double radiusMin, double radiusMax);
+	MinMaxRadiusCroppingVolume(double radiusMin, double radiusMax, double minZ, double maxZ);
+	void setParameters(double radiusMin, double radiusMax, double minZ, double maxZ);
 private:
   bool isWithinVolumeImpl(const Eigen::Vector3d &p) const final;
 	double radiusMin_=0.0;
 	double radiusMax_=1e4;
+	double minZ_ = -1e3;
+	double maxZ_ = 1e3;
 };
 
 class MaxRadiusCroppingVolume : public CroppingVolume{
