@@ -39,6 +39,18 @@ SlamMapInitializer::~SlamMapInitializer(){
 	}
 }
 
+void SlamMapInitializer::initialPoseCallback(const geometry_msgs::PoseWithCovarianceStamped &msg){
+  Eigen::Isometry3d init_transform;
+	tf::poseMsgToEigen(msg.pose.pose, init_transform);
+  std::cout << "Initial Pose \n" << asString(init_transform) << std::endl;
+  slamPtr_->setInitialTransform(init_transform.matrix());
+}
+bool SlamMapInitializer::initSlamCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res){
+  std::cout << "Map initialized" << std::endl;
+  initialized_.store(true);
+  return true;
+}
+
 void SlamMapInitializer::initialize(const MapInitializingParameters &params) {
   mapInitializerParams_ = params;
   PointCloud raw_map;
@@ -67,6 +79,9 @@ void SlamMapInitializer::initialize(const MapInitializingParameters &params) {
   std::cout << "init pose: " << asString(initPose) << std::endl;
   if (params.isUseInteractiveMarker_){
     initInteractiveMarker();
+    initPoseSub_ = nh_->subscribe("/initialpose", 1, &SlamMapInitializer::initialPoseCallback, this);
+    initializeSlamSrv_ = nh_->advertiseService("initialize_slam", &SlamMapInitializer::initSlamCallback,this);
+
     initWorker_ = std::thread([this]() {
   		initializeWorker();
   	});
@@ -80,11 +95,13 @@ void SlamMapInitializer::initializeWorker() {
 	ros::Rate r(20);
 	const bool isMergeScansIntoMap = slamPtr_->getMapperParameters().isMergeScansIntoMap_;
 	slamPtr_->getMapperParametersPtr()->isMergeScansIntoMap_ = false;
+	slamPtr_->getMapperParametersPtr()->isIgnoreMinRefinementFitness_ = true;
 	while (ros::ok() && !initialized_.load()) {
 		ros::spinOnce();
 		r.sleep();
 	}
 	slamPtr_->getMapperParametersPtr()->isMergeScansIntoMap_ = isMergeScansIntoMap;
+	slamPtr_->getMapperParametersPtr()->isIgnoreMinRefinementFitness_ = false;
 	std::cout << "Finished setting initial map! \n";
 }
 

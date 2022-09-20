@@ -137,6 +137,7 @@ struct MapperParameters {
 	ScanProcessingParameters scanProcessing_;
 	double minMovementBetweenMappingSteps_ = 0.0;
 	double minRefinementFitness_ = 0.7;
+	bool isIgnoreMinRefinementFitness_ = false;
 	MapBuilderParameters mapBuilder_;
 	MapBuilderParameters denseMapBuilder_;
 	size_t numScansOverlap_ = 3;

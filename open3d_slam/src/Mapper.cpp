@@ -168,7 +168,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		return true;
 	}
 
-	if (result.fitness_ < params_.minRefinementFitness_) {
+	if (!params_.isIgnoreMinRefinementFitness_ && result.fitness_ < params_.minRefinementFitness_) {
 			std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
 			std::cout << "preeIcp: " << asString(mapToRangeSensorEstimate) << "\n";
 			std::cout << "postIcp: " << asString(Transform(result.transformation_)) << "\n\n";

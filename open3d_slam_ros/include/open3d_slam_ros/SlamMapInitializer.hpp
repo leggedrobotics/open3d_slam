@@ -13,12 +13,14 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include "open3d_slam_ros/Parameters.hpp"
 #include "open3d_slam/SlamWrapper.hpp"
 #include <visualization_msgs/InteractiveMarker.h>
 #include <visualization_msgs/InteractiveMarkerFeedback.h>
 #include <interactive_markers/interactive_marker_server.h>
 #include <interactive_markers/menu_handler.h>
+#include <std_srvs/Trigger.h>
 
 namespace o3d_slam {
 
@@ -35,6 +37,8 @@ private:
 	void setPoseCallback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& msg);
 	void initMapCallback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& msg);
 	void initializeWorker();
+	void initialPoseCallback(const geometry_msgs::PoseWithCovarianceStamped &msg);
+	bool initSlamCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res);
 	visualization_msgs::InteractiveMarker createInteractiveMarker() const;
   
 	interactive_markers::MenuHandler menuHandler_;
@@ -44,6 +48,8 @@ private:
 	MapInitializingParameters mapInitializerParams_;
 	ros::NodeHandlePtr nh_;
 	std::thread initWorker_;
+	ros::ServiceServer initializeSlamSrv_;
+	ros::Subscriber initPoseSub_;
 
 };
 
