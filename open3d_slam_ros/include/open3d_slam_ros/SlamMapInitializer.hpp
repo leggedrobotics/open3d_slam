@@ -40,6 +40,7 @@ private:
 	void initialPoseCallback(const geometry_msgs::PoseWithCovarianceStamped &msg);
 	bool initSlamCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res);
 	visualization_msgs::InteractiveMarker createInteractiveMarker() const;
+	void pointcloudCallback(const sensor_msgs::PointCloud2 &msg);
   
 	interactive_markers::MenuHandler menuHandler_;
   interactive_markers::InteractiveMarkerServer server_;
@@ -50,6 +51,9 @@ private:
 	std::thread initWorker_;
 	ros::ServiceServer initializeSlamSrv_;
 	ros::Subscriber initPoseSub_;
+	std::string interactiveMarkerName_;
+	ros::Subscriber cloudSub_;
+	ros::Publisher cloudPub_;
 
 };
 

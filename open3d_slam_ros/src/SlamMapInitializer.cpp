@@ -81,7 +81,10 @@ void SlamMapInitializer::initialize(const MapInitializingParameters &params) {
     initInteractiveMarker();
     initPoseSub_ = nh_->subscribe("/initialpose", 1, &SlamMapInitializer::initialPoseCallback, this);
     initializeSlamSrv_ = nh_->advertiseService("initialize_slam", &SlamMapInitializer::initSlamCallback,this);
-
+    cloudPub_ = nh_->advertise<sensor_msgs::PointCloud2>("aligned_cloud_preview",1);
+		std::string cloudTopic = nh_->param<std::string>("cloud_topic", "");
+		std::cout << "Initializer subscribing to " << cloudTopic << std::endl;
+    cloudSub_ = nh_->subscribe(cloudTopic, 1, &SlamMapInitializer::pointcloudCallback, this);
     initWorker_ = std::thread([this]() {
   		initializeWorker();
   	});
@@ -110,7 +113,7 @@ void SlamMapInitializer::initInteractiveMarker() {
   menuHandler_.insert("Set Pose", boost::bind(&SlamMapInitializer::setPoseCallback, this, _1));
 
   auto interactiveMarker = createInteractiveMarker();
-
+  interactiveMarkerName_ = interactiveMarker.name;
   server_.insert(interactiveMarker);
   menuHandler_.apply(server_, interactiveMarker.name);
   server_.applyChanges();
@@ -126,6 +129,17 @@ void SlamMapInitializer::setPoseCallback(const visualization_msgs::InteractiveMa
 void SlamMapInitializer::initMapCallback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& msg) {
   std::cout << "Map initialized" << std::endl;
   initialized_.store(true);
+}
+
+void SlamMapInitializer::pointcloudCallback(const sensor_msgs::PointCloud2 &msg){
+	visualization_msgs::InteractiveMarker marker;
+	server_.get(interactiveMarkerName_, marker);
+  Eigen::Isometry3d markerPose;
+	tf::poseMsgToEigen(	marker.pose, markerPose);
+	open3d::geometry::PointCloud cloud;
+	open3d_conversions::rosToOpen3d(msg, cloud, false);
+	cloud.Transform(markerPose.matrix());
+  o3d_slam::publishCloud(cloud, o3d_slam::frames::mapFrame, marker.header.stamp, cloudPub_);
 }
 
 visualization_msgs::InteractiveMarker SlamMapInitializer::createInteractiveMarker() const {
