@@ -42,9 +42,6 @@ mapping:
         min_z: -3.0
         max_z: 1.0
         cropper_type: "Cylinder" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
-  map_initialization_rejection:
-    max_translation_error: 0.5
-    max_angle_error: 0.628
 
 
   map_intializer:

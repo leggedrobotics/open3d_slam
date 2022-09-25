@@ -60,6 +60,4 @@ std::vector<Eigen::Vector3i> getKeysOfCarvedPoints(const PointCloud &scan,
 
 std::shared_ptr<PointCloud> removePointsWithNonFiniteValues(const PointCloud& in);
 
-bool rejectDistantTransform(const Transform &transform1, const Transform &transform2, const DistantTransformRejectingParameters &params);
-
 } /* namespace o3d_slam */

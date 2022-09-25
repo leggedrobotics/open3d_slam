@@ -458,22 +458,5 @@ std::shared_ptr<PointCloud> removePointsWithNonFiniteValues(const PointCloud &cl
 	return filtered;
 }
 
-bool rejectDistantTransform(const Transform &transform1, const Transform &transform2, const DistantTransformRejectingParameters &params)
-{
-	Transform transform = transform1.inverse() * transform2;
-
-	if (transform.translation().norm() > params.maxTranslationError_ &&
-			Eigen::AngleAxisd(transform.rotation()).angle() > params.maxAngleError_)
-	{
-		std::cout << "Transform 1: " << asString(transform1) << "\n";
-		std::cout << "Transform 2: " << asString(transform2) << "\n\n";
-		std::cout << "Distance between " << transform.translation().norm() << "\n";
-		std::cout << "Angle between " << Eigen::AngleAxisd(transform.rotation()).angle() << "\n";
-		std::cout << "Rejecting " << std::endl;
-		return true;
-	}
-	return false;
-}
-
 } /* namespace o3d_slam */
 

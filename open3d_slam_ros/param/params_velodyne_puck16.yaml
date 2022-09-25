@@ -42,9 +42,6 @@ mapping:
         max_z: 30.0
         cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
         
-  map_initialization_rejection:
-    max_translation_error: 0.5
-    max_angle_error: 0.628
 
   map_intializer:
     is_use_interactive_marker: true
