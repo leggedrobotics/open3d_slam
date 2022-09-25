@@ -83,11 +83,6 @@ void loadParameters(const YAML::Node &node, OdometryParameters *p){
 	}
 }
 
-void loadParameters(const YAML::Node &node, DistantTransformRejectingParameters *p) {
-	p->maxTranslationError_ = node["max_translation_error"].as<double>();
-	p->maxAngleError_ = node["max_angle_error"].as<double>();
-}
-
 void loadParameters(const YAML::Node &node, ScanProcessingParameters *p){
 	p->voxelSize_ = node["voxel_size"].as<double>();
 	p->downSamplingRatio_ = node["downsampling_ratio"].as<double>();
@@ -127,9 +122,7 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	p->isMergeScansIntoMap_ = node["is_merge_scans_into_map"].as<bool>();
 	loadParameters(node["scan_to_map_refinement"]["scan_matching"],&(p->scanMatcher_));
 	loadParameters(node["scan_to_map_refinement"]["scan_processing"], &(p->scanProcessing_));
-	if (node["map_initialization_rejection"].IsDefined()) {
-		loadParameters(node["map_initialization_rejection"], &(p->mapInitializationRejection_));
-	}
+
 	if (p->isBuildDenseMap_) {
 		loadParameters(node["dense_map_builder"], &(p->denseMapBuilder_));
 	}

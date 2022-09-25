@@ -65,11 +65,6 @@ struct IcpParameters {
 	IcpObjective icpObjective_ = IcpObjective::PointToPoint;
 };
 
-struct  DistantTransformRejectingParameters{
-	double maxTranslationError_ = 0.3;
-	double maxAngleError_ = M_PI / 18.0;
-};
-
 struct OdometryParameters {
 	IcpParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
@@ -145,7 +140,6 @@ struct MapperParameters {
 	SubmapParameters submaps_;
 	PlaceRecognitionParameters placeRecognition_;
 	GlobalOptimizationParameters globalOptimization_;
-	DistantTransformRejectingParameters mapInitializationRejection_;
 	bool isAttemptLoopClosures_ = true;
 	bool isDumpSubmapsToFileBeforeAndAfterLoopClosures_ = false;
 	bool isPrintTimingStatistics_ = true;
@@ -181,12 +175,10 @@ const std::map<std::type_index, std::string> typeKeywordMap{
 	{std::type_index(typeid(GlobalOptimizationParameters)), "global_optimization"},
 	{std::type_index(typeid(VisualizationParameters)), "visualization"},
 	{std::type_index(typeid(ScanProcessingParameters)), "scan_processing"},
-	{std::type_index(typeid(ScanProcessingParameters)), "scan_processing"},
 	{std::type_index(typeid(IcpParameters)), "scan_matching"},
 	{std::type_index(typeid(MapperParameters)), "mapping"},
 	{std::type_index(typeid(MapBuilderParameters)), "map_builder"},
 	{std::type_index(typeid(OdometryParameters)), "odometry"},
-	{std::type_index(typeid(DistantTransformRejectingParameters)), "distant_transform_rejection"},
 	{std::type_index(typeid(SpaceCarvingParameters)), "space_carving"},
 	{std::type_index(typeid(ScanCroppingParameters)), "scan_cropping"},
 	{std::type_index(typeid(SubmapParameters)), "submaps"},
@@ -221,7 +213,6 @@ void loadParameters(const YAML::Node &node, IcpParameters *p);
 void loadParameters(const YAML::Node &node, MapperParameters *p);
 void loadParameters(const YAML::Node &node, MapBuilderParameters *p);
 void loadParameters(const YAML::Node &node, OdometryParameters *p);
-void loadParameters(const YAML::Node &node, DistantTransformRejectingParameters *p);
 void loadParameters(const YAML::Node &node, SpaceCarvingParameters *p);
 void loadParameters(const YAML::Node &node, ScanCroppingParameters *p);
 
