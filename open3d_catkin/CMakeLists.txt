@@ -46,7 +46,12 @@ if(DEFINED ENV{Open3D_DIR})
 elseif(Open3D_FOUND)
   message("${BoldMagenta}INFO: Found Open3D.${ColourReset}")
   
-  set(Open3D_INCLUDE_DIR_MAN "${Open3D_DIR}/../../../include/")
+  # Path differs whether installed from PPA or (locally) from source
+  if(EXISTS "${Open3D_DIR}/../../../../include/")
+    set(Open3D_INCLUDE_DIR_MAN "${Open3D_DIR}/../../../../include/")
+  else()
+    set(Open3D_INCLUDE_DIR_MAN "${Open3D_DIR}/../../../include/")
+  endif()
   
   message("Open3D libraries: ${Open3D_LIBRARIES}")
   message("Open3D include path: ${Open3D_INCLUDE_DIRS} , ${Open3D_INCLUDE_DIR_MAN}")
