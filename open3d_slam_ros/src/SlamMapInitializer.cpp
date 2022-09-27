@@ -103,8 +103,9 @@ void SlamMapInitializer::initializeWorker() {
 		ros::spinOnce();
 		r.sleep();
 	}
-	slamPtr_->getMapperParametersPtr()->isMergeScansIntoMap_ = isMergeScansIntoMap;
-	slamPtr_->getMapperParametersPtr()->isIgnoreMinRefinementFitness_ = false;
+  slamPtr_->getMapperParametersPtr()->isMergeScansIntoMap_ = isMergeScansIntoMap;
+  usleep(1000000); // TODO: remove this magic. It allows to merge initial scans if the map is smaller than initial scan otherwise minimum refinement fitness is not met.
+  slamPtr_->getMapperParametersPtr()->isIgnoreMinRefinementFitness_ = false;
 	std::cout << "Finished setting initial map! \n";
 }
 
