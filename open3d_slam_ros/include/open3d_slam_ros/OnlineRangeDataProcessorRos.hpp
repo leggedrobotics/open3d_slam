@@ -30,7 +30,6 @@ public:
 private:
 	 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg);
 
-	std::shared_ptr<SlamWrapper> slam_;
 	ros::Subscriber cloudSubscriber_;
 
 };

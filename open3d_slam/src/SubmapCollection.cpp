@@ -101,6 +101,10 @@ void SubmapCollection::updateActiveSubmap(const Transform &mapToRangeSensor, con
 	if (numScansMergedInActiveSubmap_ < params_.submaps_.minNumRangeData_) {
 		return;
 	}
+
+	if (params_.isUseInitialMap_){
+		return; // do not switch maps if we are doing in the localization mode
+	}
 	const size_t closestMapIdx = findClosestSubmap(mapToRangeSensor_);
 	const Submap &closestSubmap = submaps_.at(closestMapIdx);
 	const Submap &activeSubmap = submaps_.at(activeSubmapIdx_);

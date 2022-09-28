@@ -7,7 +7,27 @@
 
 #include "open3d_slam/math.hpp"
 #include <numeric>
+
 namespace o3d_slam {
+
+Transform fromXYZandRPY(const Eigen::Vector3d &xyz, const Eigen::Vector3d &rpy){
+	Eigen::Quaterniond q = fromRPY( rpy.x(), rpy.y(), rpy.z());
+	return fromXYZandQuaternion(xyz,q);
+}
+Transform fromXYZandRPY(const Eigen::Vector3d &xyz, double roll, double pitch, double yaw){
+	Eigen::Quaterniond q = fromRPY( roll,pitch,yaw);
+	return fromXYZandQuaternion(xyz,q);
+}
+Transform fromXYZandQuaternion(const Eigen::Vector3d &xyz, const Eigen::Quaterniond &q){
+	return makeTransform(xyz, q);
+}
+
+Transform fromXYZandRPY(double x, double y, double z, double roll, double pitch, double yaw){
+	return fromXYZandRPY(Eigen::Vector3d(x,y,z),roll,pitch,yaw);
+}
+Transform fromXYZandQuaternion(double x, double y, double z, const Eigen::Quaterniond &q){
+	return makeTransform(Eigen::Vector3d(x,y,z), q);
+}
 
 Eigen::Quaterniond fromRPY(const double roll, const double pitch, const double yaw) {
 
