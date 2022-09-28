@@ -38,6 +38,10 @@ void Mapper::setParameters(const MapperParameters &p) {
 	update(p);
 }
 
+MapperParameters *Mapper::getParametersPtr(){
+	return &params_;
+}
+
 void Mapper::loopClosureUpdate(const Transform &loopClosureCorrection) {
 	mapToRangeSensor_ = loopClosureCorrection * mapToRangeSensor_;
 	mapToRangeSensorPrev_ = loopClosureCorrection * mapToRangeSensorPrev_;
@@ -84,6 +88,11 @@ SubmapCollection* Mapper::getSubmapsPtr() {
 void Mapper::setMapToRangeSensor(const Transform &t) {
 	mapToRangeSensor_ = t;
 }
+void Mapper::setMapToRangeSensorInitial(const Transform &t){
+	mapToRangeSensorPrev_ = t;
+	mapToRangeSensor_ = t;
+	isNewInitialValueSet_ = true;
+}
 
 void Mapper::estimateNormalsIfNeeded(PointCloud *pcl) const {
 	if (!pcl->HasNormals() && params_.scanMatcher_.icpObjective_ == o3d_slam::IcpObjective::PointToPlane) {
@@ -97,22 +106,23 @@ const PointCloud& Mapper::getPreprocessedScan() const {
 }
 
 bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &timestamp) {
-	isMatchingInProgress_ = true;
 	scanMatcherCropper_->setPose(Transform::Identity());
 	submaps_->setMapToRangeSensor(mapToRangeSensor_);
 
 	//insert first scan
 	if (submaps_->getActiveSubmap().isEmpty()) {
-		auto wideCroppedCloud = preProcessScan(rawScan);
-		submaps_->insertScan(rawScan, *wideCroppedCloud, Transform::Identity(), timestamp);
-		mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
-		isMatchingInProgress_ = false;
+		if (params_.isUseInitialMap_){
+			submaps_->insertScan(rawScan, rawScan, Transform::Identity(), timestamp);
+		} else {
+			auto wideCroppedCloud = preProcessScan(rawScan);
+			submaps_->insertScan(rawScan, *wideCroppedCloud, Transform::Identity(), timestamp);
+			mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
+		}
 		return true;
 	}
 
 	if (timestamp < lastMeasurementTimestamp_) {
 		std::cerr << "\n\n !!!!! MAPER WARNING: Measurements came out of order!!!! \n\n";
-		isMatchingInProgress_ = false;
 		return false;
 	}
 
@@ -126,7 +136,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 
 	Transform mapToRangeSensorEstimate =  mapToRangeSensorPrev_;
 
-	if (isOdomOkay){
+	if (isOdomOkay && !isNewInitialValueSet_){
 		const Transform odomToRangeSensor = getTransform(timestamp, odomToRangeSensorBuffer_);
 		const Transform odomToRangeSensorPrev = getTransform(lastMeasurementTimestamp_, odomToRangeSensorBuffer_);
 		const Transform odometryMotion = odomToRangeSensorPrev.inverse()*odomToRangeSensor;
@@ -146,25 +156,37 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		assert_gt<int>(narrowCropped->points_.size(),0,"narrow cropped size is zero");
 	}
 
-//	std::cout << "preeIcp: " << asString(mapToRangeSensorEstimate) << "\n";
 	const auto result = open3d::pipelines::registration::RegistrationICP(*narrowCropped, *mapPatch,
 			params_.scanMatcher_.maxCorrespondenceDistance_, mapToRangeSensorEstimate.matrix(), *icpObjective,
 			icpCriteria_);
-//	std::cout << "postIcp: " << asString(Transform(result.transformation_)) << "\n\n";
-	if (result.fitness_ < params_.minRefinementFitness_) {
-		std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
-		std::cout << "preeIcp: " << asString(mapToRangeSensor_) << "\n";
-		std::cout << "postIcp: " << asString(Transform(result.transformation_)) << "\n\n";
-		isMatchingInProgress_ = false;
-		return false;
+
+
+	if (isNewInitialValueSet_){
+		mapToRangeSensorPrev_ = mapToRangeSensor_;
+		mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
+		isNewInitialValueSet_ = false;
+		return true;
+	}
+
+	if (!params_.isIgnoreMinRefinementFitness_ && result.fitness_ < params_.minRefinementFitness_) {
+			std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
+			std::cout << "preeIcp: " << asString(mapToRangeSensorEstimate) << "\n";
+			std::cout << "postIcp: " << asString(Transform(result.transformation_)) << "\n\n";
+			return false;
 	}
 
 	// update transforms
 	mapToRangeSensor_.matrix() = result.transformation_;
 	mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
+	submaps_->setMapToRangeSensor(mapToRangeSensor_);
+
+	if (!params_.isMergeScansIntoMap_){
+		lastMeasurementTimestamp_ = timestamp;
+		mapToRangeSensorPrev_ = mapToRangeSensor_;
+		return true;
+	}
 
 	// concatenate registered cloud into map
-	submaps_->setMapToRangeSensor(mapToRangeSensor_);
 	const Transform sensorMotion = mapToRangeSensorLastScanInsertion_.inverse() * mapToRangeSensor_;
 	const bool isMovedTooLittle = sensorMotion.translation().norm() < params_.minMovementBetweenMappingSteps_;
 	if (!isMovedTooLittle) {
@@ -175,7 +197,6 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 
 	lastMeasurementTimestamp_ = timestamp;
 	mapToRangeSensorPrev_ = mapToRangeSensor_;
-	isMatchingInProgress_ = false;
 	return true;
 }
 
@@ -196,7 +217,6 @@ std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud &raw
 	}
 	estimateNormalsIfNeeded(downsampled.get());
 	return downsampled;
-
 }
 
 Mapper::PointCloud Mapper::getAssembledMapPointCloud() const {

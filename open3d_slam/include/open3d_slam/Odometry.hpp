@@ -40,8 +40,8 @@ private:
 	open3d::pipelines::registration::ICPConvergenceCriteria icpConvergenceCriteria_;
 	std::shared_ptr<CroppingVolume> cropper_;
 	Time lastMeasurementTimestamp_;
-	Eigen::Matrix4d icpTransform_ = Eigen::Matrix4d::Identity();
-	bool resetIcpTransform_ = false;
+	Eigen::Matrix4d initialTransform_ = Eigen::Matrix4d::Identity();
+	bool isInitialTransformSet_ = false;
 };
 
 } // namespace o3d_slam

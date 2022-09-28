@@ -54,10 +54,14 @@ public:
 	virtual void stopWorkers();
 	virtual void finishProcessing();
 
+	const MapperParameters &getMapperParameters() const;
+	MapperParameters *getMapperParametersPtr();
+
 	size_t getOdometryBufferSize() const;
 	size_t getMappingBufferSize() const;
 	size_t getOdometryBufferSizeLimit() const;
 	size_t getMappingBufferSizeLimit() const;
+	std::string getParameterFilePath() const;
 	std::pair<PointCloud,Time> getLatestRegisteredCloudTimestampPair() const;
 	bool saveMap(const std::string &directory);
 	bool saveSubmaps(const std::string &directory);

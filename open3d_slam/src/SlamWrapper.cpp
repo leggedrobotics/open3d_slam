@@ -80,6 +80,13 @@ SlamWrapper::~SlamWrapper() {
 	}
 }
 
+const MapperParameters &SlamWrapper::getMapperParameters() const{
+	return mapperParams_;
+}
+
+MapperParameters *SlamWrapper::getMapperParametersPtr(){
+	return mapper_->getParametersPtr();
+}
 size_t SlamWrapper::getOdometryBufferSize() const {
 	return odometryBuffer_.size();
 }
@@ -167,6 +174,10 @@ void SlamWrapper::setMapSavingDirectoryPath(const std::string &path){
 	mapSavingFolderPath_ = path;
 }
 
+std::string SlamWrapper::getParameterFilePath() const {
+	return paramPath_;
+}
+
 void SlamWrapper::setParameterFilePath(const std::string &path){
 	paramPath_ = path;
 }
@@ -212,12 +223,6 @@ void SlamWrapper::loadParametersAndInitialize() {
 
 void SlamWrapper::setInitialMap(const PointCloud &initialMap) {
 	TimestampedPointCloud measurement{fromUniversal(0), std::move(initialMap)};
-
-	const bool isOdomOkay = odometry_->addRangeScan(measurement.cloud_, measurement.time_);
-	if (!isOdomOkay) {
-		std::cerr << "WARNING: odometry intialization has failed!!!! \n";
-	}
-	
 	const bool mappingResult = mapper_->addRangeMeasurement(measurement.cloud_, measurement.time_);
 	if (!mappingResult) {
 		std::cerr << "WARNING: mapping intialization has failed!!!! \n";
@@ -227,6 +232,7 @@ void SlamWrapper::setInitialMap(const PointCloud &initialMap) {
 
 void SlamWrapper::setInitialTransform(const Eigen::Matrix4d initialTransform) {
 	odometry_->setInitialTransform(initialTransform);
+	mapper_->setMapToRangeSensorInitial(Transform(initialTransform));
 }
 
 void SlamWrapper::startWorkers() {
@@ -280,7 +286,6 @@ void SlamWrapper::odometryWorker() {
 		// this ensures that the odom is always ahead of the mapping
 		// so then we can look stuff up in the interpolation buffer
 		mappingBuffer_.push(measurement);
-
 		if (!isOdomOkay) {
 			std::cerr << "WARNING: odometry has failed!!!! \n";
 			continue;

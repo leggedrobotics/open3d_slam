@@ -10,6 +10,9 @@
 #include <map>
 #include <string>
 #include <Eigen/Dense>
+#include <iostream>
+#include <typeindex>
+
 
 
 namespace o3d_slam {
@@ -68,13 +71,6 @@ struct OdometryParameters {
   bool isPublishOdometryMsgs_ = false;
 };
 
-struct MapInconsistencyRemoval {
-	Eigen::Vector3d voxelSize_{0.5,0.5,0.5};
-	int minPointsPerVoxel_ = 2;
-	int numPointsWithHighestErrorToRemove_ = 50;
-	double minErrorThresholdForRemoval_ = 1.0;
-};
-
 struct SpaceCarvingParameters{
 	double voxelSize_=0.1;
 	double maxRaytracingLength_ = 20.0;
@@ -130,11 +126,13 @@ struct GlobalOptimizationParameters {
 };
 
 
+
 struct MapperParameters {
 	IcpParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
 	double minMovementBetweenMappingSteps_ = 0.0;
 	double minRefinementFitness_ = 0.7;
+	bool isIgnoreMinRefinementFitness_ = false;
 	MapBuilderParameters mapBuilder_;
 	MapBuilderParameters denseMapBuilder_;
 	size_t numScansOverlap_ = 3;
@@ -146,6 +144,8 @@ struct MapperParameters {
 	bool isDumpSubmapsToFileBeforeAndAfterLoopClosures_ = false;
 	bool isPrintTimingStatistics_ = true;
 	bool isRefineOdometryConstraintsBetweenSubmaps_ = false;
+	bool isUseInitialMap_ = false;
+  bool isMergeScansIntoMap_ = true;
 };
 
 struct VisualizationParameters {
@@ -167,33 +167,53 @@ struct ConstantVelocityMotionCompensationParameters {
 	int numPosesVelocityEstimation_ = 3;
 };
 
-void loadParameters(const std::string &filename, ConstantVelocityMotionCompensationParameters *p);
+const std::map<std::type_index, std::string> typeKeywordMap{
+	{std::type_index(typeid(ConstantVelocityMotionCompensationParameters)), "motion_compensation"},
+	{std::type_index(typeid(SavingParameters)), "saving_parameters"},
+	{std::type_index(typeid(PlaceRecognitionConsistencyCheckParameters)), "consistency_check"},
+	{std::type_index(typeid(PlaceRecognitionParameters)), "place_recognition"},
+	{std::type_index(typeid(GlobalOptimizationParameters)), "global_optimization"},
+	{std::type_index(typeid(VisualizationParameters)), "visualization"},
+	{std::type_index(typeid(ScanProcessingParameters)), "scan_processing"},
+	{std::type_index(typeid(IcpParameters)), "scan_matching"},
+	{std::type_index(typeid(MapperParameters)), "mapping"},
+	{std::type_index(typeid(MapBuilderParameters)), "map_builder"},
+	{std::type_index(typeid(OdometryParameters)), "odometry"},
+	{std::type_index(typeid(SpaceCarvingParameters)), "space_carving"},
+	{std::type_index(typeid(ScanCroppingParameters)), "scan_cropping"},
+	{std::type_index(typeid(SubmapParameters)), "submaps"},
+};
+
+template <typename P>
+void loadParameters(const std::string& filename, P *p)
+{
+	YAML::Node basenode = YAML::LoadFile(filename);
+	if (basenode.IsNull()) {
+		std::string error_msg = typeid(p).name();
+		error_msg.append(" params::loadParameters loading failed");
+		throw std::runtime_error(error_msg);
+	}
+	
+	std::type_index class_type = std::type_index(typeid(*p));
+	std::string keyword = typeKeywordMap.at(class_type);
+	if (basenode[keyword].IsDefined()) {
+		loadParameters(basenode[keyword], p);
+	}
+};
+
 void loadParameters(const YAML::Node &node, ConstantVelocityMotionCompensationParameters *p);
-void loadParameters(const std::string &filename, SavingParameters *p);
 void loadParameters(const YAML::Node &node, SavingParameters *p);
-void loadParameters(const std::string &filename, PlaceRecognitionConsistencyCheckParameters *p);
 void loadParameters(const YAML::Node &node, PlaceRecognitionConsistencyCheckParameters *p);
-void loadParameters(const std::string &filename, PlaceRecognitionParameters *p);
 void loadParameters(const YAML::Node &node, PlaceRecognitionParameters *p);
-void loadParameters(const std::string &filename, GlobalOptimizationParameters *p);
 void loadParameters(const YAML::Node &node, GlobalOptimizationParameters *p);
-void loadParameters(const std::string &filename, VisualizationParameters *p);
 void loadParameters(const YAML::Node &node, VisualizationParameters *p);
-void loadParameters(const std::string &filename, SubmapParameters *p);
 void loadParameters(const YAML::Node &node, SubmapParameters *p);
-void loadParameters(const std::string &filename, ScanProcessingParameters *p);
 void loadParameters(const YAML::Node &node, ScanProcessingParameters *p);
-void loadParameters(const std::string &filename, IcpParameters *p);
 void loadParameters(const YAML::Node &node, IcpParameters *p);
-void loadParameters(const std::string &filename, MapperParameters *p);
 void loadParameters(const YAML::Node &node, MapperParameters *p);
-void loadParameters(const std::string &filename, MapBuilderParameters *p);
 void loadParameters(const YAML::Node &node, MapBuilderParameters *p);
-void loadParameters(const std::string &filename, OdometryParameters *p);
 void loadParameters(const YAML::Node &node, OdometryParameters *p);
-void loadParameters(const YAML::Node &n, SpaceCarvingParameters *p);
-void loadParameters(const std::string &filename, SpaceCarvingParameters *p);
-void loadParameters(const std::string &filename, ScanCroppingParameters *p);
+void loadParameters(const YAML::Node &node, SpaceCarvingParameters *p);
 void loadParameters(const YAML::Node &node, ScanCroppingParameters *p);
 
 } // namespace o3d_slam

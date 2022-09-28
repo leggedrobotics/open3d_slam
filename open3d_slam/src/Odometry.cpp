@@ -1,3 +1,5 @@
+
+
 /*
  * Odometry.cpp
  *
@@ -44,13 +46,7 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 
 	auto result = open3d::pipelines::registration::RegistrationICP(
 		cloudPrev_, *downSampledCloud, params_.scanMatcher_.maxCorrespondenceDistance_,
-		icpTransform_, *icpObjective_, icpConvergenceCriteria_);
-
-	if (resetIcpTransform_)
-	{
-		icpTransform_ = Eigen::Matrix4d::Identity();
-		resetIcpTransform_ = false;
-	}
+		Eigen::Matrix4d::Identity(), *icpObjective_, icpConvergenceCriteria_);
 
 	//todo magic
 	const bool isOdomOkay = result.fitness_ > 0.1;
@@ -69,7 +65,14 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 		}
 		return isOdomOkay;
 	}
-	odomToRangeSensorCumulative_.matrix() *= result.transformation_.inverse();
+
+	if (isInitialTransformSet_){
+		odomToRangeSensorCumulative_.matrix() = initialTransform_;
+		isInitialTransformSet_ = false;
+	} else {
+		odomToRangeSensorCumulative_.matrix() *= result.transformation_.inverse();
+	}
+
 	cloudPrev_ = std::move(*downSampledCloud);
 	odomToRangeSensorBuffer_.push(timestamp, odomToRangeSensorCumulative_);
 	lastMeasurementTimestamp_ = timestamp;
@@ -103,8 +106,13 @@ void LidarOdometry::setParameters(const OdometryParameters &p) {
 
 
 void LidarOdometry::setInitialTransform(const Eigen::Matrix4d &initialTransform) {
-	icpTransform_ = initialTransform;
-	resetIcpTransform_ = true;
+	//todo decide what to do
+	// if I uncomment stuff below the odom jumps but starts from the pose you specified
+	// if I leave it like this it is always continuous, but starts always from the
+	// origin
+	initialTransform_ = initialTransform;
+	odomToRangeSensorCumulative_ = Transform(initialTransform);
+	isInitialTransformSet_ = true;
 }
 
 } // namespace o3d_slam
