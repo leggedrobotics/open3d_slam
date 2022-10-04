@@ -105,7 +105,7 @@ void SlamMapInitializer::initializeWorker() {
 	}
   slamPtr_->getMapperParametersPtr()->isMergeScansIntoMap_ = isMergeScansIntoMap;
   // TODO: this is a hack allows to merge scans into map that is significantly smaller than a scan but requires refinement.
-  usleep(3000000);
+  usleep(1000000);
   slamPtr_->getMapperParametersPtr()->isIgnoreMinRefinementFitness_ = false;
   std::cout << "Finished setting initial map! \n";
 }
