@@ -77,7 +77,7 @@ void SlamMapInitializer::initialize(const MapInitializingParameters &params) {
   slamPtr_->setInitialMap(raw_map);
   slamPtr_->setInitialTransform(initPose.matrix());
   std::cout << "init pose: " << asString(initPose) << std::endl;
-  if (params.isUseInteractiveMarker_){
+  if (params.isInitializeInteractively_){
     initInteractiveMarker();
     initPoseSub_ = nh_->subscribe("/initialpose", 1, &SlamMapInitializer::initialPoseCallback, this);
     initializeSlamSrv_ = nh_->advertiseService("initialize_slam", &SlamMapInitializer::initSlamCallback,this);

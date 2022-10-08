@@ -65,6 +65,7 @@ private:
 	TransformInterpolationBuffer mapToRangeSensorBuffer_;
 	open3d::geometry::PointCloud preProcessedScan_;
 	bool isNewInitialValueSet_ = false;
+	bool isIgnoreOdometryPrediction_ = false;
 
 };
 
