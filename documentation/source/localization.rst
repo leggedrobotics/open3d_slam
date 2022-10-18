@@ -30,7 +30,7 @@ Sometimes it is useful to initialize the map interactively, i.e. start the robot
 
 
 
-You caninitialize the pose interactively with the 2D pose estimate tool in Rviz which is shown in the video below:
+You can initialize the pose interactively with the 2D pose estimate tool in Rviz, which is shown in the video below:
 `initialize using 2D pose estimate <https://youtu.be/tvDPKHIizdI>`_ .
 
 The white pointcloud is the raw measurement; once it is nicely aligned with the map, your job is done, and you are ready to start the mapping. 
