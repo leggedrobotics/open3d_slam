@@ -54,6 +54,11 @@ Parameters listed below affect scan to map refinement, map building, loop closur
   
   ``is_attempt_loop_closures`` - If true, *open3d_slam* attempts to correct drift with loop closures.
   
+  ``is_use_map_initialization`` - If true, *open3d_slam* will use an initial map for initialization. Then you have to provide a 
+  path to a .pcd file.
+  
+  ``is_merge_scans_into_map`` - If true, scans are merged into the initial map. Otherwise the map remains unchanged.
+  
   ``dump_submaps_to_file_before_after_lc`` - If true, the submaps are saved before and after pose graph optimization (after the loop closure).
   Used for debugging.
   
@@ -80,6 +85,9 @@ Parameters listed below affect scan to map refinement, map building, loop closur
       ``knn_normal_estimation`` - same as scan matching for odometry.
       
       ``max_n_iter`` - same as scan matching for odometry.
+  
+  map_initializer:
+  	See the :ref:`localization <open3d_localization_ref>` page.
       
   submaps:
     ``size`` - SI unit meters. Radius of the map. Once the submap is greater than this size,

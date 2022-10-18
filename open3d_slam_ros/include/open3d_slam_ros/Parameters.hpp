@@ -23,7 +23,7 @@ struct MapInitializingParameters {
   std::string frameId_ = "";
   geometry_msgs::Pose initialMarkerPose_;
 	std::string pcdFilePath_ = "";
-	bool isUseInteractiveMarker_= false;
+	bool isInitializeInteractively_= false;
 };
 
 //todo move these guys

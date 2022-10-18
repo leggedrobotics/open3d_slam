@@ -16,6 +16,7 @@ Contents
    installation
    system_overview
    usage
+   localization
    parameters
    open3d_catkin
    docker 

@@ -21,8 +21,8 @@ mapping:
   is_print_timing_information: true
   is_build_dense_map: false
   is_attempt_loop_closures: true
-  is_use_map_initialization: true
-  is_merge_scans_into_map: true
+  is_use_map_initialization: false
+  is_merge_scans_into_map: false
   dump_submaps_to_file_before_after_lc: false
   is_refine_odometry_constraints_between_submaps: false
   min_movement_between_mapping_steps: 0.0
@@ -46,7 +46,7 @@ mapping:
        
     
   map_intializer:
-    is_use_interactive_marker: false
+    is_initialize_interactively: false
     frame_id: "map_o3d"
     pcd_file_path: "/home/jelavice/catkin_workspaces/open3d_ws/src/open3d_slam/open3d_slam_ros/data/maps/wangen.pcd"
     init_pose:

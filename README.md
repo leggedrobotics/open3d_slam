@@ -15,7 +15,7 @@ open3d_slam is a C++ (cpp) library for SLAM with ROS integration.
 
 The main difference between open3d_slam and other SLAM libraries out there is that open3d_slam was designed
 to be simple and used for education purposes. In fact, open3d_slam uses only well-established algorithms in their basic form.
-We hope that this will make it easier for newcomers to enter the field. Also, no additional input such as IMU is required.
+We hope that this will make it easier for newcomers to enter the field. It works with pointclouds, no additional input such as IMU is required. Open3D_slam can build a map from scratch or localize in a given map. The given map can also be extended with new measurements.
 
 We base our implementation on [Open3D](http://www.open3d.org/), a well-maintained and highly performant library for
 3D data processing.

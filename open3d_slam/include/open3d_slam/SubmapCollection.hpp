@@ -56,7 +56,7 @@ public:
 	size_t numFinishedSubmaps() const;
 
 
-	Constraints buildLoopClosureConstraints(const TimestampedSubmapIds &ids) const;
+	Constraints buildLoopClosureConstraints(const TimestampedSubmapIds &ids);
 	size_t numLoopClosureCandidates() const;
 	TimestampedSubmapIds popLoopClosureCandidates();
 

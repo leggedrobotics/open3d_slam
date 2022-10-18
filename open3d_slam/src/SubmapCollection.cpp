@@ -253,7 +253,7 @@ const Constraints& SubmapCollection::getOdometryConstraints() const {
 }
 
 Constraints SubmapCollection::buildLoopClosureConstraints(
-		const TimestampedSubmapIds &loopClosureCandidatesIdxs) const {
+		const TimestampedSubmapIds &loopClosureCandidatesIdxs)  {
 	Constraints retVal;
 	for (const auto &id : loopClosureCandidatesIdxs) {
 		const auto constraints = placeRecognition_.buildLoopClosureConstraints(mapToRangeSensor_, *this,
@@ -261,6 +261,9 @@ Constraints SubmapCollection::buildLoopClosureConstraints(
 		if (!constraints.empty()) {
 			for (int i = 0; i < constraints.size(); ++i) {
 				retVal.push_back(constraints.at(i));
+				const int v1 = constraints.at(i).sourceSubmapIdx_;
+				const int v2 = constraints.at(i).sourceSubmapIdx_;
+				adjacencyMatrix_.addEdge(v1, v2);
 			}
 			std::cout << " building loop closure constraints for submap: " << id.submapId_ << " resulted in: "
 					<< constraints.size() << " new constraints \n";

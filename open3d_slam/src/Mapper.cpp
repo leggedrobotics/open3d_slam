@@ -136,13 +136,13 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 
 	Transform mapToRangeSensorEstimate =  mapToRangeSensorPrev_;
 
-	if (isOdomOkay && !isNewInitialValueSet_){
+	if (isOdomOkay && !isNewInitialValueSet_ && !isIgnoreOdometryPrediction_){
 		const Transform odomToRangeSensor = getTransform(timestamp, odomToRangeSensorBuffer_);
 		const Transform odomToRangeSensorPrev = getTransform(lastMeasurementTimestamp_, odomToRangeSensorBuffer_);
 		const Transform odometryMotion = odomToRangeSensorPrev.inverse()*odomToRangeSensor;
-		mapToRangeSensorEstimate =  mapToRangeSensorPrev_*odometryMotion ;
+		mapToRangeSensorEstimate = mapToRangeSensorPrev_*odometryMotion ;
 	}
-
+	isIgnoreOdometryPrediction_ = false;
 	const PointCloud &activeSubmapPointCloud = submaps_->getActiveSubmap().getMapPointCloud();
 	std::shared_ptr<PointCloud> narrowCropped, wideCroppedCloud, mapPatch;
 	{
@@ -165,6 +165,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		mapToRangeSensorPrev_ = mapToRangeSensor_;
 		mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
 		isNewInitialValueSet_ = false;
+		isIgnoreOdometryPrediction_ = true;
 		return true;
 	}
 
