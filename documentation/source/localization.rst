@@ -43,9 +43,9 @@ Alternatively, you can use the 3d interactive marker which is shown the other vi
 `initialize with interactive marker <https://youtu.be/ePI3SvR3zpw>`_ . 
 
 You have to enable the interactive marker first. Then you can drag the marker to
-the estimated robot pose and then right click on the marker and select "Set pose". If the icp diverges, try better aligning the marker and doing it again. As you drag the marker, the blue pointcloud shows what the raw measurment
+the estimated robot pose, and then right click on the marker and select "Set pose". If the icp diverges, try better aligning the marker and doing it again. As you drag the marker, the blue pointcloud shows what the raw measurement
 would look like if the robot was at that given pose. Essentially, the blue pointcloud should fit nicely against the map. Once you have it aligned nicely,
-right click and select "initialize slam" which will star the mapping. Scans will be
+right click and select "initialize slam" which will start the mapping. Scans will be
 inserted into the map if ``is_merge_scans_into_map`` is set to true.
 
 
