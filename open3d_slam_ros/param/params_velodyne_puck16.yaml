@@ -3,17 +3,17 @@ odometry:
   scan_matching:
     icp_objective: PointToPlane
     max_correspondence_dist: 1.0
-    knn_normal_estimation: 4
+    knn_normal_estimation: 10
     max_n_iter: 50
   scan_processing:
     voxel_size: -1.0
-    downsampling_ratio: 0.45
+    downsampling_ratio: 0.5
     scan_cropping:
-      cropping_radius_max: 40.0
-      cropping_radius_min: 0.0
+      cropping_radius_max: 30.0
+      cropping_radius_min: 1.0
       min_z: -30.0
       max_z: 30.0
-      cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
+      cropper_type: "MinMaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
   
 mapping:
   is_print_timing_information: true
@@ -30,17 +30,17 @@ mapping:
     scan_matching:
       icp_objective: PointToPlane
       max_correspondence_dist: 0.8
-      knn_normal_estimation: 5
+      knn_normal_estimation: 12
       max_n_iter: 50
     scan_processing:
       voxel_size: 0.05
-      downsampling_ratio: 0.2
+      downsampling_ratio: 0.4
       scan_cropping:
-        cropping_radius_max: 40.0
-        cropping_radius_min: 0.0
+        cropping_radius_max: 30.0
+        cropping_radius_min: 1.0
         min_z: -30.0
         max_z: 30.0
-        cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
+        cropper_type: "MinMaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
         
 
   map_intializer:
@@ -64,26 +64,26 @@ mapping:
     
   map_builder:
     scan_cropping:
-      cropping_radius_max: 40.0
-      cropping_radius_min: 0.0
+      cropping_radius_max: 25.0
+      cropping_radius_min: 1.0
       min_z: -50.0
       max_z: 50.0
-      cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
+      cropper_type: "MinMaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
     map_voxel_size: 0.1
     space_carving:
       voxel_size: 0.2
-      max_raytracing_length: 30.0
-      truncation_distance: 0.3
-      carve_space_every_n_scans: 10
+      max_raytracing_length: 20.0
+      truncation_distance: 0.4
+      carve_space_every_n_scans: 4
       min_dot_product_with_normal: 0.3
       
   dense_map_builder:
     scan_cropping:
       cropping_radius_max: 15.0
-      cropping_radius_min: 0.0
+      cropping_radius_min: 1.0
       min_z: -50.0
       max_z: 50.0
-      cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
+      cropper_type: "MinMaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
     map_voxel_size: 0.05
     space_carving:
       neigborhood_radius_for_removal: 0.1

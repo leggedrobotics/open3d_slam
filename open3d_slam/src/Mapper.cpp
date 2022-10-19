@@ -181,7 +181,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
 	submaps_->setMapToRangeSensor(mapToRangeSensor_);
 
-	if (!params_.isMergeScansIntoMap_){
+	if (params_.isUseInitialMap_ && !params_.isMergeScansIntoMap_){
 		lastMeasurementTimestamp_ = timestamp;
 		mapToRangeSensorPrev_ = mapToRangeSensor_;
 		return true;
