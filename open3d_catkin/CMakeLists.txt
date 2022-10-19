@@ -55,18 +55,39 @@ elseif(Open3D_FOUND)
   
   message("Open3D libraries: ${Open3D_LIBRARIES}")
   message("Open3D include path: ${Open3D_INCLUDE_DIRS} , ${Open3D_INCLUDE_DIR_MAN}")
+  
+  
+  find_package(fmt QUIET)
+  if(fmt_FOUND)
+  	message("Linking fmt into open3d_catkin")
+  	catkin_package(
+      INCLUDE_DIRS 
+        ${Open3D_INCLUDE_DIRS}
+        ${Open3D_INCLUDE_DIR_MAN}
+      LIBRARIES 
+        ${Open3D_LIBRARIES}
+        fmt::fmt
+      CATKIN_DEPENDS
+        ${CATKIN_PACKAGE_DEPENDENCIES}
+      DEPENDS
+        Open3D 
+    )
+  else()
+  	message("fmt not found. If you get linking errors try installing libfmt with sudo apt install libfmt-dev")
+  	catkin_package(
+      INCLUDE_DIRS 
+        ${Open3D_INCLUDE_DIRS}
+        ${Open3D_INCLUDE_DIR_MAN}
+      LIBRARIES 
+        ${Open3D_LIBRARIES}
+      CATKIN_DEPENDS
+        ${CATKIN_PACKAGE_DEPENDENCIES}
+      DEPENDS
+        Open3D 
+    )  	 
+  endif()
 
-  catkin_package(
-    INCLUDE_DIRS 
-      ${Open3D_INCLUDE_DIRS}
-      ${Open3D_INCLUDE_DIR_MAN}
-    LIBRARIES 
-      ${Open3D_LIBRARIES}
-    CATKIN_DEPENDS
-      ${CATKIN_PACKAGE_DEPENDENCIES}
-    DEPENDS
-      Open3D 
-  )
+
 # 3 - Compile in catkin workspace -------------------------------------------------------------
 else()
   message("${BoldMagenta}INFO: Neither variable Open3d_DIR is set, nor could Open3D be found, hence compiling in workspace.${ColourReset}")
