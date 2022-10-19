@@ -10,6 +10,7 @@
 #include <geometry_msgs/Transform.h>
 #include <geometry_msgs/Pose.h>
 #include <sensor_msgs/PointCloud2.h>
+#include "open3d/io/PointCloudIO.h"
 
 #include "open3d_conversions/open3d_conversions.h"
 #include "open3d_slam/frames.hpp"

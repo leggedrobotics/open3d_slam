@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "open3d_conversions/open3d_conversions.h"
+#include "open3d/core/EigenConverter.h"
 
 namespace open3d_conversions {
 void open3dToRos(const open3d::geometry::PointCloud &pointcloud, sensor_msgs::PointCloud2 &ros_pc2,
