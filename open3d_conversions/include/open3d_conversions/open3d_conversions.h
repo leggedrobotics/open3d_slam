@@ -16,8 +16,9 @@
 #define OPEN3D_CONVERSIONS_HPP_
 
 // Open3D
-#include <open3d/Open3D.h>
-
+#include "open3d/t/geometry/PointCloud.h"
+#include "open3d/geometry/PointCloud.h"
+#include "open3d/geometry/TriangleMesh.h"
 // ROS
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
