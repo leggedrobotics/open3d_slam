@@ -104,7 +104,8 @@ std::shared_ptr<registration::TransformationEstimation> icpObjectiveFactory(
 	}
 
 	case o3d_slam::IcpObjective::PointToPlane: {
-		auto obj = std::make_shared<registration::TransformationEstimationPointToPlane>();
+		auto loss = std::make_shared<registration::TukeyLoss>(1.0);
+		auto obj = std::make_shared<registration::TransformationEstimationPointToPlane>(loss);
 		return obj;
 	}
 
