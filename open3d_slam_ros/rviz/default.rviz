@@ -62,9 +62,9 @@ Visualization Manager:
       Reference Frame: <Fixed Frame>
       Value: true
     - Class: jsk_rviz_plugin/TFTrajectory
-      Enabled: true
+      Enabled: false
       Name: TFTrajectory
-      Value: true
+      Value: false
       color: 25; 255; 240
       duration: 500
       frame: range_sensor_o3d
@@ -92,7 +92,7 @@ Visualization Manager:
       Size (Pixels): 2
       Size (m): 0.009999999776482582
       Style: Points
-      Topic: /mapping_node/raw_cloud
+      Topic: /mapping_node/mapping_input
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -102,15 +102,137 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
+        BASE:
+          Value: true
+        BASE_inertia:
+          Value: true
+        BOOM:
+          Value: true
+        CABIN:
+          Value: true
+        DIPPER:
+          Value: true
+        ENDEFFECTOR:
+          Value: true
+        ENDEFFECTOR_CONTACT:
+          Value: true
+        GNSS_L:
+          Value: true
+        GNSS_R:
+          Value: true
+        IMU_CABIN_base_link:
+          Value: true
+        IMU_CABIN_link:
+          Value: true
+        IMU_base_link:
+          Value: true
+        IMU_link:
+          Value: true
+        LF_BEAM:
+          Value: true
+        LF_BEARING:
+          Value: true
+        LF_KNUCKLE:
+          Value: true
+        LF_PARALLEL:
+          Value: true
+        LF_SWIVEL:
+          Value: true
+        LF_WHEEL:
+          Value: true
+        LF_WHEEL_CONTACT:
+          Value: true
+        LH_BEAM:
+          Value: true
+        LH_KNUCKLE:
+          Value: true
+        LH_OUTRIGGER:
+          Value: true
+        LH_ROTATOR:
+          Value: true
+        LH_WHEEL:
+          Value: true
+        LH_WHEEL_CONTACT:
+          Value: true
+        LIDAR:
+          Value: true
+        RF_BEAM:
+          Value: true
+        RF_BEARING:
+          Value: true
+        RF_KNUCKLE:
+          Value: true
+        RF_PARALLEL:
+          Value: true
+        RF_SWIVEL:
+          Value: true
+        RF_WHEEL:
+          Value: true
+        RF_WHEEL_CONTACT:
+          Value: true
+        RH_BEAM:
+          Value: true
+        RH_KNUCKLE:
+          Value: true
+        RH_OUTRIGGER:
+          Value: true
+        RH_ROTATOR:
+          Value: true
+        RH_WHEEL:
+          Value: true
+        RH_WHEEL_CONTACT:
+          Value: true
+        ROTO:
+          Value: true
+        ROTO_BASE:
+          Value: true
+        SHOVEL:
+          Value: true
+        TELE:
+          Value: true
+        camMainView:
+          Value: true
+        camera_odom_frame:
+          Value: true
+        camera_pose_frame:
+          Value: true
+        imu_box_base_link:
+          Value: true
+        imu_box_link:
+          Value: true
+        leica_pos:
+          Value: true
+        lidar_mount:
+          Value: true
+        livox_frame:
+          Value: true
+        map:
+          Value: true
         map_o3d:
           Value: true
+        odom:
+          Value: true
         odom_o3d:
+          Value: true
+        os_imu:
+          Value: true
+        os_lidar:
+          Value: true
+        os_sensor:
           Value: true
         range_sensor_o3d:
           Value: true
         raw_odom_o3d:
           Value: true
         raw_rs_o3d:
+          Value: true
+        roof_top_box:
+          Value: true
+        rototilt_adapter_plate:
+          Value: true
+        total_station_prism:
+          Value: true
+        world:
           Value: true
       Marker Alpha: 1
       Marker Scale: 1
@@ -132,8 +254,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 7.695680141448975
-        Min Value: -1.3617147207260132
+        Max Value: 51.936500549316406
+        Min Value: -2.651144027709961
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -284,7 +406,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 27.31747817993164
+      Distance: 35.944881439208984
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -292,17 +414,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.8266111612319946
-        Y: 1.0956493616104126
-        Z: -5.843243598937988
+        X: -4.369645595550537
+        Y: -2.471628427505493
+        Z: -1.6402990818023682
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.4047958850860596
+      Pitch: 0.6947970986366272
       Target Frame: <Fixed Frame>
-      Yaw: 2.3832569122314453
+      Yaw: 5.681422710418701
     Saved: ~
 Window Geometry:
   Displays:
@@ -320,5 +442,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1920
-  X: 0
+  X: 1920
   Y: 0
