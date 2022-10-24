@@ -4,8 +4,8 @@
 
 	<arg name="launch_prefix" default="" doc="gdb -ex run --args"/>
 	<arg name="launch_rviz" default="true" />
-	<arg name="cloud_topic" default="/rslidar_points" />
-	<arg name="parameter_filename" default="params_robosense_rs16.yaml"/>
+	<arg name="cloud_topic" default="/hesai/pandar" />
+	<arg name="parameter_filename" default="hesai_pandarQT.yaml"/>
 	<arg name="parameter_folder_path" default="$(find open3d_slam_ros)/param/"/>
 	<arg name="map_saving_folder" default="$(find open3d_slam_ros)/data/maps/"/>
 	<arg name="num_accumulated_range_data" default="1"/>
@@ -13,7 +13,7 @@
 	<arg name="use_sim_time" default="true"/>
 	<arg name="play_delay" default="0.4" />
 	<arg name="play_rate" default="1.0" />
-	<arg name="bag_filename" default="wheeled_robot_large_outdoor_area.bag" /> 
+	<arg name="bag_filename" default="test19_2022-09-26-16-30-25.bag" /> 
 	<arg name="bag_folder_path" default="$(find open3d_slam_ros)/data/"/>
 	
 	<!-- END OF ARGS -->	
@@ -35,5 +35,7 @@
 	<node pkg="rosbag" type="play" name="rosbag"
 		args="'$(arg rosbag_full_path)' --delay '$(arg play_delay)' --rate '$(arg play_rate)' --clock -s 0" unless="$(arg is_read_from_rosbag)"/>
 	<!-- append - -loop for looping -->
+	<node pkg="tf2_ros" type="static_transform_publisher" name="odom" args="15.5895 -7.6923 1.3866 -0.0512 -0.0366 -0.8929 0.4459 odom map_o3d" /> 
+
 
 </launch>
