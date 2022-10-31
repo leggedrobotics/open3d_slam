@@ -43,27 +43,27 @@ void ScanToMapIcpOpen3D::estimateNormalsIfNeeded(PointCloud *pcl) const {
 
 ProcessedScans ScanToMapIcpOpen3D::processForScanMatchingAndMerging(const PointCloud &in,
 		const Transform &mapToRangeSensor) const {
-
 	ProcessedScans retVal;
 	PointCloudPtr narrowCropped, wideCropped;
 	Timer timer;
 	wideCropped = cropVoxelizeDownsample(in, *mapBuilderCropper_, params_.scanProcessing_.voxelSize_,
 			params_.scanProcessing_.downSamplingRatio_);
 	estimateNormalsIfNeeded(wideCropped.get());
+	scanMatcherCropper_->setPose(Transform::Identity());
 	narrowCropped = scanMatcherCropper_->crop(*wideCropped);
 	retVal.match_ = narrowCropped;
 	retVal.merge_ = wideCropped;
 	assert_gt<int>(narrowCropped->points_.size(), 0, "ScanToMapIcpOpen3D::narrow cropped size is zero");
+	assert_gt<int>(wideCropped->points_.size(), 0, "ScanToMapIcpOpen3D::wideCropped cropped size is zero");
 	return retVal;
 }
 RegistrationResult ScanToMapIcpOpen3D::scanToMapRegistration(const PointCloud &scan, const Submap &activeSubmap,
 		const Transform &mapToRangeSensor, const Transform &initialGuess) const {
-	RegistrationResult retVal;
 	const PointCloud &activeSubmapPointCloud = activeSubmap.getMapPointCloud();
 	scanMatcherCropper_->setPose(mapToRangeSensor);
 	const PointCloudPtr mapPatch = scanMatcherCropper_->crop(activeSubmapPointCloud);
 	assert_gt<int>(mapPatch->points_.size(), 0, "map patch size is zero");
-	const auto result = open3d::pipelines::registration::RegistrationICP(scan, *mapPatch,
+	const RegistrationResult retVal = open3d::pipelines::registration::RegistrationICP(scan, *mapPatch,
 			params_.scanMatcher_.maxCorrespondenceDistance_, initialGuess.matrix(), *icpObjective, icpCriteria);
 	return std::move(retVal);
 }

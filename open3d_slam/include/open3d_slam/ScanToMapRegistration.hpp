@@ -31,8 +31,10 @@ class ScanToMapRegistration {
 public:
 	ScanToMapRegistration() = default;
 	virtual ~ScanToMapRegistration() = default;
-	virtual ProcessedScans processForScanMatchingAndMerging(const PointCloud &in, const Transform &mapToRangeSensor) const =0;
-	virtual RegistrationResult scanToMapRegistration(const PointCloud &scan, const Submap &activeSubmap, const Transform &mapToRangeSensor,const Transform &initialGuess) const = 0;
+	virtual ProcessedScans processForScanMatchingAndMerging(const PointCloud &in,
+			const Transform &mapToRangeSensor) const =0;
+	virtual RegistrationResult scanToMapRegistration(const PointCloud &scan, const Submap &activeSubmap,
+			const Transform &mapToRangeSensor, const Transform &initialGuess) const = 0;
 };
 
 class ScanToMapIcpOpen3D : public ScanToMapRegistration {
