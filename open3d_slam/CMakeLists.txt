@@ -29,6 +29,7 @@ set(SRC_FILES
   src/VoxelHashMap.cpp
   src/ScanToMapRegistration.cpp
   src/cloud_processing.cpp
+  src/CloudRegistration.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES
@@ -38,6 +39,8 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 
 
 find_package(Eigen3 REQUIRED)
+find_package(Boost QUIET REQUIRED COMPONENTS serialization filesystem system program_options)
+
 find_package(OpenMP QUIET)
 if (OpenMP_FOUND)
   add_compile_options("${OpenMP_CXX_FLAGS}")
@@ -50,7 +53,8 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS
     include
-    ${EIGEN3_INCLUDE_DIRS}  
+    ${EIGEN3_INCLUDE_DIRS} 
+    ${Boost_INCLUDE_DIR} 
   LIBRARIES
     yaml-cpp
     ${PROJECT_NAME} 
@@ -63,6 +67,7 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIR}
   ${YAML_CPP_INCLUDE_DIR}
   ${OpenMP_CXX_INCLUDE_DIRS}
 )

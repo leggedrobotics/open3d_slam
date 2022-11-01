@@ -11,6 +11,7 @@
 #include "open3d_slam/helpers.hpp"
 #include "open3d_slam/time.hpp"
 #include "open3d_slam/output.hpp"
+#include "open3d_slam/CloudRegistration.hpp"
 
 #include <iostream>
 
@@ -19,6 +20,7 @@ namespace o3d_slam {
 LidarOdometry::LidarOdometry() {
 	icpObjective_ = icpObjectiveFactory(IcpObjective::PointToPlane);
 	cropper_ = std::make_shared<CroppingVolume>();
+	cloudRegistration_ = cloudRegistrationFactory(params_.scanMatcher_);
 }
 
 bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, const Time &timestamp) {

@@ -12,7 +12,7 @@
 #include <Eigen/Dense>
 #include <iostream>
 #include <typeindex>
-
+#include <boost/concept_check.hpp>
 
 
 namespace o3d_slam {
@@ -20,6 +20,21 @@ namespace o3d_slam {
 namespace params_internal {
 	const double kDegToRad =  M_PI / 180.0;
 }
+
+struct Parameters {
+	Parameters() = default;
+	virtual ~Parameters() = default;
+	template<class T>
+	T* as() {
+		BOOST_CONCEPT_ASSERT((boost::Convertible<T*, Parameters*>));
+		return static_cast<T*>(this);
+	}
+	template<class T>
+	const T* as() const {
+		BOOST_CONCEPT_ASSERT((boost::Convertible<T*, Parameters*>));
+		return static_cast<const T*>(this);
+	}
+};
 
 enum class IcpObjective : int {
 	PointToPoint,
@@ -29,6 +44,16 @@ enum class IcpObjective : int {
 static const std::map<std::string, IcpObjective> IcpObjectiveNames {
 	{"PointToPoint",IcpObjective::PointToPoint},
 	{"PointToPlane",IcpObjective::PointToPlane}
+};
+
+enum class CloudRegistrationType : int {
+	PointToPlaneIcpOpen3D,
+	PointToPointIcpOpen3D
+};
+
+static const std::map<std::string, CloudRegistrationType> CloudRegistrationNames {
+	{"PointToPlaneIcpOpen3D",CloudRegistrationType::PointToPlaneIcpOpen3D},
+	{"PointToPointIcpOpen3D",CloudRegistrationType::PointToPointIcpOpen3D}
 };
 
 enum class ScanToMapRegistrationType : int {
@@ -55,11 +80,13 @@ struct ScanProcessingParameters{
 	ScanCroppingParameters cropper_;
 };
 
-struct IcpParameters {
+struct IcpParameters : public Parameters {
 	int kNNnormalEstimation_ = 5;
 	int maxNumIter_ = 50;
 	double maxCorrespondenceDistance_ = 0.2;
+	double maxDistanceNormalEstimation_ = 3.0;
 	IcpObjective icpObjective_ = IcpObjective::PointToPoint;
+	CloudRegistrationType regType_ = CloudRegistrationType::PointToPlaneIcpOpen3D;
 };
 
 struct OdometryParameters {

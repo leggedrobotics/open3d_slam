@@ -15,6 +15,9 @@
 #include "open3d_slam/TransformInterpolationBuffer.hpp"
 
 namespace o3d_slam {
+
+class CloudRegistration;
+
 class LidarOdometry {
 
 public:
@@ -42,6 +45,7 @@ private:
 	Time lastMeasurementTimestamp_;
 	Eigen::Matrix4d initialTransform_ = Eigen::Matrix4d::Identity();
 	bool isInitialTransformSet_ = false;
+	std::shared_ptr<CloudRegistration> cloudRegistration_;
 };
 
 } // namespace o3d_slam
