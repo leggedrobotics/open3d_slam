@@ -8,6 +8,8 @@
 #pragma once
 #include <Eigen/Dense>
 #include "open3d/pipelines/registration/Registration.h"
+#include "open3d/pipelines/registration/GeneralizedICP.h"
+
 #include "open3d_slam/typedefs.hpp"
 #include "open3d_slam/Transform.hpp"
 #include "open3d_slam/Parameters.hpp"
@@ -55,6 +57,23 @@ public:
 	open3d::pipelines::registration::ICPConvergenceCriteria icpConvergenceCriteria_;
 };
 
+class RegistrationIcpGeneralized: public CloudRegistration {
+public:
+	using RegistrationResult = open3d::pipelines::registration::RegistrationResult;
+	RegistrationIcpGeneralized() = default;
+	~RegistrationIcpGeneralized() override = default;
+	virtual RegistrationResult registerClouds(const PointCloud &source, const PointCloud &target,
+			const Transform &init) const final;
+	virtual void prepareCloud(PointCloud *cloud) const final;
+
+	double maxCorrespondenceDistance_ = 1.0;
+	int knnNormalEstimation_ = 10;
+	double maxRadiusNormalEstimation_ = 2.0;
+	open3d::pipelines::registration::ICPConvergenceCriteria icpConvergenceCriteria_;
+	open3d::pipelines::registration::TransformationEstimationForGeneralizedICP tranformationEstimationGICP_;
+};
+
+std::unique_ptr<RegistrationIcpGeneralized> createGeneralizedIcp(const CloudRegistrationParameters &p);
 std::unique_ptr<RegistrationIcpPointToPoint> createPointToPointIcp(const CloudRegistrationParameters &p);
 std::unique_ptr<RegistrationIcpPointToPlane> createPointToPlaneIcp(const CloudRegistrationParameters &p);
 std::unique_ptr<CloudRegistration> cloudRegistrationFactory(const CloudRegistrationParameters &p);

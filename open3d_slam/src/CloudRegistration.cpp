@@ -10,12 +10,36 @@
 
 namespace o3d_slam {
 using namespace open3d::pipelines::registration;
+////////////////////////////////
+/////// generalized
+////////////////////////////////
+RegistrationIcpGeneralized::RegistrationResult RegistrationIcpGeneralized::registerClouds(const PointCloud &source,
+		const PointCloud &target, const Transform &init) const {
+	return RegistrationGeneralizedICP(
+		source, target, maxCorrespondenceDistance_,
+		init.matrix(),tranformationEstimationGICP_ , icpConvergenceCriteria_);
+}
+void RegistrationIcpGeneralized::prepareCloud(PointCloud *cloud) const {
+	assert_gt(maxRadiusNormalEstimation_,0.0,"maxRadiusNormalEstimation_");
+	assert_gt(knnNormalEstimation_,0,"knnNormalEstimation_");
+	open3d::geometry::KDTreeSearchParamHybrid param(maxRadiusNormalEstimation_, knnNormalEstimation_);
+//	cloud->EstimateNormals(param);
+//	cloud->NormalizeNormals();
+	cloud->EstimateCovariances(param);
+}
 
+std::unique_ptr<RegistrationIcpGeneralized> createGeneralizedIcp(const CloudRegistrationParameters &p) {
+	auto ret  = std::make_unique<RegistrationIcpGeneralized>();
+	ret->maxCorrespondenceDistance_ = p.icp_.maxCorrespondenceDistance_;
+	ret->knnNormalEstimation_ = p.icp_.knn_;
+	ret->maxRadiusNormalEstimation_ = p.icp_.maxDistanceKnn_;
+	ret->icpConvergenceCriteria_.max_iteration_ = p.icp_.maxNumIter_;
+	return std::move(ret);
+}
 
 ////////////////////////////////
 /////// point to plane
 ////////////////////////////////
-
 RegistrationIcpPointToPlane::RegistrationResult RegistrationIcpPointToPlane::registerClouds(const PointCloud &source,
 		const PointCloud &target, const Transform &init) const {
 	return RegistrationICP(
