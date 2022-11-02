@@ -23,9 +23,10 @@ void RegistrationIcpGeneralized::prepareCloud(PointCloud *cloud) const {
 	assert_gt(maxRadiusNormalEstimation_,0.0,"maxRadiusNormalEstimation_");
 	assert_gt(knnNormalEstimation_,0,"knnNormalEstimation_");
 	open3d::geometry::KDTreeSearchParamHybrid param(maxRadiusNormalEstimation_, knnNormalEstimation_);
-//	cloud->EstimateNormals(param);
-//	cloud->NormalizeNormals();
-	cloud->EstimateCovariances(param);
+	cloud->EstimateNormals(param);
+	cloud->NormalizeNormals();
+	//todo estimate covariance directly
+//	cloud->EstimateCovariances(param);
 }
 
 std::unique_ptr<RegistrationIcpGeneralized> createGeneralizedIcp(const CloudRegistrationParameters &p) {
