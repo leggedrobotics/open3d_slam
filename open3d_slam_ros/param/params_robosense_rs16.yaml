@@ -2,7 +2,7 @@
 odometry:
   is_publish_odometry_msgs: true
   scan_matching:
-    cloud_registration_type: PointToPlanceIcp #PointToPointIcp, GeneraliedIcp, PointToPlanceIcp
+    cloud_registration_type: PointToPlaneIcp #PointToPointIcp, GeneraliedIcp, PointToPlaneIcp
     icp_parameters:
       max_correspondence_dist: 1.0
       knn: 4 #20 for GICP, 4 for PointToPlaneIcp
