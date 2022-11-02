@@ -27,11 +27,11 @@ public:
 
 };
 
-class RegistrationIcpPointToPlaneOpen3D: public CloudRegistration {
+class RegistrationIcpPointToPlane: public CloudRegistration {
 public:
 	using RegistrationResult = open3d::pipelines::registration::RegistrationResult;
-	RegistrationIcpPointToPlaneOpen3D() = default;
-	~RegistrationIcpPointToPlaneOpen3D() override = default;
+	RegistrationIcpPointToPlane() = default;
+	~RegistrationIcpPointToPlane() override = default;
 	virtual RegistrationResult registerClouds(const PointCloud &source, const PointCloud &target,
 			const Transform &init) const final;
 	virtual void prepareCloud(PointCloud *cloud) const final;
@@ -43,8 +43,8 @@ public:
 	open3d::pipelines::registration::TransformationEstimationPointToPlane pointToPlane_;
 };
 
-std::unique_ptr<RegistrationIcpPointToPlaneOpen3D> createPointToPlaneIcpOpen3D(const CloudRegistrationParameters &p);
-std::unique_ptr<CloudRegistration> cloudRegistrationFactory(const Parameters &p);
+std::unique_ptr<RegistrationIcpPointToPlane> createPointToPlaneIcp(const CloudRegistrationParameters &p);
+std::unique_ptr<CloudRegistration> cloudRegistrationFactory(const CloudRegistrationParameters &p);
 
 } // namespace o3d_slam
 
