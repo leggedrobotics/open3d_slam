@@ -43,6 +43,19 @@ public:
 	open3d::pipelines::registration::TransformationEstimationPointToPlane pointToPlane_;
 };
 
+class RegistrationIcpPointToPoint: public CloudRegistration {
+public:
+	using RegistrationResult = open3d::pipelines::registration::RegistrationResult;
+	RegistrationIcpPointToPoint() = default;
+	~RegistrationIcpPointToPoint() override = default;
+	virtual RegistrationResult registerClouds(const PointCloud &source, const PointCloud &target,
+			const Transform &init) const final;
+
+	double maxCorrespondenceDistance_ = 1.0;
+	open3d::pipelines::registration::ICPConvergenceCriteria icpConvergenceCriteria_;
+};
+
+std::unique_ptr<RegistrationIcpPointToPoint> createPointToPointIcp(const CloudRegistrationParameters &p);
 std::unique_ptr<RegistrationIcpPointToPlane> createPointToPlaneIcp(const CloudRegistrationParameters &p);
 std::unique_ptr<CloudRegistration> cloudRegistrationFactory(const CloudRegistrationParameters &p);
 

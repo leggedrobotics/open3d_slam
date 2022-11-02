@@ -11,13 +11,16 @@
 namespace o3d_slam {
 using namespace open3d::pipelines::registration;
 
+
+////////////////////////////////
+/////// point to plane
+////////////////////////////////
+
 RegistrationIcpPointToPlane::RegistrationResult RegistrationIcpPointToPlane::registerClouds(const PointCloud &source,
 		const PointCloud &target, const Transform &init) const {
-
 	return RegistrationICP(
 		source, target, maxCorrespondenceDistance_,
-		Eigen::Matrix4d::Identity(),pointToPlane_ , icpConvergenceCriteria_);
-
+		init.matrix(),pointToPlane_ , icpConvergenceCriteria_);
 }
 void RegistrationIcpPointToPlane::prepareCloud(PointCloud *cloud) const {
 	assert_gt(maxRadiusNormalEstimation_,0.0,"maxRadiusNormalEstimation_");
@@ -35,11 +38,33 @@ std::unique_ptr<RegistrationIcpPointToPlane> createPointToPlaneIcp(const CloudRe
 	ret->icpConvergenceCriteria_.max_iteration_ = p.icp_.maxNumIter_;
 	return std::move(ret);
 }
+////////////////////////////////
+/////// point to point
+////////////////////////////////
+RegistrationIcpPointToPoint::RegistrationResult RegistrationIcpPointToPoint::registerClouds(const PointCloud &source,
+		const PointCloud &target, const Transform &init) const {
+	return RegistrationICP(
+		source, target, maxCorrespondenceDistance_,
+		init.matrix(),TransformationEstimationPointToPoint() , icpConvergenceCriteria_);
+}
+
+std::unique_ptr<RegistrationIcpPointToPoint> createPointToPointIcp(const CloudRegistrationParameters &p){
+	auto ret  = std::make_unique<RegistrationIcpPointToPoint>();
+	ret->maxCorrespondenceDistance_ = p.icp_.maxCorrespondenceDistance_;
+	ret->icpConvergenceCriteria_.max_iteration_ = p.icp_.maxNumIter_;
+	return std::move(ret);
+}
+////////////////////////////////
+/////// factory
+////////////////////////////////
 std::unique_ptr<CloudRegistration> cloudRegistrationFactory(const CloudRegistrationParameters &p) {
 	switch (p.regType_) {
 
 	case 	CloudRegistrationType::PointToPlaneIcp:{
 		return createPointToPlaneIcp(p);
+	}
+	case 	CloudRegistrationType::PointToPointIcp:{
+		return createPointToPointIcp(p);
 	}
 
 	default:
