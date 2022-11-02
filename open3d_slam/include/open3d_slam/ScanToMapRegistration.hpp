@@ -35,6 +35,8 @@ public:
 			const Transform &mapToRangeSensor) const =0;
 	virtual RegistrationResult scanToMapRegistration(const PointCloud &scan, const Submap &activeSubmap,
 			const Transform &mapToRangeSensor, const Transform &initialGuess) const = 0;
+	virtual bool isMergeScanValid(const PointCloud &in) const =0;
+	virtual void prepareInitialMap(PointCloud *map) const =0;
 };
 
 class ScanToMapIcpOpen3D : public ScanToMapRegistration {
@@ -45,7 +47,8 @@ public:
 	void setParameters(const MapperParameters &p);
 	ProcessedScans processForScanMatchingAndMerging(const PointCloud &in, const Transform &mapToRangeSensor) const final;
 	RegistrationResult scanToMapRegistration(const PointCloud &scan, const Submap &activeSubmap, const Transform &mapToRangeSensor,const Transform &initialGuess) const final;
-
+	bool isMergeScanValid(const PointCloud &in) const final;
+	void prepareInitialMap(PointCloud *map) const final;
 private:
 	void update(const MapperParameters &p);
 	void estimateNormalsIfNeeded(PointCloud *pcl) const;

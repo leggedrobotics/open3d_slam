@@ -68,6 +68,15 @@ RegistrationResult ScanToMapIcpOpen3D::scanToMapRegistration(const PointCloud &s
 	return std::move(retVal);
 }
 
+bool ScanToMapIcpOpen3D::isMergeScanValid(const PointCloud &in) const {
+	return params_.scanMatcher_.icpObjective_ == o3d_slam::IcpObjective::PointToPlane && in.HasNormals();
+}
+
+void ScanToMapIcpOpen3D::prepareInitialMap(PointCloud *map) const {
+	estimateNormalsIfNeeded(map);
+}
+
+
 std::unique_ptr<ScanToMapIcpOpen3D> createScanToMapIcpOpen3D(const MapperParameters &p) {
 	auto ret  = std::make_unique<ScanToMapIcpOpen3D>();
 	ret->setParameters(p);

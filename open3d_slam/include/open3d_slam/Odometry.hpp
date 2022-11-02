@@ -38,8 +38,6 @@ private:
 	open3d::geometry::PointCloud cloudPrev_;
 	Transform odomToRangeSensorCumulative_ = Transform::Identity();
 	OdometryParameters params_;
-//	std::shared_ptr<open3d::pipelines::registration::TransformationEstimation> icpObjective_;
-//	open3d::pipelines::registration::ICPConvergenceCriteria icpConvergenceCriteria_;
 	std::shared_ptr<CroppingVolume> cropper_;
 	Time lastMeasurementTimestamp_;
 	Eigen::Matrix4d initialTransform_ = Eigen::Matrix4d::Identity();

@@ -22,6 +22,7 @@
 #include "open3d_slam/constraint_builders.hpp"
 #include "open3d_slam/Odometry.hpp"
 #include "open3d_slam/MotionCompensation.hpp"
+#include "open3d_slam/ScanToMapRegistration.hpp"
 
 #ifdef open3d_slam_OPENMP_FOUND
 #include <omp.h>
@@ -223,9 +224,14 @@ void SlamWrapper::loadParametersAndInitialize() {
 
 void SlamWrapper::setInitialMap(const PointCloud &initialMap) {
 	TimestampedPointCloud measurement{fromUniversal(0), std::move(initialMap)};
+  {
+	  Timer t("initial map preparation");
+  	mapper_->getScanToMapRegistration().prepareInitialMap(&measurement.cloud_);
+  }
+  std::cout << "Initial map prepared! \n";
 	const bool mappingResult = mapper_->addRangeMeasurement(measurement.cloud_, measurement.time_);
 	if (!mappingResult) {
-		std::cerr << "WARNING: mapping intialization has failed!!!! \n";
+		std::cerr << "WARNING: mapping initialization has failed!!!! \n";
 	}
 }
 

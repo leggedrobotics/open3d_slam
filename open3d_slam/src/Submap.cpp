@@ -48,14 +48,12 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 
 	if (params_.isUseInitialMap_ && mapCloud_.IsEmpty()){
 		std::lock_guard<std::mutex> lck(mapPointCloudMutex_);
-		mapCloud_ = rawScan;
+		mapCloud_ = preProcessedScan;
 		voxelize(params_.mapBuilder_.mapVoxelSize_, &mapCloud_);
-		estimateNormalsIfNeeded(params_.scanMatcher_.knn_, &mapCloud_);
 		return true;
 	}
 
 	auto transformedCloud = o3d_slam::transform(mapToRangeSensor.matrix(), preProcessedScan);
-	estimateNormalsIfNeeded(params_.scanMatcher_.knn_, transformedCloud.get());
 	if (isPerformCarving) {
 		carvingStatisticsTimer_.startStopwatch();
 		{
@@ -139,13 +137,6 @@ void Submap::carve(const PointCloud &scan, const Eigen::Vector3d &sensorPosition
 	std::vector<Eigen::Vector3i> keysToRemove = getKeysOfCarvedPoints(*croppedScanPtr, *cloud, sensorPosition, param);
 	for (const auto &k : keysToRemove){
 		cloud->removeKey(k);
-	}
-}
-
-void Submap::estimateNormalsIfNeeded(int knn, PointCloud *pcl) const {
-	if (!pcl->HasNormals() && params_.scanMatcher_.icpObjective_ == IcpObjective::PointToPlane) {
-		estimateNormals(knn, pcl);
-		pcl->NormalizeNormals(); //todo, dunno if I need this
 	}
 }
 
