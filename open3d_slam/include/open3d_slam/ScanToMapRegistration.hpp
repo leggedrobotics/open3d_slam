@@ -39,11 +39,11 @@ public:
 	virtual void prepareInitialMap(PointCloud *map) const =0;
 };
 
-class ScanToMapIcpOpen3D : public ScanToMapRegistration {
+class ScanToMapIcp : public ScanToMapRegistration {
 
 public:
-	ScanToMapIcpOpen3D();
-	virtual ~ScanToMapIcpOpen3D() = default;
+	ScanToMapIcp();
+	virtual ~ScanToMapIcp() = default;
 	void setParameters(const MapperParameters &p);
 	ProcessedScans processForScanMatchingAndMerging(const PointCloud &in, const Transform &mapToRangeSensor) const final;
 	RegistrationResult scanToMapRegistration(const PointCloud &scan, const Submap &activeSubmap, const Transform &mapToRangeSensor,const Transform &initialGuess) const final;
@@ -58,7 +58,7 @@ private:
 	std::shared_ptr<CroppingVolume> mapBuilderCropper_;
 };
 
-std::unique_ptr<ScanToMapIcpOpen3D> createScanToMapIcpOpen3D(const MapperParameters &p);
+std::unique_ptr<ScanToMapIcp> createScanToMapIcp(const MapperParameters &p);
 std::unique_ptr<ScanToMapRegistration> scanToMapRegistrationFactory(const MapperParameters &p);
 
 
