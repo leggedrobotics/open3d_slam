@@ -68,7 +68,7 @@ void SlamMapInitializer::initialize(const MapInitializingParameters &params) {
     const auto &p = slamPtr_->getMapperParameters();
     Timer t("initial map normal estimation");
     if (!raw_map.HasNormals() && p.scanMatcher_.icpObjective_ == o3d_slam::IcpObjective::PointToPlane) {
-    		estimateNormals(p.scanMatcher_.kNNnormalEstimation_, &raw_map);
+    		estimateNormals(p.scanMatcher_.knn_, &raw_map);
     		raw_map.NormalizeNormals(); //todo, dunno if I need this
     	}
     std::cout << "Normals estimated! \n";

@@ -36,7 +36,7 @@ void ScanToMapIcpOpen3D::update(const MapperParameters &p) {
 
 void ScanToMapIcpOpen3D::estimateNormalsIfNeeded(PointCloud *pcl) const {
 	if (!pcl->HasNormals() && params_.scanMatcher_.icpObjective_ == o3d_slam::IcpObjective::PointToPlane) {
-		estimateNormals(params_.scanMatcher_.kNNnormalEstimation_, pcl);
+		estimateNormals(params_.scanMatcher_.knn_, pcl);
 		pcl->NormalizeNormals();
 	}
 }
@@ -78,8 +78,8 @@ std::unique_ptr<ScanToMapRegistration> scanToMapRegistrationFactory(const Mapper
 
 	switch (p.scanToMapRegType_) {
 
-	case 	ScanToMapRegistrationType::PointToPlaneIcpOpen3D:
-	case 	ScanToMapRegistrationType::PointToPointIcpOpen3D:{
+	case 	ScanToMapRegistrationType::PointToPlaneIcp:
+	case 	ScanToMapRegistrationType::PointToPointIcp:{
 		return createScanToMapIcpOpen3D(p);
 	}
 

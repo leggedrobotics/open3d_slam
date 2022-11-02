@@ -30,6 +30,7 @@
 		<arg name="use_sim_time" value="$(arg use_sim_time)"/>
 		<arg name="is_read_from_rosbag" value="$(arg is_read_from_rosbag)"/>
 		<arg name="rosbag_filepath" value="$(arg rosbag_full_path)"/>
+		<arg name="launch_prefix" value="$(arg launch_prefix)"/>
 	</include>
 
 	<node pkg="rosbag" type="play" name="rosbag"

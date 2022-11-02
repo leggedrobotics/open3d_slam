@@ -50,12 +50,12 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 		std::lock_guard<std::mutex> lck(mapPointCloudMutex_);
 		mapCloud_ = rawScan;
 		voxelize(params_.mapBuilder_.mapVoxelSize_, &mapCloud_);
-		estimateNormalsIfNeeded(params_.scanMatcher_.kNNnormalEstimation_, &mapCloud_);
+		estimateNormalsIfNeeded(params_.scanMatcher_.knn_, &mapCloud_);
 		return true;
 	}
 
 	auto transformedCloud = o3d_slam::transform(mapToRangeSensor.matrix(), preProcessedScan);
-	estimateNormalsIfNeeded(params_.scanMatcher_.kNNnormalEstimation_, transformedCloud.get());
+	estimateNormalsIfNeeded(params_.scanMatcher_.knn_, transformedCloud.get());
 	if (isPerformCarving) {
 		carvingStatisticsTimer_.startStopwatch();
 		{

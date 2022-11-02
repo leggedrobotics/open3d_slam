@@ -24,19 +24,19 @@ void RegistrationIcpPointToPlaneOpen3D::prepareCloud(PointCloud *cloud) const {
 	cloud->NormalizeNormals();
 }
 
-std::unique_ptr<RegistrationIcpPointToPlaneOpen3D> createPointToPlaneIcpOpen3D(const IcpParameters &p) {
+std::unique_ptr<RegistrationIcpPointToPlaneOpen3D> createPointToPlaneIcpOpen3D(const CloudRegistrationParameters &p) {
 	auto ret  = std::make_unique<RegistrationIcpPointToPlaneOpen3D>();
-	ret->maxCorrespondenceDistance_ = p.maxCorrespondenceDistance_;
-	ret->knnNormalEstimation_ = p.kNNnormalEstimation_;
-	ret->maxRadiusNormalEstimation_ = p.maxDistanceNormalEstimation_;
-	ret->icpConvergenceCriteria_.max_iteration_ = p.maxNumIter_;
+	ret->maxCorrespondenceDistance_ = p.icp_.maxCorrespondenceDistance_;
+	ret->knnNormalEstimation_ = p.icp_.knn_;
+	ret->maxRadiusNormalEstimation_ = p.icp_.maxDistanceKnn_;
+	ret->icpConvergenceCriteria_.max_iteration_ = p.icp_.maxNumIter_;
 	return std::move(ret);
 }
 std::unique_ptr<CloudRegistration> cloudRegistrationFactory(const Parameters &p) {
-	const auto &scanRegParameters = *(p.as<IcpParameters>());
+	const auto &scanRegParameters = *(p.as<CloudRegistrationParameters>());
 	switch (scanRegParameters.regType_) {
 
-	case 	CloudRegistrationType::PointToPlaneIcpOpen3D:{
+	case 	CloudRegistrationType::PointToPlaneIcp:{
 		return createPointToPlaneIcpOpen3D(scanRegParameters);
 	}
 

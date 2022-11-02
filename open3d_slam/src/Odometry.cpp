@@ -18,7 +18,7 @@
 namespace o3d_slam {
 
 LidarOdometry::LidarOdometry() {
-	icpObjective_ = icpObjectiveFactory(IcpObjective::PointToPlane);
+//	icpObjective_ = icpObjectiveFactory(IcpObjective::PointToPlane);
 	cropper_ = std::make_shared<CroppingVolume>();
 	cloudRegistration_ = cloudRegistrationFactory(params_.scanMatcher_);
 }
@@ -41,14 +41,16 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 	o3d_slam::voxelize(params_.scanProcessing_.voxelSize_, croppedCloud.get());
 	auto downSampledCloud = croppedCloud->RandomDownSample(params_.scanProcessing_.downSamplingRatio_);
 
-	if (params_.scanMatcher_.icpObjective_ == o3d_slam::IcpObjective::PointToPlane) {
-		o3d_slam::estimateNormals(params_.scanMatcher_.kNNnormalEstimation_, downSampledCloud.get());
-		downSampledCloud->NormalizeNormals();
-	}
-
-	auto result = open3d::pipelines::registration::RegistrationICP(
-		cloudPrev_, *downSampledCloud, params_.scanMatcher_.maxCorrespondenceDistance_,
-		Eigen::Matrix4d::Identity(), *icpObjective_, icpConvergenceCriteria_);
+//	if (params_.scanMatcher_.icpObjective_ == o3d_slam::IcpObjective::PointToPlane) {
+//		o3d_slam::estimateNormals(params_.scanMatcher_.kNNnormalEstimation_, downSampledCloud.get());
+//		downSampledCloud->NormalizeNormals();
+//	}
+//
+//	auto result = open3d::pipelines::registration::RegistrationICP(
+//		cloudPrev_, *downSampledCloud, params_.scanMatcher_.maxCorrespondenceDistance_,
+//		Eigen::Matrix4d::Identity(), *icpObjective_, icpConvergenceCriteria_);
+	cloudRegistration_->prepareCloud(downSampledCloud.get());
+	const auto result = cloudRegistration_->registerClouds(cloudPrev_,*downSampledCloud, Transform::Identity());
 
 	//todo magic
 	const bool isOdomOkay = result.fitness_ > 0.1;
@@ -98,12 +100,12 @@ bool  LidarOdometry::hasProcessedMeasurements() const{
 
 void LidarOdometry::setParameters(const OdometryParameters &p) {
 	params_ = p;
-	icpConvergenceCriteria_.max_iteration_ = p.scanMatcher_.maxNumIter_;
-	icpObjective_ = icpObjectiveFactory(params_.scanMatcher_.icpObjective_);
+//	icpConvergenceCriteria_.max_iteration_ = p.scanMatcher_.maxNumIter_;
+//	icpObjective_ = icpObjectiveFactory(params_.scanMatcher_.icpObjective_);
 //	cropper_ = std::make_shared<MaxRadiusCroppingVolume>(params_.scanProcessing_.croppingRadius_);
 //	cropper_ = std::make_shared<CylinderCroppingVolume>(params_.scanProcessing_.croppingRadius_,-3.0,3.0);
-	const auto &par = params_.scanProcessing_.cropper_;
-	cropper_ = croppingVolumeFactory(par);
+	cropper_ = croppingVolumeFactory(params_.scanProcessing_.cropper_);
+	cloudRegistration_ = cloudRegistrationFactory(params_.scanMatcher_);
 }
 
 

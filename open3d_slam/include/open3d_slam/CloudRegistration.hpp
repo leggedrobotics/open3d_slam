@@ -22,9 +22,8 @@ public:
 
 	virtual RegistrationResult registerClouds(const PointCloud &source, const PointCloud &target,
 			const Transform &init) const = 0;
-	virtual void prepareCloud(PointCloud *cloud) const {
-	}
-	;
+	virtual void prepareCloud(PointCloud *cloud) const {}
+
 
 };
 
@@ -44,7 +43,7 @@ public:
 	open3d::pipelines::registration::TransformationEstimationPointToPlane pointToPlane_;
 };
 
-std::unique_ptr<RegistrationIcpPointToPlaneOpen3D> createPointToPlaneIcpOpen3D(const IcpParameters &p);
+std::unique_ptr<RegistrationIcpPointToPlaneOpen3D> createPointToPlaneIcpOpen3D(const CloudRegistrationParameters &p);
 std::unique_ptr<CloudRegistration> cloudRegistrationFactory(const Parameters &p);
 
 } // namespace o3d_slam

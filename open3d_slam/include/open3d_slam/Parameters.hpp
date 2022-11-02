@@ -47,23 +47,23 @@ static const std::map<std::string, IcpObjective> IcpObjectiveNames {
 };
 
 enum class CloudRegistrationType : int {
-	PointToPlaneIcpOpen3D,
-	PointToPointIcpOpen3D
+	PointToPlaneIcp,
+	PointToPointIcp
 };
 
 static const std::map<std::string, CloudRegistrationType> CloudRegistrationNames {
-	{"PointToPlaneIcpOpen3D",CloudRegistrationType::PointToPlaneIcpOpen3D},
-	{"PointToPointIcpOpen3D",CloudRegistrationType::PointToPointIcpOpen3D}
+	{"PointToPlaneIcp",CloudRegistrationType::PointToPlaneIcp},
+	{"PointToPointIcp",CloudRegistrationType::PointToPointIcp}
 };
 
 enum class ScanToMapRegistrationType : int {
-	PointToPlaneIcpOpen3D,
-	PointToPointIcpOpen3D
+	PointToPlaneIcp,
+	PointToPointIcp
 };
 
 static const std::map<std::string, ScanToMapRegistrationType> ScanToMapRegistrationNames {
-	{"PointToPlaneIcpOpen3D",ScanToMapRegistrationType::PointToPlaneIcpOpen3D},
-	{"PointToPointIcpOpen3D",ScanToMapRegistrationType::PointToPointIcpOpen3D}
+	{"PointToPlaneIcp",ScanToMapRegistrationType::PointToPlaneIcp},
+	{"PointToPointIcp",ScanToMapRegistrationType::PointToPointIcp}
 };
 
 struct ScanCroppingParameters {
@@ -80,17 +80,22 @@ struct ScanProcessingParameters{
 	ScanCroppingParameters cropper_;
 };
 
-struct IcpParameters : public Parameters {
-	int kNNnormalEstimation_ = 5;
+struct IcpParameters {
 	int maxNumIter_ = 50;
 	double maxCorrespondenceDistance_ = 0.2;
-	double maxDistanceNormalEstimation_ = 3.0;
+	int knn_ = 5;
+	double maxDistanceKnn_ = 10.0; //not used for now
 	IcpObjective icpObjective_ = IcpObjective::PointToPoint;
-	CloudRegistrationType regType_ = CloudRegistrationType::PointToPlaneIcpOpen3D;
+	CloudRegistrationType regType_ = CloudRegistrationType::PointToPlaneIcp;
+};
+
+struct CloudRegistrationParameters : public Parameters {
+	CloudRegistrationType regType_ = CloudRegistrationType::PointToPlaneIcp;
+	IcpParameters icp_;
 };
 
 struct OdometryParameters {
-	IcpParameters scanMatcher_;
+	CloudRegistrationParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
   bool isPublishOdometryMsgs_ = false;
 };
@@ -149,10 +154,13 @@ struct GlobalOptimizationParameters {
 	int referenceNode_ = 0;
 };
 
-
+struct ScanToMapRegistrationParameters : public Parameters {
+	ScanToMapRegistrationType scanToMapRegType_ = ScanToMapRegistrationType::PointToPlaneIcp;
+	IcpParameters icp_;
+};
 
 struct MapperParameters {
-	ScanToMapRegistrationType scanToMapRegType_ = ScanToMapRegistrationType::PointToPlaneIcpOpen3D;
+	ScanToMapRegistrationType scanToMapRegType_ = ScanToMapRegistrationType::PointToPlaneIcp;
 	IcpParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
 	double minMovementBetweenMappingSteps_ = 0.0;
@@ -192,39 +200,40 @@ struct ConstantVelocityMotionCompensationParameters {
 	int numPosesVelocityEstimation_ = 3;
 };
 
-const std::map<std::type_index, std::string> typeKeywordMap{
-	{std::type_index(typeid(ConstantVelocityMotionCompensationParameters)), "motion_compensation"},
-	{std::type_index(typeid(SavingParameters)), "saving_parameters"},
-	{std::type_index(typeid(PlaceRecognitionConsistencyCheckParameters)), "consistency_check"},
-	{std::type_index(typeid(PlaceRecognitionParameters)), "place_recognition"},
-	{std::type_index(typeid(GlobalOptimizationParameters)), "global_optimization"},
-	{std::type_index(typeid(VisualizationParameters)), "visualization"},
-	{std::type_index(typeid(ScanProcessingParameters)), "scan_processing"},
-	{std::type_index(typeid(IcpParameters)), "scan_matching"},
-	{std::type_index(typeid(MapperParameters)), "mapping"},
-	{std::type_index(typeid(MapBuilderParameters)), "map_builder"},
-	{std::type_index(typeid(OdometryParameters)), "odometry"},
-	{std::type_index(typeid(SpaceCarvingParameters)), "space_carving"},
-	{std::type_index(typeid(ScanCroppingParameters)), "scan_cropping"},
-	{std::type_index(typeid(SubmapParameters)), "submaps"},
-};
+//const std::map<std::type_index, std::string> typeKeywordMap{
+//	{std::type_index(typeid(ConstantVelocityMotionCompensationParameters)), "motion_compensation"},
+//	{std::type_index(typeid(SavingParameters)), "saving_parameters"},
+//	{std::type_index(typeid(PlaceRecognitionConsistencyCheckParameters)), "consistency_check"},
+//	{std::type_index(typeid(PlaceRecognitionParameters)), "place_recognition"},
+//	{std::type_index(typeid(GlobalOptimizationParameters)), "global_optimization"},
+//	{std::type_index(typeid(VisualizationParameters)), "visualization"},
+//	{std::type_index(typeid(ScanProcessingParameters)), "scan_processing"},
+//	{std::type_index(typeid(IcpParameters)), "scan_matching"},
+//	{std::type_index(typeid(MapperParameters)), "mapping"},
+//	{std::type_index(typeid(MapBuilderParameters)), "map_builder"},
+//	{std::type_index(typeid(OdometryParameters)), "odometry"},
+//	{std::type_index(typeid(SpaceCarvingParameters)), "space_carving"},
+//	{std::type_index(typeid(ScanCroppingParameters)), "scan_cropping"},
+//	{std::type_index(typeid(SubmapParameters)), "submaps"},
+//};
 
-template <typename P>
-void loadParameters(const std::string& filename, P *p)
-{
-	YAML::Node basenode = YAML::LoadFile(filename);
-	if (basenode.IsNull()) {
-		std::string error_msg = typeid(p).name();
-		error_msg.append(" params::loadParameters loading failed");
-		throw std::runtime_error(error_msg);
-	}
-	
-	std::type_index class_type = std::type_index(typeid(*p));
-	std::string keyword = typeKeywordMap.at(class_type);
-	if (basenode[keyword].IsDefined()) {
-		loadParameters(basenode[keyword], p);
-	}
-};
+//template <typename P>
+//void loadParameters(const std::string& filename, P *p)
+//{
+//	std::cout << "dis\n";
+//	YAML::Node basenode = YAML::LoadFile(filename);
+//	if (basenode.IsNull()) {
+//		std::string error_msg = typeid(p).name();
+//		error_msg.append(" params::loadParameters loading failed");
+//		throw std::runtime_error(error_msg);
+//	}
+//
+//	std::type_index class_type = std::type_index(typeid(*p));
+//	std::string keyword = typeKeywordMap.at(class_type);
+//	if (basenode[keyword].IsDefined()) {
+//		loadParameters(basenode[keyword], p);
+//	}
+//};
 
 void loadParameters(const YAML::Node &node, ConstantVelocityMotionCompensationParameters *p);
 void loadParameters(const YAML::Node &node, SavingParameters *p);
@@ -235,10 +244,27 @@ void loadParameters(const YAML::Node &node, VisualizationParameters *p);
 void loadParameters(const YAML::Node &node, SubmapParameters *p);
 void loadParameters(const YAML::Node &node, ScanProcessingParameters *p);
 void loadParameters(const YAML::Node &node, IcpParameters *p);
+void loadParameters(const YAML::Node &node, CloudRegistrationParameters *p);
 void loadParameters(const YAML::Node &node, MapperParameters *p);
 void loadParameters(const YAML::Node &node, MapBuilderParameters *p);
 void loadParameters(const YAML::Node &node, OdometryParameters *p);
 void loadParameters(const YAML::Node &node, SpaceCarvingParameters *p);
 void loadParameters(const YAML::Node &node, ScanCroppingParameters *p);
+
+void loadParameters(const std::string &filename, ConstantVelocityMotionCompensationParameters *p);
+void loadParameters(const std::string &filename, SavingParameters *p);
+void loadParameters(const std::string &filename, PlaceRecognitionConsistencyCheckParameters *p);
+void loadParameters(const std::string &filename, PlaceRecognitionParameters *p);
+void loadParameters(const std::string &filename, GlobalOptimizationParameters *p);
+void loadParameters(const std::string &filename, VisualizationParameters *p);
+void loadParameters(const std::string &filename, SubmapParameters *p);
+void loadParameters(const std::string &filename, ScanProcessingParameters *p);
+void loadParameters(const std::string &filename, IcpParameters *p);
+void loadParameters(const std::string &filename, CloudRegistrationParameters *p);
+void loadParameters(const std::string &filename, MapperParameters *p);
+void loadParameters(const std::string &filename, MapBuilderParameters *p);
+void loadParameters(const std::string &filename, OdometryParameters *p);
+void loadParameters(const std::string &filename, SpaceCarvingParameters *p);
+void loadParameters(const std::string &filename, ScanCroppingParameters *p);
 
 } // namespace o3d_slam
