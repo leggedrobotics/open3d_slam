@@ -28,15 +28,16 @@ void ScanToMapIcpOpen3D::setParameters(const MapperParameters &p) {
 	update(params_);
 }
 void ScanToMapIcpOpen3D::update(const MapperParameters &p) {
-	icpCriteria.max_iteration_ = p.scanMatcher_.maxNumIter_;
-	icpObjective = icpObjectiveFactory(p.scanMatcher_.icpObjective_);
+	icpCriteria.max_iteration_ = p.scanMatcher_.icp_.maxNumIter_;
+	icpObjective = icpObjectiveFactory(p.scanMatcher_.scanToMapRegType_);
 	mapBuilderCropper_ = croppingVolumeFactory(params_.mapBuilder_.cropper_);
 	scanMatcherCropper_ = croppingVolumeFactory(params_.scanProcessing_.cropper_);
 }
 
 void ScanToMapIcpOpen3D::estimateNormalsIfNeeded(PointCloud *pcl) const {
-	if (!pcl->HasNormals() && params_.scanMatcher_.icpObjective_ == o3d_slam::IcpObjective::PointToPlane) {
-		estimateNormals(params_.scanMatcher_.knn_, pcl);
+	if (!pcl->HasNormals()
+			&& params_.scanMatcher_.scanToMapRegType_ == o3d_slam::ScanToMapRegistrationType::PointToPlaneIcp) {
+		estimateNormals(params_.scanMatcher_.icp_.knn_, pcl);
 		pcl->NormalizeNormals();
 	}
 }
@@ -64,31 +65,32 @@ RegistrationResult ScanToMapIcpOpen3D::scanToMapRegistration(const PointCloud &s
 	const PointCloudPtr mapPatch = scanMatcherCropper_->crop(activeSubmapPointCloud);
 	assert_gt<int>(mapPatch->points_.size(), 0, "map patch size is zero");
 	const RegistrationResult retVal = open3d::pipelines::registration::RegistrationICP(scan, *mapPatch,
-			params_.scanMatcher_.maxCorrespondenceDistance_, initialGuess.matrix(), *icpObjective, icpCriteria);
+			params_.scanMatcher_.icp_.maxCorrespondenceDistance_, initialGuess.matrix(), *icpObjective, icpCriteria);
 	return std::move(retVal);
 }
 
 bool ScanToMapIcpOpen3D::isMergeScanValid(const PointCloud &in) const {
-	return params_.scanMatcher_.icpObjective_ == o3d_slam::IcpObjective::PointToPlane && in.HasNormals();
+	if (params_.scanMatcher_.scanToMapRegType_ == o3d_slam::ScanToMapRegistrationType::PointToPlaneIcp) {
+		return in.HasNormals();
+	}
+	return true;
 }
 
 void ScanToMapIcpOpen3D::prepareInitialMap(PointCloud *map) const {
 	estimateNormalsIfNeeded(map);
 }
 
-
 std::unique_ptr<ScanToMapIcpOpen3D> createScanToMapIcpOpen3D(const MapperParameters &p) {
-	auto ret  = std::make_unique<ScanToMapIcpOpen3D>();
+	auto ret = std::make_unique<ScanToMapIcpOpen3D>();
 	ret->setParameters(p);
 	return std::move(ret);
 }
 std::unique_ptr<ScanToMapRegistration> scanToMapRegistrationFactory(const MapperParameters &p) {
 
-
 	switch (p.scanToMapRegType_) {
 
-	case 	ScanToMapRegistrationType::PointToPlaneIcp:
-	case 	ScanToMapRegistrationType::PointToPointIcp:{
+	case ScanToMapRegistrationType::PointToPlaneIcp:
+	case ScanToMapRegistrationType::PointToPointIcp: {
 		return createScanToMapIcpOpen3D(p);
 	}
 

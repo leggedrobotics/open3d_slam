@@ -29,7 +29,7 @@ std::shared_ptr<registration::TransformationEstimation> icpObjective;
 } // namespace
 
 PlaceRecognition::PlaceRecognition() {
-	icpObjective = icpObjectiveFactory(IcpObjective::PointToPlane);
+	icpObjective = icpObjectiveFactory(CloudRegistrationType::PointToPlaneIcp);
 }
 
 void PlaceRecognition::setParameters(const MapperParameters &p) {

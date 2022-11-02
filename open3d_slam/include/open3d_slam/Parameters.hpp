@@ -36,16 +36,6 @@ struct Parameters {
 	}
 };
 
-enum class IcpObjective : int {
-	PointToPoint,
-	PointToPlane
-};
-
-static const std::map<std::string, IcpObjective> IcpObjectiveNames {
-	{"PointToPoint",IcpObjective::PointToPoint},
-	{"PointToPlane",IcpObjective::PointToPlane}
-};
-
 enum class CloudRegistrationType : int {
 	PointToPlaneIcp,
 	PointToPointIcp
@@ -85,8 +75,6 @@ struct IcpParameters {
 	double maxCorrespondenceDistance_ = 0.2;
 	int knn_ = 5;
 	double maxDistanceKnn_ = 10.0; //not used for now
-	IcpObjective icpObjective_ = IcpObjective::PointToPoint;
-	CloudRegistrationType regType_ = CloudRegistrationType::PointToPlaneIcp;
 };
 
 struct CloudRegistrationParameters : public Parameters {
@@ -156,15 +144,15 @@ struct GlobalOptimizationParameters {
 
 struct ScanToMapRegistrationParameters : public Parameters {
 	ScanToMapRegistrationType scanToMapRegType_ = ScanToMapRegistrationType::PointToPlaneIcp;
+	double minRefinementFitness_ = 0.7;
 	IcpParameters icp_;
 };
 
 struct MapperParameters {
 	ScanToMapRegistrationType scanToMapRegType_ = ScanToMapRegistrationType::PointToPlaneIcp;
-	IcpParameters scanMatcher_;
+	ScanToMapRegistrationParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
 	double minMovementBetweenMappingSteps_ = 0.0;
-	double minRefinementFitness_ = 0.7;
 	bool isIgnoreMinRefinementFitness_ = false;
 	MapBuilderParameters mapBuilder_;
 	MapBuilderParameters denseMapBuilder_;
@@ -200,41 +188,6 @@ struct ConstantVelocityMotionCompensationParameters {
 	int numPosesVelocityEstimation_ = 3;
 };
 
-//const std::map<std::type_index, std::string> typeKeywordMap{
-//	{std::type_index(typeid(ConstantVelocityMotionCompensationParameters)), "motion_compensation"},
-//	{std::type_index(typeid(SavingParameters)), "saving_parameters"},
-//	{std::type_index(typeid(PlaceRecognitionConsistencyCheckParameters)), "consistency_check"},
-//	{std::type_index(typeid(PlaceRecognitionParameters)), "place_recognition"},
-//	{std::type_index(typeid(GlobalOptimizationParameters)), "global_optimization"},
-//	{std::type_index(typeid(VisualizationParameters)), "visualization"},
-//	{std::type_index(typeid(ScanProcessingParameters)), "scan_processing"},
-//	{std::type_index(typeid(IcpParameters)), "scan_matching"},
-//	{std::type_index(typeid(MapperParameters)), "mapping"},
-//	{std::type_index(typeid(MapBuilderParameters)), "map_builder"},
-//	{std::type_index(typeid(OdometryParameters)), "odometry"},
-//	{std::type_index(typeid(SpaceCarvingParameters)), "space_carving"},
-//	{std::type_index(typeid(ScanCroppingParameters)), "scan_cropping"},
-//	{std::type_index(typeid(SubmapParameters)), "submaps"},
-//};
-
-//template <typename P>
-//void loadParameters(const std::string& filename, P *p)
-//{
-//	std::cout << "dis\n";
-//	YAML::Node basenode = YAML::LoadFile(filename);
-//	if (basenode.IsNull()) {
-//		std::string error_msg = typeid(p).name();
-//		error_msg.append(" params::loadParameters loading failed");
-//		throw std::runtime_error(error_msg);
-//	}
-//
-//	std::type_index class_type = std::type_index(typeid(*p));
-//	std::string keyword = typeKeywordMap.at(class_type);
-//	if (basenode[keyword].IsDefined()) {
-//		loadParameters(basenode[keyword], p);
-//	}
-//};
-
 void loadParameters(const YAML::Node &node, ConstantVelocityMotionCompensationParameters *p);
 void loadParameters(const YAML::Node &node, SavingParameters *p);
 void loadParameters(const YAML::Node &node, PlaceRecognitionConsistencyCheckParameters *p);
@@ -250,6 +203,7 @@ void loadParameters(const YAML::Node &node, MapBuilderParameters *p);
 void loadParameters(const YAML::Node &node, OdometryParameters *p);
 void loadParameters(const YAML::Node &node, SpaceCarvingParameters *p);
 void loadParameters(const YAML::Node &node, ScanCroppingParameters *p);
+void loadParameters(const YAML::Node &node, ScanToMapRegistrationParameters *p);
 
 void loadParameters(const std::string &filename, ConstantVelocityMotionCompensationParameters *p);
 void loadParameters(const std::string &filename, SavingParameters *p);

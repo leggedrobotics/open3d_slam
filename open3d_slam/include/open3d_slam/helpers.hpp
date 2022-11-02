@@ -29,7 +29,9 @@ void voxelize(double voxelSize, open3d::geometry::PointCloud *pcl);
 
 void estimateNormals(int numNearestNeighbours, open3d::geometry::PointCloud *pcl);
 std::shared_ptr<open3d::pipelines::registration::TransformationEstimation> icpObjectiveFactory(
-		const o3d_slam::IcpObjective &obj);
+		const o3d_slam::CloudRegistrationType &obj);
+std::shared_ptr<open3d::pipelines::registration::TransformationEstimation> icpObjectiveFactory(
+		const o3d_slam::ScanToMapRegistrationType &obj);
 
 std::pair<std::vector<double>, std::vector<size_t>> computePointCloudDistance(
 		const open3d::geometry::PointCloud &reference, const open3d::geometry::PointCloud &cloud,
