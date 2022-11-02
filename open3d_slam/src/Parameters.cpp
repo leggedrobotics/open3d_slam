@@ -27,6 +27,10 @@ void loadParameters(const std::string &filename, ConstantVelocityMotionCompensat
 	if (basenode.IsNull()) {
 		throw std::runtime_error("ConstantVelocityMotionCompensationParameters::loadParameters loading failed");
 	}
+	if (!basenode["motion_compensation"].IsDefined()){
+		std::cout << "motion_compensation not defined \n";
+		return;
+	}
 	loadParameters(basenode["motion_compensation"], p);
 }
 
@@ -41,6 +45,10 @@ void loadParameters(const std::string &filename, SavingParameters *p){
 	YAML::Node basenode = YAML::LoadFile(filename);
 	if (basenode.IsNull()) {
 		throw std::runtime_error("SavingParameters::loadParameters loading failed");
+	}
+	if (!basenode["saving_parameters"].IsDefined()){
+		std::cout << "saving_parameters not defined \n";
+		return;
 	}
 	loadParameters(basenode["saving_parameters"], p);
 }
@@ -89,6 +97,10 @@ void loadParameters(const std::string &filename, VisualizationParameters *p){
 	if (basenode.IsNull()) {
 		throw std::runtime_error("VisualizationParameters::loadParameters loading failed");
 	}
+	if (!basenode["visualization"].IsDefined()){
+		std::cout << "visualization not defined \n";
+		return;
+	}
 	loadParameters(basenode["visualization"], p);
 }
 
@@ -119,6 +131,10 @@ void loadParameters(const std::string &filename, OdometryParameters *p){
 	YAML::Node basenode = YAML::LoadFile(filename);
 	if (basenode.IsNull()) {
 		throw std::runtime_error("Odometry::loadParameters loading failed");
+	}
+	if (!basenode["odometry"].IsDefined()){
+		std::cout << "odometry not defined \n";
+		return;
 	}
 	loadParameters(basenode["odometry"], p);
 }
@@ -161,6 +177,10 @@ void loadParameters(const std::string &filename, MapperParameters *p){
 	YAML::Node basenode = YAML::LoadFile(filename);
 	if (basenode.IsNull()) {
 		throw std::runtime_error("MapperParameters::loadParameters loading failed");
+	}
+	if (!basenode["mapping"].IsDefined()){
+		std::cout << "mapping not defined \n";
+		return;
 	}
 	loadParameters(basenode["mapping"], p);
 }
