@@ -90,9 +90,12 @@ std::unique_ptr<CloudRegistration> cloudRegistrationFactory(const CloudRegistrat
 	case 	CloudRegistrationType::PointToPointIcp:{
 		return createPointToPointIcp(p);
 	}
+	case 	CloudRegistrationType::GeneralizedIcp:{
+		return createGeneralizedIcp(p);
+	}
 
 	default:
-		throw std::runtime_error("scanToMapRegistrationFactory: unknown type of registration scan to map");
+		throw std::runtime_error("cloud: unknown type of cloud registration");
 	}
 
 }

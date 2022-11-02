@@ -38,12 +38,14 @@ struct Parameters {
 
 enum class CloudRegistrationType : int {
 	PointToPlaneIcp,
-	PointToPointIcp
+	PointToPointIcp,
+	GeneralizedIcp
 };
 
 static const std::map<std::string, CloudRegistrationType> CloudRegistrationNames {
 	{"PointToPlaneIcp",CloudRegistrationType::PointToPlaneIcp},
-	{"PointToPointIcp",CloudRegistrationType::PointToPointIcp}
+	{"PointToPointIcp",CloudRegistrationType::PointToPointIcp},
+	{"GeneralizedIcp",CloudRegistrationType::GeneralizedIcp}
 };
 
 enum class ScanToMapRegistrationType : int {
