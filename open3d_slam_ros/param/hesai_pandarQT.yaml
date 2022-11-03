@@ -4,12 +4,12 @@ odometry:
   is_publish_odometry_msgs: true
   scan_matching:
     icp_objective: PointToPlane
-    max_correspondence_dist: 0.8
-    knn_normal_estimation: 10
+    max_correspondence_dist: 0.4
+    knn_normal_estimation: 16
     max_n_iter: 40
   scan_processing:
-    voxel_size: 0.15
-    downsampling_ratio: 0.3
+    voxel_size: 0.05
+    downsampling_ratio: 0.6
     scan_cropping:
       cropping_radius_max: 20.0
       cropping_radius_min: 2.0
@@ -37,7 +37,7 @@ mapping:
       max_n_iter: 50
     scan_processing:
       voxel_size: 0.1
-      downsampling_ratio: 0.4
+      downsampling_ratio: 0.6
       scan_cropping:
         cropping_radius_max: 20.0
         cropping_radius_min: 2.0
@@ -48,16 +48,16 @@ mapping:
   map_intializer:
     is_initialize_interactively: true
     frame_id: "map_o3d"
-    pcd_file_path: "/home/grzegorz/catkin_ws/src/open3d_slam/open3d_slam_ros/data/maps/hongg.pcd"
+    pcd_file_path: "/home/grzegorz/catkin_ws/src/open3d_slam/open3d_slam_ros/data/maps/hongg3.pcd"
     init_pose:
       position:
-        x: 0.0
-        y: 0.0
-        z: 0.0
-      orientation: #in degrees
+        x: -3.0
+        y: -10.0
+        z: 0.5
+      orientation: #in degrees  
         roll: 0.0
         pitch: 0.0
-        yaw: 0.0
+        yaw: -90.0
 
   submaps:
     size: 30
