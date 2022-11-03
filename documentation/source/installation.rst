@@ -19,7 +19,14 @@ Dependencies
 
    sudo apt install libgoogle-glog-dev
 
-2. Ros dependencies
+2. GLFW
+~~~~~~~
+
+.. code-block:: bash
+
+   sudo apt-get install libglfw3 libglfw3-dev
+
+3. Ros dependencies
 ~~~~~~~~~~~~~~~~~~~
 If you want to use open3d_slam_ros consider installing jsk-rviz plugins. We use them to visualize the trajectories. 
 If you don't have them installed, you should still be able to run the package, however with some red letters in the terminal.
@@ -30,7 +37,7 @@ Install with apt:
 
    sudo apt install ros-noetic-jsk-rviz-plugins
 
-3. open3d_catkin
+4. open3d_catkin
 ~~~~~~~~~~~~~~~~
 
 Follow the instructions to build :ref:`open3d_catkin <open3d_catkin_ref>`.
