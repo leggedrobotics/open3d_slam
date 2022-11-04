@@ -56,7 +56,6 @@ double getMapVoxelSize(const MapBuilderParameters &p, double valueIfZero);
 bool isValidColor(const Eigen::Vector3d &c);
 
 Eigen::Vector3d computeCenter(const VoxelizedPointCloud &voxels);
-PointCloud getPointCloudWithinCroppingVolume(const CroppingVolume &croppingVolume,const VoxelizedPointCloud &voxels, bool isIgnoreColors );
 std::vector<Eigen::Vector3i> getKeysOfCarvedPoints(const PointCloud &scan,
 		const VoxelizedPointCloud &cloud, const Eigen::Vector3d &sensorPosition, const SpaceCarvingParameters &param);
 

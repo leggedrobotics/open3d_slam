@@ -49,7 +49,6 @@ public:
 
 	Indices getIndicesWithinVolume(const PointCloud &cloud) const;
 	std::shared_ptr<PointCloud> crop(const PointCloud &cloud) const;
-	std::shared_ptr<PointCloud> cropMultiThreaded(const PointCloud &cloud) const;
 	void crop(PointCloud *cloud) const;
 
 
