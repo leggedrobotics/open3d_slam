@@ -10,8 +10,6 @@
 #include "open3d_slam/assert.hpp"
 #include "open3d_slam/CloudRegistration.hpp"
 
-#include "open3d_slam/cloud_processing.hpp"
-
 namespace o3d_slam {
 
 namespace {
