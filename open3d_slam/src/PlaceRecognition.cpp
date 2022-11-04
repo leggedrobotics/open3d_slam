@@ -11,6 +11,8 @@
 #include "open3d_slam/magic.hpp"
 #include "open3d_slam/math.hpp"
 #include "open3d_slam/output.hpp"
+#include "open3d_slam/CloudRegistration.hpp"
+#include "open3d_slam/ScanToMapRegistration.hpp"
 
 #include <open3d/pipelines/registration/FastGlobalRegistration.h>
 #include <open3d/pipelines/registration/Registration.h>
@@ -25,17 +27,26 @@ namespace o3d_slam {
 
 namespace {
 namespace registration = open3d::pipelines::registration;
-std::shared_ptr<registration::TransformationEstimation> icpObjective;
+//std::shared_ptr<registration::TransformationEstimation> icpObjective;
+std::shared_ptr<CloudRegistration> cloudRegistration;
 } // namespace
 
 PlaceRecognition::PlaceRecognition() {
-	icpObjective = icpObjectiveFactory(CloudRegistrationType::PointToPlaneIcp);
+//	icpObjective = icpObjectiveFactory(CloudRegistrationType::PointToPlaneIcp);
+	updateRegistrationAlgorithm(params_);
 }
 
 void PlaceRecognition::setParameters(const MapperParameters &p) {
 	params_ = p;
-
+	updateRegistrationAlgorithm(params_);
 }
+
+void PlaceRecognition::updateRegistrationAlgorithm(const MapperParameters &p){
+	params_.scanMatcher_.icp_.maxNumIter_ = magic::icpRunUntilConvergenceNumberOfIterations;
+	params_.scanMatcher_.icp_.maxCorrespondenceDistance_ = params_.placeRecognition_.maxIcpCorrespondenceDistance_;
+	cloudRegistration = cloudRegistrationFactory(toCloudRegistrationType(params_.scanMatcher_));
+}
+
 Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapToRangeSensor,
 		const SubmapCollection &submapCollection, const AdjacencyMatrix &adjMatrix, size_t lastFinishedSubmapIdx,
 		size_t activeSubmapIdx, const Time &timestamp) const {
@@ -107,11 +118,12 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 //		const auto &sourceOverlap = source;
 //		const auto &targetOverlap = target;
 
-		open3d::pipelines::registration::ICPConvergenceCriteria criteria;
-		criteria.max_iteration_ = magic::icpRunUntilConvergenceNumberOfIterations; // i.e. run until convergence
-		const auto icpResult = open3d::pipelines::registration::RegistrationICP(sourceOverlap, targetOverlap,
-				cfg.maxIcpCorrespondenceDistance_, ransacResult.transformation_,
-				open3d::pipelines::registration::TransformationEstimationPointToPlane(), criteria);
+		const auto icpResult = cloudRegistration->registerClouds(sourceOverlap, targetOverlap,Transform(ransacResult.transformation_));
+//		open3d::pipelines::registration::ICPConvergenceCriteria criteria;
+//		criteria.max_iteration_ = magic::icpRunUntilConvergenceNumberOfIterations; // i.e. run until convergence
+//		const auto icpResult = open3d::pipelines::registration::RegistrationICP(sourceOverlap, targetOverlap,
+//				cfg.maxIcpCorrespondenceDistance_, ransacResult.transformation_,
+//				open3d::pipelines::registration::TransformationEstimationPointToPlane(), criteria);
 //		printf("submap %ld size: %ld \n", id, source.points_.size());
 //			printf("submap %ld overlap size: %ld \n", id, source.points_.size());
 //			printf("submap %ld size: %ld \n", lastFinishedSubmapIdx, target.points_.size());

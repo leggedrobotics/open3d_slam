@@ -16,33 +16,7 @@ namespace o3d_slam {
 
 namespace {
 namespace registration = open3d::pipelines::registration;
-//std::shared_ptr<registration::TransformationEstimation> icpObjective;
-//open3d::pipelines::registration::ICPConvergenceCriteria icpCriteria;
 std::shared_ptr<CloudRegistration> cloudRegistration;
-
-CloudRegistrationParameters toCloudRegistrationType(const ScanToMapRegistrationParameters &p) {
-	CloudRegistrationParameters retVal;
-	retVal.icp_ = p.icp_;
-	switch (p.scanToMapRegType_) {
-	case ScanToMapRegistrationType::PointToPlaneIcp: {
-		retVal.regType_ = CloudRegistrationType::PointToPlaneIcp;
-		break;
-	}
-	case ScanToMapRegistrationType::PointToPointIcp: {
-		retVal.regType_ = CloudRegistrationType::PointToPointIcp;
-		break;
-	}
-	case ScanToMapRegistrationType::GeneralizedIcp: {
-		retVal.regType_ = CloudRegistrationType::GeneralizedIcp;
-		break;
-	}
-	default:
-		throw std::runtime_error(
-				"Conversion not possible from ScanToMapRegistrationParameters to CloudRegistrationParameters, for this particular scan to map reg type");
-	}
-
-	return retVal;
-}
 
 } // namespace
 
@@ -130,6 +104,30 @@ std::unique_ptr<ScanToMapRegistration> scanToMapRegistrationFactory(const Mapper
 		throw std::runtime_error("scanToMapRegistrationFactory: unknown type of registration scan to map");
 	}
 
+}
+
+CloudRegistrationParameters toCloudRegistrationType(const ScanToMapRegistrationParameters &p) {
+	CloudRegistrationParameters retVal;
+	retVal.icp_ = p.icp_;
+	switch (p.scanToMapRegType_) {
+	case ScanToMapRegistrationType::PointToPlaneIcp: {
+		retVal.regType_ = CloudRegistrationType::PointToPlaneIcp;
+		break;
+	}
+	case ScanToMapRegistrationType::PointToPointIcp: {
+		retVal.regType_ = CloudRegistrationType::PointToPointIcp;
+		break;
+	}
+	case ScanToMapRegistrationType::GeneralizedIcp: {
+		retVal.regType_ = CloudRegistrationType::GeneralizedIcp;
+		break;
+	}
+	default:
+		throw std::runtime_error(
+				"Conversion not possible from ScanToMapRegistrationParameters to CloudRegistrationParameters, for this particular scan to map reg type");
+	}
+
+	return retVal;
 }
 
 } // namespace o3d_slam

@@ -60,6 +60,6 @@ private:
 
 std::unique_ptr<ScanToMapIcp> createScanToMapIcp(const MapperParameters &p);
 std::unique_ptr<ScanToMapRegistration> scanToMapRegistrationFactory(const MapperParameters &p);
-
+CloudRegistrationParameters toCloudRegistrationType(const ScanToMapRegistrationParameters &p);
 
 } // namespace o3d_slam
