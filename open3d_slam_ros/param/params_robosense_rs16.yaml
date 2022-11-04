@@ -1,4 +1,3 @@
-
 odometry:
   is_publish_odometry_msgs: true
   scan_matching:
@@ -47,11 +46,11 @@ mapping:
         max_z: 30.0
         cropper_type: "MaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
        
-    
+  
   map_intializer:
     is_initialize_interactively: false
     frame_id: "map_o3d"
-    pcd_file_path: "/home/jelavice/catkin_workspaces/open3d_ws/src/open3d_slam/open3d_slam_ros/data/maps/wangen.pcd"
+    pcd_file_path: ""
     init_pose:
       position:
         x: 0.0
@@ -67,6 +66,7 @@ mapping:
     size: 20
     min_num_range_data: 10
     adjacency_based_revisiting_min_fitness: 0.5
+
     
   map_builder:
     scan_cropping:
@@ -82,6 +82,7 @@ mapping:
       truncation_distance: 0.3
       carve_space_every_n_scans: 10
       min_dot_product_with_normal: 0.3
+
       
   dense_map_builder:
     scan_cropping:
@@ -97,6 +98,7 @@ mapping:
       truncation_distance: 0.4
       carve_space_every_n_scans: 10
       min_dot_product_with_normal: 0.1
+
 
   place_recognition:
     feature_map_normal_estimation_radius: 1.0
@@ -127,17 +129,20 @@ mapping:
     max_correspondence_distance: 10.0
     reference_node: 0
 
+
 #motion compensation set up for robosense, so turned on by default
 motion_compensation:
   is_undistort_scan: true   
   is_spinning_clockwise: true
   scan_duration: 0.1
   num_poses_vel_estimation: 3
+
   
 visualization:
   assembled_map_voxel_size: 0.2
   submaps_voxel_size: 0.2
   visualize_every_n_msec: 300.0
+  
   
 saving_parameters:
   save_at_mission_end: true
