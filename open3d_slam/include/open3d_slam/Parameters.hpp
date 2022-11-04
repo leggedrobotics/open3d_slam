@@ -153,7 +153,6 @@ struct ScanToMapRegistrationParameters : public Parameters {
 };
 
 struct MapperParameters {
-	ScanToMapRegistrationType scanToMapRegType_ = ScanToMapRegistrationType::PointToPlaneIcp;
 	ScanToMapRegistrationParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
 	double minMovementBetweenMappingSteps_ = 0.0;

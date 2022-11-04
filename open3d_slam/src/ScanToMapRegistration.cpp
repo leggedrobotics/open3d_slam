@@ -92,10 +92,9 @@ std::unique_ptr<ScanToMapIcp> createScanToMapIcp(const MapperParameters &p) {
 	return std::move(ret);
 }
 std::unique_ptr<ScanToMapRegistration> scanToMapRegistrationFactory(const MapperParameters &p) {
-
-	switch (p.scanToMapRegType_) {
-
+	switch (p.scanMatcher_.scanToMapRegType_) {
 	case ScanToMapRegistrationType::PointToPlaneIcp:
+	case ScanToMapRegistrationType::GeneralizedIcp:
 	case ScanToMapRegistrationType::PointToPointIcp: {
 		return createScanToMapIcp(p);
 	}
