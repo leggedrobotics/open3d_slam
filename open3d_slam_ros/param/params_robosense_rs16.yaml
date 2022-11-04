@@ -31,15 +31,15 @@ mapping:
   submaps_num_scan_overlap: 10
   scan_to_map_refinement:
     min_refinement_fitness: 0.7
-    scan_to_map_refinement_type: PointToPlaneIcp
+    scan_to_map_refinement_type: GeneralizedIcp
     icp_parameters:
       max_correspondence_dist: 1.0
-      knn: 4
+      knn: 20
       max_distance_knn: 2.0
       max_n_iter: 50
     scan_processing:
       voxel_size: 0.05
-      downsampling_ratio: 0.2
+      downsampling_ratio: 0.25
       scan_cropping:
         cropping_radius_max: 40.0
         cropping_radius_min: 0.0

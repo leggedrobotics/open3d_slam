@@ -25,7 +25,6 @@ void RegistrationIcpGeneralized::estimateNormalsOrCovariancesIfNeeded(PointCloud
 	open3d::geometry::KDTreeSearchParamHybrid param(maxRadiusNormalEstimation_, knnNormalEstimation_);
 	cloud->EstimateNormals(param);
 	cloud->NormalizeNormals();
-	//todo estimate covariance directly
 //	cloud->EstimateCovariances(param);
 }
 

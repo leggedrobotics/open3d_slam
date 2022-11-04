@@ -55,30 +55,24 @@ void ScanToMapIcp::setParameters(const MapperParameters &p) {
 	update(params_);
 }
 void ScanToMapIcp::update(const MapperParameters &p) {
-//	icpCriteria.max_iteration_ = p.scanMatcher_.icp_.maxNumIter_;
-//	icpObjective = icpObjectiveFactory(p.scanMatcher_.scanToMapRegType_);
 	mapBuilderCropper_ = croppingVolumeFactory(params_.mapBuilder_.cropper_);
 	scanMatcherCropper_ = croppingVolumeFactory(params_.scanProcessing_.cropper_);
 	cloudRegistration = cloudRegistrationFactory(toCloudRegistrationType(p.scanMatcher_));
 }
 
-//void ScanToMapIcp::estimateNormalsIfNeeded(PointCloud *pcl) const {
-//	if (!pcl->HasNormals()
-//			&& params_.scanMatcher_.scanToMapRegType_ == o3d_slam::ScanToMapRegistrationType::PointToPlaneIcp) {
-//		estimateNormals(params_.scanMatcher_.icp_.knn_, pcl);
-//		pcl->NormalizeNormals();
-//	}
-//}
+PointCloudPtr ScanToMapIcp::preprocess(const PointCloud &in) const{
+	auto croppedCloud = mapBuilderCropper_->crop(in);
+	o3d_slam::voxelize(params_.scanProcessing_.voxelSize_, croppedCloud.get());
+	cloudRegistration->estimateNormalsOrCovariancesIfNeeded(croppedCloud.get());
+	return croppedCloud->RandomDownSample(params_.scanProcessing_.downSamplingRatio_);
+}
 
 ProcessedScans ScanToMapIcp::processForScanMatchingAndMerging(const PointCloud &in,
 		const Transform &mapToRangeSensor) const {
 	ProcessedScans retVal;
 	PointCloudPtr narrowCropped, wideCropped;
 	Timer timer;
-	wideCropped = cropVoxelizeDownsample(in, *mapBuilderCropper_, params_.scanProcessing_.voxelSize_,
-			params_.scanProcessing_.downSamplingRatio_);
-//	estimateNormalsIfNeeded(wideCropped.get());
-	cloudRegistration->estimateNormalsOrCovariancesIfNeeded(wideCropped.get());
+	wideCropped = preprocess(in);
 	scanMatcherCropper_->setPose(Transform::Identity());
 	narrowCropped = scanMatcherCropper_->crop(*wideCropped);
 	retVal.match_ = narrowCropped;
@@ -94,9 +88,6 @@ RegistrationResult ScanToMapIcp::scanToMapRegistration(const PointCloud &scan, c
 	const PointCloudPtr mapPatch = scanMatcherCropper_->crop(activeSubmapPointCloud);
 	assert_gt<int>(mapPatch->points_.size(), 0, "map patch size is zero");
 	return cloudRegistration->registerClouds(scan, *mapPatch, initialGuess);
-//	const RegistrationResult retVal = open3d::pipelines::registration::RegistrationICP(scan, *mapPatch,
-//			params_.scanMatcher_.icp_.maxCorrespondenceDistance_, initialGuess.matrix(), *icpObjective, icpCriteria);
-//	return std::move(retVal);
 }
 
 bool ScanToMapIcp::isMergeScanValid(const PointCloud &in) const {
@@ -108,7 +99,7 @@ bool ScanToMapIcp::isMergeScanValid(const PointCloud &in) const {
 		return true;
 	}
 	case ScanToMapRegistrationType::GeneralizedIcp: {
-		return in.HasNormals() || in.HasCovariances();
+		return in.HasCovariances() || in.HasNormals();
 	}
 	default:
 		throw std::runtime_error("cannot check whether merge scan is valid for this registration type");

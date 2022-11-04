@@ -50,8 +50,8 @@ public:
 	bool isMergeScanValid(const PointCloud &in) const final;
 	void prepareInitialMap(PointCloud *map) const final;
 private:
+	PointCloudPtr preprocess(const PointCloud &in) const;
 	void update(const MapperParameters &p);
-	void estimateNormalsIfNeeded(PointCloud *pcl) const;
 
 	MapperParameters params_;
 	std::shared_ptr<CroppingVolume> scanMatcherCropper_;
