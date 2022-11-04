@@ -19,7 +19,7 @@ RegistrationIcpGeneralized::RegistrationResult RegistrationIcpGeneralized::regis
 		source, target, maxCorrespondenceDistance_,
 		init.matrix(),tranformationEstimationGICP_ , icpConvergenceCriteria_);
 }
-void RegistrationIcpGeneralized::prepareCloud(PointCloud *cloud) const {
+void RegistrationIcpGeneralized::estimateNormalsOrCovariancesIfNeeded(PointCloud *cloud) const {
 	assert_gt(maxRadiusNormalEstimation_,0.0,"maxRadiusNormalEstimation_");
 	assert_gt(knnNormalEstimation_,0,"knnNormalEstimation_");
 	open3d::geometry::KDTreeSearchParamHybrid param(maxRadiusNormalEstimation_, knnNormalEstimation_);
@@ -47,7 +47,7 @@ RegistrationIcpPointToPlane::RegistrationResult RegistrationIcpPointToPlane::reg
 		source, target, maxCorrespondenceDistance_,
 		init.matrix(),pointToPlane_ , icpConvergenceCriteria_);
 }
-void RegistrationIcpPointToPlane::prepareCloud(PointCloud *cloud) const {
+void RegistrationIcpPointToPlane::estimateNormalsOrCovariancesIfNeeded(PointCloud *cloud) const {
 	assert_gt(maxRadiusNormalEstimation_,0.0,"maxRadiusNormalEstimation_");
 	assert_gt(knnNormalEstimation_,0,"knnNormalEstimation_");
 	open3d::geometry::KDTreeSearchParamHybrid param(maxRadiusNormalEstimation_, knnNormalEstimation_);

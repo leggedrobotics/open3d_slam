@@ -24,7 +24,7 @@ public:
 
 	virtual RegistrationResult registerClouds(const PointCloud &source, const PointCloud &target,
 			const Transform &init) const = 0;
-	virtual void prepareCloud(PointCloud *cloud) const {}
+	virtual void estimateNormalsOrCovariancesIfNeeded(PointCloud *cloud) const {}
 
 
 };
@@ -34,9 +34,9 @@ public:
 	using RegistrationResult = open3d::pipelines::registration::RegistrationResult;
 	RegistrationIcpPointToPlane() = default;
 	~RegistrationIcpPointToPlane() override = default;
-	virtual RegistrationResult registerClouds(const PointCloud &source, const PointCloud &target,
+	RegistrationResult registerClouds(const PointCloud &source, const PointCloud &target,
 			const Transform &init) const final;
-	virtual void prepareCloud(PointCloud *cloud) const final;
+	void estimateNormalsOrCovariancesIfNeeded(PointCloud *cloud) const final;
 
 	double maxCorrespondenceDistance_ = 1.0;
 	int knnNormalEstimation_ = 10;
@@ -50,7 +50,7 @@ public:
 	using RegistrationResult = open3d::pipelines::registration::RegistrationResult;
 	RegistrationIcpPointToPoint() = default;
 	~RegistrationIcpPointToPoint() override = default;
-	virtual RegistrationResult registerClouds(const PointCloud &source, const PointCloud &target,
+	RegistrationResult registerClouds(const PointCloud &source, const PointCloud &target,
 			const Transform &init) const final;
 
 	double maxCorrespondenceDistance_ = 1.0;
@@ -62,9 +62,9 @@ public:
 	using RegistrationResult = open3d::pipelines::registration::RegistrationResult;
 	RegistrationIcpGeneralized() = default;
 	~RegistrationIcpGeneralized() override = default;
-	virtual RegistrationResult registerClouds(const PointCloud &source, const PointCloud &target,
+	RegistrationResult registerClouds(const PointCloud &source, const PointCloud &target,
 			const Transform &init) const final;
-	virtual void prepareCloud(PointCloud *cloud) const final;
+	void estimateNormalsOrCovariancesIfNeeded(PointCloud *cloud) const final;
 
 	double maxCorrespondenceDistance_ = 1.0;
 	int knnNormalEstimation_ = 10;

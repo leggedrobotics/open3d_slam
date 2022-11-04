@@ -78,7 +78,7 @@ ProcessedScans ScanToMapIcp::processForScanMatchingAndMerging(const PointCloud &
 	wideCropped = cropVoxelizeDownsample(in, *mapBuilderCropper_, params_.scanProcessing_.voxelSize_,
 			params_.scanProcessing_.downSamplingRatio_);
 //	estimateNormalsIfNeeded(wideCropped.get());
-	cloudRegistration->prepareCloud(wideCropped.get());
+	cloudRegistration->estimateNormalsOrCovariancesIfNeeded(wideCropped.get());
 	scanMatcherCropper_->setPose(Transform::Identity());
 	narrowCropped = scanMatcherCropper_->crop(*wideCropped);
 	retVal.match_ = narrowCropped;
@@ -118,7 +118,7 @@ bool ScanToMapIcp::isMergeScanValid(const PointCloud &in) const {
 
 void ScanToMapIcp::prepareInitialMap(PointCloud *map) const {
 //	estimateNormalsIfNeeded(map);
-	cloudRegistration->prepareCloud(map);
+	cloudRegistration->estimateNormalsOrCovariancesIfNeeded(map);
 }
 
 std::unique_ptr<ScanToMapIcp> createScanToMapIcp(const MapperParameters &p) {

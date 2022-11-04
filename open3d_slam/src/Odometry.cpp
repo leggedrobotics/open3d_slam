@@ -22,16 +22,16 @@ LidarOdometry::LidarOdometry() {
 	cloudRegistration_ = cloudRegistrationFactory(params_.scanMatcher_);
 }
 
-PointCloudPtr LidarOdometry::prepareCloud(const PointCloud &in) const{
+PointCloudPtr LidarOdometry::preprocess(const PointCloud &in) const{
 	auto croppedCloud = cropper_->crop(in);
 	o3d_slam::voxelize(params_.scanProcessing_.voxelSize_, croppedCloud.get());
-	cloudRegistration_->prepareCloud(croppedCloud.get());
+	cloudRegistration_->estimateNormalsOrCovariancesIfNeeded(croppedCloud.get());
 	return croppedCloud->RandomDownSample(params_.scanProcessing_.downSamplingRatio_);
 }
 
 bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, const Time &timestamp) {
 	if (cloudPrev_.IsEmpty()) {
-		auto preProcessed = prepareCloud(cloud);
+		auto preProcessed = preprocess(cloud);
 		cloudPrev_ = *preProcessed;
 		odomToRangeSensorBuffer_.push(timestamp, odomToRangeSensorCumulative_);
 		lastMeasurementTimestamp_ = timestamp;
@@ -44,7 +44,7 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 	}
 
 	const o3d_slam::Timer timer;
-	auto preProcessed = prepareCloud(cloud);
+	auto preProcessed = preprocess(cloud);
 	const auto result = cloudRegistration_->registerClouds(cloudPrev_,*preProcessed, Transform::Identity());
 
 	//todo magic

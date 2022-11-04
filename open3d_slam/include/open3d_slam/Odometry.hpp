@@ -35,7 +35,7 @@ public:
 
 private:
 
-	PointCloudPtr prepareCloud(const PointCloud &in) const;
+	PointCloudPtr preprocess(const PointCloud &in) const;
 
 	TransformInterpolationBuffer odomToRangeSensorBuffer_;
 	open3d::geometry::PointCloud cloudPrev_;
