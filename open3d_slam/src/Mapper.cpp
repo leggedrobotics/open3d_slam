@@ -13,6 +13,7 @@
 #include "open3d_slam/Voxel.hpp"
 #include "open3d_slam/assert.hpp"
 #include "open3d_slam/output.hpp"
+#include "open3d_slam/ScanToMapRegistration.hpp"
 
 #include "open3d/utility/Eigen.h"
 #include "open3d/utility/Helper.h"
@@ -23,7 +24,6 @@ namespace o3d_slam {
 
 namespace {
 namespace registration = open3d::pipelines::registration;
-std::shared_ptr<registration::TransformationEstimation> icpObjective;
 const bool isCheckTransformChainingAndPrintResult = false;
 } // namespace
 
@@ -52,10 +52,7 @@ bool Mapper::hasProcessedMeasurements() const {
 }
 
 void Mapper::update(const MapperParameters &p) {
-	icpCriteria_.max_iteration_ = p.scanMatcher_.maxNumIter_;
-	icpObjective = icpObjectiveFactory(p.scanMatcher_.icpObjective_);
-	mapBuilderCropper_ = croppingVolumeFactory(params_.mapBuilder_.cropper_);
-	scanMatcherCropper_ = croppingVolumeFactory(params_.scanProcessing_.cropper_);
+	scan2MapReg_ = scanToMapRegistrationFactory(p);
 	submaps_->setParameters(p);
 }
 
@@ -94,19 +91,11 @@ void Mapper::setMapToRangeSensorInitial(const Transform &t){
 	isNewInitialValueSet_ = true;
 }
 
-void Mapper::estimateNormalsIfNeeded(PointCloud *pcl) const {
-	if (!pcl->HasNormals() && params_.scanMatcher_.icpObjective_ == o3d_slam::IcpObjective::PointToPlane) {
-		estimateNormals(params_.scanMatcher_.kNNnormalEstimation_, pcl);
-		pcl->NormalizeNormals(); //todo, dunno if I need this
-	}
-}
-
 const PointCloud& Mapper::getPreprocessedScan() const {
 	return preProcessedScan_;
 }
 
 bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &timestamp) {
-	scanMatcherCropper_->setPose(Transform::Identity());
 	submaps_->setMapToRangeSensor(mapToRangeSensor_);
 
 	//insert first scan
@@ -114,8 +103,8 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		if (params_.isUseInitialMap_){
 			submaps_->insertScan(rawScan, rawScan, Transform::Identity(), timestamp);
 		} else {
-			auto wideCroppedCloud = preProcessScan(rawScan);
-			submaps_->insertScan(rawScan, *wideCroppedCloud, Transform::Identity(), timestamp);
+			const ProcessedScans processed = scan2MapReg_->processForScanMatchingAndMerging(rawScan, mapToRangeSensor_);
+			submaps_->insertScan(rawScan, *processed.merge_, Transform::Identity(), timestamp);
 			mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
 		}
 		return true;
@@ -143,24 +132,10 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		mapToRangeSensorEstimate = mapToRangeSensorPrev_*odometryMotion ;
 	}
 	isIgnoreOdometryPrediction_ = false;
-	const PointCloud &activeSubmapPointCloud = submaps_->getActiveSubmap().getMapPointCloud();
-	std::shared_ptr<PointCloud> narrowCropped, wideCroppedCloud, mapPatch;
-	{
-		Timer timer;
-		wideCroppedCloud = preProcessScan(rawScan);
-		narrowCropped = scanMatcherCropper_->crop(*wideCroppedCloud);
-		preProcessedScan_ = *narrowCropped;
-		scanMatcherCropper_->setPose(mapToRangeSensor_);
-		mapPatch = scanMatcherCropper_->crop(activeSubmapPointCloud);
-		assert_gt<int>(mapPatch->points_.size(),0,"map patch size is zero");
-		assert_gt<int>(narrowCropped->points_.size(),0,"narrow cropped size is zero");
-	}
-
-	const auto result = open3d::pipelines::registration::RegistrationICP(*narrowCropped, *mapPatch,
-			params_.scanMatcher_.maxCorrespondenceDistance_, mapToRangeSensorEstimate.matrix(), *icpObjective,
-			icpCriteria_);
-
-
+	const ProcessedScans processed = scan2MapReg_->processForScanMatchingAndMerging(rawScan, mapToRangeSensor_);
+	const RegistrationResult result = scan2MapReg_->scanToMapRegistration(*processed.match_, submaps_->getActiveSubmap(),
+			mapToRangeSensor_, mapToRangeSensorEstimate);
+	preProcessedScan_ = *processed.match_;
 	if (isNewInitialValueSet_){
 		mapToRangeSensorPrev_ = mapToRangeSensor_;
 		mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
@@ -192,32 +167,13 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	const bool isMovedTooLittle = sensorMotion.translation().norm() < params_.minMovementBetweenMappingSteps_;
 	if (!isMovedTooLittle) {
 		//Timer t("scan_insertion_and_bookeeping");
-		submaps_->insertScan(rawScan, *wideCroppedCloud, mapToRangeSensor_, timestamp);
+		submaps_->insertScan(rawScan, *processed.merge_, mapToRangeSensor_, timestamp);
 		mapToRangeSensorLastScanInsertion_ = mapToRangeSensor_;
 	}
 
 	lastMeasurementTimestamp_ = timestamp;
 	mapToRangeSensorPrev_ = mapToRangeSensor_;
 	return true;
-}
-
-std::shared_ptr<Mapper::PointCloud> Mapper::preProcessScan(const PointCloud &rawScan) const {
-	mapBuilderCropper_->setPose(Transform::Identity());
-	std::shared_ptr<PointCloud> wideCroppedCloud, voxelized, downsampled;
-	wideCroppedCloud = mapBuilderCropper_->crop(rawScan);
-	if (params_.scanProcessing_.voxelSize_ <= 0.0) {
-		voxelized = wideCroppedCloud;
-	} else {
-		voxelized = wideCroppedCloud->VoxelDownSample(params_.scanProcessing_.voxelSize_);
-	}
-
-	if (params_.scanProcessing_.downSamplingRatio_ >= 1.0) {
-		downsampled = voxelized;
-	} else {
-		downsampled = voxelized->RandomDownSample(params_.scanProcessing_.downSamplingRatio_);
-	}
-	estimateNormalsIfNeeded(downsampled.get());
-	return downsampled;
 }
 
 Mapper::PointCloud Mapper::getAssembledMapPointCloud() const {

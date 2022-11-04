@@ -18,6 +18,8 @@
 
 namespace o3d_slam {
 
+class ScanToMapRegistration;
+
 class Mapper {
 
 public:
@@ -45,9 +47,7 @@ public:
 	bool hasProcessedMeasurements() const;
 	
 private:
-	std::shared_ptr<PointCloud> preProcessScan(const PointCloud &scan) const;
 	void update(const MapperParameters &p);
-	void estimateNormalsIfNeeded(PointCloud *pcl) const;
 	void checkTransformChainingAndPrintResult(bool isCheckTransformChainingAndPrintResult) const;
 
 	Time lastMeasurementTimestamp_;
@@ -56,16 +56,14 @@ private:
 	Transform mapToRangeSensorLastScanInsertion_ = Transform::Identity();
 
 	MapperParameters params_;
-	open3d::pipelines::registration::ICPConvergenceCriteria icpCriteria_;
 	std::mutex mapManipulationMutex_;
-	std::shared_ptr<CroppingVolume> scanMatcherCropper_;
-	std::shared_ptr<CroppingVolume> mapBuilderCropper_;
 	std::shared_ptr<SubmapCollection> submaps_;
 	const TransformInterpolationBuffer &odomToRangeSensorBuffer_;
 	TransformInterpolationBuffer mapToRangeSensorBuffer_;
 	open3d::geometry::PointCloud preProcessedScan_;
 	bool isNewInitialValueSet_ = false;
 	bool isIgnoreOdometryPrediction_ = false;
+	std::shared_ptr<ScanToMapRegistration> scan2MapReg_;
 
 };
 

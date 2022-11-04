@@ -26,22 +26,19 @@ enum class IcpObjective : int {
 	PointToPlane
 };
 
-enum class MesherStrategy : int {
-	AlphaShape,
-	BallPivot,
-	Poisson
-};
-
-
-static const std::map<std::string, MesherStrategy> mesherStrategyNames {
-	{"AlphaShape",MesherStrategy::AlphaShape},
-	{"BallPivot",MesherStrategy::BallPivot},
-	{"Poisson",MesherStrategy::Poisson}
-};
-
 static const std::map<std::string, IcpObjective> IcpObjectiveNames {
 	{"PointToPoint",IcpObjective::PointToPoint},
 	{"PointToPlane",IcpObjective::PointToPlane}
+};
+
+enum class ScanToMapRegistrationType : int {
+	PointToPlaneIcpOpen3D,
+	PointToPointIcpOpen3D
+};
+
+static const std::map<std::string, ScanToMapRegistrationType> ScanToMapRegistrationNames {
+	{"PointToPlaneIcpOpen3D",ScanToMapRegistrationType::PointToPlaneIcpOpen3D},
+	{"PointToPointIcpOpen3D",ScanToMapRegistrationType::PointToPointIcpOpen3D}
 };
 
 struct ScanCroppingParameters {
@@ -128,6 +125,7 @@ struct GlobalOptimizationParameters {
 
 
 struct MapperParameters {
+	ScanToMapRegistrationType scanToMapRegType_ = ScanToMapRegistrationType::PointToPlaneIcpOpen3D;
 	IcpParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
 	double minMovementBetweenMappingSteps_ = 0.0;
