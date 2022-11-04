@@ -10,9 +10,8 @@
 	<arg name="map_saving_folder" default="$(find open3d_slam_ros)/data/maps/"/>
 	<arg name="num_accumulated_range_data" default="1"/>
 	<arg name="is_read_from_rosbag" default="false"/>
-	<arg name="rosbag_filepath" default=""/>
+	<arg name="rosbag_filepath" default="$(find open3d_slam_ros)/data/rosbags/kitti00.bag"/>
 	<arg name="use_sim_time" default="true"/>
-
 
 	<!-- END OF ARGS -->	
 

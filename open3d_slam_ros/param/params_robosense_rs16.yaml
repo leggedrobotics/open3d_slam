@@ -4,8 +4,8 @@ odometry:
     cloud_registration_type: GeneralizedIcp #PointToPointIcp, GeneralizedIcp, PointToPlaneIcp
     icp_parameters:
       max_correspondence_dist: 1.0
-      knn: 20 #20 for GICP, 4 for PointToPlaneIcp
-      max_distance_knn: 2.0
+      knn: 20 
+      max_distance_knn: 3.0
       max_n_iter: 50
   scan_processing:
     voxel_size: 0.05
@@ -34,10 +34,10 @@ mapping:
     icp_parameters:
       max_correspondence_dist: 1.0
       knn: 20
-      max_distance_knn: 2.0
+      max_distance_knn: 3.0
       max_n_iter: 50
     scan_processing:
-      voxel_size: 0.05
+      voxel_size: 0.08
       downsampling_ratio: 0.25
       scan_cropping:
         cropping_radius_max: 40.0
