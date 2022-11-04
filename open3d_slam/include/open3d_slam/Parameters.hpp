@@ -50,12 +50,14 @@ static const std::map<std::string, CloudRegistrationType> CloudRegistrationNames
 
 enum class ScanToMapRegistrationType : int {
 	PointToPlaneIcp,
-	PointToPointIcp
+	PointToPointIcp,
+	GeneralizedIcp
 };
 
 static const std::map<std::string, ScanToMapRegistrationType> ScanToMapRegistrationNames {
 	{"PointToPlaneIcp",ScanToMapRegistrationType::PointToPlaneIcp},
-	{"PointToPointIcp",ScanToMapRegistrationType::PointToPointIcp}
+	{"PointToPointIcp",ScanToMapRegistrationType::PointToPointIcp},
+	{"GeneralizedIcp",ScanToMapRegistrationType::GeneralizedIcp}
 };
 
 struct ScanCroppingParameters {
