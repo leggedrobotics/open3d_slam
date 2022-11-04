@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.16)
 project(open3d_catkin)
 
 find_package(catkin REQUIRED)
@@ -91,6 +91,10 @@ elseif(Open3D_FOUND)
 # 3 - Compile in catkin workspace -------------------------------------------------------------
 else()
   message("${BoldMagenta}INFO: Neither variable Open3d_DIR is set, nor could Open3D be found, hence compiling in workspace.${ColourReset}")
+  message("${BoldMagenta}INFO: This automatic compilation from source requires CMAKE>3.18.${ColourReset}")
+
+  # Newer version of CMake is required
+  cmake_minimum_required(VERSION 3.18)
 
   # Catkinization of open3D
   include(ExternalProject)
