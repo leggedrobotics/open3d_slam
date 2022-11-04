@@ -46,7 +46,7 @@ mapping:
   map_intializer:
     is_initialize_interactively: true
     frame_id: "map_o3d"
-    pcd_file_path: "/home/jelavice/catkin_workspaces/open3d_ws/src/open3d_slam/open3d_slam_ros/data/maps/menzi_office.pcd"
+    pcd_file_path: ""
     init_pose:
       position:
         x: 0.0
