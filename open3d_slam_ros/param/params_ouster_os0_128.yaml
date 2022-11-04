@@ -5,8 +5,8 @@ odometry:
     cloud_registration_type: PointToPlaneIcp
     icp_parameters:
       max_correspondence_dist: 0.5
-      knn: 4
-      max_distance_knn: 2.0
+      knn: 20
+      max_distance_knn: 3.0
       max_n_iter: 40
   scan_processing:
     voxel_size: 0.15
@@ -30,11 +30,11 @@ mapping:
   submaps_num_scan_overlap: 5
   scan_to_map_refinement:
     min_refinement_fitness: 0.7
-    scan_to_map_refinement_type: PointToPlaneIcp
+    scan_to_map_refinement_type: PointToPlaneIcp # options GeneralizedIcp, PointToPointIcp, PointToPlaneIcp
     icp_parameters:
       max_correspondence_dist: 0.5
-      knn: 5
-      max_distance_knn: 2.0
+      knn: 20
+      max_distance_knn: 3.0
       max_n_iter: 50
     scan_processing:
       voxel_size: 0.2

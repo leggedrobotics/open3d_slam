@@ -1,7 +1,7 @@
 odometry:
   is_publish_odometry_msgs: false
   scan_matching:
-    cloud_registration_type: GeneralizedIcp
+    cloud_registration_type: GeneralizedIcp # options GeneralizedIcp, PointToPointIcp, PointToPlaneIcp
     icp_parameters:
       max_correspondence_dist: 1.0
       knn: 20
@@ -29,7 +29,7 @@ mapping:
   submaps_num_scan_overlap: 10
   scan_to_map_refinement:
     min_refinement_fitness: 0.7
-    scan_to_map_refinement_type: GeneralizedIcp
+    scan_to_map_refinement_type: GeneralizedIcp # options GeneralizedIcp, PointToPointIcp, PointToPlaneIcp
     icp_parameters:
       max_correspondence_dist: 0.8
       knn: 20
