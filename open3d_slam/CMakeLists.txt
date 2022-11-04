@@ -28,7 +28,6 @@ set(SRC_FILES
   src/MotionCompensation.cpp
   src/VoxelHashMap.cpp
   src/ScanToMapRegistration.cpp
-  src/cloud_processing.cpp
   src/CloudRegistration.cpp
 )
 
