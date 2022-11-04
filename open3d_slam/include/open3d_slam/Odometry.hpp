@@ -34,6 +34,9 @@ public:
 	void setInitialTransform(const Eigen::Matrix4d &initialTransform);
 
 private:
+
+	PointCloudPtr prepareCloud(const PointCloud &in) const;
+
 	TransformInterpolationBuffer odomToRangeSensorBuffer_;
 	open3d::geometry::PointCloud cloudPrev_;
 	Transform odomToRangeSensorCumulative_ = Transform::Identity();

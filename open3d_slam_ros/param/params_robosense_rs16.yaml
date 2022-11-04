@@ -2,15 +2,15 @@
 odometry:
   is_publish_odometry_msgs: true
   scan_matching:
-    cloud_registration_type: PointToPlaneIcp #PointToPointIcp, GeneraliedIcp, PointToPlaneIcp
+    cloud_registration_type: GeneralizedIcp #PointToPointIcp, GeneralizedIcp, PointToPlaneIcp
     icp_parameters:
       max_correspondence_dist: 1.0
-      knn: 4 #20 for GICP, 4 for PointToPlaneIcp
-      max_distance_knn: 1.0
+      knn: 20 #20 for GICP, 4 for PointToPlaneIcp
+      max_distance_knn: 2.0
       max_n_iter: 50
   scan_processing:
-    voxel_size: -1.0
-    downsampling_ratio: 0.45 #0.45 for PointToPlaceIcp, 0.95 for GeneralizedIcp
+    voxel_size: 0.05
+    downsampling_ratio: 1.0 #0.45 for PointToPlaceIcp
     scan_cropping:
       cropping_radius_max: 40.0
       cropping_radius_min: 0.0
