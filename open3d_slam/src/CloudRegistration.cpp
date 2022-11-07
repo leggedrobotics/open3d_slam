@@ -25,6 +25,7 @@ void RegistrationIcpGeneralized::estimateNormalsOrCovariancesIfNeeded(PointCloud
 	open3d::geometry::KDTreeSearchParamHybrid param(maxRadiusNormalEstimation_, knnNormalEstimation_);
 	cloud->EstimateNormals(param);
 	cloud->NormalizeNormals();
+	cloud->OrientNormalsTowardsCameraLocation();
 //	cloud->EstimateCovariances(param);
 }
 
@@ -52,6 +53,7 @@ void RegistrationIcpPointToPlane::estimateNormalsOrCovariancesIfNeeded(PointClou
 	open3d::geometry::KDTreeSearchParamHybrid param(maxRadiusNormalEstimation_, knnNormalEstimation_);
 	cloud->EstimateNormals(param);
 	cloud->NormalizeNormals();
+	cloud->OrientNormalsTowardsCameraLocation();
 }
 
 std::unique_ptr<RegistrationIcpPointToPlane> createPointToPlaneIcp(const CloudRegistrationParameters &p) {
