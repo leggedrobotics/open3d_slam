@@ -22,14 +22,15 @@ public:
 
 	void addEdge(SubmapId id1, SubmapId id2);
 	bool isAdjacent(SubmapId id1, SubmapId id2) const;
+	void markNodeAsLoopClosureSubmap(SubmapId id);
+	int getDistanceToNearestLoopClosureSubmap(SubmapId id) const;
 	void print() const;
-	std::vector<SubmapId> findLoopInvolvingEdge(SubmapId id1, SubmapId id2) const;
 	void clear();
 private:
 
 
-
 	std::unordered_map<SubmapId, std::set<SubmapId>> adjacency_;
+	std::unordered_map<SubmapId, bool> isLoopClosureSubmap_;
 
 
 };
