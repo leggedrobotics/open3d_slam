@@ -27,12 +27,10 @@ namespace o3d_slam {
 
 namespace {
 namespace registration = open3d::pipelines::registration;
-//std::shared_ptr<registration::TransformationEstimation> icpObjective;
 std::shared_ptr<CloudRegistration> cloudRegistration;
 } // namespace
 
 PlaceRecognition::PlaceRecognition() {
-//	icpObjective = icpObjectiveFactory(CloudRegistrationType::PointToPlaneIcp);
 	updateRegistrationAlgorithm(params_);
 }
 
@@ -119,11 +117,6 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 //		const auto &targetOverlap = target;
 
 		const auto icpResult = cloudRegistration->registerClouds(sourceOverlap, targetOverlap,Transform(ransacResult.transformation_));
-//		open3d::pipelines::registration::ICPConvergenceCriteria criteria;
-//		criteria.max_iteration_ = magic::icpRunUntilConvergenceNumberOfIterations; // i.e. run until convergence
-//		const auto icpResult = open3d::pipelines::registration::RegistrationICP(sourceOverlap, targetOverlap,
-//				cfg.maxIcpCorrespondenceDistance_, ransacResult.transformation_,
-//				open3d::pipelines::registration::TransformationEstimationPointToPlane(), criteria);
 //		printf("submap %ld size: %ld \n", id, source.points_.size());
 //			printf("submap %ld overlap size: %ld \n", id, source.points_.size());
 //			printf("submap %ld size: %ld \n", lastFinishedSubmapIdx, target.points_.size());

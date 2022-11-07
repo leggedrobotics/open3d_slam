@@ -100,34 +100,6 @@ void estimateNormals(int numNearestNeighbours, open3d::geometry::PointCloud *pcl
 	pcl->EstimateNormals(param);
 }
 
-std::shared_ptr<registration::TransformationEstimation> icpObjectiveFactory(
-		const o3d_slam::CloudRegistrationType &obj) {
-	switch (obj) {
-	case CloudRegistrationType::PointToPointIcp: {
-		return std::make_shared<registration::TransformationEstimationPointToPoint>(false);
-	}
-	case CloudRegistrationType::PointToPlaneIcp: {
-		return std::make_shared<registration::TransformationEstimationPointToPlane>();
-	}
-	default:
-		throw std::runtime_error("Unknown icp objective");
-	}
-}
-
-std::shared_ptr<open3d::pipelines::registration::TransformationEstimation> icpObjectiveFactory(
-		const o3d_slam::ScanToMapRegistrationType &obj) {
-	switch (obj) {
-	case ScanToMapRegistrationType::PointToPointIcp: {
-		return std::make_shared<registration::TransformationEstimationPointToPoint>(false);
-	}
-	case ScanToMapRegistrationType::PointToPlaneIcp: {
-		return std::make_shared<registration::TransformationEstimationPointToPlane>();
-	}
-	default:
-		throw std::runtime_error("Unknown icp objective");
-	}
-
-}
 void randomDownSample(double downSamplingRatio, open3d::geometry::PointCloud *pcl) {
 	if (downSamplingRatio >= 1.0) {
 		return;
