@@ -95,12 +95,17 @@ const PointCloud& Mapper::getPreprocessedScan() const {
 	return preProcessedScan_;
 }
 
+const ScanToMapRegistration &Mapper::getScanToMapRegistration() const{
+	return *scan2MapReg_;
+}
+
 bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &timestamp) {
 	submaps_->setMapToRangeSensor(mapToRangeSensor_);
 
 	//insert first scan
 	if (submaps_->getActiveSubmap().isEmpty()) {
 		if (params_.isUseInitialMap_){
+			assert_true(scan2MapReg_->isMergeScanValid(rawScan),"Init map invalid!!!!");
 			submaps_->insertScan(rawScan, rawScan, Transform::Identity(), timestamp);
 		} else {
 			const ProcessedScans processed = scan2MapReg_->processForScanMatchingAndMerging(rawScan, mapToRangeSensor_);
@@ -144,7 +149,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		return true;
 	}
 
-	if (!params_.isIgnoreMinRefinementFitness_ && result.fitness_ < params_.minRefinementFitness_) {
+	if (!params_.isIgnoreMinRefinementFitness_ && result.fitness_ < params_.scanMatcher_.minRefinementFitness_) {
 			std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
 			std::cout << "preeIcp: " << asString(mapToRangeSensorEstimate) << "\n";
 			std::cout << "postIcp: " << asString(Transform(result.transformation_)) << "\n\n";

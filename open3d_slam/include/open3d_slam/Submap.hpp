@@ -67,7 +67,6 @@ private:
 	void carve(const PointCloud &scan, const Eigen::Vector3d &sensorPosition,
 			const SpaceCarvingParameters &param, VoxelizedPointCloud *cloud);
 	void update(const MapperParameters &mapperParams);
-	void estimateNormalsIfNeeded(int knn, PointCloud *pcl) const;
 	void carve(const PointCloud &rawScan, const Transform &mapToRangeSensor, const CroppingVolume &cropper,
 			const SpaceCarvingParameters &params, PointCloud *map);
 	void voxelizeInsideCroppingVolume(const CroppingVolume &cropper, const MapBuilderParameters &param,

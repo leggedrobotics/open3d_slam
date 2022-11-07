@@ -63,16 +63,6 @@ void SlamMapInitializer::initialize(const MapInitializingParameters &params) {
 		std::cerr << "[Error] Initialization pointcloud not loaded" << std::endl;
   }
 
-  {
-    std::cout << "Calculating normals for the initial map!" << std::endl;
-    const auto &p = slamPtr_->getMapperParameters();
-    Timer t("initial map normal estimation");
-    if (!raw_map.HasNormals() && p.scanMatcher_.icpObjective_ == o3d_slam::IcpObjective::PointToPlane) {
-    		estimateNormals(p.scanMatcher_.kNNnormalEstimation_, &raw_map);
-    		raw_map.NormalizeNormals(); //todo, dunno if I need this
-    	}
-    std::cout << "Normals estimated! \n";
-  }
   Transform initPose;
 	tf::poseMsgToEigen(params.initialMarkerPose_, initPose);
   slamPtr_->setInitialMap(raw_map);

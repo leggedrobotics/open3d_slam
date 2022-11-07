@@ -30,21 +30,24 @@ public:
 			std::shared_ptr<SubmapCollection> submaps);
 	~Mapper() = default;
 
+	void setParameters(const MapperParameters &p);
 	void setMapToRangeSensor(const Transform &t);
 	void setMapToRangeSensorInitial(const Transform &t);
+
 	const Submap& getActiveSubmap() const;
 	const SubmapCollection& getSubmaps() const;
 	SubmapCollection* getSubmapsPtr();
 	PointCloud getAssembledMapPointCloud() const;
-	bool addRangeMeasurement(const PointCloud &cloud, const Time &timestamp);
-	void setParameters(const MapperParameters &p);
 	MapperParameters *getParametersPtr();
 	Transform getMapToOdom(const Time &timestamp) const;
 	Transform getMapToRangeSensor(const Time &timestamp) const;
 	const TransformInterpolationBuffer& getMapToRangeSensorBuffer() const;
 	const PointCloud& getPreprocessedScan() const;
+	const ScanToMapRegistration &getScanToMapRegistration() const;
+
 	void loopClosureUpdate(const Transform &loopClosureCorrection);
 	bool hasProcessedMeasurements() const;
+	bool addRangeMeasurement(const PointCloud &cloud, const Time &timestamp);
 	
 private:
 	void update(const MapperParameters &p);

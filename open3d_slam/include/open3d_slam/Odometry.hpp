@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <open3d/pipelines/registration/Registration.h>
 #include <open3d/geometry/PointCloud.h>
 #include <Eigen/Dense>
 #include "open3d_slam/Parameters.hpp"
@@ -15,6 +14,9 @@
 #include "open3d_slam/TransformInterpolationBuffer.hpp"
 
 namespace o3d_slam {
+
+class CloudRegistration;
+
 class LidarOdometry {
 
 public:
@@ -32,16 +34,18 @@ public:
 	void setInitialTransform(const Eigen::Matrix4d &initialTransform);
 
 private:
+
+	PointCloudPtr preprocess(const PointCloud &in) const;
+
 	TransformInterpolationBuffer odomToRangeSensorBuffer_;
 	open3d::geometry::PointCloud cloudPrev_;
 	Transform odomToRangeSensorCumulative_ = Transform::Identity();
 	OdometryParameters params_;
-	std::shared_ptr<open3d::pipelines::registration::TransformationEstimation> icpObjective_;
-	open3d::pipelines::registration::ICPConvergenceCriteria icpConvergenceCriteria_;
 	std::shared_ptr<CroppingVolume> cropper_;
 	Time lastMeasurementTimestamp_;
 	Eigen::Matrix4d initialTransform_ = Eigen::Matrix4d::Identity();
 	bool isInitialTransformSet_ = false;
+	std::shared_ptr<CloudRegistration> cloudRegistration_;
 };
 
 } // namespace o3d_slam

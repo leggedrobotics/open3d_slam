@@ -8,85 +8,123 @@
 #include "open3d_slam/Submap.hpp"
 #include "open3d_slam/helpers.hpp"
 #include "open3d_slam/assert.hpp"
-
-#include "open3d_slam/cloud_processing.hpp"
+#include "open3d_slam/CloudRegistration.hpp"
 
 namespace o3d_slam {
 
 namespace {
 namespace registration = open3d::pipelines::registration;
-std::shared_ptr<registration::TransformationEstimation> icpObjective;
-open3d::pipelines::registration::ICPConvergenceCriteria icpCriteria;
+std::shared_ptr<CloudRegistration> cloudRegistration;
+
 } // namespace
 
-ScanToMapIcpOpen3D::ScanToMapIcpOpen3D() {
+ScanToMapIcp::ScanToMapIcp() {
 	update(params_);
 }
 
-void ScanToMapIcpOpen3D::setParameters(const MapperParameters &p) {
+void ScanToMapIcp::setParameters(const MapperParameters &p) {
 	params_ = p;
 	update(params_);
 }
-void ScanToMapIcpOpen3D::update(const MapperParameters &p) {
-	icpCriteria.max_iteration_ = p.scanMatcher_.maxNumIter_;
-	icpObjective = icpObjectiveFactory(p.scanMatcher_.icpObjective_);
+void ScanToMapIcp::update(const MapperParameters &p) {
 	mapBuilderCropper_ = croppingVolumeFactory(params_.mapBuilder_.cropper_);
 	scanMatcherCropper_ = croppingVolumeFactory(params_.scanProcessing_.cropper_);
+	cloudRegistration = cloudRegistrationFactory(toCloudRegistrationType(p.scanMatcher_));
 }
 
-void ScanToMapIcpOpen3D::estimateNormalsIfNeeded(PointCloud *pcl) const {
-	if (!pcl->HasNormals() && params_.scanMatcher_.icpObjective_ == o3d_slam::IcpObjective::PointToPlane) {
-		estimateNormals(params_.scanMatcher_.kNNnormalEstimation_, pcl);
-		pcl->NormalizeNormals();
-	}
+PointCloudPtr ScanToMapIcp::preprocess(const PointCloud &in) const{
+	auto croppedCloud = mapBuilderCropper_->crop(in);
+	o3d_slam::voxelize(params_.scanProcessing_.voxelSize_, croppedCloud.get());
+	cloudRegistration->estimateNormalsOrCovariancesIfNeeded(croppedCloud.get());
+	return croppedCloud->RandomDownSample(params_.scanProcessing_.downSamplingRatio_);
 }
 
-ProcessedScans ScanToMapIcpOpen3D::processForScanMatchingAndMerging(const PointCloud &in,
+ProcessedScans ScanToMapIcp::processForScanMatchingAndMerging(const PointCloud &in,
 		const Transform &mapToRangeSensor) const {
 	ProcessedScans retVal;
 	PointCloudPtr narrowCropped, wideCropped;
 	Timer timer;
-	wideCropped = cropVoxelizeDownsample(in, *mapBuilderCropper_, params_.scanProcessing_.voxelSize_,
-			params_.scanProcessing_.downSamplingRatio_);
-	estimateNormalsIfNeeded(wideCropped.get());
+	wideCropped = preprocess(in);
 	scanMatcherCropper_->setPose(Transform::Identity());
 	narrowCropped = scanMatcherCropper_->crop(*wideCropped);
 	retVal.match_ = narrowCropped;
 	retVal.merge_ = wideCropped;
-	assert_gt<int>(narrowCropped->points_.size(), 0, "ScanToMapIcpOpen3D::narrow cropped size is zero");
-	assert_gt<int>(wideCropped->points_.size(), 0, "ScanToMapIcpOpen3D::wideCropped cropped size is zero");
+	assert_gt<int>(narrowCropped->points_.size(), 0, "ScanToMapIcp::narrow cropped size is zero");
+	assert_gt<int>(wideCropped->points_.size(), 0, "ScanToMapIcp::wideCropped cropped size is zero");
 	return retVal;
 }
-RegistrationResult ScanToMapIcpOpen3D::scanToMapRegistration(const PointCloud &scan, const Submap &activeSubmap,
+RegistrationResult ScanToMapIcp::scanToMapRegistration(const PointCloud &scan, const Submap &activeSubmap,
 		const Transform &mapToRangeSensor, const Transform &initialGuess) const {
 	const PointCloud &activeSubmapPointCloud = activeSubmap.getMapPointCloud();
 	scanMatcherCropper_->setPose(mapToRangeSensor);
 	const PointCloudPtr mapPatch = scanMatcherCropper_->crop(activeSubmapPointCloud);
 	assert_gt<int>(mapPatch->points_.size(), 0, "map patch size is zero");
-	const RegistrationResult retVal = open3d::pipelines::registration::RegistrationICP(scan, *mapPatch,
-			params_.scanMatcher_.maxCorrespondenceDistance_, initialGuess.matrix(), *icpObjective, icpCriteria);
-	return std::move(retVal);
+	return cloudRegistration->registerClouds(scan, *mapPatch, initialGuess);
 }
 
-std::unique_ptr<ScanToMapIcpOpen3D> createScanToMapIcpOpen3D(const MapperParameters &p) {
-	auto ret  = std::make_unique<ScanToMapIcpOpen3D>();
+bool ScanToMapIcp::isMergeScanValid(const PointCloud &in) const {
+	switch (params_.scanMatcher_.scanToMapRegType_) {
+	case ScanToMapRegistrationType::PointToPlaneIcp: {
+		return in.HasNormals();
+	}
+	case ScanToMapRegistrationType::PointToPointIcp: {
+		return true;
+	}
+	case ScanToMapRegistrationType::GeneralizedIcp: {
+		return in.HasCovariances() || in.HasNormals();
+	}
+	default:
+		throw std::runtime_error("cannot check whether merge scan is valid for this registration type");
+	}
+	return true;
+}
+
+void ScanToMapIcp::prepareInitialMap(PointCloud *map) const {
+//	estimateNormalsIfNeeded(map);
+	cloudRegistration->estimateNormalsOrCovariancesIfNeeded(map);
+}
+
+std::unique_ptr<ScanToMapIcp> createScanToMapIcp(const MapperParameters &p) {
+	auto ret = std::make_unique<ScanToMapIcp>();
 	ret->setParameters(p);
 	return std::move(ret);
 }
 std::unique_ptr<ScanToMapRegistration> scanToMapRegistrationFactory(const MapperParameters &p) {
-
-
-	switch (p.scanToMapRegType_) {
-
-	case 	ScanToMapRegistrationType::PointToPlaneIcpOpen3D:
-	case 	ScanToMapRegistrationType::PointToPointIcpOpen3D:{
-		return createScanToMapIcpOpen3D(p);
+	switch (p.scanMatcher_.scanToMapRegType_) {
+	case ScanToMapRegistrationType::PointToPlaneIcp:
+	case ScanToMapRegistrationType::GeneralizedIcp:
+	case ScanToMapRegistrationType::PointToPointIcp: {
+		return createScanToMapIcp(p);
 	}
 
 	default:
 		throw std::runtime_error("scanToMapRegistrationFactory: unknown type of registration scan to map");
 	}
 
+}
+
+CloudRegistrationParameters toCloudRegistrationType(const ScanToMapRegistrationParameters &p) {
+	CloudRegistrationParameters retVal;
+	retVal.icp_ = p.icp_;
+	switch (p.scanToMapRegType_) {
+	case ScanToMapRegistrationType::PointToPlaneIcp: {
+		retVal.regType_ = CloudRegistrationType::PointToPlaneIcp;
+		break;
+	}
+	case ScanToMapRegistrationType::PointToPointIcp: {
+		retVal.regType_ = CloudRegistrationType::PointToPointIcp;
+		break;
+	}
+	case ScanToMapRegistrationType::GeneralizedIcp: {
+		retVal.regType_ = CloudRegistrationType::GeneralizedIcp;
+		break;
+	}
+	default:
+		throw std::runtime_error(
+				"Conversion not possible from ScanToMapRegistrationParameters to CloudRegistrationParameters, for this particular scan to map reg type");
+	}
+
+	return retVal;
 }
 
 } // namespace o3d_slam

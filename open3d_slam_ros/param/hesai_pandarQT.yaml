@@ -3,16 +3,18 @@
 odometry:
   is_publish_odometry_msgs: true
   scan_matching:
-    icp_objective: PointToPlane
-    max_correspondence_dist: 0.8
-    knn_normal_estimation: 5
-    max_n_iter: 40
+    cloud_registration_type: GeneralizedIcp # options GeneralizedIcp, PointToPointIcp, PointToPlaneIcp
+    icp_parameters:
+      max_correspondence_dist: 0.8
+      knn: 20
+      max_distance_knn: 3.0
+      max_n_iter: 50
   scan_processing:
-    voxel_size: 0.15
-    downsampling_ratio: 0.5
+    voxel_size: 0.05
+    downsampling_ratio: 0.9
     scan_cropping:
       cropping_radius_max: 40.0
-      cropping_radius_min: 1.0
+      cropping_radius_min: 2.0
       min_z: -30.0
       max_z: 30.0
       cropper_type: "MinMaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
@@ -30,10 +32,11 @@ mapping:
   submaps_num_scan_overlap: 5
   scan_to_map_refinement:
     min_refinement_fitness: 0.7
-    scan_matching:
-      icp_objective: PointToPlane
+    scan_to_map_refinement_type: GeneralizedIcp # options GeneralizedIcp, PointToPointIcp, PointToPlaneIcp
+    icp_parameters:
       max_correspondence_dist: 1.0
-      knn_normal_estimation: 5
+      knn: 20
+      max_distance_knn: 3.0
       max_n_iter: 50
     scan_processing:
       voxel_size: 0.1

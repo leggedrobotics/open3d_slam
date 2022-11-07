@@ -28,7 +28,6 @@ class SubmapCollection;
 class OptimizationProblem;
 class MotionCompensation;
 
-
 class SlamWrapper {
 	struct TimestampedPointCloud {
 		Time time_;
@@ -56,20 +55,21 @@ public:
 
 	const MapperParameters &getMapperParameters() const;
 	MapperParameters *getMapperParametersPtr();
-
 	size_t getOdometryBufferSize() const;
 	size_t getMappingBufferSize() const;
 	size_t getOdometryBufferSizeLimit() const;
 	size_t getMappingBufferSizeLimit() const;
 	std::string getParameterFilePath() const;
 	std::pair<PointCloud,Time> getLatestRegisteredCloudTimestampPair() const;
-	bool saveMap(const std::string &directory);
-	bool saveSubmaps(const std::string &directory);
+
 	void setDirectoryPath(const std::string &path);
 	void setMapSavingDirectoryPath(const std::string &path);
 	void setParameterFilePath(const std::string &path);
 	void setInitialMap(const PointCloud &initialMap);
 	void setInitialTransform(const Eigen::Matrix4d initialTransform);
+
+	bool saveMap(const std::string &directory);
+	bool saveSubmaps(const std::string &directory);
 
 private:
 

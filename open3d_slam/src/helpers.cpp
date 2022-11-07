@@ -29,11 +29,6 @@ namespace registration = open3d::pipelines::registration;
 
 class AccumulatedPoint {
 public:
-	AccumulatedPoint() :
-			num_of_points_(0), point_(0.0, 0.0, 0.0), normal_(0.0, 0.0, 0.0), color_(0.0, 0.0, 0.0) {
-	}
-
-public:
 	void AddPoint(const open3d::geometry::PointCloud &cloud, int index) {
 		point_ += cloud.points_[index];
 		if (cloud.HasNormals()) {
@@ -46,6 +41,11 @@ public:
 		if (cloud.HasColors() && isValidColor(cloud.colors_[index])) {
 			color_ = cloud.colors_[index]; //+= cloud.colors_[index];
 		}
+
+    if (cloud.HasCovariances()) {
+        covariance_ += cloud.covariances_[index];
+    }
+
 		num_of_points_++;
 	}
 
@@ -62,11 +62,17 @@ public:
 		return color_; // / double(num_of_points_);
 	}
 
+	Eigen::Matrix3d GetAverageCovariance() const {
+		// Call NormalizeNormals() afterwards if necessary
+		return covariance_ / double(num_of_points_);
+	}
+
 public:
-	int num_of_points_;
-	Eigen::Vector3d point_;
-	Eigen::Vector3d normal_;
-	Eigen::Vector3d color_;
+	int num_of_points_ = 0;
+	Eigen::Vector3d point_= Eigen::Vector3d::Zero();
+	Eigen::Vector3d normal_= Eigen::Vector3d::Zero();
+	Eigen::Vector3d color_= Eigen::Vector3d::Zero();
+	Eigen::Matrix3d covariance_ = Eigen::Matrix3d::Zero();
 };
 
 class point_cubic_id {
@@ -94,26 +100,6 @@ void estimateNormals(int numNearestNeighbours, open3d::geometry::PointCloud *pcl
 	pcl->EstimateNormals(param);
 }
 
-std::shared_ptr<registration::TransformationEstimation> icpObjectiveFactory(
-		const o3d_slam::IcpObjective &obj) {
-
-	switch (obj) {
-	case o3d_slam::IcpObjective::PointToPoint: {
-		auto obj = std::make_shared<registration::TransformationEstimationPointToPoint>(false);
-		return obj;
-	}
-
-	case o3d_slam::IcpObjective::PointToPlane: {
-		auto obj = std::make_shared<registration::TransformationEstimationPointToPlane>();
-		return obj;
-	}
-
-	default:
-		throw std::runtime_error("Unknown icp objective");
-	}
-
-}
-
 void randomDownSample(double downSamplingRatio, open3d::geometry::PointCloud *pcl) {
 	if (downSamplingRatio >= 1.0) {
 		return;
@@ -132,7 +118,7 @@ void voxelize(double voxelSize, open3d::geometry::PointCloud *pcl) {
 std::shared_ptr<open3d::geometry::PointCloud> voxelizeWithinCroppingVolume(double voxel_size,
 		const CroppingVolume &croppingVolume, const open3d::geometry::PointCloud &cloud) {
 	using namespace open3d::geometry;
-	auto output = std::make_shared<PointCloud>();
+	PointCloudPtr output = std::make_shared<PointCloud>();
 	if (voxel_size <= 0.0) {
 		*output = cloud;
 		return output;
@@ -151,12 +137,17 @@ std::shared_ptr<open3d::geometry::PointCloud> voxelizeWithinCroppingVolume(doubl
 
 	const bool has_normals = cloud.HasNormals();
 	const bool has_colors = cloud.HasColors();
+	const bool has_covariances = cloud.HasCovariances();
 	output->points_.reserve(cloud.points_.size());
 	if (has_colors) {
 		output->colors_.reserve(cloud.points_.size());
 	}
 	if (has_normals) {
 		output->normals_.reserve(cloud.points_.size());
+	}
+
+	if (has_covariances) {
+		output->covariances_.reserve(cloud.points_.size());
 	}
 
 	voxelindex_to_accpoint.reserve(cloud.points_.size());
@@ -172,6 +163,9 @@ std::shared_ptr<open3d::geometry::PointCloud> voxelizeWithinCroppingVolume(doubl
 			if (has_colors) {
 				output->colors_.emplace_back(std::move(cloud.colors_[i]));
 			}
+			if (has_covariances) {
+				output->covariances_.emplace_back(std::move(cloud.covariances_[i]));
+			}
 		}
 	}
 
@@ -182,6 +176,9 @@ std::shared_ptr<open3d::geometry::PointCloud> voxelizeWithinCroppingVolume(doubl
 		}
 		if (has_colors) {
 			output->colors_.emplace_back(std::move(accpoint.second.GetAverageColor()));
+		}
+		if (has_covariances) {
+			output->covariances_.emplace_back(std::move(accpoint.second.GetAverageCovariance()));
 		}
 	}
 
@@ -297,6 +294,9 @@ std::shared_ptr<open3d::geometry::PointCloud> transform(const Eigen::Matrix4d &T
 	if (cloud.HasNormals()) {
 		out->normals_.reserve(cloud.points_.size());
 	}
+	if (cloud.HasCovariances()) {
+		out->covariances_.reserve(cloud.points_.size());
+	}
 	for (size_t i = 0; i < cloud.points_.size(); ++i) {
 		const auto &p = cloud.points_[i];
 		Eigen::Vector4d new_point = T * Eigen::Vector4d(p(0), p(1), p(2), 1.0);
@@ -306,6 +306,11 @@ std::shared_ptr<open3d::geometry::PointCloud> transform(const Eigen::Matrix4d &T
 			const auto &n = cloud.normals_[i];
 			Eigen::Vector4d new_normal = T * Eigen::Vector4d(n(0), n(1), n(2), 0.0);
 			out->normals_.emplace_back(std::move(new_normal.head<3>()));
+		}
+		if (cloud.HasCovariances()) {
+			const auto &cov = cloud.covariances_[i];
+			const Eigen::Matrix3d R = T.block<3, 3>(0, 0);
+			out->covariances_.emplace_back(std::move(R * cov * R.transpose()));
 		}
 	}
 	return out;
@@ -391,35 +396,6 @@ std::vector<Eigen::Vector3i> getKeysOfCarvedPoints(const open3d::geometry::Point
   return vecOfIdsToRemove;
 }
 
-PointCloud getPointCloudWithinCroppingVolume(const CroppingVolume &croppingVolume,
-		const VoxelizedPointCloud &voxels, bool isIgnoreColors) {
-
-	if (voxels.empty()) {
-		return PointCloud();
-	}
-	PointCloud ret;
-	ret.points_.reserve(voxels.size());
-	if (!isIgnoreColors && voxels.hasColors()) {
-		ret.colors_.reserve(voxels.size());
-	}
-	if (voxels.hasNormals()) {
-		ret.normals_.reserve(voxels.size());
-	}
-
-	for (const auto &voxel : voxels.voxels_) {
-		if (croppingVolume.isWithinVolume(voxel.second.getAggregatedPosition())) {
-			ret.points_.push_back(voxel.second.getAggregatedPosition());
-			if (!isIgnoreColors && voxels.hasColors()) {
-				ret.colors_.push_back(voxel.second.getAggregatedColor());
-			}
-			if (voxels.hasNormals()) {
-				ret.normals_.push_back(voxel.second.getAggregatedNormal());
-			}
-		}
-	}
-	return ret;
-}
-
 Eigen::Vector3d computeCenter(const VoxelizedPointCloud &voxels) {
 	Eigen::Vector3d center = Eigen::Vector3d::Zero();
 	int n = 0;
@@ -433,28 +409,9 @@ Eigen::Vector3d computeCenter(const VoxelizedPointCloud &voxels) {
 }
 
 std::shared_ptr<PointCloud> removePointsWithNonFiniteValues(const PointCloud &cloud){
-	std::shared_ptr<CroppingVolume::PointCloud> filtered(new PointCloud());
-	const int nPoints = cloud.points_.size();
-	filtered->points_.reserve(nPoints);
-	if (cloud.HasColors()) {
-		filtered->colors_.reserve(nPoints);
-	}
-	if (cloud.HasNormals()) {
-		filtered->normals_.reserve(nPoints);
-	}
-
-	for (size_t i = 0; i < nPoints; ++i) {
-		if (cloud.points_[i].array().isFinite().all()) {
-			filtered->points_.push_back(cloud.points_[i]);
-			if (cloud.HasColors()) {
-				filtered->colors_.push_back(cloud.colors_[i]);
-			}
-			if (cloud.HasNormals()) {
-				filtered->normals_.push_back(cloud.normals_[i]);
-			}
-		} // end if
-	}
-//	std::cout << "Filter: " << filtered->points_.size() << "/" << nPoints << std::endl;
+	std::shared_ptr<PointCloud> filtered = std::make_shared<PointCloud>();
+	*filtered = cloud;
+	filtered->RemoveNonFinitePoints();
 	return filtered;
 }
 

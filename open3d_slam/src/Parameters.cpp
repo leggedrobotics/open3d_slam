@@ -9,11 +9,48 @@
 
 namespace o3d_slam {
 
+namespace {
+template<typename T, typename Ret>
+void loadIfKeyDefined(const YAML::Node &node, const std::string &key, Ret *value) {
+	if (node[key].IsDefined()) {
+		*value = node[key].as<T>();
+	} else {
+		std::cout << " key " << key << " not found \n";;
+	}
+}
+
+} //namespace
+
+
+void loadParameters(const std::string &filename, ConstantVelocityMotionCompensationParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+	if (basenode.IsNull()) {
+		throw std::runtime_error("ConstantVelocityMotionCompensationParameters::loadParameters loading failed");
+	}
+	if (!basenode["motion_compensation"].IsDefined()){
+		std::cout << "motion_compensation not defined \n";
+		return;
+	}
+	loadParameters(basenode["motion_compensation"], p);
+}
+
 void loadParameters(const YAML::Node& node, ConstantVelocityMotionCompensationParameters* p) {
 	p->isUndistortInputCloud_ = node["is_undistort_scan"].as<bool>();
 	p->isSpinningClockwise_ = node["is_spinning_clockwise"].as<bool>();
 	p->scanDuration_ = node["scan_duration"].as<double>();
 	p->numPosesVelocityEstimation_ = node["num_poses_vel_estimation"].as<int>();
+}
+
+void loadParameters(const std::string &filename, SavingParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+	if (basenode.IsNull()) {
+		throw std::runtime_error("SavingParameters::loadParameters loading failed");
+	}
+	if (!basenode["saving_parameters"].IsDefined()){
+		std::cout << "saving_parameters not defined \n";
+		return;
+	}
+	loadParameters(basenode["saving_parameters"], p);
 }
 
 void loadParameters(const YAML::Node &node, SavingParameters *p) {
@@ -55,6 +92,18 @@ void loadParameters(const YAML::Node &node, GlobalOptimizationParameters *p){
 	p->referenceNode_ = node["reference_node"].as<int>();
 }
 
+void loadParameters(const std::string &filename, VisualizationParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+	if (basenode.IsNull()) {
+		throw std::runtime_error("VisualizationParameters::loadParameters loading failed");
+	}
+	if (!basenode["visualization"].IsDefined()){
+		std::cout << "visualization not defined \n";
+		return;
+	}
+	loadParameters(basenode["visualization"], p);
+}
+
 void loadParameters(const YAML::Node &node, VisualizationParameters *p){
 	p->assembledMapVoxelSize_ = node["assembled_map_voxel_size"].as<double>();
 	p->submapVoxelSize_ = node["submaps_voxel_size"].as<double>();
@@ -62,10 +111,17 @@ void loadParameters(const YAML::Node &node, VisualizationParameters *p){
 }
 
 void loadParameters(const YAML::Node &n, IcpParameters *p) {
-	p->icpObjective_ = IcpObjectiveNames.at(n["icp_objective"].as<std::string>());
-	p->kNNnormalEstimation_ = n["knn_normal_estimation"].as<int>();
+	p->knn_ = n["knn"].as<int>();
 	p->maxCorrespondenceDistance_ = n["max_correspondence_dist"].as<double>();
 	p->maxNumIter_ = n["max_n_iter"].as<int>();
+	loadIfKeyDefined<double>(n, "max_distance_knn", &p->maxDistanceKnn_);
+}
+
+void loadParameters(const YAML::Node &node, CloudRegistrationParameters *p){
+	const std::string regTypeName = node["cloud_registration_type"].as<std::string>();
+	p->regType_ = CloudRegistrationStringToEnumMap.at(regTypeName);
+	loadParameters(node["icp_parameters"], &p->icp_);
+
 }
 
 void loadParameters(const std::string &filename, OdometryParameters *p){
@@ -73,14 +129,16 @@ void loadParameters(const std::string &filename, OdometryParameters *p){
 	if (basenode.IsNull()) {
 		throw std::runtime_error("Odometry::loadParameters loading failed");
 	}
+	if (!basenode["odometry"].IsDefined()){
+		std::cout << "odometry not defined \n";
+		return;
+	}
 	loadParameters(basenode["odometry"], p);
 }
 void loadParameters(const YAML::Node &node, OdometryParameters *p){
 	loadParameters(node["scan_matching"], &(p->scanMatcher_) );
 	loadParameters(node["scan_processing"], &(p->scanProcessing_) );
-	if (node["is_publish_odometry_msgs"].IsDefined()){
-	    p->isPublishOdometryMsgs_ = node["is_publish_odometry_msgs"].as<bool>();
-	}
+	loadIfKeyDefined<bool>(node,"is_publish_odometry_msgs", &p->isPublishOdometryMsgs_);
 }
 
 void loadParameters(const YAML::Node &node, ScanProcessingParameters *p){
@@ -109,18 +167,30 @@ void loadParameters(const YAML::Node& node, MapBuilderParameters* p) {
 	loadParameters(node["scan_cropping"], &(p->cropper_));
 }
 
+void loadParameters(const std::string &filename, MapperParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+	if (basenode.IsNull()) {
+		throw std::runtime_error("MapperParameters::loadParameters loading failed");
+	}
+	if (!basenode["mapping"].IsDefined()){
+		std::cout << "mapping not defined \n";
+		return;
+	}
+	loadParameters(basenode["mapping"], p);
+}
+
+
 void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	p->isBuildDenseMap_ = node["is_build_dense_map"].as<bool>();
 	p->isAttemptLoopClosures_ = node["is_attempt_loop_closures"].as<bool>();
 	p->minMovementBetweenMappingSteps_ = node["min_movement_between_mapping_steps"].as<double>();
-	p->minRefinementFitness_ = node["scan_to_map_refinement"]["min_refinement_fitness"].as<double>();
 	p->numScansOverlap_ = node["submaps_num_scan_overlap"].as<int>();
 	p->isDumpSubmapsToFileBeforeAndAfterLoopClosures_ = node["dump_submaps_to_file_before_after_lc"].as<bool>();
 	p->isPrintTimingStatistics_ = node["is_print_timing_information"].as<bool>();
 	p->isRefineOdometryConstraintsBetweenSubmaps_ = node["is_refine_odometry_constraints_between_submaps"].as<bool>();
 	p->isUseInitialMap_ = node["is_use_map_initialization"].as<bool>();
 	p->isMergeScansIntoMap_ = node["is_merge_scans_into_map"].as<bool>();
-	loadParameters(node["scan_to_map_refinement"]["scan_matching"],&(p->scanMatcher_));
+	loadParameters(node["scan_to_map_refinement"],&(p->scanMatcher_));
 	loadParameters(node["scan_to_map_refinement"]["scan_processing"], &(p->scanProcessing_));
 
 	if (p->isBuildDenseMap_) {
@@ -130,6 +200,13 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	loadParameters(node["submaps"], &(p->submaps_));
 	loadParameters(node["global_optimization"], &(p->globalOptimization_));
 	loadParameters(node["place_recognition"], &(p->placeRecognition_));
+}
+
+void loadParameters(const YAML::Node &node, ScanToMapRegistrationParameters *p){
+	const std::string regTypeName = node["scan_to_map_refinement_type"].as<std::string>();
+	p->scanToMapRegType_ = ScanToMapRegistrationStringToEnumMap.at(regTypeName);
+	p->minRefinementFitness_ = node["min_refinement_fitness"].as<double>();
+	loadParameters(node["icp_parameters"], &p->icp_);
 }
 
 void loadParameters(const YAML::Node &node, SpaceCarvingParameters *p){

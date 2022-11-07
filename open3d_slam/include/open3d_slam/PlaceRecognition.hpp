@@ -31,6 +31,7 @@ public:
 	void setFolderPath(const std::string &folderPath);
 private:
 	bool isRegistrationConsistent(const Eigen::Matrix4d &T) const;
+	void updateRegistrationAlgorithm(const MapperParameters &p);
 
 	std::string folderPath_ = "";
 	mutable size_t recognitionCounter_ = 0;

@@ -35,28 +35,31 @@ public:
 			const Transform &mapToRangeSensor) const =0;
 	virtual RegistrationResult scanToMapRegistration(const PointCloud &scan, const Submap &activeSubmap,
 			const Transform &mapToRangeSensor, const Transform &initialGuess) const = 0;
+	virtual bool isMergeScanValid(const PointCloud &in) const =0;
+	virtual void prepareInitialMap(PointCloud *map) const =0;
 };
 
-class ScanToMapIcpOpen3D : public ScanToMapRegistration {
+class ScanToMapIcp : public ScanToMapRegistration {
 
 public:
-	ScanToMapIcpOpen3D();
-	virtual ~ScanToMapIcpOpen3D() = default;
+	ScanToMapIcp();
+	virtual ~ScanToMapIcp() = default;
 	void setParameters(const MapperParameters &p);
 	ProcessedScans processForScanMatchingAndMerging(const PointCloud &in, const Transform &mapToRangeSensor) const final;
 	RegistrationResult scanToMapRegistration(const PointCloud &scan, const Submap &activeSubmap, const Transform &mapToRangeSensor,const Transform &initialGuess) const final;
-
+	bool isMergeScanValid(const PointCloud &in) const final;
+	void prepareInitialMap(PointCloud *map) const final;
 private:
+	PointCloudPtr preprocess(const PointCloud &in) const;
 	void update(const MapperParameters &p);
-	void estimateNormalsIfNeeded(PointCloud *pcl) const;
 
 	MapperParameters params_;
 	std::shared_ptr<CroppingVolume> scanMatcherCropper_;
 	std::shared_ptr<CroppingVolume> mapBuilderCropper_;
 };
 
-std::unique_ptr<ScanToMapIcpOpen3D> createScanToMapIcpOpen3D(const MapperParameters &p);
+std::unique_ptr<ScanToMapIcp> createScanToMapIcp(const MapperParameters &p);
 std::unique_ptr<ScanToMapRegistration> scanToMapRegistrationFactory(const MapperParameters &p);
-
+CloudRegistrationParameters toCloudRegistrationType(const ScanToMapRegistrationParameters &p);
 
 } // namespace o3d_slam

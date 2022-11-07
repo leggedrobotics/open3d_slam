@@ -9,8 +9,6 @@
 #include <chrono>
 #include <open3d/geometry/PointCloud.h>
 #include <open3d/geometry/MeshBase.h>
-
-#include <open3d/pipelines/registration/TransformationEstimation.h>
 #include "open3d_slam/Parameters.hpp"
 #include "open3d_slam/Transform.hpp"
 
@@ -28,8 +26,6 @@ void randomDownSample(double downSamplingRatio, open3d::geometry::PointCloud *pc
 void voxelize(double voxelSize, open3d::geometry::PointCloud *pcl);
 
 void estimateNormals(int numNearestNeighbours, open3d::geometry::PointCloud *pcl);
-std::shared_ptr<open3d::pipelines::registration::TransformationEstimation> icpObjectiveFactory(
-		const o3d_slam::IcpObjective &obj);
 
 std::pair<std::vector<double>, std::vector<size_t>> computePointCloudDistance(
 		const open3d::geometry::PointCloud &reference, const open3d::geometry::PointCloud &cloud,
@@ -54,7 +50,6 @@ double getMapVoxelSize(const MapBuilderParameters &p, double valueIfZero);
 bool isValidColor(const Eigen::Vector3d &c);
 
 Eigen::Vector3d computeCenter(const VoxelizedPointCloud &voxels);
-PointCloud getPointCloudWithinCroppingVolume(const CroppingVolume &croppingVolume,const VoxelizedPointCloud &voxels, bool isIgnoreColors );
 std::vector<Eigen::Vector3i> getKeysOfCarvedPoints(const PointCloud &scan,
 		const VoxelizedPointCloud &cloud, const Eigen::Vector3d &sensorPosition, const SpaceCarvingParameters &param);
 

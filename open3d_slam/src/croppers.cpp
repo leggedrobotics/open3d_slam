@@ -74,44 +74,6 @@ CroppingVolume::Indices CroppingVolume::getIndicesWithinVolume(const PointCloud 
 	return idxs;
 }
 
-std::shared_ptr<CroppingVolume::PointCloud> CroppingVolume::cropMultiThreaded(const PointCloud &cloud) const {
-
-	std::shared_ptr<CroppingVolume::PointCloud> cropped(new PointCloud());
-
-	const int nPoints = cloud.points_.size();
-	cropped->points_.reserve(nPoints);
-	if (cloud.HasColors()) {
-		cropped->colors_.reserve(nPoints);
-	}
-	if (cloud.HasNormals()) {
-		cropped->normals_.reserve(nPoints);
-	}
-
-#ifndef open3d_slam_OPENMP_FOUND
-	std::cerr << "OpemMP not found, defaulting to single threaded implementation\n";
-#else
-#pragma omp parallel for
-#endif
-	for (size_t i = 0; i < nPoints; ++i) {
-		if (isWithinVolume(cloud.points_[i])) {
-#ifdef open3d_slam_OPENMP_FOUND
-#pragma omp critical
-#endif
-			{
-				cropped->points_.push_back(cloud.points_[i]);
-				if (cloud.HasColors()) {
-					cropped->colors_.push_back(cloud.colors_[i]);
-				}
-				if (cloud.HasNormals()) {
-					cropped->normals_.push_back(cloud.normals_[i]);
-				}
-			} // end pragma
-		} // end if
-	}
-
-	return cropped;
-}
-
 std::shared_ptr<CroppingVolume::PointCloud> CroppingVolume::crop(const PointCloud &cloud) const {
 	std::shared_ptr<CroppingVolume::PointCloud> cropped(new PointCloud());
 	const int nPoints = cloud.points_.size();
@@ -122,6 +84,9 @@ std::shared_ptr<CroppingVolume::PointCloud> CroppingVolume::crop(const PointClou
 	if (cloud.HasNormals()) {
 		cropped->normals_.reserve(nPoints);
 	}
+	if (cloud.HasCovariances()) {
+		cropped->covariances_.reserve(nPoints);
+	}
 
 	for (size_t i = 0; i < nPoints; ++i) {
 		if (isWithinVolume(cloud.points_[i])) {
@@ -131,6 +96,9 @@ std::shared_ptr<CroppingVolume::PointCloud> CroppingVolume::crop(const PointClou
 			}
 			if (cloud.HasNormals()) {
 				cropped->normals_.push_back(cloud.normals_[i]);
+			}
+			if (cloud.HasCovariances()) {
+				cropped->covariances_.push_back(cloud.covariances_[i]);
 			}
 		} // end if
 	}
@@ -264,6 +232,9 @@ std::shared_ptr<PointCloud> ColorRangeCropper::crop(const PointCloud &cloud) con
 	if (cloud.HasNormals()) {
 		cropped->normals_.reserve(nPoints);
 	}
+	if (cloud.HasCovariances()) {
+		cropped->covariances_.reserve(nPoints);
+	}
 
 	for (size_t i = 0; i < nPoints; ++i) {
 		if (isValidColor(cloud.colors_[i])) {
@@ -271,6 +242,9 @@ std::shared_ptr<PointCloud> ColorRangeCropper::crop(const PointCloud &cloud) con
 			cropped->colors_.push_back(cloud.colors_[i]);
 			if (cloud.HasNormals()) {
 				cropped->normals_.push_back(cloud.normals_[i]);
+			}
+			if (cloud.HasCovariances()) {
+				cropped->covariances_.push_back(cloud.covariances_[i]);
 			}
 		} // end if
 	}
