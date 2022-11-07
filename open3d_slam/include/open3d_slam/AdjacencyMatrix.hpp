@@ -22,7 +22,7 @@ public:
 
 	void addEdge(SubmapId id1, SubmapId id2);
 	bool isAdjacent(SubmapId id1, SubmapId id2) const;
-	void markNodeAsLoopClosureSubmap(SubmapId id);
+	void markAsLoopClosureSubmap(SubmapId id);
 	int getDistanceToNearestLoopClosureSubmap(SubmapId id) const;
 	void print() const;
 	void clear();

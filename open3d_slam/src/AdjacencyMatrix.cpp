@@ -51,7 +51,7 @@ int AdjacencyMatrix::getDistanceToNearestLoopClosureSubmap(SubmapId id) const {
 	return distance;
 }
 
-void AdjacencyMatrix::markNodeAsLoopClosureSubmap(SubmapId id) {
+void AdjacencyMatrix::markAsLoopClosureSubmap(SubmapId id) {
 	isLoopClosureSubmap_.at(id) = true;
 }
 
