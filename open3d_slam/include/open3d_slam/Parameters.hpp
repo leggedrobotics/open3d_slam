@@ -42,7 +42,7 @@ enum class CloudRegistrationType : int {
 	GeneralizedIcp
 };
 
-static const std::map<std::string, CloudRegistrationType> CloudRegistrationNames {
+static const std::map<std::string, CloudRegistrationType> CloudRegistrationStringToEnumMap {
 	{"PointToPlaneIcp",CloudRegistrationType::PointToPlaneIcp},
 	{"PointToPointIcp",CloudRegistrationType::PointToPointIcp},
 	{"GeneralizedIcp",CloudRegistrationType::GeneralizedIcp}
@@ -54,7 +54,7 @@ enum class ScanToMapRegistrationType : int {
 	GeneralizedIcp
 };
 
-static const std::map<std::string, ScanToMapRegistrationType> ScanToMapRegistrationNames {
+static const std::map<std::string, ScanToMapRegistrationType> ScanToMapRegistrationStringToEnumMap {
 	{"PointToPlaneIcp",ScanToMapRegistrationType::PointToPlaneIcp},
 	{"PointToPointIcp",ScanToMapRegistrationType::PointToPointIcp},
 	{"GeneralizedIcp",ScanToMapRegistrationType::GeneralizedIcp}
@@ -78,7 +78,7 @@ struct IcpParameters {
 	int maxNumIter_ = 50;
 	double maxCorrespondenceDistance_ = 0.2;
 	int knn_ = 5;
-	double maxDistanceKnn_ = 10.0; //not used for now
+	double maxDistanceKnn_ = 10.0;
 };
 
 struct CloudRegistrationParameters : public Parameters {

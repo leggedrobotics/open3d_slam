@@ -119,7 +119,7 @@ void loadParameters(const YAML::Node &n, IcpParameters *p) {
 
 void loadParameters(const YAML::Node &node, CloudRegistrationParameters *p){
 	const std::string regTypeName = node["cloud_registration_type"].as<std::string>();
-	p->regType_ = CloudRegistrationNames.at(regTypeName);
+	p->regType_ = CloudRegistrationStringToEnumMap.at(regTypeName);
 	loadParameters(node["icp_parameters"], &p->icp_);
 
 }
@@ -204,7 +204,7 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 
 void loadParameters(const YAML::Node &node, ScanToMapRegistrationParameters *p){
 	const std::string regTypeName = node["scan_to_map_refinement_type"].as<std::string>();
-	p->scanToMapRegType_ = ScanToMapRegistrationNames.at(regTypeName);
+	p->scanToMapRegType_ = ScanToMapRegistrationStringToEnumMap.at(regTypeName);
 	p->minRefinementFitness_ = node["min_refinement_fitness"].as<double>();
 	loadParameters(node["icp_parameters"], &p->icp_);
 }
