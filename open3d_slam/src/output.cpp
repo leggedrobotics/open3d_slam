@@ -30,6 +30,17 @@ std::string asString(const Transform &T) {
 
 }
 
+std::string asStringXYZRPY(const Transform &T) {
+	const double kRadToDeg = 180.0 / M_PI;
+	const auto &t = T.translation();
+	const auto &q = Eigen::Quaterniond(T.rotation());
+	const std::string trans = string_format("t:[%f, %f, %f]", t.x(), t.y(), t.z());
+	const auto rpy = toRPY(q) * kRadToDeg;
+	const std::string rpyString = string_format("rpy (deg):[%f, %f, %f]", rpy.x(), rpy.y(), rpy.z());
+	return trans + " ; " + rpyString;
+
+}
+
 bool saveToFile(const std::string &filename, const PointCloud &cloud) {
 	PointCloud copy = cloud;
 	std::string nameWithCorrectSuffix = filename;

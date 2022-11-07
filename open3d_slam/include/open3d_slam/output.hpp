@@ -26,6 +26,7 @@ std::string string_format( const std::string& format, Args ... args )
 
 
 std::string asString(const Transform &T);
+std::string asStringXYZRPY(const Transform &T);
 bool saveToFile(const std::string &filename, const PointCloud &cloud);
 
 //outputs true if directory has been created

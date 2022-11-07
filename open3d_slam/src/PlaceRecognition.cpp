@@ -72,13 +72,22 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		const int id = closeSubmapsIdxs.at(i);
 		const bool isAdjacent = std::abs<int>(id - lastFinishedSubmapIdx) == 1
 				|| adjMatrix.isAdjacent(id, lastFinishedSubmapIdx);
-		if (!isAdjacent) {
-			std::cout << "matching submap: " << lastFinishedSubmapIdx << " with submap: " << id << "\n";
-		} else {
+		if (isAdjacent){
 			std::cout << "Skipping the loop closure of: " << lastFinishedSubmapIdx << " with submap: " << id
 					<< " since they are adjacent \n";
 			continue;
 		}
+
+		const int loopClosingDistance = adjMatrix.getDistanceToNearestLoopClosureSubmap(lastFinishedSubmapIdx);
+		std::cout << "submap " << lastFinishedSubmapIdx<<" has lc dist of: " << loopClosingDistance << "\n";
+		if (loopClosingDistance < magic::minLoopClosureDistance){
+			std::cout << "Skipping the loop closure of: " << lastFinishedSubmapIdx << " with submap: " << id
+					<< " since they are too close \n";
+			continue;
+		}
+
+		std::cout << "matching submap: " << lastFinishedSubmapIdx << " with submap: " << id << "\n";
+
 		const Submap &targetSubmap = submapCollection.getSubmap(id);
 		const PointCloud targetSparse = targetSubmap.getSparseMapPointCloud();
 		const Submap::Feature targetFeature = targetSubmap.getFeatures();
@@ -205,6 +214,21 @@ bool PlaceRecognition::isRegistrationConsistent(const Eigen::Matrix4d &mat) cons
 		result = false;
 		std::cout << "  PlaceRecognition::isRegistrationConsistent The yaw drift is: " << yaw * kRadToDeg
 				<< " [deg] which is > than " << p.maxDriftYaw_ * kRadToDeg << "\n";
+	}
+	if (std::fabs(T.translation().x()) > p.maxDriftX_){
+		result = false;
+		std::cout << "  PlaceRecognition::isRegistrationConsistent The x drift is: " << T.translation().x()
+				<< " [m] which is > than " << p.maxDriftX_ << "\n";
+	}
+	if (std::fabs(T.translation().y()) > p.maxDriftY_){
+		result = false;
+		std::cout << "  PlaceRecognition::isRegistrationConsistent The y drift is: " << T.translation().y()
+				<< " [m] which is > than " << p.maxDriftY_ << "\n";
+	}
+	if (std::fabs(T.translation().z()) > p.maxDriftZ_){
+		result = false;
+		std::cout << "  PlaceRecognition::isRegistrationConsistent The z drift is: " << T.translation().z()
+				<< " [m] which is > than " << p.maxDriftZ_ << "\n";
 	}
 
 	if (!result) {

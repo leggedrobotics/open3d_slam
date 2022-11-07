@@ -118,6 +118,9 @@ struct PlaceRecognitionConsistencyCheckParameters{
 	double maxDriftRoll_ = 90.0 * params_internal::kDegToRad;
 	double maxDriftPitch_ = 90.0 * params_internal::kDegToRad;
 	double maxDriftYaw_ = 90.0 * params_internal::kDegToRad;
+	double maxDriftZ_ = 15.0;
+	double maxDriftY_ = 10.0;
+	double maxDriftX_ = 10.0;
 };
 
 struct PlaceRecognitionParameters{
