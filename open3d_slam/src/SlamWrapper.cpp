@@ -511,8 +511,8 @@ void SlamWrapper::updateSubmapsAndTrajectory() {
 		c.sourceToTarget_.setIdentity();
 		optimizationProblem_->updateLoopClosureConstraint(i, c);
 		loopClosureConstraints.at(i) = c;
-		std::cout << "Loop closure constraint " << i << " new transform: " << asString(c.sourceToTarget_)
-				<< std::endl;
+//		std::cout << "Loop closure constraint " << i << " new transform: " << asString(c.sourceToTarget_)
+//				<< std::endl;
 	}
 
 	submaps_->updateAdjacencyMatrix(loopClosureConstraints);

@@ -84,7 +84,7 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		const int loopClosingDistance = adjMatrix.getDistanceToNearestLoopClosureSubmap(lastFinishedSubmapIdx);
 		std::cout << "submap " << lastFinishedSubmapIdx<<" has lc dist of: " << loopClosingDistance << "\n";
 		if (loopClosingDistance < params_.placeRecognition_.minSubmapsBetweenLoopClosures_){
-			std::cout << "Skipping the loop closure of " << matchingSubmapsString << " since there are fewer than "<<  params_.placeRecognition_.minSubmapsBetweenLoopClosures_ << " inbetween \n";
+			std::cout << "Skipping the loop closure of " << matchingSubmapsString << " since there are fewer than "<<  params_.placeRecognition_.minSubmapsBetweenLoopClosures_ << " submaps inbetween \n";
 			continue;
 		}
 
@@ -261,7 +261,9 @@ std::vector<size_t> PlaceRecognition::getLoopClosureCandidatesIdxs(const Transfo
 			continue;
 		}
 
-		const double distance = (mapToRangeSensor.translation() - submapCollection.getSubmap(i).getMapToSubmapCenter()).norm();
+		const double distance = (submapCollection.getSubmap(lastFinishedSubmapIdx).getMapToSubmapCenter()
+				- submapCollection.getSubmap(i).getMapToSubmapCenter()).norm();
+//		const double distance = (mapToRangeSensor.translation() - submapCollection.getSubmap(i).getMapToSubmapCenter()).norm();
 		const bool isTooFar = distance > params_.submaps_.radius_;
 //		std::cout << "distance submap to submap " << i << " : " << distance << std::endl;
 		if (isTooFar) {

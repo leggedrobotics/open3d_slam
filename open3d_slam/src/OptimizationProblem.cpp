@@ -40,6 +40,7 @@ void OptimizationProblem::solve() {
 	GlobalOptimization(poseGraph_, method, criteria, option);
 	poseGraphOptimized_ = poseGraph_;
 	isRunningOptimization_ = false;
+	std::cout << "Finished graph optimization\n";
 }
 
 void OptimizationProblem::setParameters(const MapperParameters &p) {
