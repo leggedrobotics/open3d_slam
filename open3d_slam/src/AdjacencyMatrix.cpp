@@ -27,14 +27,15 @@ int AdjacencyMatrix::getDistanceToNearestLoopClosureSubmap(SubmapId id) const {
 
 	std::queue<SubmapId> toProcess;
 	std::set<SubmapId> visited;
-	int distance = 0;
+	std::map<SubmapId,SubmapId> parents;
 	auto isVisited = [&visited](SubmapId id) {
 		return visited.find(id) != visited.end();
 	};
+	SubmapId v = id;
 	visited.insert(id);
 	toProcess.push(id);
 	while (!toProcess.empty()) {
-		const SubmapId v = toProcess.front();
+		v = toProcess.front();
 		toProcess.pop();
 		if (isLoopClosureSubmap_.at(v)) {
 			break;
@@ -43,12 +44,16 @@ int AdjacencyMatrix::getDistanceToNearestLoopClosureSubmap(SubmapId id) const {
 			if (!isVisited(adj)) {
 				visited.insert(v);
 				toProcess.push(adj);
+				parents.insert({adj,v});
 			}
 		}
-		++distance;
 	} // end while
-
-	return distance;
+	int distance = 0;
+	while (v!=id){
+		v = parents.at(v);
+		distance++;
+	}
+	return std::max(0,distance-1);
 }
 
 void AdjacencyMatrix::markAsLoopClosureSubmap(SubmapId id) {

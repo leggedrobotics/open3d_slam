@@ -18,6 +18,7 @@ class AdjacencyMatrix {
 
 public:
 	AdjacencyMatrix() = default;
+	~AdjacencyMatrix() = default;
 	using SubmapId = int64;
 
 	void addEdge(SubmapId id1, SubmapId id2);
