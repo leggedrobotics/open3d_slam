@@ -441,7 +441,7 @@ void SlamWrapper::loopClosureWorker() {
 
 		Constraints loopClosureConstraints;
 		{
-			Timer t("loop_closing_attempt");
+//			Timer t("loop_closing_attempt");
 			const auto lcc = loopClosureCandidates_.popAllElements();
 			loopClosureConstraints = submaps_->buildLoopClosureConstraints(lcc);
 			numLatesLoopClosureConstraints_ = loopClosureConstraints.size();

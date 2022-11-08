@@ -11,6 +11,8 @@
 #include "open3d_slam/magic.hpp"
 #include "open3d_slam/math.hpp"
 #include "open3d_slam/output.hpp"
+#include "open3d_slam/assert.hpp"
+
 #include "open3d_slam/CloudRegistration.hpp"
 #include "open3d_slam/ScanToMapRegistration.hpp"
 
@@ -70,23 +72,21 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 //#pragma omp parallel for
 	for (int i = 0; i < closeSubmapsIdxs.size(); ++i) {
 		const int id = closeSubmapsIdxs.at(i);
+		const std::string matchingSubmapsString = " submap: " + std::to_string(lastFinishedSubmapIdx) + " with submap " + std::to_string(id);
 		const bool isAdjacent = std::abs<int>(id - lastFinishedSubmapIdx) == 1
 				|| adjMatrix.isAdjacent(id, lastFinishedSubmapIdx);
 		if (isAdjacent){
-			std::cout << "Skipping the loop closure of: " << lastFinishedSubmapIdx << " with submap: " << id
+			std::cout << "Skipping the loop closure of " << matchingSubmapsString
 					<< " since they are adjacent \n";
 			continue;
 		}
 
 		const int loopClosingDistance = adjMatrix.getDistanceToNearestLoopClosureSubmap(lastFinishedSubmapIdx);
 		std::cout << "submap " << lastFinishedSubmapIdx<<" has lc dist of: " << loopClosingDistance << "\n";
-		if (loopClosingDistance < magic::minLoopClosureDistance){
-			std::cout << "Skipping the loop closure of: " << lastFinishedSubmapIdx << " with submap: " << id
-					<< " since they are too close \n";
+		if (loopClosingDistance < params_.placeRecognition_.minSubmapsBetweenLoopClosures_){
+			std::cout << "Skipping the loop closure of " << matchingSubmapsString << " since there are fewer than "<<  params_.placeRecognition_.minSubmapsBetweenLoopClosures_ << " inbetween \n";
 			continue;
 		}
-
-		std::cout << "matching submap: " << lastFinishedSubmapIdx << " with submap: " << id << "\n";
 
 		const Submap &targetSubmap = submapCollection.getSubmap(id);
 		const PointCloud targetSparse = targetSubmap.getSparseMapPointCloud();
@@ -100,13 +100,13 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 							edgeLengthChecker }, RANSACConvergenceCriteria(cfg.ransacNumIter_, cfg.ransacProbability_));
 		}
 		if (ransacResult.correspondence_set_.size() < cfg.ransacMinCorrespondenceSetSize_) {
-			std::cout << "skipping place recognition with: " << ransacResult.correspondence_set_.size()
-					<< " correspondences. \n";
+			std::cout << "REJECTED loop closure, " << ransacResult.correspondence_set_.size()
+					<< " correspondences. " << matchingSubmapsString << "\n";
 			continue;
 		}
 
 		if (!isRegistrationConsistent(ransacResult.transformation_)) {
-			std::cout << "skipping place recognition with : "<< ransacResult.correspondence_set_.size() <<" ransac correspondences \n";
+			std::cout << "REJECTED loop closure, with ransac inconsistant " << matchingSubmapsString << "\n";
 			continue;
 		}
 
@@ -133,12 +133,12 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 
 		const auto &cfg = params_.placeRecognition_;
 		if (icpResult.fitness_ < cfg.minRefinementFitness_) {
-			std::cout << "skipping place recognition with refinement score: " << icpResult.fitness_ << " \n";
+			std::cout << "REJECTED loop closure, refinement score: " << icpResult.fitness_ << ", " << matchingSubmapsString << "\n";;
 			continue;
 		}
 
 		if (!isRegistrationConsistent(icpResult.transformation_)) {
-			std::cout << "skipping place recognition \n";
+			std::cout << "REJECTED loop closure, icp reg inconsistent, " << matchingSubmapsString << "\n";;
 			continue;
 		}
 
@@ -171,17 +171,22 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		{
 			constraints.emplace_back(std::move(c));
 		}
+		assert_eq<int>(lastFinishedSubmapIdx,sourceSubmap.getId(), "oops source submap");
+		assert_eq<int>(id,targetSubmap.getId(), "oops target submap");
+
 		if (params_.placeRecognition_.isDumpPlaceRecognitionAlignmentsToFile_) {
+			std::string lcName = std::to_string(recognitionCounter_) + "_"+ std::to_string(sourceSubmap.getId())+"_"+std::to_string(targetSubmap.getId());
 			PointCloud sourceOverlapCopy = sourceOverlap;
 			PointCloud sourceCopy = source;
 			sourceCopy.Transform(icpResult.transformation_);
 			sourceOverlapCopy.Transform(icpResult.transformation_);
-			saveToFile(folderPath_ + "/source_" + std::to_string(recognitionCounter_), sourceOverlapCopy);
-			saveToFile(folderPath_ + "/sourceFull_" + std::to_string(recognitionCounter_), sourceCopy);
-			saveToFile(folderPath_ + "/targetFull_" + std::to_string(recognitionCounter_), target);
-			saveToFile(folderPath_ + "/target_" + std::to_string(recognitionCounter_++), targetOverlap);
-			std::cout << "Dumped place recognition to file \n";
+			saveToFile(folderPath_ + "/source_" + lcName, sourceOverlapCopy);
+			saveToFile(folderPath_ + "/sourceFull_" + lcName, sourceCopy);
+			saveToFile(folderPath_ + "/targetFull_" + lcName, target);
+			saveToFile(folderPath_ + "/target_" + lcName, targetOverlap);
+//			std::cout << "Dumped place recognition to file \n";
 		}
+		std::cout << "ACCEPTED loop closure: " << matchingSubmapsString <<", " << asStringXYZRPY(c.sourceToTarget_) << "\n";;
 
 	} // end for loop
 	return constraints;

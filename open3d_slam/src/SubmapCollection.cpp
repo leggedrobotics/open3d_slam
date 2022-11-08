@@ -143,8 +143,8 @@ void SubmapCollection::createNewSubmap(const Transform &mapToSubmap) {
 	activeSubmapIdx_ = submaps_.size() - 1;
 	numScansMergedInActiveSubmap_ = 0;
 	std::cout << "Created submap: " << activeSubmapIdx_ << " with parent " << submapParentId << std::endl;
-	std::cout << "Submap " << activeSubmapIdx_ << " pose: " << asString(newSubmap.getMapToSubmapOrigin())
-			<< std::endl;
+//	std::cout << "Submap " << activeSubmapIdx_ << " pose: " << asString(newSubmap.getMapToSubmapOrigin())
+//			<< std::endl;
 }
 
 size_t SubmapCollection::findClosestSubmap(const Transform &mapToRangeSensor) const {
@@ -201,7 +201,7 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 		const auto id1 = submaps_.at(prevActiveSubmapIdx).getId();
 		const auto id2 = submaps_.at(activeSubmapIdx_).getId();
 		adjacencyMatrix_.addEdge(id1, id2);
-		std::cout << "Adding edge between " << id1 << " and " << id2 << std::endl;
+//		std::cout << "Adding edge between " << id1 << " and " << id2 << std::endl;
 		insertBufferedScans(&submaps_.at(activeSubmapIdx_));
 	} else {
 		submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, true);
@@ -228,7 +228,7 @@ void SubmapCollection::computeFeatures(const TimestampedSubmapIds &finishedSubma
 	auto featureComputation = [&]() {
 //		Timer t("feature computation");
 		for (const auto &id : finishedSubmapIds) {
-			std::cout << "computing features for submap: " << id.submapId_ << std::endl;
+//			std::cout << "computing features for submap: " << id.submapId_ << std::endl;
 //			std::cout << "submap size: " << submaps_.at(id.submapId_).getMapPointCloud().points_.size() << std::endl;
 			submaps_.at(id.submapId_).computeFeatures();
 			loopClosureCandidatesIdxs_.push(id);
@@ -284,15 +284,15 @@ bool SubmapCollection::dumpToFile(const std::string &folderPath, const std::stri
 void SubmapCollection::transform(const OptimizedTransforms &transformIncrements) {
 	const size_t nTransforms = transformIncrements.size();
 	std::vector<size_t> optimizedIdxs;
-	std::cout << "Num transforms: " << transformIncrements.size() << std::endl;
-	std::cout << "Num submaps: " << submaps_.size() << std::endl;
-	std::cout << "Transforms of updated submaps:: \n";
+//	std::cout << "Num transforms: " << transformIncrements.size() << std::endl;
+//	std::cout << "Num submaps: " << submaps_.size() << std::endl;
+//	std::cout << "Transforms of updated submaps:: \n";
 	for (size_t i = 0; i < nTransforms; ++i) {
 		const auto &update = transformIncrements.at(i);
 		if (update.submapId_ < submaps_.size()) {
 			submaps_.at(update.submapId_).transform(update.dT_);
 			optimizedIdxs.push_back(update.submapId_);
-			std::cout << "Submap " << update.submapId_ << " " << asString(update.dT_) << "\n";
+//			std::cout << "Submap " << update.submapId_ << " " << asString(update.dT_) << "\n";
 		} else {
 			std::cout << "tying to update submap: " << update.submapId_ << " but the there are only: "
 					<< submaps_.size() << "submaps!!!! This should not happen! \n";
@@ -304,9 +304,9 @@ void SubmapCollection::transform(const OptimizedTransforms &transformIncrements)
 	std::vector<size_t> submapIdxsToUpdate;
 	std::set_difference(allIdxs.begin(), allIdxs.end(), optimizedIdxs.begin(), optimizedIdxs.end(),
 			std::inserter(submapIdxsToUpdate, submapIdxsToUpdate.begin()));
-	std::cout << "\n num maps: " << submaps_.size() << "\n";
-	std::cout << "num maps missing: " << submapIdxsToUpdate.size() << "\n";
-	std::cout << " maps that are missing: \n";
+//	std::cout << "\n num maps: " << submaps_.size() << "\n";
+//	std::cout << "num maps missing: " << submapIdxsToUpdate.size() << "\n";
+//	std::cout << " maps that are missing: \n";
 	for (auto idx : submapIdxsToUpdate) {
 		//look at the node parent
 		// if the parent is not in the list of nodes to update
@@ -314,7 +314,7 @@ void SubmapCollection::transform(const OptimizedTransforms &transformIncrements)
 		// otherwise, set the current node to be the parent node
 		size_t currentNode;
 		currentNode = idx;
-		std::cout << currentNode << " with parent: ";
+//		std::cout << currentNode << " with parent: ";
 		while (true && !transformIncrements.empty()) {
 			currentNode = submaps_.at(currentNode).getParentId();
 			if (std::find(submapIdxsToUpdate.begin(), submapIdxsToUpdate.end(), currentNode)
@@ -322,7 +322,7 @@ void SubmapCollection::transform(const OptimizedTransforms &transformIncrements)
 				/* parent is in the pose graph */
 				const auto &update = transformIncrements.at(currentNode);
 				submaps_.at(idx).transform(update.dT_);
-				std::cout << update.submapId_ << "\n";
+//				std::cout << update.submapId_ << "\n";
 				break;
 			}
 			if (currentNode == submaps_.at(currentNode).getParentId()) {
