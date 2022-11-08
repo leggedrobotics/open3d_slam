@@ -140,6 +140,7 @@ struct PlaceRecognitionParameters{
 	double minRefinementFitness_ = 0.7;
 	bool isDumpPlaceRecognitionAlignmentsToFile_ = false;
 	PlaceRecognitionConsistencyCheckParameters consistencyCheck_;
+	size_t minSubmapsBetweenLoopClosures_ = 2;
 };
 
 struct GlobalOptimizationParameters {
