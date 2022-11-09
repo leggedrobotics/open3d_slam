@@ -258,11 +258,10 @@ std::vector<size_t> PlaceRecognition::getLoopClosureCandidatesIdxs(const Transfo
 		}
 
 		const Eigen::Vector3d submapCenter = submapCollection.getSubmap(i).getMapToSubmapCenter();
-		const double maxDistance = params_.submaps_.radius_;
+		const double maxDistance = params_.placeRecognition_.loopClosureSearchRadius_;
 		const double distance = (lastFinishedSubmabCenter-submapCenter).norm();
 //		const double distance = (mapToRangeSensor.translation() - submapCollection.getSubmap(i).getMapToSubmapCenter()).norm();
 		const bool isTooFar = distance > maxDistance;
-
 //		std::cout << "distance submap to submap " << i << " : " << distance << std::endl;
 		if (isTooFar) {
 			continue;
