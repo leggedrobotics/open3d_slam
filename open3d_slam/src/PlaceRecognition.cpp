@@ -73,20 +73,6 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 	for (int i = 0; i < closeSubmapsIdxs.size(); ++i) {
 		const int id = closeSubmapsIdxs.at(i);
 		const std::string matchingSubmapsString = " submap: " + std::to_string(lastFinishedSubmapIdx) + " with submap " + std::to_string(id);
-		const bool isAdjacent = std::abs<int>(id - lastFinishedSubmapIdx) == 1
-				|| adjMatrix.isAdjacent(id, lastFinishedSubmapIdx);
-		if (isAdjacent){
-			std::cout << "Skipping the loop closure of " << matchingSubmapsString
-					<< " since they are adjacent \n";
-			continue;
-		}
-
-		const int loopClosingDistance = adjMatrix.getDistanceToNearestLoopClosureSubmap(lastFinishedSubmapIdx);
-		std::cout << "submap " << lastFinishedSubmapIdx<<" has lc dist of: " << loopClosingDistance << "\n";
-		if (loopClosingDistance < params_.placeRecognition_.minSubmapsBetweenLoopClosures_){
-			std::cout << "Skipping the loop closure of " << matchingSubmapsString << " since there are fewer than "<<  params_.placeRecognition_.minSubmapsBetweenLoopClosures_ << " submaps inbetween \n";
-			continue;
-		}
 
 		const Submap &targetSubmap = submapCollection.getSubmap(id);
 		const PointCloud targetSparse = targetSubmap.getSparseMapPointCloud();
@@ -180,10 +166,10 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 			PointCloud sourceCopy = source;
 			sourceCopy.Transform(icpResult.transformation_);
 			sourceOverlapCopy.Transform(icpResult.transformation_);
-			saveToFile(folderPath_ + "/source_" + lcName, sourceOverlapCopy);
-			saveToFile(folderPath_ + "/sourceFull_" + lcName, sourceCopy);
-			saveToFile(folderPath_ + "/targetFull_" + lcName, target);
-			saveToFile(folderPath_ + "/target_" + lcName, targetOverlap);
+			saveToFile(folderPath_ + "/overlap_source_" + lcName, sourceOverlapCopy);
+			saveToFile(folderPath_ + "/full_source_" + lcName, sourceCopy);
+			saveToFile(folderPath_ + "/full_target_" + lcName, target);
+			saveToFile(folderPath_ + "/overlap_target_" + lcName, targetOverlap);
 //			std::cout << "Dumped place recognition to file \n";
 		}
 		std::cout << "ACCEPTED loop closure: " << matchingSubmapsString <<", " << asStringXYZRPY(c.sourceToTarget_) << "\n";;
@@ -251,22 +237,47 @@ std::vector<size_t> PlaceRecognition::getLoopClosureCandidatesIdxs(const Transfo
 	std::vector<size_t> idxs;
 	const size_t nSubmaps = submapCollection.getNumSubmaps();
 	idxs.reserve(nSubmaps);
+	const Eigen::Vector3d lastFinishedSubmabCenter = submapCollection.getSubmap(lastFinishedSubmapIdx).getMapToSubmapCenter();
 	for (size_t i = 0; i < nSubmaps; ++i) {
 		if (i == activeSubmapIdx) {
 			continue;
 		}
+		const std::string matchingSubmapsString = " submap: " + std::to_string(lastFinishedSubmapIdx) + " with submap " + std::to_string(i);
 		const auto id1 = submapCollection.getSubmap(i).getId();
 		const auto id2 = submapCollection.getSubmap(activeSubmapIdx).getId();
 		if (adjMatrix.isAdjacent(id1, id2)) {
 			continue;
 		}
 
-		const double distance = (submapCollection.getSubmap(lastFinishedSubmapIdx).getMapToSubmapCenter()
-				- submapCollection.getSubmap(i).getMapToSubmapCenter()).norm();
+		const bool isAdjacent = std::abs<int>(i - lastFinishedSubmapIdx) == 1
+				|| adjMatrix.isAdjacent(i, lastFinishedSubmapIdx);
+		if (isAdjacent){
+//			std::cout << "Skipping the loop closure of " << matchingSubmapsString
+//					<< " since they are adjacent \n";
+			continue;
+		}
+
+		const Eigen::Vector3d submapCenter = submapCollection.getSubmap(i).getMapToSubmapCenter();
+		const double maxDistance = params_.submaps_.radius_;
+		const double distance = (lastFinishedSubmabCenter-submapCenter).norm();
 //		const double distance = (mapToRangeSensor.translation() - submapCollection.getSubmap(i).getMapToSubmapCenter()).norm();
-		const bool isTooFar = distance > params_.submaps_.radius_;
+		const bool isTooFar = distance > maxDistance;
+
 //		std::cout << "distance submap to submap " << i << " : " << distance << std::endl;
 		if (isTooFar) {
+			continue;
+		}
+
+		const int consecutiveThreshold = (int) std::ceil(maxDistance / params_.submaps_.radius_);
+		const bool isConsecutive = std::abs<int>(i - lastFinishedSubmapIdx) <= consecutiveThreshold;
+		if (isConsecutive) {
+			continue;
+		}
+
+		const int loopClosingDistance = adjMatrix.getDistanceToNearestLoopClosureSubmap(lastFinishedSubmapIdx);
+//		std::cout << "submap " << lastFinishedSubmapIdx<<" has lc dist of: " << loopClosingDistance << "\n";
+		if (loopClosingDistance < params_.placeRecognition_.minSubmapsBetweenLoopClosures_){
+			std::cout << "Skipping the loop closure of " << matchingSubmapsString << " since there are fewer than "<<  params_.placeRecognition_.minSubmapsBetweenLoopClosures_ << " submaps inbetween \n";
 			continue;
 		}
 
