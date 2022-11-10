@@ -19,4 +19,5 @@ Contents
    localization
    parameters
    open3d_catkin
-   docker 
+   docker
+   examples 

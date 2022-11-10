@@ -82,3 +82,13 @@ target_link_libraries(mapping_node
     ${PROJECT_NAME}
 )
 
+add_executable(adjacency_graph_example_node
+  src/adjacency_graph_example_node.cpp
+)
+
+target_link_libraries(adjacency_graph_example_node
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+)
+
+

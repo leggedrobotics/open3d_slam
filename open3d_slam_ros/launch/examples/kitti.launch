@@ -10,8 +10,10 @@
 	<arg name="map_saving_folder" default="$(find open3d_slam_ros)/data/maps/"/>
 	<arg name="num_accumulated_range_data" default="1"/>
 	<arg name="is_read_from_rosbag" default="false"/>
-	<arg name="rosbag_filepath" default="$(find open3d_slam_ros)/data/rosbags/kitti00.bag"/>
+	<arg name="rosbag_filepath" default="$(find open3d_slam_ros)/data/kitti00.bag"/>
 	<arg name="use_sim_time" default="true"/>
+	<arg name="play_delay" default="0.4" />
+	<arg name="play_rate" default="1.0" />
 
 	<!-- END OF ARGS -->	
 
@@ -30,6 +32,9 @@
 		<param name="map_saving_folder" value="$(arg map_saving_folder)"/>
 	</node>
 
+	<node pkg="rosbag" type="play" name="rosbag"
+		args="'$(arg rosbag_filepath)' --delay '$(arg play_delay)' --rate '$(arg play_rate)' --clock -s 0" unless="$(arg is_read_from_rosbag)"/>
+	<!-- append - -loop for looping -->
 
 	<include
 		file="$(find open3d_slam_ros)/launch/vis.launch"

@@ -72,7 +72,7 @@ public:
 	bool saveSubmaps(const std::string &directory);
 
 private:
-
+	void checkIfOptimizedGraphAvailable();
 	void odometryWorker();
 	void mappingWorker();
 	void loopClosureWorker();

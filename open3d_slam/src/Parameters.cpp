@@ -63,6 +63,9 @@ void loadParameters(const YAML::Node &node, PlaceRecognitionConsistencyCheckPara
 	p->maxDriftPitch_ = node["max_drift_pitch"].as<double>() * params_internal::kDegToRad;
 	p->maxDriftRoll_ =  node["max_drift_roll"].as<double>() * params_internal::kDegToRad;
 	p->maxDriftYaw_ =  node["max_drift_yaw"].as<double>() * params_internal::kDegToRad;
+	loadIfKeyDefined<double>(node, "max_drift_x", &p->maxDriftX_);
+	loadIfKeyDefined<double>(node, "max_drift_y", &p->maxDriftY_);
+	loadIfKeyDefined<double>(node, "max_drift_z", &p->maxDriftZ_);
 }
 
 void loadParameters(const YAML::Node &node, PlaceRecognitionParameters *p){
@@ -82,6 +85,9 @@ void loadParameters(const YAML::Node &node, PlaceRecognitionParameters *p){
 	p->maxIcpCorrespondenceDistance_ = node["max_icp_correspondence_distance"].as<double>();
 	p->minRefinementFitness_ = node["min_icp_refinement_fitness"].as<double>();
 	p->isDumpPlaceRecognitionAlignmentsToFile_ = node["dump_aligned_place_recognitions_to_file"].as<bool>();
+	loadIfKeyDefined<int>(node, "min_submaps_between_loop_closures", &p->minSubmapsBetweenLoopClosures_);
+	loadIfKeyDefined<double>(node, "loop_closure_serach_radius", &p->loopClosureSearchRadius_);
+
 	loadParameters(node["consistency_check"], &(p->consistencyCheck_));
 }
 
@@ -200,6 +206,10 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	loadParameters(node["submaps"], &(p->submaps_));
 	loadParameters(node["global_optimization"], &(p->globalOptimization_));
 	loadParameters(node["place_recognition"], &(p->placeRecognition_));
+	if (!node["place_recognition"]["loop_closure_serach_radius"].IsDefined()){
+		std::cout << "Using submap size as loop closure serach radius! \n";
+		p->placeRecognition_.loopClosureSearchRadius_ = p->submaps_.radius_; // default value
+	}
 }
 
 void loadParameters(const YAML::Node &node, ScanToMapRegistrationParameters *p){

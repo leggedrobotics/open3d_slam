@@ -11,6 +11,8 @@
 #include "open3d_slam/magic.hpp"
 #include "open3d_slam/math.hpp"
 #include "open3d_slam/output.hpp"
+#include "open3d_slam/assert.hpp"
+
 #include "open3d_slam/CloudRegistration.hpp"
 #include "open3d_slam/ScanToMapRegistration.hpp"
 
@@ -70,15 +72,8 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 //#pragma omp parallel for
 	for (int i = 0; i < closeSubmapsIdxs.size(); ++i) {
 		const int id = closeSubmapsIdxs.at(i);
-		const bool isAdjacent = std::abs<int>(id - lastFinishedSubmapIdx) == 1
-				|| adjMatrix.isAdjacent(id, lastFinishedSubmapIdx);
-		if (!isAdjacent) {
-			std::cout << "matching submap: " << lastFinishedSubmapIdx << " with submap: " << id << "\n";
-		} else {
-			std::cout << "Skipping the loop closure of: " << lastFinishedSubmapIdx << " with submap: " << id
-					<< " since they are adjacent \n";
-			continue;
-		}
+		const std::string matchingSubmapsString = " submap: " + std::to_string(lastFinishedSubmapIdx) + " with submap " + std::to_string(id);
+
 		const Submap &targetSubmap = submapCollection.getSubmap(id);
 		const PointCloud targetSparse = targetSubmap.getSparseMapPointCloud();
 		const Submap::Feature targetFeature = targetSubmap.getFeatures();
@@ -91,13 +86,13 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 							edgeLengthChecker }, RANSACConvergenceCriteria(cfg.ransacNumIter_, cfg.ransacProbability_));
 		}
 		if (ransacResult.correspondence_set_.size() < cfg.ransacMinCorrespondenceSetSize_) {
-			std::cout << "skipping place recognition with: " << ransacResult.correspondence_set_.size()
-					<< " correspondences. \n";
+			std::cout << "REJECTED loop closure, " << ransacResult.correspondence_set_.size()
+					<< " correspondences. " << matchingSubmapsString << "\n";
 			continue;
 		}
 
 		if (!isRegistrationConsistent(ransacResult.transformation_)) {
-			std::cout << "skipping place recognition with : "<< ransacResult.correspondence_set_.size() <<" ransac correspondences \n";
+			std::cout << "REJECTED loop closure, with ransac inconsistant " << matchingSubmapsString << "\n";
 			continue;
 		}
 
@@ -124,12 +119,12 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 
 		const auto &cfg = params_.placeRecognition_;
 		if (icpResult.fitness_ < cfg.minRefinementFitness_) {
-			std::cout << "skipping place recognition with refinement score: " << icpResult.fitness_ << " \n";
+			std::cout << "REJECTED loop closure, refinement score: " << icpResult.fitness_ << ", " << matchingSubmapsString << "\n";;
 			continue;
 		}
 
 		if (!isRegistrationConsistent(icpResult.transformation_)) {
-			std::cout << "skipping place recognition \n";
+			std::cout << "REJECTED loop closure, icp reg inconsistent, " << matchingSubmapsString << "\n";;
 			continue;
 		}
 
@@ -162,17 +157,22 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform &mapTo
 		{
 			constraints.emplace_back(std::move(c));
 		}
+		assert_eq<int>(lastFinishedSubmapIdx,sourceSubmap.getId(), "oops source submap");
+		assert_eq<int>(id,targetSubmap.getId(), "oops target submap");
+
 		if (params_.placeRecognition_.isDumpPlaceRecognitionAlignmentsToFile_) {
+			std::string lcName = std::to_string(recognitionCounter_) + "_"+ std::to_string(sourceSubmap.getId())+"_"+std::to_string(targetSubmap.getId());
 			PointCloud sourceOverlapCopy = sourceOverlap;
 			PointCloud sourceCopy = source;
 			sourceCopy.Transform(icpResult.transformation_);
 			sourceOverlapCopy.Transform(icpResult.transformation_);
-			saveToFile(folderPath_ + "/source_" + std::to_string(recognitionCounter_), sourceOverlapCopy);
-			saveToFile(folderPath_ + "/sourceFull_" + std::to_string(recognitionCounter_), sourceCopy);
-			saveToFile(folderPath_ + "/targetFull_" + std::to_string(recognitionCounter_), target);
-			saveToFile(folderPath_ + "/target_" + std::to_string(recognitionCounter_++), targetOverlap);
-			std::cout << "Dumped place recognition to file \n";
+			saveToFile(folderPath_ + "/overlap_source_" + lcName, sourceOverlapCopy);
+			saveToFile(folderPath_ + "/full_source_" + lcName, sourceCopy);
+			saveToFile(folderPath_ + "/full_target_" + lcName, target);
+			saveToFile(folderPath_ + "/overlap_target_" + lcName, targetOverlap);
+//			std::cout << "Dumped place recognition to file \n";
 		}
+		std::cout << "ACCEPTED loop closure: " << matchingSubmapsString <<", " << asStringXYZRPY(c.sourceToTarget_) << "\n";;
 
 	} // end for loop
 	return constraints;
@@ -206,6 +206,21 @@ bool PlaceRecognition::isRegistrationConsistent(const Eigen::Matrix4d &mat) cons
 		std::cout << "  PlaceRecognition::isRegistrationConsistent The yaw drift is: " << yaw * kRadToDeg
 				<< " [deg] which is > than " << p.maxDriftYaw_ * kRadToDeg << "\n";
 	}
+	if (std::fabs(T.translation().x()) > p.maxDriftX_){
+		result = false;
+		std::cout << "  PlaceRecognition::isRegistrationConsistent The x drift is: " << T.translation().x()
+				<< " [m] which is > than " << p.maxDriftX_ << "\n";
+	}
+	if (std::fabs(T.translation().y()) > p.maxDriftY_){
+		result = false;
+		std::cout << "  PlaceRecognition::isRegistrationConsistent The y drift is: " << T.translation().y()
+				<< " [m] which is > than " << p.maxDriftY_ << "\n";
+	}
+	if (std::fabs(T.translation().z()) > p.maxDriftZ_){
+		result = false;
+		std::cout << "  PlaceRecognition::isRegistrationConsistent The z drift is: " << T.translation().z()
+				<< " [m] which is > than " << p.maxDriftZ_ << "\n";
+	}
 
 	if (!result) {
 		std::cout << "   It is very unlikely that lidar odometry has drifted that much. Most likely, "
@@ -222,20 +237,46 @@ std::vector<size_t> PlaceRecognition::getLoopClosureCandidatesIdxs(const Transfo
 	std::vector<size_t> idxs;
 	const size_t nSubmaps = submapCollection.getNumSubmaps();
 	idxs.reserve(nSubmaps);
+	const Eigen::Vector3d lastFinishedSubmabCenter = submapCollection.getSubmap(lastFinishedSubmapIdx).getMapToSubmapCenter();
 	for (size_t i = 0; i < nSubmaps; ++i) {
 		if (i == activeSubmapIdx) {
 			continue;
 		}
+		const std::string matchingSubmapsString = " submap: " + std::to_string(lastFinishedSubmapIdx) + " with submap " + std::to_string(i);
 		const auto id1 = submapCollection.getSubmap(i).getId();
 		const auto id2 = submapCollection.getSubmap(activeSubmapIdx).getId();
 		if (adjMatrix.isAdjacent(id1, id2)) {
 			continue;
 		}
 
-		const double distance = (mapToRangeSensor.translation() - submapCollection.getSubmap(i).getMapToSubmapCenter()).norm();
-		const bool isTooFar = distance > params_.submaps_.radius_;
+		const bool isAdjacent = std::abs<int>(i - lastFinishedSubmapIdx) == 1
+				|| adjMatrix.isAdjacent(i, lastFinishedSubmapIdx);
+		if (isAdjacent){
+//			std::cout << "Skipping the loop closure of " << matchingSubmapsString
+//					<< " since they are adjacent \n";
+			continue;
+		}
+
+		const Eigen::Vector3d submapCenter = submapCollection.getSubmap(i).getMapToSubmapCenter();
+		const double maxDistance = params_.placeRecognition_.loopClosureSearchRadius_;
+		const double distance = (lastFinishedSubmabCenter-submapCenter).norm();
+//		const double distance = (mapToRangeSensor.translation() - submapCollection.getSubmap(i).getMapToSubmapCenter()).norm();
+		const bool isTooFar = distance > maxDistance;
 //		std::cout << "distance submap to submap " << i << " : " << distance << std::endl;
 		if (isTooFar) {
+			continue;
+		}
+
+		const int consecutiveThreshold = (int) std::ceil(maxDistance / params_.submaps_.radius_);
+		const bool isConsecutive = std::abs<int>(i - lastFinishedSubmapIdx) <= consecutiveThreshold;
+		if (isConsecutive) {
+			continue;
+		}
+
+		const int loopClosingDistance = adjMatrix.getDistanceToNearestLoopClosureSubmap(lastFinishedSubmapIdx);
+//		std::cout << "submap " << lastFinishedSubmapIdx<<" has lc dist of: " << loopClosingDistance << "\n";
+		if (loopClosingDistance < params_.placeRecognition_.minSubmapsBetweenLoopClosures_){
+			std::cout << "Skipping the loop closure of " << matchingSubmapsString << " since there are fewer than "<<  params_.placeRecognition_.minSubmapsBetweenLoopClosures_ << " submaps inbetween \n";
 			continue;
 		}
 

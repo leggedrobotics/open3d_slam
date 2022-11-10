@@ -40,6 +40,7 @@ void OptimizationProblem::solve() {
 	GlobalOptimization(poseGraph_, method, criteria, option);
 	poseGraphOptimized_ = poseGraph_;
 	isRunningOptimization_ = false;
+	std::cout << "Finished graph optimization\n";
 }
 
 void OptimizationProblem::setParameters(const MapperParameters &p) {
@@ -118,7 +119,8 @@ void OptimizationProblem::setupLoopClosureEdges() {
 
 	for (auto &loopClosingConstraint : loopClosureConstraints_) {
 		std::cout << " loop closure from submap: " << loopClosingConstraint.sourceSubmapIdx_ << " to submap "
-				<< loopClosingConstraint.targetSubmapIdx_ << "\n";
+				<< loopClosingConstraint.targetSubmapIdx_ << " with transformation:\n"
+				<< "    "<< asStringXYZRPY(loopClosingConstraint.sourceToTarget_) << "\n\n";
 	}
 }
 

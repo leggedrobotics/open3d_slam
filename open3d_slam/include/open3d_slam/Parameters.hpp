@@ -118,6 +118,9 @@ struct PlaceRecognitionConsistencyCheckParameters{
 	double maxDriftRoll_ = 90.0 * params_internal::kDegToRad;
 	double maxDriftPitch_ = 90.0 * params_internal::kDegToRad;
 	double maxDriftYaw_ = 90.0 * params_internal::kDegToRad;
+	double maxDriftZ_ = 15.0;
+	double maxDriftY_ = 10.0;
+	double maxDriftX_ = 10.0;
 };
 
 struct PlaceRecognitionParameters{
@@ -137,6 +140,8 @@ struct PlaceRecognitionParameters{
 	double minRefinementFitness_ = 0.7;
 	bool isDumpPlaceRecognitionAlignmentsToFile_ = false;
 	PlaceRecognitionConsistencyCheckParameters consistencyCheck_;
+	size_t minSubmapsBetweenLoopClosures_ = 2;
+	double loopClosureSearchRadius_ = 20;
 };
 
 struct GlobalOptimizationParameters {

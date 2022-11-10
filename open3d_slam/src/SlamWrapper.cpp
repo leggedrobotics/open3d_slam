@@ -153,10 +153,10 @@ void SlamWrapper::finishProcessing() {
 		if (isOptimizedGraphAvailable_) {
 			isOptimizedGraphAvailable_ = false;
 			const auto poseBeforeUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
-			std::cout << "latest pose before update: \n " << asString(poseBeforeUpdate.transform_) << "\n";
+			std::cout << "latest pose before update: \n " << asStringXYZRPY(poseBeforeUpdate.transform_) << "\n";
 			updateSubmapsAndTrajectory();
 			const auto poseAfterUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
-			std::cout << "latest pose after update: \n " << asString(poseAfterUpdate.transform_) << "\n";
+			std::cout << "latest pose after update: \n " << asStringXYZRPY(poseAfterUpdate.transform_) << "\n";
 			if (mapperParams_.isDumpSubmapsToFileBeforeAndAfterLoopClosures_) {
 				submaps_->dumpToFile(folderPath_, "after");
 			}
@@ -314,6 +314,7 @@ void SlamWrapper::odometryWorker() {
 void SlamWrapper::mappingWorker() {
 	while (isRunWorkers_) {
 		if (mappingBuffer_.empty()) {
+			checkIfOptimizedGraphAvailable();
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			continue;
 		}
@@ -358,18 +359,7 @@ void SlamWrapper::mappingWorker() {
 			attemptLoopClosuresIfReady();
 		}
 
-		if (isOptimizedGraphAvailable_) {
-			isOptimizedGraphAvailable_ = false;
-			const auto poseBeforeUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
-			std::cout << "latest pose before update: \n " << asString(poseBeforeUpdate.transform_) << "\n";
-			updateSubmapsAndTrajectory();
-			const auto poseAfterUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
-			std::cout << "latest pose after update: \n " << asString(poseAfterUpdate.transform_) << "\n";
-//			publishMaps(measurement.time_);
-			if (mapperParams_.isDumpSubmapsToFileBeforeAndAfterLoopClosures_){
-				submaps_->dumpToFile(folderPath_, "after");
-			}
-		}
+		checkIfOptimizedGraphAvailable();
 
 		// publish visualizatinos
 //		publishMaps(measurement.time_);
@@ -384,6 +374,21 @@ void SlamWrapper::mappingWorker() {
 			mappingStatisticsTimer_.reset();
 		}
 
+	} // while (isRunWorkers_)
+}
+
+void SlamWrapper::checkIfOptimizedGraphAvailable(){
+	if (isOptimizedGraphAvailable_) {
+		isOptimizedGraphAvailable_ = false;
+		const auto poseBeforeUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
+		std::cout << "latest pose before update: \n " << asStringXYZRPY(poseBeforeUpdate.transform_) << "\n";
+		updateSubmapsAndTrajectory();
+		const auto poseAfterUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
+		std::cout << "latest pose after update: \n " << asStringXYZRPY(poseAfterUpdate.transform_) << "\n";
+//			publishMaps(measurement.time_);
+		if (mapperParams_.isDumpSubmapsToFileBeforeAndAfterLoopClosures_){
+			submaps_->dumpToFile(folderPath_, "after");
+		}
 	}
 }
 
@@ -441,7 +446,7 @@ void SlamWrapper::loopClosureWorker() {
 
 		Constraints loopClosureConstraints;
 		{
-			Timer t("loop_closing_attempt");
+//			Timer t("loop_closing_attempt");
 			const auto lcc = loopClosureCandidates_.popAllElements();
 			loopClosureConstraints = submaps_->buildLoopClosureConstraints(lcc);
 			numLatesLoopClosureConstraints_ = loopClosureConstraints.size();
@@ -498,7 +503,7 @@ void SlamWrapper::updateSubmapsAndTrajectory() {
 	const auto dT = optimizedTransformations.at(latestLoopClosureConstraint.sourceSubmapIdx_);
 
 	std::cout << "Transforming the pose buffer with the delta T from submap "
-			<< latestLoopClosureConstraint.sourceSubmapIdx_ << "the transform is: \n" << asString(dT.dT_)
+			<< latestLoopClosureConstraint.sourceSubmapIdx_ << " the transform is: \n" << asStringXYZRPY(dT.dT_)
 			<< std::endl;
 	mapper_->loopClosureUpdate(dT.dT_);
 
@@ -511,8 +516,8 @@ void SlamWrapper::updateSubmapsAndTrajectory() {
 		c.sourceToTarget_.setIdentity();
 		optimizationProblem_->updateLoopClosureConstraint(i, c);
 		loopClosureConstraints.at(i) = c;
-		std::cout << "Loop closure constraint " << i << " new transform: " << asString(c.sourceToTarget_)
-				<< std::endl;
+//		std::cout << "Loop closure constraint " << i << " new transform: " << asStringXYZRPY(c.sourceToTarget_)
+//				<< std::endl;
 	}
 
 	submaps_->updateAdjacencyMatrix(loopClosureConstraints);
