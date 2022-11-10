@@ -42,7 +42,7 @@ int AdjacencyMatrix::getDistanceToNearestLoopClosureSubmap(SubmapId id) const {
 		}
 		for (const auto adj : adjacency_.at(v)) {
 			if (!isVisited(adj)) {
-				visited.insert(v);
+				visited.insert(adj);
 				toProcess.push(adj);
 				parents.insert({adj,v});
 			}
