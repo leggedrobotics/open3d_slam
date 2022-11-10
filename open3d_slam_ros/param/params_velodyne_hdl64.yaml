@@ -8,7 +8,7 @@ odometry:
       max_distance_knn: 3.0
       max_n_iter: 50
   scan_processing:
-    voxel_size: 0.15
+    voxel_size: 0.2
     downsampling_ratio: 0.3
     scan_cropping:
       cropping_radius_max: 30.0
@@ -19,7 +19,7 @@ odometry:
 
 
 mapping:
-  is_print_timing_information: false
+  is_print_timing_information: true
   is_build_dense_map: false
   is_attempt_loop_closures: true
   is_use_map_initialization: false
@@ -37,7 +37,7 @@ mapping:
       max_distance_knn: 3.0
       max_n_iter: 50
     scan_processing:
-      voxel_size: 0.15
+      voxel_size: 0.3
       downsampling_ratio: 0.25
       scan_cropping:
         cropping_radius_max: 30.0
@@ -75,12 +75,12 @@ mapping:
       min_z: -50.0
       max_z: 50.0
       cropper_type: "MinMaxRadius" #otions are Cylinder, MaxRadius, MinRadius, MinMaxRadius
-    map_voxel_size: 0.2
+    map_voxel_size: 0.3
     space_carving:
       voxel_size: 0.2
       max_raytracing_length: 30.0
       truncation_distance: 0.3
-      carve_space_every_n_scans: 10
+      carve_space_every_n_scans: 20
       min_dot_product_with_normal: 0.3
 
       
@@ -114,23 +114,23 @@ mapping:
     ransac_correspondence_checker_edge_length: 0.6
     ransac_min_corresondence_set_size: 25
     max_icp_correspondence_distance: 0.3
-    min_icp_refinement_fitness: 0.6 #the more aliasing, the higher this should be
+    min_icp_refinement_fitness: 0.8 #the more aliasing, the higher this should be
     dump_aligned_place_recognitions_to_file: true 
-    min_submaps_between_loop_closures: 2
+    min_submaps_between_loop_closures: 5
     loop_closure_serach_radius: 20.0
     consistency_check:
       max_drift_roll: 30.0 #deg
       max_drift_pitch: 30.0 # deg
       max_drift_yaw: 30.0 #deg
-      max_drift_x: 40.0 #meters
-      max_drift_y: 40.0 #meters
-      max_drift_z: 30.0 #meters
+      max_drift_x: 80.0 #meters
+      max_drift_y: 80.0 #meters
+      max_drift_z: 40.0 #meters
     
     
   global_optimization:
     edge_prune_threshold: 0.2
     loop_closure_preference: 2.0
-    max_correspondence_distance: 100.0
+    max_correspondence_distance: 1000.0
     reference_node: 0
 
 
@@ -148,6 +148,6 @@ visualization:
   
   
 saving_parameters:
-  save_at_mission_end: false
-  save_map: false
+  save_at_mission_end: true
+  save_map: true
   save_submaps: false
