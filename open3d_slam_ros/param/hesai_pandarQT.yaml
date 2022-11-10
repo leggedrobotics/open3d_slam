@@ -113,7 +113,8 @@ mapping:
     max_icp_correspondence_distance: 0.3
     min_icp_refinement_fitness: 0.5
     dump_aligned_place_recognitions_to_file: false   
-    min_submaps_between_loop_closures: 1
+    min_submaps_between_loop_closures: 2
+    loop_closure_serach_radius: 20.0
     consistency_check:
       max_drift_roll: 30.0 #deg
       max_drift_pitch: 30.0 # deg
