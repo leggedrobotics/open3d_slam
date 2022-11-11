@@ -29,6 +29,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   rosbag
   interactive_markers
   open3d_slam_yaml_io
+  open3d_slam_lua_io
 )
 
 find_package(Eigen3 REQUIRED)

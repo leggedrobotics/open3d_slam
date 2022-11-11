@@ -9,6 +9,7 @@
 #include "open3d_slam/Parameters.hpp"
 #include "open3d_slam_ros/SlamMapInitializer.hpp"
 #include "open3d_slam_yaml_io/parameter_loaders.hpp"
+#include "open3d_slam_lua_io/parameter_loaders.hpp"
 
 
 int main(int argc, char **argv) {

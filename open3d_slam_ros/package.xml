@@ -28,6 +28,7 @@
   <depend>interactive_markers</depend>
   <depend>rosbag</depend>
   <depend>open3d_slam_yaml_io</depend>
+  <depend>open3d_slam_lua_io</depend>
 
 
 </package>
