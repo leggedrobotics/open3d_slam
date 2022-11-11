@@ -7,13 +7,14 @@
 
 #pragma once
 #include "open3d_slam/Parameters.hpp"
+#include "open3d_slam_lua_io/LuaLoader.hpp"
 
 
 namespace o3d_slam {
 namespace io_lua{
 
 //void loadParameters(const YAML::Node &node, ConstantVelocityMotionCompensationParameters *p);
-//void loadParameters(const YAML::Node &node, SavingParameters *p);
+void loadParameters(const DictPtr dict, SavingParameters *p);
 //void loadParameters(const YAML::Node &node, PlaceRecognitionConsistencyCheckParameters *p);
 //void loadParameters(const YAML::Node &node, PlaceRecognitionParameters *p);
 //void loadParameters(const YAML::Node &node, GlobalOptimizationParameters *p);
@@ -24,7 +25,7 @@ namespace io_lua{
 //void loadParameters(const YAML::Node &node, CloudRegistrationParameters *p);
 //void loadParameters(const YAML::Node &node, MapperParameters *p);
 //void loadParameters(const YAML::Node &node, MapBuilderParameters *p);
-//void loadParameters(const YAML::Node &node, OdometryParameters *p);
+void loadParameters(const DictPtr dict, OdometryParameters *p);
 //void loadParameters(const YAML::Node &node, SpaceCarvingParameters *p);
 //void loadParameters(const YAML::Node &node, ScanCroppingParameters *p);
 //void loadParameters(const YAML::Node &node, ScanToMapRegistrationParameters *p);
@@ -33,8 +34,8 @@ namespace io_lua{
 //void loadParameters(const YAML::Node& node, Eigen::Isometry3d* T);
 
 
-void loadParameters(const std::string &filename, MapperParameters *p);
-void loadParameters(const std::string &filename, SlamParameters *p);
+void loadParameters(const std::string &folderpath, const std::string &topLevelFileName, MapperParameters *p);
+void loadParameters(const std::string &folderpath, const std::string &topLevelFileName, SlamParameters *p);
 
 } // namespace io_lua
 } // namespace o3d_slam

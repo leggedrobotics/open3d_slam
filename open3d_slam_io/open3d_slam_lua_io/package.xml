@@ -19,5 +19,6 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>lua_parameter_dictionary</depend>
   <depend>open3d_slam</depend>
+  <depend>rospack</depend>
 
 </package>

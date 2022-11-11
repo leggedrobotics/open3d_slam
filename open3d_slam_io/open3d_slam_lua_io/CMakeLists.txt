@@ -12,6 +12,8 @@ set(SRC_FILES
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   open3d_slam
+  lua_parameter_dictionary
+  rospack
 )
   
 find_package(catkin REQUIRED COMPONENTS

@@ -8,6 +8,7 @@
 
 
 #include "open3d_slam_lua_io/parameter_loaders.hpp"
+#include "open3d_slam_lua_io/LuaLoader.hpp"
 
 #include "open3d_slam/math.hpp"
 #include "open3d_slam/output.hpp"
@@ -26,12 +27,22 @@ const double kDegToRad = M_PI / 180.0;
 
 
 
-void loadParameters(const std::string &filename, SlamParameters *p){
-//	YAML::Node basenode = YAML::LoadFile(filename);
-//	if (basenode.IsNull()) {
-//		throw std::runtime_error("SlamParameters::loadParameters loading failed");
-//	}
-//	loadParameters(basenode, p);
+void loadParameters(const std::string &folderpath, const std::string &topLevelFileName, SlamParameters *p){
+	LuaLoader loader;
+	loader.setupDictionary(topLevelFileName, folderpath);
+	DictSharedPtr dict = loader.getDict();
+	if (dict->HasKey("saving_parameters")){
+		DictPtr subDict = dict->GetDictionary("saving_parameters");
+		loadParameters(std::move(subDict), &p->saving_);
+	} else {
+		std::cout << "saving_parameters not defined \n";
+	}
+}
+
+void loadParameters(const DictPtr dict, SavingParameters *p){
+	p->isSaveAtMissionEnd_ = dict->GetBool("save_at_mission_end");
+	p->isSaveMap_ = dict->GetBool("save_map");
+	p->isSaveSubmaps_ = dict->GetBool("save_submaps");
 }
 
 void loadParameters(const std::string &filename, MapperParameters *p){
@@ -45,6 +56,7 @@ void loadParameters(const std::string &filename, MapperParameters *p){
 //	}
 //	loadParameters(basenode["mapping"], p);
 }
+
 
 
 } // namespace io_lua

@@ -39,7 +39,7 @@ catkin_package(
 ## Specify additional locations of header files
 include_directories(
   include
-    ${LUA_INCLUDE_DIR}
+  ${LUA_INCLUDE_DIR}
   SYSTEM
     ${catkin_INCLUDE_DIRS}
 )
@@ -59,6 +59,15 @@ target_link_libraries(${PROJECT_NAME}
 
 add_executable( example
 	src/example.cpp
+)
+
+target_link_libraries(example
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+)
+
+add_executable(minimal_example
+	src/minimal_example.cpp
 )
 
 target_link_libraries(example

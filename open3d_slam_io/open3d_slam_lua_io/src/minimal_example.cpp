@@ -1,15 +1,16 @@
 /*
- * example.cpp
+ * minimal_example.cpp
  *
- *  Created on: Mar 26, 2021
+ *  Created on: Nov 11, 2022
  *      Author: jelavice
  */
+
+
 
 #include <ros/package.h>
 #include <iostream>
 #include <memory>
-#include "lua_parameter_dictionary/configuration_file_resolver.h"
-#include "lua_parameter_dictionary/lua_parameter_dictionary.h"
+#include "open3d_slam_lua_io/parameter_loaders.hpp"
 
 int main(int argc, char** argv) {
   using namespace lua_dict;
@@ -84,3 +85,5 @@ int main(int argc, char** argv) {
   std::cout << "All done" << std::endl;
   return 0;
 }
+
+
