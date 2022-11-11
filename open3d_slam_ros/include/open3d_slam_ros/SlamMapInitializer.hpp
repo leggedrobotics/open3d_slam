@@ -14,7 +14,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include "open3d_slam_ros/Parameters.hpp"
+#include "open3d_slam/Parameters.hpp"
 #include "open3d_slam/SlamWrapper.hpp"
 #include <visualization_msgs/InteractiveMarker.h>
 #include <visualization_msgs/InteractiveMarkerFeedback.h>

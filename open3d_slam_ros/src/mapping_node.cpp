@@ -6,8 +6,9 @@
  */
 #include <open3d/Open3D.h>
 #include "open3d_slam_ros/creators.hpp"
-#include "open3d_slam_ros/Parameters.hpp"
+#include "open3d_slam/Parameters.hpp"
 #include "open3d_slam_ros/SlamMapInitializer.hpp"
+#include "open3d_slam_yaml_io/parameter_loaders.hpp"
 
 
 int main(int argc, char **argv) {
@@ -17,8 +18,8 @@ int main(int argc, char **argv) {
 	ros::NodeHandlePtr nh(new ros::NodeHandle("~"));
 
 	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
-	MapperParametersWithInitialization params;
-	loadParameters(paramFile, &params);
+	MapperParameters params;
+	io::loadParameters(paramFile, &params);
 
 	const bool isProcessAsFastAsPossible = nh->param<bool>("is_read_from_rosbag", false);
 	std::cout << "Is process as fast as possible: " << std::boolalpha << isProcessAsFastAsPossible << "\n";
@@ -31,7 +32,7 @@ int main(int argc, char **argv) {
 	if (params.isUseInitialMap_) {
 		std::shared_ptr<SlamWrapper> slam = dataProcessor->getSlamPtr();
 		slamMapInitializer = std::make_shared<SlamMapInitializer>(slam, nh);
-		slamMapInitializer->initialize(params.mapInitParameters_);
+		slamMapInitializer->initialize(params.mapInit_);
 	}
 
 	dataProcessor->startProcessing();

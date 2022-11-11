@@ -17,7 +17,7 @@ DataProcessorRos::DataProcessorRos(ros::NodeHandlePtr nh) :
 		nh_(nh) {
 
 }
-;
+
 
 void DataProcessorRos::initCommonRosStuff() {
 	cloudTopic_ = nh_->param<std::string>("cloud_topic", "");

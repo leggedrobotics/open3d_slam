@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include <yaml-cpp/yaml.h>
 #include <map>
 #include <string>
 #include <Eigen/Dense>
@@ -157,6 +156,13 @@ struct ScanToMapRegistrationParameters : public Parameters {
 	IcpParameters icp_;
 };
 
+struct MapInitializingParameters { //todo these are a bit implementation specific
+  std::string frameId_ = "";
+  Eigen::Isometry3d initialPose_ = Eigen::Isometry3d::Identity();
+	std::string pcdFilePath_ = "";
+	bool isInitializeInteractively_= false;
+};
+
 struct MapperParameters {
 	ScanToMapRegistrationParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
@@ -175,6 +181,7 @@ struct MapperParameters {
 	bool isRefineOdometryConstraintsBetweenSubmaps_ = false;
 	bool isUseInitialMap_ = false;
   bool isMergeScansIntoMap_ = true;
+  MapInitializingParameters mapInit_;
 };
 
 struct VisualizationParameters {
@@ -196,37 +203,13 @@ struct ConstantVelocityMotionCompensationParameters {
 	int numPosesVelocityEstimation_ = 3;
 };
 
-void loadParameters(const YAML::Node &node, ConstantVelocityMotionCompensationParameters *p);
-void loadParameters(const YAML::Node &node, SavingParameters *p);
-void loadParameters(const YAML::Node &node, PlaceRecognitionConsistencyCheckParameters *p);
-void loadParameters(const YAML::Node &node, PlaceRecognitionParameters *p);
-void loadParameters(const YAML::Node &node, GlobalOptimizationParameters *p);
-void loadParameters(const YAML::Node &node, VisualizationParameters *p);
-void loadParameters(const YAML::Node &node, SubmapParameters *p);
-void loadParameters(const YAML::Node &node, ScanProcessingParameters *p);
-void loadParameters(const YAML::Node &node, IcpParameters *p);
-void loadParameters(const YAML::Node &node, CloudRegistrationParameters *p);
-void loadParameters(const YAML::Node &node, MapperParameters *p);
-void loadParameters(const YAML::Node &node, MapBuilderParameters *p);
-void loadParameters(const YAML::Node &node, OdometryParameters *p);
-void loadParameters(const YAML::Node &node, SpaceCarvingParameters *p);
-void loadParameters(const YAML::Node &node, ScanCroppingParameters *p);
-void loadParameters(const YAML::Node &node, ScanToMapRegistrationParameters *p);
 
-void loadParameters(const std::string &filename, ConstantVelocityMotionCompensationParameters *p);
-void loadParameters(const std::string &filename, SavingParameters *p);
-void loadParameters(const std::string &filename, PlaceRecognitionConsistencyCheckParameters *p);
-void loadParameters(const std::string &filename, PlaceRecognitionParameters *p);
-void loadParameters(const std::string &filename, GlobalOptimizationParameters *p);
-void loadParameters(const std::string &filename, VisualizationParameters *p);
-void loadParameters(const std::string &filename, SubmapParameters *p);
-void loadParameters(const std::string &filename, ScanProcessingParameters *p);
-void loadParameters(const std::string &filename, IcpParameters *p);
-void loadParameters(const std::string &filename, CloudRegistrationParameters *p);
-void loadParameters(const std::string &filename, MapperParameters *p);
-void loadParameters(const std::string &filename, MapBuilderParameters *p);
-void loadParameters(const std::string &filename, OdometryParameters *p);
-void loadParameters(const std::string &filename, SpaceCarvingParameters *p);
-void loadParameters(const std::string &filename, ScanCroppingParameters *p);
+struct SlamParameters {
+	MapperParameters mapper_;
+	OdometryParameters odometry_;
+	VisualizationParameters visualization_;
+	SavingParameters saving_;
+	ConstantVelocityMotionCompensationParameters motionCompensation_;
+};
 
 } // namespace o3d_slam

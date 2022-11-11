@@ -15,7 +15,6 @@ set(SRC_FILES
   src/DataProcessorRos.cpp
   src/RosbagRangeDataProcessorRos.cpp
   src/Color.cpp
-  src/Parameters.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES
@@ -29,6 +28,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   tf2_geometry_msgs
   rosbag
   interactive_markers
+  open3d_slam_yaml_io
 )
 
 find_package(Eigen3 REQUIRED)

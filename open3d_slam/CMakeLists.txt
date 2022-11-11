@@ -7,7 +7,6 @@ add_compile_options(-O2)
 
 
 set(SRC_FILES
-  src/Parameters.cpp
   src/Mapper.cpp
   src/helpers.cpp
   src/time.cpp
@@ -55,7 +54,6 @@ catkin_package(
     ${EIGEN3_INCLUDE_DIRS} 
     ${Boost_INCLUDE_DIR} 
   LIBRARIES
-    yaml-cpp
     ${PROJECT_NAME} 
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
@@ -67,7 +65,6 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIR}
-  ${YAML_CPP_INCLUDE_DIR}
   ${OpenMP_CXX_INCLUDE_DIRS}
 )
 

@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>lua_parameter_dictionary</name>
+  <version>1.0.0</version>
+  <description>Param dictionary loader from lua.</description>
+  <maintainer email="ej@ethz.ch">ej</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>eigen</depend>
+  <depend>lua5.2-dev</depend>
+  <depend>rospack</depend>
+  <depend>roslib</depend>
+  <test_depend>gtest</test_depend>
+</package>
