@@ -66,15 +66,6 @@ target_link_libraries(example
   ${PROJECT_NAME}
 )
 
-add_executable(minimal_example
-	src/minimal_example.cpp
-)
-
-target_link_libraries(example
-  ${catkin_LIBRARIES}
-  ${PROJECT_NAME}
-)
-
 #############
 ## Install ##
 #############

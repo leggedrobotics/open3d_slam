@@ -8,6 +8,7 @@ add_compile_options(-O2)
 
 set(SRC_FILES
   src/parameter_loaders.cpp
+  src/LuaLoader.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES
@@ -45,5 +46,14 @@ add_dependencies(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
+)
+
+add_executable( minimal_example
+	src/minimal_example.cpp
+)
+
+target_link_libraries(minimal_example
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
 )
 
