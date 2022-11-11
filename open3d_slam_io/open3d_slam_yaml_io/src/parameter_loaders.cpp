@@ -13,7 +13,7 @@
 
 
 namespace o3d_slam {
-namespace io {
+namespace io_yaml {
 
 namespace {
 template<typename T, typename Ret>
@@ -276,5 +276,5 @@ void loadParameters(const std::string &filename, MapperParameters *p){
 }
 
 
-} // namespace io
+} // namespace io_yaml
 } // namespace o3d_slam

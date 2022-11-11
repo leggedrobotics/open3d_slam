@@ -24,8 +24,10 @@ find_package(Lua REQUIRED)
 catkin_package(
   INCLUDE_DIRS
     include
+    ${LUA_INCLUDE_DIR}
   LIBRARIES
     ${PROJECT_NAME}
+    ${LUA_LIBRARIES}
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
 )
@@ -37,7 +39,7 @@ catkin_package(
 ## Specify additional locations of header files
 include_directories(
   include
-  ${LUA_INCLUDE_DIR}
+    ${LUA_INCLUDE_DIR}
   SYSTEM
     ${catkin_INCLUDE_DIRS}
 )

@@ -11,7 +11,7 @@
 
 
 namespace o3d_slam {
-namespace io{
+namespace io_yaml{
 
 void loadParameters(const YAML::Node &node, ConstantVelocityMotionCompensationParameters *p);
 void loadParameters(const YAML::Node &node, SavingParameters *p);
@@ -37,5 +37,5 @@ void loadParameters(const YAML::Node& node, Eigen::Isometry3d* T);
 void loadParameters(const std::string &filename, MapperParameters *p);
 void loadParameters(const std::string &filename, SlamParameters *p);
 
-} // namespace io
+} // namespace io_yaml
 } // namespace o3d_slam

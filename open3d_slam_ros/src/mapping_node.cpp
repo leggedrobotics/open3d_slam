@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
 
 	const std::string paramFile = nh->param<std::string>("parameter_file_path", "");
 	MapperParameters params;
-	io::loadParameters(paramFile, &params);
+	io_yaml::loadParameters(paramFile, &params);
 
 	const bool isProcessAsFastAsPossible = nh->param<bool>("is_read_from_rosbag", false);
 	std::cout << "Is process as fast as possible: " << std::boolalpha << isProcessAsFastAsPossible << "\n";

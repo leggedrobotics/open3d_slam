@@ -196,7 +196,7 @@ void SlamWrapperRos::loadParametersAndInitialize() {
 	mapSavingFolderPath_ = nh_->param<std::string>("map_saving_folder", folderPath_);
 	const std::string paramFile = nh_->param<std::string>("parameter_file_path", "");
 	setParameterFilePath(paramFile);
-	io::loadParameters(paramFile, &params_);
+	io_yaml::loadParameters(paramFile, &params_);
 	BASE::loadParametersAndInitialize();
 }
 
