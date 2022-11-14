@@ -64,7 +64,10 @@ mapping:
     size: 3
     min_num_range_data: 10
     adjacency_based_revisiting_min_fitness: 0.5
-    
+    submaps_num_scan_overlap: 2
+
+
+  
   map_builder:
     scan_cropping:
       cropping_radius_max: 3

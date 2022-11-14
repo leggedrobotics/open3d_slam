@@ -111,6 +111,7 @@ struct SubmapParameters{
 	int minNumRangeData_ = 5;
 	double minSecondsBetweenFeatureComputation_=5.0;
 	double adjacencyBasedRevisitingMinFitness_ = 0.4;
+	int numScansOverlap_ = 3;
 };
 
 struct PlaceRecognitionConsistencyCheckParameters{
@@ -126,20 +127,20 @@ struct PlaceRecognitionParameters{
 	double normalEstimationRadius_=1.0;
 	double featureVoxelSize_ = 0.5;
 	double featureRadius_ = 2.5;
-	size_t featureKnn_=100;
-	size_t normalKnn_=10;
-	size_t ransacNumIter_ = 1000000;
+	int featureKnn_=100;
+	int normalKnn_=10;
+	int ransacNumIter_ = 1000000;
 	double ransacProbability_ = 0.99;
-	size_t ransacModelSize_=3;
+	int ransacModelSize_=3;
 	double ransacMaxCorrespondenceDistance_= 0.75;
 	double correspondenceCheckerDistance_=0.75;
 	double correspondenceCheckerEdgeLength_=0.5;
-	size_t ransacMinCorrespondenceSetSize_ = 25;
+	int ransacMinCorrespondenceSetSize_ = 25;
 	double maxIcpCorrespondenceDistance_ = 0.3;
 	double minRefinementFitness_ = 0.7;
 	bool isDumpPlaceRecognitionAlignmentsToFile_ = false;
 	PlaceRecognitionConsistencyCheckParameters consistencyCheck_;
-	size_t minSubmapsBetweenLoopClosures_ = 2;
+	int minSubmapsBetweenLoopClosures_ = 2;
 	double loopClosureSearchRadius_ = 20;
 };
 
@@ -170,7 +171,6 @@ struct MapperParameters {
 	bool isIgnoreMinRefinementFitness_ = false;
 	MapBuilderParameters mapBuilder_;
 	MapBuilderParameters denseMapBuilder_;
-	size_t numScansOverlap_ = 3;
 	bool isBuildDenseMap_ = true;
 	SubmapParameters submaps_;
 	PlaceRecognitionParameters placeRecognition_;
