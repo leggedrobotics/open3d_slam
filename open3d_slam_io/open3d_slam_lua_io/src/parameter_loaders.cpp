@@ -23,51 +23,6 @@ namespace {
 
 const double kDegToRad = M_PI / 180.0;
 
-template<typename Param>
-void loadIfDictionaryDefined(const DictPtr &dict,const std::string &key, Param *p){
-	if (dict->HasKey(key)){
-		DictPtr subDict = dict->GetDictionary(key);
-		loadParameters(std::move(subDict), p);
-	} else {
-		std::cout << "[WARNING] PARAM LOAD: " << key << " sub-dictionary not defined \n";
-	}
-}
-
-template<typename Param>
-void deepLoadIfDictionaryDefined(const DictPtr &dict, const std::vector<std::string> &keys, Param *p) {
-	DictPtr subDict;
-	for (size_t i = 0; i < keys.size(); ++i) {
-		const auto &key = keys.at(i);
-		const bool hasKey = i == 0 ? dict->HasKey(key) : subDict->HasKey(key);
-		if (hasKey) {
-			subDict = i == 0 ? dict->GetDictionary(key) : subDict->GetDictionary(key);
-			if (i == keys.size() - 1) {
-				loadParameters(std::move(subDict), p);
-			}
-		} else {
-			std::cout << "[WARNING] PARAM LOAD: " << key << " sub-dictionary not defined \n";
-		}
-	}
-}
-
-bool isKeyDefinedDeep(const DictPtr &dict, const std::vector<std::string> &keys) {
-	DictPtr subDict;
-	if (keys.size() == 1) {
-		return dict->HasKey(keys.at(0));
-	}
-	for (size_t i = 0; i < keys.size(); ++i) {
-		const auto &key = keys.at(i);
-		const bool isFirst = i == 0;
-		const bool isLast = i == keys.size() - 1;
-		const bool hasKey = isFirst ? dict->HasKey(key) : subDict->HasKey(key);
-		if (isLast){
-			return subDict->HasKey(key);
-		}
-		subDict = isFirst ? dict->GetDictionary(key) : subDict->GetDictionary(key);
-	}
-	return false;
-}
-
 } //namespace
 
 void loadParameters(const std::string &folderpath, const std::string &topLevelFileName, SlamParameters *p){
@@ -77,6 +32,7 @@ void loadParameters(const std::string &folderpath, const std::string &topLevelFi
 
 	loadIfDictionaryDefined(dict,"saving", &p->saving_);
 	loadIfDictionaryDefined(dict,"visualization", &p->visualization_);
+	loadIfDictionaryDefined(dict,"odometry", &p->odometry_);
 	loadIfDictionaryDefined(dict,"motion_compensation", &p->motionCompensation_);
 	loadIfDictionaryDefined(dict,"global_optimization", &p->mapper_.globalOptimization_);
 	loadIfDictionaryDefined(dict,"submap", &p->mapper_.submaps_);
@@ -87,7 +43,7 @@ void loadParameters(const std::string &folderpath, const std::string &topLevelFi
 	loadIfDictionaryDefined(dict,"mapper_localizer", &p->mapper_);
 	loadIfDictionaryDefined(dict,"map_initializer", &p->mapper_.mapInit_);
 	loadIfDictionaryDefined(dict,"place_recognition", &p->mapper_.placeRecognition_);
-	if (!isKeyDefinedDeep(dict,{"place_recognition","loop_closure_search_radius"})){
+	if (!isKeyDefinedMultiLevel(dict,{"place_recognition","loop_closure_search_radius"})){
 		std::cout << "Using submap size as loop closure serach radius! \n";
 		p->mapper_.placeRecognition_.loopClosureSearchRadius_ = p->mapper_.submaps_.radius_; // default value
 	}
@@ -103,7 +59,7 @@ void loadParameters(const DictPtr dict, MapperParameters *p) {
 	loadIfKeyDefined(dict, "is_use_map_initialization", &p->isUseInitialMap_);
 	loadIfKeyDefined(dict, "is_merge_scans_into_map", &p->isMergeScansIntoMap_);
 	loadIfDictionaryDefined(dict,"scan_to_map_registration", &p->scanMatcher_);
-	deepLoadIfDictionaryDefined(dict,{"scan_to_map_registration","scan_processing"}, &p->scanProcessing_);
+	loadIfDictionaryDefinedMultiLevel(dict,{"scan_to_map_registration","scan_processing"}, &p->scanProcessing_);
 }
 
 void loadParameters(const DictPtr dict, PlaceRecognitionParameters *p){
@@ -166,7 +122,7 @@ void loadParameters(const DictPtr dict, CloudRegistrationParameters *p){
 	std::string regTypeName ="";
 	loadIfKeyDefined<std::string>(dict, "cloud_registration_type", &regTypeName);
 	p->regType_ = CloudRegistrationStringToEnumMap.at(regTypeName);
-	loadIfDictionaryDefined(dict,"icp_parameters", &p->icp_);
+	loadIfDictionaryDefined(dict,"icp", &p->icp_);
 }
 
 void loadParameters(const DictPtr dict, ScanProcessingParameters *p){
