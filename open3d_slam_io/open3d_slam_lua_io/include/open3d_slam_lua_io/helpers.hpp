@@ -15,9 +15,9 @@ namespace io_lua{
 template<typename Ret>
 void loadIfKeyDefined(const DictPtr &dict, const std::string &key, Ret *value) {
 	if (dict->HasKey(key)) {
-			throw std::runtime_error("unknown type!!! only int, double and std::string are supported");
+			throw std::runtime_error("unknown type!!! only int, bool, double and std::string are supported");
 	} else {
-		std::cout << " key " << key << " not found \n";;
+		std::cout << " [WARNING] PARAM LOAD: key " << key << " not found \n";;
 	}
 }
 
@@ -26,7 +26,7 @@ void loadIfKeyDefined<int>(const DictPtr &dict, const std::string &key, int *val
 	if (dict->HasKey(key)) {
 			*value = dict->GetInt(key);
 	} else {
-		std::cout << " key " << key << " not found \n";;
+		std::cout << " [WARNING] PARAM LOAD: key " << key << " not found \n";;
 	}
 }
 
@@ -35,7 +35,7 @@ void loadIfKeyDefined<double>(const DictPtr &dict, const std::string &key, doubl
 	if (dict->HasKey(key)) {
 			*value = dict->GetDouble(key);
 	} else {
-		std::cout << " key " << key << " not found \n";;
+		std::cout << " [WARNING] PARAM LOAD: key " << key << " not found \n";;
 	}
 }
 
@@ -44,7 +44,16 @@ void loadIfKeyDefined<std::string>(const DictPtr &dict, const std::string &key, 
 	if (dict->HasKey(key)) {
 			*value = dict->GetString(key);
 	} else {
-		std::cout << " key " << key << " not found \n";;
+		std::cout << " [WARNING] PARAM LOAD: key " << key << " not found \n";;
+	}
+}
+
+template<>
+void loadIfKeyDefined<bool>(const DictPtr &dict, const std::string &key, bool *value) {
+	if (dict->HasKey(key)) {
+			*value = dict->GetBool(key);
+	} else {
+		std::cout << " [WARNING] PARAM LOAD: key " << key << " not found \n";;
 	}
 }
 

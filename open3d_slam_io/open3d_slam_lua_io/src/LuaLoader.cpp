@@ -19,13 +19,13 @@ void LuaLoader::setupDictionary(const std::string &topLevelFileName, const std::
 	auto fileResolver = std::make_unique<ConfigurationFileResolver>(paths);
 	const std::string fullContent = fileResolver->GetFileContentOrDie(topLevelFileName);
 	const std::string fullPath = fileResolver->GetFullPathOrDie(topLevelFileName);
-	dict_ = std::make_shared<LuaParameterDictionary>(fullContent, std::move(fileResolver));
-//	dict_ = LuaParameterDictionary::NonReferenceCounted(fullContent, std::move(fileResolver));
+//	dict_ = std::make_shared<LuaParameterDictionary>(fullContent, std::move(fileResolver));
+	dict_ = LuaParameterDictionary::NonReferenceCounted(fullContent, std::move(fileResolver));
 
   std::cout << "Lua loader resolved full path, loading from: " << fullPath << std::endl;
 }
 
-std::shared_ptr<lua_dict::LuaParameterDictionary> LuaLoader::getDict() const{
+const DictPtr &LuaLoader::getDict() const{
 	return dict_;
 }
 

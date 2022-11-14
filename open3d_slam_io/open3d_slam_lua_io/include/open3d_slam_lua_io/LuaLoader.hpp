@@ -22,9 +22,9 @@ public:
 	LuaLoader() = default;
 	~LuaLoader() = default;
 	void setupDictionary(const std::string &topLevelFileName, const std::string &folderPath);
-	std::shared_ptr<lua_dict::LuaParameterDictionary> getDict() const;
+	const DictPtr &getDict() const;
 private:
-	std::shared_ptr<lua_dict::LuaParameterDictionary> dict_;
+	DictPtr dict_;
 
 };
 
