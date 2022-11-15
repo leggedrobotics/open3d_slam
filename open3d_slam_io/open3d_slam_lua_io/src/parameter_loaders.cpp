@@ -29,6 +29,11 @@ void loadParameters(const std::string &folderpath, const std::string &topLevelFi
 	LuaLoader loader;
 	loader.setupDictionary(topLevelFileName, folderpath);
 	const DictPtr &dict = loader.getDict();
+	loader.buildLuaParamList();
+	if (check::nameStack.empty()){
+		check::nameStack.push("o3d_params");
+	}
+
 
 	loadIfDictionaryDefined(dict,"saving", &p->saving_);
 	loadIfDictionaryDefined(dict,"visualization", &p->visualization_);
@@ -47,6 +52,20 @@ void loadParameters(const std::string &folderpath, const std::string &topLevelFi
 		std::cout << "Using submap size as loop closure serach radius! \n";
 		p->mapper_.placeRecognition_.loopClosureSearchRadius_ = p->mapper_.submaps_.radius_; // default value
 	}
+  for (auto it = check::loadingParamCount.begin(); it != check::loadingParamCount.end(); it++)
+  {
+      if (it->second > 1){
+      	std::cout << "\033[1;31mWARNING:\033[0m key " << it->first << "has been loaded: " << it->second << " times\n";
+      }
+  }
+  for (auto it = loader.luaParamList_.begin(); it != 	loader.luaParamList_.end(); ++it){
+  	auto search = check::loadingParamCount.find(*it);
+  	if (search == check::loadingParamCount.end()){
+  		std::cout << "\033[1;31mWARNING:\033[0m key " << *it << " was not loaded \n";
+  	}
+  }
+
+
 }
 
 void loadParameters(const DictPtr dict, MapperParameters *p) {
@@ -191,29 +210,21 @@ void loadParameters(const DictPtr dict, SpaceCarvingParameters *p){
 	loadIfKeyDefined<int>(dict, "carve_space_every_n_scans", &p->carveSpaceEveryNscans_);
 }
 
-void loadParameters(const DictPtr dict, Eigen::Isometry3d* T) {
+void loadParameters(const DictPtr dict, Eigen::Isometry3d *T) {
 	Eigen::Isometry3d retVal = Eigen::Isometry3d::Identity();
-	if (dict->HasKey("orientation")){
-		DictPtr subDict = dict->GetDictionary("orientation");
-		double roll(0.0),pitch(0.0),yaw(0.0);
-		loadIfKeyDefined(subDict, "roll", &roll);
-		loadIfKeyDefined(subDict, "pitch", &pitch);
-		loadIfKeyDefined(subDict, "yaw", &yaw);
-		const Eigen::Quaterniond q = fromRPY(roll,pitch,yaw).normalized();
-		retVal = makeTransform(Eigen::Vector3d::Zero(), q);
-	} else {
-		std::cout << "[WARNING] PARAM LOAD: orientation sub-dictionary not defined \n";
-	}
-	if (dict->HasKey("position")){
-		DictPtr subDict = dict->GetDictionary("position");
-		double x(0.0),y(0.0),z(0.0);
-		loadIfKeyDefined(subDict, "x", &x);
-		loadIfKeyDefined(subDict, "y", &y);
-		loadIfKeyDefined(subDict, "z", &z);
-		retVal.translation() = Eigen::Vector3d(x,y,z);
-	} else {
-		std::cout << "[WARNING] PARAM LOAD: position sub-dictionary not defined \n";
-	}
+	double roll(0.0), pitch(0.0), yaw(0.0);
+	loadIfKeyDefined(dict, "roll", &roll);
+	loadIfKeyDefined(dict, "pitch", &pitch);
+	loadIfKeyDefined(dict, "yaw", &yaw);
+	const Eigen::Quaterniond q = fromRPY(roll, pitch, yaw).normalized();
+	retVal = makeTransform(Eigen::Vector3d::Zero(), q);
+
+	double x(0.0), y(0.0), z(0.0);
+	loadIfKeyDefined(dict, "x", &x);
+	loadIfKeyDefined(dict, "y", &y);
+	loadIfKeyDefined(dict, "z", &z);
+	retVal.translation() = Eigen::Vector3d(x, y, z);
+
 	*T = retVal;
 }
 

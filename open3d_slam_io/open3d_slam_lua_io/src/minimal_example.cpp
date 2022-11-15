@@ -15,7 +15,7 @@
 #include <stack>
 #include "open3d_slam_lua_io/helpers.hpp"
 #include "open3d_slam_lua_io/parameter_loaders.hpp"
-#define watch(x) std::cout << "variable: \033[1;31m" << (#x) << "\033[0m is " << (x) << std::endl
+#define watch(x) std::cout << "variable: \033[1;32m" << (#x) << "\033[0m is " << (x) << std::endl
 
 
 using namespace o3d_slam;
@@ -30,24 +30,8 @@ int main(int argc, char** argv) {
 	const DictPtr &dict = loader.getDict();
 	loader.buildLuaParamList();
 
-//	auto dict2 = dict->GetDictionary("saving");
-//	std::cout << "isNullptr: " << (dict == nullptr) << std::endl;
-//	std::cout << "isNullptr2: " << (dict2 == nullptr) << std::endl;
-//	std::cout << dict2->ToString() << std::endl;
-//	std::cout << "has key: " << dict2->HasKey("save_map") << std::endl;
-//	std::cout << "value " << dict2->GetBool("save_map") << "\n";
-//
-//	std::cout << "is table " << dict2->IsTable("save_map")<< std::endl;
-//	std::cout << "is table " << dict->IsTable("saving")<< std::endl;
-//	std::cout << "value " << dict2->GetBool("save_map") << "\n";
-//	std::cout << "value " << dict2->GetBool("save_at_mission_end") << "\n";
-//	std::cout << "value " << dict2->GetBool("save_submaps") << "\n";
-//	std::cout << "is table " << dict2->IsTable("save_at_mission_end")<< std::endl;
-//	auto dict3 = dict->GetDictionary("saving");
-
   SlamParameters param;
   io_lua::loadParameters(folderPath, "configuration.lua", &param);
-
 
   watch(param.odometry_.scanProcessing_.voxelSize_);
   watch(param.odometry_.scanProcessing_.downSamplingRatio_);

@@ -29,7 +29,8 @@ void LuaLoader::setupDictionary(const std::string &topLevelFileName, const std::
 	dict_ = LuaParameterDictionary::NonReferenceCounted(fullContent, std::move(fileResolver));
 
 	std::cout << "Lua loader resolved full path, loading from: " << fullPath << std::endl;
-
+	 topFileName_ = topLevelFileName;
+	folderPath_ = folderPath;
 }
 
 const DictPtr& LuaLoader::getDict() const {
@@ -39,7 +40,13 @@ void LuaLoader::buildLuaParamList(){
 	if (S.empty()){
 		S.push("o3d_params");
 	}
-	treeTraversal(dict_);
+	const std::vector<std::string> paths( { folderPath_ });
+	auto fileResolver = std::make_unique<ConfigurationFileResolver>(paths);
+	const std::string fullContent = fileResolver->GetFileContentOrDie(topFileName_);
+	const std::string fullPath = fileResolver->GetFullPathOrDie(topFileName_);
+	auto dict = LuaParameterDictionary::NonReferenceCounted(fullContent, std::move(fileResolver));
+	luaParamList_.clear();
+	treeTraversal(dict);
 }
 void LuaLoader::treeTraversal(const DictPtr &dict) {
 	auto keys = dict->GetKeys();
@@ -51,7 +58,7 @@ void LuaLoader::treeTraversal(const DictPtr &dict) {
 		} else {
 			auto name = extractPrefix(S) + "/" + key;
 			luaParamList_.insert(name);
-			std::cout << "Name: " << name << std::endl;
+//			std::cout << "Name: " << name << std::endl;
 		}
 	}
 	S.pop();

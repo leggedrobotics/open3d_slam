@@ -29,6 +29,8 @@ public:
 private:
 	void treeTraversal(const DictPtr &dict);
 	DictPtr dict_;
+	std::string topFileName_;
+	std::string folderPath_;
 };
 
 } // namespace io_lua

@@ -46,7 +46,6 @@ ICP_PARAMETERS = {
 }
 
 SCAN_MATCHING_PARAMETERS = {
-  is_publish_odometry_msgs = false,
   icp = ICP_PARAMETERS,
   cloud_registration_type = "GeneralizedIcp", -- options GeneralizedIcp, PointToPointIcp, PointToPlaneIcp
 }
@@ -98,21 +97,13 @@ MAPPER_LOCALIZER_PARAMETERS = {
   scan_to_map_registration = SCAN_TO_MAP_REGISTRATION_PARAMETERS,
 }
 
-POSITION = {
+POSE = {
  x = 0.0,
  y = 0.0,
  z = 0.0,
-}
-
-ORIENTATION = {
  roll = 0.0, --roll, pitch ,yaw in degrees!!!!!
  pitch = 0.0,
  yaw = 0.0,
-}
-
-POSE = {
-  position = POSITION,
-  orientation = ORIENTATION,
 }
 
 MAP_INITIALIZER_PARAMETERS = {

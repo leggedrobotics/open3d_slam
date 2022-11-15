@@ -13,11 +13,6 @@
 namespace o3d_slam {
 namespace io_lua{
 
-//namespace check {
-//	static std::map<std::string,bool> isParamUsed;
-//	static std::stack<std::string> nameStack;
-//}
-
 inline std::string extractPrefix(const std::stack<std::string> &S) {
 	std::stack<std::string> inverse;
 	std::stack<std::string> copy = S;
@@ -33,6 +28,20 @@ inline std::string extractPrefix(const std::stack<std::string> &S) {
 		inverse.pop();
 	}
 	return retVal;
+}
+
+namespace check {
+	static std::map<std::string,int> loadingParamCount;
+	static std::stack<std::string> nameStack;
+	inline void incrementRefCount(const std::string &key){
+		std::string name = extractPrefix(nameStack) +"/" + key;
+		auto search = loadingParamCount.find(name);
+		if (search == loadingParamCount.end()){
+			loadingParamCount[name] = 1;
+		} else {
+			loadingParamCount[name]++; // todo extra search
+		}
+	}
 }
 
 inline std::string getKeysAsStringCsv(const lua_dict::LuaParameterDictionary &dict){
@@ -62,6 +71,7 @@ template<>
 inline void loadIfKeyDefined<int>(const DictPtr &dict, const std::string &key, int *value) {
 	if (dict->HasKey(key)) {
 			*value = dict->GetInt(key);
+			check::incrementRefCount(key);
 	} else {
 		std::cout << " [WARNING] PARAM LOAD SINGLE KEY: key " << key << " not found \n";;
 		const std::string keysAvailable = getKeysAsStringCsv(*dict);
@@ -73,6 +83,7 @@ template<>
 inline void loadIfKeyDefined<double>(const DictPtr &dict, const std::string &key, double *value) {
 	if (dict->HasKey(key)) {
 			*value = dict->GetDouble(key);
+			check::incrementRefCount(key);
 	} else {
 		std::cout << " [WARNING] PARAM LOAD SINGLE KEY: key " << key << " not found \n";;
 		const std::string keysAvailable = getKeysAsStringCsv(*dict);
@@ -84,6 +95,7 @@ template<>
 inline void loadIfKeyDefined<std::string>(const DictPtr &dict, const std::string &key, std::string *value) {
 	if (dict->HasKey(key)) {
 			*value = dict->GetString(key);
+			check::incrementRefCount(key);
 	} else {
 		std::cout << " [WARNING] PARAM LOAD SINGLE KEY: key " << key << " not found \n";;
 		const std::string keysAvailable = getKeysAsStringCsv(*dict);
@@ -95,6 +107,7 @@ template<>
 inline void loadIfKeyDefined<bool>(const DictPtr &dict, const std::string &key, bool *value) {
 	if (dict->HasKey(key)) {
 			*value = dict->GetBool(key);
+			check::incrementRefCount(key);
 	} else {
 		std::cout << " [WARNING] PARAM LOAD SINGLE KEY: key " << key << " not found \n";;
 		const std::string keysAvailable = getKeysAsStringCsv(*dict);
@@ -105,6 +118,7 @@ inline void loadIfKeyDefined<bool>(const DictPtr &dict, const std::string &key, 
 template<typename Param>
 inline void loadIfDictionaryDefined(const DictPtr &dict,const std::string &key, Param *p){
 	if (dict->HasKey(key)){
+		check::nameStack.push(key);
 		DictPtr subDict = dict->GetDictionary(key);
 		loadParameters(std::move(subDict), p);
 	} else {
@@ -112,15 +126,19 @@ inline void loadIfDictionaryDefined(const DictPtr &dict,const std::string &key, 
 		const std::string keysAvailable = getKeysAsStringCsv(*dict);
 		std::cout << "	keys availalbe: " << keysAvailable << "\n\n";
 	}
+	check::nameStack.pop();
 }
 
 template<typename Param>
 inline void loadIfDictionaryDefinedMultiLevel(const DictPtr &dict, const std::vector<std::string> &keys, Param *p) {
 	DictPtr subDict;
+	int pushCount = 0;
 	for (size_t i = 0; i < keys.size(); ++i) {
 		const auto &key = keys.at(i);
 		const bool hasKey = i == 0 ? dict->HasKey(key) : subDict->HasKey(key);
 		if (hasKey) {
+			check::nameStack.push(key);
+			pushCount++;
 			subDict = i == 0 ? dict->GetDictionary(key) : subDict->GetDictionary(key);
 			if (i == keys.size() - 1) {
 				loadParameters(std::move(subDict), p);
@@ -128,6 +146,9 @@ inline void loadIfDictionaryDefinedMultiLevel(const DictPtr &dict, const std::ve
 		} else {
 			std::cout << "[WARNING] PARAM LOAD MULTI-LVL-DICT: " << key << " sub-dictionary not defined \n";
 		}
+	}
+	for (int i =0; i < pushCount; ++i){
+		check::nameStack.pop();
 	}
 }
 
