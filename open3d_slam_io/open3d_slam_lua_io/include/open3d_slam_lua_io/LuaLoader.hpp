@@ -9,7 +9,8 @@
 #include <string>
 #include "lua_parameter_dictionary/configuration_file_resolver.h"
 #include "lua_parameter_dictionary/lua_parameter_dictionary.h"
-
+#include <unordered_map>
+#include <set>
 namespace o3d_slam {
 namespace io_lua{
 
@@ -23,9 +24,11 @@ public:
 	~LuaLoader() = default;
 	void setupDictionary(const std::string &topLevelFileName, const std::string &folderPath);
 	const DictPtr &getDict() const;
+	void buildLuaParamList();
+	std::set<std::string> luaParamList_;
 private:
+	void treeTraversal(const DictPtr &dict);
 	DictPtr dict_;
-
 };
 
 } // namespace io_lua

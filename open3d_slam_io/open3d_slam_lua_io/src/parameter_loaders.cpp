@@ -132,15 +132,16 @@ void loadParameters(const DictPtr dict, ScanProcessingParameters *p){
 }
 
 void loadParameters(const DictPtr dict, SavingParameters *p){
-	p->isSaveAtMissionEnd_ = dict->GetBool("save_at_mission_end");
-	p->isSaveMap_ = dict->GetBool("save_map");
-	p->isSaveSubmaps_ = dict->GetBool("save_submaps");
+	loadIfKeyDefined(dict, "save_at_mission_end", &p->isSaveAtMissionEnd_);
+	loadIfKeyDefined(dict, "save_map", &p->isSaveMap_);
+	loadIfKeyDefined(dict, "save_submaps", &p->isSaveSubmaps_);
 }
 
 void loadParameters(const DictPtr dict, VisualizationParameters *p){
-	p->assembledMapVoxelSize_ = dict->GetDouble("assembled_map_voxel_size");
-	p->submapVoxelSize_ = dict->GetDouble("submaps_voxel_size");
-	p->visualizeEveryNmsec_ = dict->GetDouble("visualize_every_n_msec");
+	loadIfKeyDefined(dict, "assembled_map_voxel_size", &p->assembledMapVoxelSize_);
+	loadIfKeyDefined(dict, "submaps_voxel_size", &p->submapVoxelSize_);
+	loadIfKeyDefined(dict, "visualize_every_n_msec", &p->visualizeEveryNmsec_);
+
 }
 
 void loadParameters(const DictPtr dict, ConstantVelocityMotionCompensationParameters *p){

@@ -8,11 +8,34 @@
 #pragma once
 #include "open3d_slam_lua_io/LuaLoader.hpp"
 #include <iostream>
+#include <stack>
 
 namespace o3d_slam {
 namespace io_lua{
 
-std::string getKeysAsStringCsv(const lua_dict::LuaParameterDictionary &dict){
+//namespace check {
+//	static std::map<std::string,bool> isParamUsed;
+//	static std::stack<std::string> nameStack;
+//}
+
+inline std::string extractPrefix(const std::stack<std::string> &S) {
+	std::stack<std::string> inverse;
+	std::stack<std::string> copy = S;
+	while (!copy.empty()) {
+		std::string key = copy.top();
+		inverse.push(key);
+		copy.pop();
+	}
+	std::string retVal;
+	while (!inverse.empty()) {
+		std::string key = inverse.top();
+		retVal += "/" + key;
+		inverse.pop();
+	}
+	return retVal;
+}
+
+inline std::string getKeysAsStringCsv(const lua_dict::LuaParameterDictionary &dict){
 	const std::vector<std::string> keys = dict.GetKeys();
 	std::string retVal = "";
 	for (size_t i =0; i < keys.size(); ++i){
@@ -25,7 +48,7 @@ std::string getKeysAsStringCsv(const lua_dict::LuaParameterDictionary &dict){
 }
 
 template<typename Ret>
-void loadIfKeyDefined(const DictPtr &dict, const std::string &key, Ret *value) {
+inline void loadIfKeyDefined(const DictPtr &dict, const std::string &key, Ret *value) {
 	if (dict->HasKey(key)) {
 			throw std::runtime_error("unknown type!!! only int, bool, double and std::string are supported");
 	} else {
@@ -36,7 +59,7 @@ void loadIfKeyDefined(const DictPtr &dict, const std::string &key, Ret *value) {
 }
 
 template<>
-void loadIfKeyDefined<int>(const DictPtr &dict, const std::string &key, int *value) {
+inline void loadIfKeyDefined<int>(const DictPtr &dict, const std::string &key, int *value) {
 	if (dict->HasKey(key)) {
 			*value = dict->GetInt(key);
 	} else {
@@ -47,7 +70,7 @@ void loadIfKeyDefined<int>(const DictPtr &dict, const std::string &key, int *val
 }
 
 template<>
-void loadIfKeyDefined<double>(const DictPtr &dict, const std::string &key, double *value) {
+inline void loadIfKeyDefined<double>(const DictPtr &dict, const std::string &key, double *value) {
 	if (dict->HasKey(key)) {
 			*value = dict->GetDouble(key);
 	} else {
@@ -58,7 +81,7 @@ void loadIfKeyDefined<double>(const DictPtr &dict, const std::string &key, doubl
 }
 
 template<>
-void loadIfKeyDefined<std::string>(const DictPtr &dict, const std::string &key, std::string *value) {
+inline void loadIfKeyDefined<std::string>(const DictPtr &dict, const std::string &key, std::string *value) {
 	if (dict->HasKey(key)) {
 			*value = dict->GetString(key);
 	} else {
@@ -69,7 +92,7 @@ void loadIfKeyDefined<std::string>(const DictPtr &dict, const std::string &key, 
 }
 
 template<>
-void loadIfKeyDefined<bool>(const DictPtr &dict, const std::string &key, bool *value) {
+inline void loadIfKeyDefined<bool>(const DictPtr &dict, const std::string &key, bool *value) {
 	if (dict->HasKey(key)) {
 			*value = dict->GetBool(key);
 	} else {
@@ -80,7 +103,7 @@ void loadIfKeyDefined<bool>(const DictPtr &dict, const std::string &key, bool *v
 }
 
 template<typename Param>
-void loadIfDictionaryDefined(const DictPtr &dict,const std::string &key, Param *p){
+inline void loadIfDictionaryDefined(const DictPtr &dict,const std::string &key, Param *p){
 	if (dict->HasKey(key)){
 		DictPtr subDict = dict->GetDictionary(key);
 		loadParameters(std::move(subDict), p);
@@ -92,7 +115,7 @@ void loadIfDictionaryDefined(const DictPtr &dict,const std::string &key, Param *
 }
 
 template<typename Param>
-void loadIfDictionaryDefinedMultiLevel(const DictPtr &dict, const std::vector<std::string> &keys, Param *p) {
+inline void loadIfDictionaryDefinedMultiLevel(const DictPtr &dict, const std::vector<std::string> &keys, Param *p) {
 	DictPtr subDict;
 	for (size_t i = 0; i < keys.size(); ++i) {
 		const auto &key = keys.at(i);
@@ -108,7 +131,7 @@ void loadIfDictionaryDefinedMultiLevel(const DictPtr &dict, const std::vector<st
 	}
 }
 
-bool isKeyDefinedMultiLevel(const DictPtr &dict, const std::vector<std::string> &keys) {
+inline bool isKeyDefinedMultiLevel(const DictPtr &dict, const std::vector<std::string> &keys) {
 	DictPtr subDict;
 	if (keys.size() == 1) {
 		return dict->HasKey(keys.at(0));
