@@ -49,6 +49,8 @@ class LuaParameterDictionary {
 
   ~LuaParameterDictionary();
 
+  bool IsTable(const std::string &key) const;
+
   // Returns all available keys.
   std::vector<std::string> GetKeys() const;
 

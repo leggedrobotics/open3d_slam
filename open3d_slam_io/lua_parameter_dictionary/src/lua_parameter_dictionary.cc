@@ -196,6 +196,14 @@ LuaParameterDictionary::~LuaParameterDictionary() {
   }
 }
 
+bool LuaParameterDictionary::IsTable(const std::string &key) const{
+  GetValueFromLuaTable(L_, key);
+//	PushValue(L_, key);
+  bool ret = lua_istable(L_, -1);
+  lua_pop(L_, 1);
+  return ret;
+}
+
 std::vector<std::string> LuaParameterDictionary::GetKeys() const {
   CheckTableIsAtTopOfStack(L_);
   std::vector<std::string> keys;
