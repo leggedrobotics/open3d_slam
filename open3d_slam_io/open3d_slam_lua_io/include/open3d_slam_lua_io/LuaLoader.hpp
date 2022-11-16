@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <set>
 #include <stack>
+
 namespace o3d_slam {
 namespace io_lua{
 
@@ -104,7 +105,7 @@ void LuaLoader::loadIfDictionaryDefinedMultiLevel(const DictPtr &dict, const std
 				loadParameters(std::move(subDict), p);
 			}
 		} else {
-			std::cout << "[WARNING] PARAM LOAD MULTI-LVL-DICT: " << key << " sub-dictionary not defined \n";
+			std::cout << "\033[1;33m[WARNING]:\033[0m PARAM LOAD MULTI-LVL-DICT: " << key << " sub-dictionary not defined \n";
 		}
 	}
 	for (int i =0; i < pushCount; ++i){
