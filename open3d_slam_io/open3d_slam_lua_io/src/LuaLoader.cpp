@@ -46,9 +46,13 @@ std::string parseTopLevelName(const std::string &s){
 	}
 	std::string str = s.substr(found+7);
 	str.erase(std::remove(str.begin(), str.end(), '\n'), str.cend());
-
 	return str;
+}
 
+std::vector<std::string> includeDirectoriesRecursively(const std::string &folderPath){
+	std::vector<std::string> retVal;
+
+	return retVal;
 }
 
 } // namespace
@@ -57,7 +61,8 @@ using namespace lua_dict;
 
 void LuaLoader::setupDictionary(const std::string &topLevelFileName, const std::string &folderPath) {
 	const std::vector<std::string> paths( { folderPath });
-	auto fileResolver = std::make_unique<ConfigurationFileResolver>(paths);
+	folderPaths_ = paths;
+	auto fileResolver = std::make_unique<ConfigurationFileResolver>(folderPaths_);
 	const std::string fullContent = fileResolver->GetFileContentOrDie(topLevelFileName);
 	const std::string fullPath = fileResolver->GetFullPathOrDie(topLevelFileName);
 	std::cout << fullContent << std::endl;
@@ -67,7 +72,6 @@ void LuaLoader::setupDictionary(const std::string &topLevelFileName, const std::
 //	dict_ = std::make_shared<LuaParameterDictionary>(fullContent, std::move(fileResolver));
 	dict_ = LuaParameterDictionary::NonReferenceCounted(fullContent, std::move(fileResolver));
 	topFileName_ = topLevelFileName;
-	folderPath_ = folderPath;
 	std::cout << "Lua loader resolved full path, loaded from: " << fullPath << std::endl;
 }
 
@@ -76,9 +80,8 @@ const DictPtr& LuaLoader::getDict() const {
 }
 void LuaLoader::buildLuaParamList() {
 	luaParamListNameStack = std::stack<std::string>(); // empty stack
-		luaParamListNameStack.push(rootParamName);
-	const std::vector<std::string> paths( { folderPath_ });
-	auto fileResolver = std::make_unique<ConfigurationFileResolver>(paths);
+	luaParamListNameStack.push(rootParamName);
+	auto fileResolver = std::make_unique<ConfigurationFileResolver>(folderPaths_);
 	const std::string fullContent = fileResolver->GetFileContentOrDie(topFileName_);
 	const std::string fullPath = fileResolver->GetFullPathOrDie(topFileName_);
 	auto dict = LuaParameterDictionary::NonReferenceCounted(fullContent, std::move(fileResolver));

@@ -68,7 +68,7 @@ private:
 
 	DictPtr dict_;
 	std::string topFileName_;
-	std::string folderPath_;
+	std::vector<std::string> folderPaths_;
 	std::map<std::string,int> loadingParamCount_;
 	std::stack<std::string> loadingNameStack_;
 	std::set<std::string> luaParamList_;
