@@ -25,7 +25,7 @@ void loadParameters(const std::string &folderpath, const std::string &topLevelFi
 	loader.setupDictionary(topLevelFileName, folderpath);
 	loader.loadParameters(folderpath, topLevelFileName, p);
 	if (!loader.isLoadingOkay()){
-		std::cout << "	Some parameters could not be loaded or loaded multiple times \n";
+		std::cout << "\n	Some parameters could not be loaded or loaded multiple times \n";
 	}
 }
 

@@ -11,6 +11,7 @@
 #include <vector>
 #include <iostream>
 #include <stack>
+#include <boost/filesystem.hpp>
 
 namespace o3d_slam {
 namespace io_lua {
@@ -51,7 +52,20 @@ std::string parseTopLevelName(const std::string &s){
 
 std::vector<std::string> includeDirectoriesRecursively(const std::string &folderPath){
 	std::vector<std::string> retVal;
-
+	using namespace boost::filesystem;
+	    recursive_directory_iterator dir( folderPath), end;
+	    while (dir != end)
+	    {
+	    	if (is_directory(*dir)){
+	        retVal.push_back(dir->path().c_str());
+	        // do other stuff here.
+	        std::cout << "recursively including folder: " << retVal.back() << " \n";
+	    	}
+	        ++dir;
+	    }
+	    if (retVal.empty()){
+	    	std::cout << "not including any additional directories \n";
+	    }
 	return retVal;
 }
 
@@ -60,12 +74,13 @@ std::vector<std::string> includeDirectoriesRecursively(const std::string &folder
 using namespace lua_dict;
 
 void LuaLoader::setupDictionary(const std::string &topLevelFileName, const std::string &folderPath) {
-	const std::vector<std::string> paths( { folderPath });
+	const std::vector<std::string> extraDirs = includeDirectoriesRecursively(folderPath);
+	std::vector<std::string> paths( { folderPath });
+	paths.insert(paths.end(), extraDirs.begin(), extraDirs.end());
 	folderPaths_ = paths;
 	auto fileResolver = std::make_unique<ConfigurationFileResolver>(folderPaths_);
 	const std::string fullContent = fileResolver->GetFileContentOrDie(topLevelFileName);
 	const std::string fullPath = fileResolver->GetFullPathOrDie(topLevelFileName);
-	std::cout << fullContent << std::endl;
 	const std::string structName = parseTopLevelName(fullContent);
 	rootParamName = structName;
 	std::cout << "Top level param struct resolved to be: " << structName << std::endl;
