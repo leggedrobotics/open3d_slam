@@ -19,7 +19,26 @@ namespace {
 std::stack<std::string> luaParamListNameStack;
 const double kDegToRad = M_PI / 180.0;
 const std::string rootParamName = "o3d_params";
-;} // namespace
+const std::string paramNameDelimiter = ".";
+std::string extractPrefix(const std::stack<std::string> &S) {
+	std::stack<std::string> inverse;
+	std::stack<std::string> copy = S;
+	while (!copy.empty()) {
+		std::string key = copy.top();
+		inverse.push(key);
+		copy.pop();
+	}
+	std::string retVal;
+	while (!inverse.empty()) {
+		std::string key = inverse.top();
+		const std::string prefix = retVal.empty() ? "":paramNameDelimiter;
+		retVal += prefix + key;
+		inverse.pop();
+	}
+	return retVal;
+}
+
+} // namespace
 
 using namespace lua_dict;
 
@@ -58,7 +77,7 @@ void LuaLoader::treeTraversal(const DictPtr &dict) {
 			luaParamListNameStack.push(key);
 			treeTraversal(subDict);
 		} else {
-			auto name = extractPrefix(luaParamListNameStack) + "/" + key;
+			auto name = extractPrefix(luaParamListNameStack) + paramNameDelimiter + key;
 			luaParamList_.insert(name);
 //			std::cout << "Name: " << name << std::endl;
 		}
@@ -67,7 +86,7 @@ void LuaLoader::treeTraversal(const DictPtr &dict) {
 }
 
 void LuaLoader::incrementRefCount(const std::string &key){
-		std::string name = extractPrefix(loadingNameStack_) +"/" + key;
+		std::string name = extractPrefix(loadingNameStack_) +paramNameDelimiter + key;
 		auto search = loadingParamCount_.find(name);
 		if (search == loadingParamCount_.end()){
 			loadingParamCount_[name] = 1;

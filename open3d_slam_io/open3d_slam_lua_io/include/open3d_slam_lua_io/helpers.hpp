@@ -13,23 +13,6 @@
 namespace o3d_slam {
 namespace io_lua{
 
-inline std::string extractPrefix(const std::stack<std::string> &S) {
-	std::stack<std::string> inverse;
-	std::stack<std::string> copy = S;
-	while (!copy.empty()) {
-		std::string key = copy.top();
-		inverse.push(key);
-		copy.pop();
-	}
-	std::string retVal;
-	while (!inverse.empty()) {
-		std::string key = inverse.top();
-		retVal += "/" + key;
-		inverse.pop();
-	}
-	return retVal;
-}
-
 inline std::string getKeysAsStringCsv(const lua_dict::LuaParameterDictionary &dict){
 	const std::vector<std::string> keys = dict.GetKeys();
 	std::string retVal = "";
