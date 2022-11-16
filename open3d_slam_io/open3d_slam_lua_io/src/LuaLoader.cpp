@@ -18,7 +18,7 @@ namespace io_lua {
 namespace {
 std::stack<std::string> luaParamListNameStack;
 const double kDegToRad = M_PI / 180.0;
-const std::string rootParamName = "o3d_params";
+std::string rootParamName = "o3d_params";
 const std::string paramNameDelimiter = ".";
 std::string extractPrefix(const std::stack<std::string> &S) {
 	std::stack<std::string> inverse;
@@ -38,6 +38,19 @@ std::string extractPrefix(const std::stack<std::string> &S) {
 	return retVal;
 }
 
+std::string parseTopLevelName(const std::string &s){
+	std::size_t found = s.rfind("return");
+	if (found == std::string::npos) {
+		throw std::runtime_error(
+				"your configuration file must contain return statement where you return the parameter structure. See examples");
+	}
+	std::string str = s.substr(found+7);
+	str.erase(std::remove(str.begin(), str.end(), '\n'), str.cend());
+
+	return str;
+
+}
+
 } // namespace
 
 using namespace lua_dict;
@@ -47,12 +60,15 @@ void LuaLoader::setupDictionary(const std::string &topLevelFileName, const std::
 	auto fileResolver = std::make_unique<ConfigurationFileResolver>(paths);
 	const std::string fullContent = fileResolver->GetFileContentOrDie(topLevelFileName);
 	const std::string fullPath = fileResolver->GetFullPathOrDie(topLevelFileName);
+	std::cout << fullContent << std::endl;
+	const std::string structName = parseTopLevelName(fullContent);
+	rootParamName = structName;
+	std::cout << "Top level param struct resolved to be: " << structName << std::endl;
 //	dict_ = std::make_shared<LuaParameterDictionary>(fullContent, std::move(fileResolver));
 	dict_ = LuaParameterDictionary::NonReferenceCounted(fullContent, std::move(fileResolver));
-
-	std::cout << "Lua loader resolved full path, loading from: " << fullPath << std::endl;
 	topFileName_ = topLevelFileName;
 	folderPath_ = folderPath;
+	std::cout << "Lua loader resolved full path, loaded from: " << fullPath << std::endl;
 }
 
 const DictPtr& LuaLoader::getDict() const {
@@ -142,14 +158,14 @@ bool LuaLoader::isLoadingOkay() {
   for (auto it = loadingParamCount_.begin(); it != loadingParamCount_.end(); it++)
   {
       if (it->second > 1){
-      	std::cout << "\033[1;33mWARNING:\033[0m key " << it->first << "has been loaded: " << it->second << " times\n";
+      	std::cout << "\033[1;33m[WARNING]: entry \033[0m " << it->first << "has been loaded: " << it->second << " times\n";
       	res = false;
       }
   }
   for (auto it = luaParamList_.begin(); it != 	luaParamList_.end(); ++it){
   	auto search = loadingParamCount_.find(*it);
   	if (search == loadingParamCount_.end()){
-  		std::cout << "\033[1;33m[WARNING]:\033[0m key " << *it << " was not loaded \n";
+  		std::cout << "\033[1;33m[WARNING]: entry \033[0m " << *it << " was not loaded \n";
   		res = false;
   	}
   }
