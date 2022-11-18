@@ -24,6 +24,8 @@
 
 namespace lua_dict {
 
+std::set<std::string> ConfigurationFileResolver::resolvedBasenames_;
+
 ConfigurationFileResolver::ConfigurationFileResolver(const std::vector<std::string>& configuration_files_directories)
     : configuration_files_directories_(configuration_files_directories) {}
 
@@ -32,7 +34,10 @@ std::string ConfigurationFileResolver::GetFullPathOrDie(const std::string& basen
     const std::string filename = path + "/" + basename;
     std::ifstream stream(filename.c_str());
     if (stream.good()) {
-      LOG(INFO) << "Found '" << filename << "' for '" << basename << "'.";
+    	if (resolvedBasenames_.find(basename) == resolvedBasenames_.end()){
+    		LOG(INFO) << "Found '" << filename << "' for '" << basename << "'.";
+    	}
+      resolvedBasenames_.insert(basename);
       return filename;
     }
   }

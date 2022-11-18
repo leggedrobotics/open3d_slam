@@ -83,10 +83,10 @@ void LuaLoader::setupDictionary(const std::string &topLevelFileName, const std::
 	const std::string fullPath = fileResolver->GetFullPathOrDie(topLevelFileName);
 	const std::string structName = parseTopLevelName(fullContent);
 	rootParamName = structName;
-	std::cout << "Top level param struct resolved to be: " << structName << std::endl;
 //	dict_ = std::make_shared<LuaParameterDictionary>(fullContent, std::move(fileResolver));
 	dict_ = LuaParameterDictionary::NonReferenceCounted(fullContent, std::move(fileResolver));
 	topFileName_ = topLevelFileName;
+	std::cout << "Top level param struct resolved to be: " << structName << std::endl;
 	std::cout << "Lua loader resolved full path, loaded from: " << fullPath << std::endl;
 }
 

@@ -17,6 +17,7 @@
 #pragma once
 
 #include <vector>
+#include <set>
 
 #include "lua_parameter_dictionary/lua_parameter_dictionary.h"
 #include "lua_parameter_dictionary/port.h"
@@ -38,6 +39,7 @@ class ConfigurationFileResolver : public FileResolver {
 
  private:
   std::vector<std::string> configuration_files_directories_;
+  static std::set<std::string> resolvedBasenames_;
 };
 
 }  // namespace lua_dict
