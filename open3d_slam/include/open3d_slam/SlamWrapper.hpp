@@ -95,7 +95,7 @@ protected:
 //	VisualizationParameters visualizationParameters_;
 //	SavingParameters savingParameters_;
 //	ConstantVelocityMotionCompensationParameters motionCompensationParameters_;
-	std::string folderPath_, mapSavingFolderPath_, paramPath_;
+	std::string folderPath_, mapSavingFolderPath_;
 
 	// modules
 	std::shared_ptr<MotionCompensation> motionCompensationOdom_,motionCompensationMap_;

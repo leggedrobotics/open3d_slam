@@ -195,9 +195,18 @@ void SlamWrapperRos::loadParametersAndInitialize() {
 
 	folderPath_ = ros::package::getPath("open3d_slam_ros") + "/data/";
 	mapSavingFolderPath_ = nh_->param<std::string>("map_saving_folder", folderPath_);
-	const std::string paramFile = nh_->param<std::string>("parameter_file_path", "");
-	setParameterFilePath(paramFile);
-	io_yaml::loadParameters(paramFile, &params_);
+
+//	const std::string paramFile = nh_->param<std::string>("parameter_file_path", "");
+//	setParameterFilePath(paramFile);
+//	io_yaml::loadParameters(paramFile, &params_);
+//
+	const std::string paramFolderPath = nh_->param<std::string>("parameter_folder_path", "");
+	const std::string paramFilename = nh_->param<std::string>("parameter_filename", "");
+	SlamParameters params;
+	io_lua::loadParameters(paramFolderPath, paramFilename, &params_);
+
+
+
 	BASE::loadParametersAndInitialize();
 }
 

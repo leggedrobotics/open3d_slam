@@ -175,20 +175,20 @@ void SlamWrapper::setMapSavingDirectoryPath(const std::string &path){
 	mapSavingFolderPath_ = path;
 }
 
-std::string SlamWrapper::getParameterFilePath() const {
-	return paramPath_;
-}
-
-void SlamWrapper::setParameterFilePath(const std::string &path){
-	paramPath_ = path;
-}
+//std::string SlamWrapper::getParameterFilePath() const {
+//	return paramPath_;
+//}
+//
+//void SlamWrapper::setParameterFilePath(const std::string &path){
+//	paramPath_ = path;
+//}
 
 void SlamWrapper::loadParametersAndInitialize() {
 
 	//	auto &logger = open3d::utility::Logger::GetInstance();
 	//	logger.SetVerbosityLevel(open3d::utility::VerbosityLevel::Debug);
 
-	const std::string paramFile = paramPath_;
+//	const std::string paramFile = paramPath_;
 
 //	loadParameters(paramFile, &odometryParams_);
 	odometry_ = std::make_shared<o3d_slam::LidarOdometry>();
