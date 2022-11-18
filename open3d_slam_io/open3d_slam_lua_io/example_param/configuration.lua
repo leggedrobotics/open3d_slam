@@ -1,7 +1,7 @@
 include "default/default_parameters.lua"
 
 
-params = DEFAULT_PARAMETERS
+params = deepcopy(DEFAULT_PARAMETERS)
 
 params.mapper_localizer.is_use_map_initialization = true
 params.odometry.scan_processing.voxel_size = 0.14

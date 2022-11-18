@@ -22,13 +22,19 @@ int main(int argc, char** argv) {
   const std::string folderPath = ros::package::getPath("open3d_slam_lua_io") + "/example_param";
 
   SlamParameters param;
-  io_lua::loadParameters(folderPath, "configuration.lua", &param);
+  io_lua::loadParameters(folderPath, "param_robosense_rs16.lua", &param);
 
   watch(param.odometry_.scanProcessing_.voxelSize_);
   watch(param.odometry_.scanProcessing_.downSamplingRatio_);
   watch(param.odometry_.scanProcessing_.cropper_.cropperName_);
   watch(param.odometry_.scanProcessing_.cropper_.croppingMaxRadius_);
+  watch(param.odometry_.scanProcessing_.cropper_.croppingMinRadius_);
 
+  watch(param.mapper_.scanMatcher_.icp_.maxCorrespondenceDistance_);
+  watch(param.mapper_.scanProcessing_.voxelSize_);
+  watch(param.mapper_.scanProcessing_.downSamplingRatio_);
+  watch(param.mapper_.scanProcessing_.cropper_.croppingMaxRadius_);
+  watch(param.mapper_.scanProcessing_.cropper_.croppingMinRadius_);
 //  watch(param.saving_.isSaveAtMissionEnd_);
 //  watch(param.saving_.isSaveMap_);
 //  watch(param.saving_.isSaveSubmaps_);

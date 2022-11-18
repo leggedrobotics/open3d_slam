@@ -1,3 +1,27 @@
+-- need this to deep copy all the tables
+function deepcopy(orig, copies)
+    copies = copies or {}
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        if copies[orig] then
+            copy = copies[orig]
+        else
+            copy = {}
+            copies[orig] = copy
+            for orig_key, orig_value in next, orig, nil do
+                copy[deepcopy(orig_key, copies)] = deepcopy(orig_value, copies)
+            end
+            setmetatable(copy, deepcopy(getmetatable(orig), copies))
+        end
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
+end
+
+
+
 SAVING_PARAMETERS = {
   save_at_mission_end = true,
   save_map = false,
@@ -35,7 +59,7 @@ SCAN_CROPPING_PARAMETERS = {
 SCAN_PROCESSING_PARAMETERS = {
   voxel_size = 0.1,
   downsampling_ratio = 0.3,
-  scan_cropping = SCAN_CROPPING_PARAMETERS,
+  scan_cropping = deepcopy(SCAN_CROPPING_PARAMETERS),
 }
 
 ICP_PARAMETERS = {
@@ -46,14 +70,14 @@ ICP_PARAMETERS = {
 }
 
 SCAN_MATCHING_PARAMETERS = {
-  icp = ICP_PARAMETERS,
+  icp = deepcopy(ICP_PARAMETERS),
   cloud_registration_type = "GeneralizedIcp", -- options GeneralizedIcp, PointToPointIcp, PointToPlaneIcp
 }
 
 ODOMETRY_PARAMETERS = {
   is_publish_odometry_msgs = false,
-  scan_matching = SCAN_MATCHING_PARAMETERS,
-  scan_processing = SCAN_PROCESSING_PARAMETERS,
+  scan_matching = deepcopy(SCAN_MATCHING_PARAMETERS),
+  scan_processing = deepcopy(SCAN_PROCESSING_PARAMETERS),
 }
 
 SUBMAP_PARAMETERS = {
@@ -65,23 +89,23 @@ SUBMAP_PARAMETERS = {
 
 SPACE_CARVING_PARAMETERS = {
   voxel_size= 0.2,
-  max_raytracing_length = 30.0,
+  max_raytracing_length = 20.0,
   truncation_distance = 0.3,
   carve_space_every_n_scans= 10.0,
 }
 
 
 MAP_BUILDER_PARAMETERS = {
-  map_voxel_size = 0.1,
-  scan_cropping = SCAN_CROPPING_PARAMETERS,
-  space_carving = SPACE_CARVING_PARAMETERS,
+  map_voxel_size = 0.1, --meters
+  scan_cropping = deepcopy(SCAN_CROPPING_PARAMETERS),
+  space_carving = deepcopy(SPACE_CARVING_PARAMETERS),
 }
 
 SCAN_TO_MAP_REGISTRATION_PARAMETERS = {
   min_refinement_fitness = 0.7,
   scan_to_map_refinement_type = "GeneralizedIcp", -- options GeneralizedIcp, PointToPointIcp, PointToPlaneIcp
-  icp = ICP_PARAMETERS,
-  scan_processing = SCAN_PROCESSING_PARAMETERS,
+  icp = deepcopy(ICP_PARAMETERS),
+  scan_processing = deepcopy(SCAN_PROCESSING_PARAMETERS),
 }
 
 
@@ -94,7 +118,7 @@ MAPPER_LOCALIZER_PARAMETERS = {
   dump_submaps_to_file_before_after_lc = false,
   is_refine_odometry_constraints_between_submaps = false,
   min_movement_between_mapping_steps = 0.0,
-  scan_to_map_registration = SCAN_TO_MAP_REGISTRATION_PARAMETERS,
+  scan_to_map_registration = deepcopy(SCAN_TO_MAP_REGISTRATION_PARAMETERS),
 }
 
 POSE = {
@@ -136,10 +160,10 @@ PLACE_RECOGNITION_PARAMETERS = {
   ransac_correspondence_checker_edge_length = 0.6,
   ransac_min_corresondence_set_size = 25,
   max_icp_correspondence_distance = 0.3,
-  min_icp_refinement_fitness = 0.8, -- the more aliasing, the higher this should be
-  dump_aligned_place_recognitions_to_file = true ,
-  min_submaps_between_loop_closures = 5,
+  min_icp_refinement_fitness = 0.7, -- the more aliasing, the higher this should be
+  dump_aligned_place_recognitions_to_file = false , --useful for debugging
+  min_submaps_between_loop_closures = 2,
   loop_closure_search_radius = 20.0,
-  consistency_check = LOOP_CLOSURE_CONSISTENCY_CHECK_PARAMETERS,
+  consistency_check = deepcopy(LOOP_CLOSURE_CONSISTENCY_CHECK_PARAMETERS),
 }
 
