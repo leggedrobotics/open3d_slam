@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
   const std::string folderPath = ros::package::getPath("open3d_slam_lua_io") + "/example_param";
 
   SlamParameters param;
-  io_lua::loadParameters(folderPath, "param_realsense.lua", &param);
+  io_lua::loadParameters(folderPath, "configuration.lua", &param);
 
   watch(param.odometry_.scanProcessing_.voxelSize_);
   watch(param.odometry_.scanProcessing_.downSamplingRatio_);
