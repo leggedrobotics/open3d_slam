@@ -271,11 +271,11 @@ Constraints SubmapCollection::buildLoopClosureConstraints(
 	return retVal;
 }
 
-bool SubmapCollection::dumpToFile(const std::string &folderPath, const std::string &filename, const bool &is_dense_map) const {
+bool SubmapCollection::dumpToFile(const std::string &folderPath, const std::string &filename, const bool &isDenseMap) const {
 	bool result = true;
 	for (size_t i = 0; i < submaps_.size(); ++i) {
 		PointCloud copy;
-		if (is_dense_map) {
+		if (isDenseMap) {
 			copy = submaps_.at(i).getDenseMapCopy().toPointCloud();
 		} else {
 			copy = submaps_.at(i).getMapPointCloudCopy();

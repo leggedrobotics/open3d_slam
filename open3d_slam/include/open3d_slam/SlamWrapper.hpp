@@ -70,7 +70,7 @@ public:
 
 	bool saveMap(const std::string &directory);
 	bool saveDenseSubmaps(const std::string &directory);
-	bool saveSubmaps(const std::string &directory, const bool& is_dense_map=false);
+	bool saveSubmaps(const std::string &directory, const bool& isDenseMap=false);
 private:
 	void checkIfOptimizedGraphAvailable();
 	void odometryWorker();
