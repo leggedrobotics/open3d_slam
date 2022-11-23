@@ -279,11 +279,8 @@ bool SlamWrapper::saveDenseSubmaps(const std::string &directory) {
 }
 bool SlamWrapper::saveSubmaps(const std::string &directory, const bool& isDenseMap) {
 	createDirectoryOrNoActionIfExists(directory);
-	std::string cloudname = "submap";
-	if (isDenseMap) {
-		cloudname = "denseSubmap"; 
-	}
-	const bool savingResult = mapper_->getSubmaps().dumpToFile(directory, cloudname, isDenseMap);
+	const std::string cloudName = isDenseMap ? "denseSubmap" : "submap";
+	const bool savingResult = mapper_->getSubmaps().dumpToFile(directory, cloudName, isDenseMap);
 	return savingResult;
 }
 
