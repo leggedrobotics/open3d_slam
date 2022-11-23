@@ -10,20 +10,20 @@ odometry:
       max_distance_knn: 3.0
       max_n_iter: 50
   scan_processing:
-    voxel_size: 0.05
-    downsampling_ratio: 0.9
+    voxel_size: 0.1
+    downsampling_ratio: 0.2
     scan_cropping:
-      cropping_radius_max: 40.0
+      cropping_radius_max: 25.0
       cropping_radius_min: 2.0
-      min_z: -30.0
-      max_z: 30.0
+      min_z: -15.0
+      max_z: 15.0
       cropper_type: "MinMaxRadius" #options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
 
 
 mapping:
   is_print_timing_information: true
   is_build_dense_map: false
-  is_attempt_loop_closures: false
+  is_attempt_loop_closures: true
   is_use_map_initialization: false
   is_merge_scans_into_map: false
   dump_submaps_to_file_before_after_lc: false
@@ -40,9 +40,9 @@ mapping:
       max_n_iter: 50
     scan_processing:
       voxel_size: 0.1
-      downsampling_ratio: 0.4
+      downsampling_ratio: 0.2
       scan_cropping:
-        cropping_radius_max: 20.0
+        cropping_radius_max: 25.0
         cropping_radius_min: 2.0
         min_z: -30.0
         max_z: 30.0
@@ -69,7 +69,7 @@ mapping:
     
   map_builder:
     scan_cropping:
-      cropping_radius_max: 20.0
+      cropping_radius_max: 25.0
       cropping_radius_min: 2.0
       min_z: -40.0
       max_z: 40.0
@@ -140,6 +140,7 @@ saving_parameters:
   save_at_mission_end: true
   save_map: true
   save_submaps: false
+  save_dense_submaps: false
 
 
   
