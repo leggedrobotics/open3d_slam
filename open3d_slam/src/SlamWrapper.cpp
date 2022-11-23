@@ -75,6 +75,9 @@ SlamWrapper::~SlamWrapper() {
 		if (savingParameters_.isSaveSubmaps_){
 			saveSubmaps(mapSavingFolderPath_);
 		}
+		if (mapperParams_.isBuildDenseMap_ && savingParameters_.isSaveDenseSubmaps_){
+			saveDenseSubmaps(mapSavingFolderPath_);
+		}
 		std::cout << "All done! \n";
 		std::cout << "Maps saved in " << mapSavingFolderPath_ << "\n";
 
@@ -158,7 +161,7 @@ void SlamWrapper::finishProcessing() {
 			const auto poseAfterUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
 			std::cout << "latest pose after update: \n " << asStringXYZRPY(poseAfterUpdate.transform_) << "\n";
 			if (mapperParams_.isDumpSubmapsToFileBeforeAndAfterLoopClosures_) {
-				submaps_->dumpToFile(folderPath_, "after");
+				submaps_->dumpToFile(folderPath_, "after", false);
 			}
 			break;
 		} else {
@@ -271,9 +274,13 @@ bool SlamWrapper::saveMap(const std::string &directory) {
 	const std::string filename = directory + "map.pcd";
 	return saveToFile(filename, map);
 }
-bool SlamWrapper::saveSubmaps(const std::string &directory) {
+bool SlamWrapper::saveDenseSubmaps(const std::string &directory) {
+	return saveSubmaps(directory, true);
+}
+bool SlamWrapper::saveSubmaps(const std::string &directory, const bool& isDenseMap) {
 	createDirectoryOrNoActionIfExists(directory);
-	const bool savingResult = mapper_->getSubmaps().dumpToFile(directory, "submap");
+	const std::string cloudName = isDenseMap ? "denseSubmap" : "submap";
+	const bool savingResult = mapper_->getSubmaps().dumpToFile(directory, cloudName, isDenseMap);
 	return savingResult;
 }
 
@@ -387,7 +394,7 @@ void SlamWrapper::checkIfOptimizedGraphAvailable(){
 		std::cout << "latest pose after update: \n " << asStringXYZRPY(poseAfterUpdate.transform_) << "\n";
 //			publishMaps(measurement.time_);
 		if (mapperParams_.isDumpSubmapsToFileBeforeAndAfterLoopClosures_){
-			submaps_->dumpToFile(folderPath_, "after");
+			submaps_->dumpToFile(folderPath_, "after", false);
 		}
 	}
 }
@@ -469,7 +476,7 @@ void SlamWrapper::loopClosureWorker() {
 
 //			optimizationProblem_->print();
 			if (mapperParams_.isDumpSubmapsToFileBeforeAndAfterLoopClosures_){
-				submaps_->dumpToFile(folderPath_, "before");
+				submaps_->dumpToFile(folderPath_, "before", false);
 				optimizationProblem_->dumpToFile(folderPath_ + "/poseGraph.json");
 			}
 			optimizationProblem_->solve();

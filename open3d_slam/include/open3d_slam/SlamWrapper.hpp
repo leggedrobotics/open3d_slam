@@ -69,8 +69,8 @@ public:
 	void setInitialTransform(const Eigen::Matrix4d initialTransform);
 
 	bool saveMap(const std::string &directory);
-	bool saveSubmaps(const std::string &directory);
-
+	bool saveDenseSubmaps(const std::string &directory);
+	bool saveSubmaps(const std::string &directory, const bool& isDenseMap=false);
 private:
 	void checkIfOptimizedGraphAvailable();
 	void odometryWorker();
