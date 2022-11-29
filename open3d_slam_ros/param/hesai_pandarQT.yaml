@@ -4,8 +4,8 @@ odometry:
   is_publish_odometry_msgs: true
   scan_matching:
     icp_objective: PointToPlane
-    max_correspondence_dist: 0.3
-    knn_normal_estimation: 16
+    max_correspondence_dist: 0.2
+    knn_normal_estimation: 32
     max_n_iter: 30
   scan_processing:
     voxel_size: 0.05
@@ -37,9 +37,9 @@ mapping:
       max_n_iter: 50
     scan_processing:
       voxel_size: 0.1
-      downsampling_ratio: 0.6
+      downsampling_ratio: 0.8
       scan_cropping:
-        cropping_radius_max: 20.0
+        cropping_radius_max: 15.0
         cropping_radius_min: 2.0
         min_z: -30.0
         max_z: 30.0
