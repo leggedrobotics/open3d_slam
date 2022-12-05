@@ -44,7 +44,7 @@ If you use open3d_slam_ros, the configs are loaded using LUA, as they allow for 
 Install with apt:
 .. code-block:: bash
 
-   sudo apt install lua5.2
+   sudo apt install liblua5.2-dev
 
 5. open3d_catkin
 ~~~~~~~~~~~~~~~~
