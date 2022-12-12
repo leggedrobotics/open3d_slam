@@ -136,10 +136,10 @@ visualization:
   
   
 saving_parameters:
-  save_at_mission_end: true
-  save_map: true
-  save_submaps: true
-  save_dense_submaps: true
+  save_at_mission_end: false
+  save_map: false
+  save_submaps: false
+  save_dense_submaps: false
 
 
   
