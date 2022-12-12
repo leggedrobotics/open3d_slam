@@ -57,7 +57,9 @@ void loadParameters(const YAML::Node &node, SavingParameters *p) {
 	p->isSaveAtMissionEnd_ = node["save_at_mission_end"].as<bool>();
 	p->isSaveMap_ = node["save_map"].as<bool>();
 	p->isSaveSubmaps_ = node["save_submaps"].as<bool>();
-	p->isSaveDenseSubmaps_ = node["save_dense_submaps"].as<bool>();
+	if (node["save_dense_submaps"].IsDefined()){
+		p->isSaveDenseSubmaps_ = node["save_dense_submaps"].as<bool>();
+	}
 }
 
 void loadParameters(const YAML::Node &node, PlaceRecognitionConsistencyCheckParameters *p){

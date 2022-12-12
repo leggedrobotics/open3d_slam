@@ -142,6 +142,7 @@ visualization:
   visualize_every_n_msec: 300.0
   
 saving_parameters:
-  save_at_mission_end: true
+  save_at_mission_end: false
   save_map: true
   save_submaps: true
+  save_dense_submaps: false
