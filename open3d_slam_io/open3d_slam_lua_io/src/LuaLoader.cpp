@@ -315,6 +315,7 @@ void LuaLoader::loadParameters(const DictPtr dict, SavingParameters *p){
 	loadBoolIfKeyDefined(dict, "save_at_mission_end", &p->isSaveAtMissionEnd_);
 	loadBoolIfKeyDefined(dict, "save_map", &p->isSaveMap_);
 	loadBoolIfKeyDefined(dict, "save_submaps", &p->isSaveSubmaps_);
+	loadBoolIfKeyDefined(dict, "save_dense_submaps", &p->isSaveDenseSubmaps_);
 }
 
 void LuaLoader::loadParameters(const DictPtr dict, VisualizationParameters *p){

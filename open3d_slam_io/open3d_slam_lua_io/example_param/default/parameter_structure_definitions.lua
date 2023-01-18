@@ -26,6 +26,7 @@ SAVING_PARAMETERS = {
   save_at_mission_end = true,
   save_map = false,
   save_submaps = false,
+  save_dense_submaps = false,
 }
 
 MOTION_COMPENSATION_PARAMETERS = {
