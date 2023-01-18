@@ -24,7 +24,6 @@
 #include "open3d_slam/constraint_builders.hpp"
 #include "open3d_slam/Odometry.hpp"
 #include "nav_msgs/Odometry.h"
-#include "open3d_slam_yaml_io/parameter_loaders.hpp"
 #include "open3d_slam_lua_io/parameter_loaders.hpp"
 
 #ifdef open3d_slam_ros_OPENMP_FOUND
