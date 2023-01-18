@@ -194,6 +194,7 @@ struct SavingParameters {
 	bool isSaveAtMissionEnd_ = false;
 	bool isSaveMap_ = false;
 	bool isSaveSubmaps_ = false;
+	bool isSaveDenseSubmaps_ = false;
 };
 
 struct ConstantVelocityMotionCompensationParameters {
