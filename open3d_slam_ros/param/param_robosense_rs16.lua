@@ -6,6 +6,8 @@ params = deepcopy(DEFAULT_PARAMETERS)
 --ODOMETRY
 params.odometry.scan_processing.voxel_size = 0.05
 params.odometry.scan_processing.downsampling_ratio = 1.0
+params.odometry.scan_processing.scan_cropping.cropping_radius_max = 40.0
+
 
 --MAPPER_LOCALIZER
 params.mapper_localizer.is_merge_scans_into_map = false
@@ -14,7 +16,7 @@ params.mapper_localizer.is_use_map_initialization = false
 params.mapper_localizer.is_print_timing_information = true
 params.mapper_localizer.scan_to_map_registration.scan_processing.voxel_size = 0.08
 params.mapper_localizer.scan_to_map_registration.scan_processing.downsampling_ratio = 0.25
-params.mapper_localizer.scan_to_map_registration.scan_processing.scan_cropping.cropping_radius_max = 30.0
+params.mapper_localizer.scan_to_map_registration.scan_processing.scan_cropping.cropping_radius_max = 40.0
 params.mapper_localizer.scan_to_map_registration.icp.max_correspondence_dist = 0.8
 
 --MAP_INITIALIZER
@@ -32,7 +34,7 @@ params.submap.submap_size = 20.0 --meters
 
 --MAP_BUILDER
 params.map_builder.map_voxel_size = 0.1
-params.map_builder.scan_cropping.cropping_radius_max = 25.0
+params.map_builder.scan_cropping.cropping_radius_max = 40.0
 params.map_builder.space_carving.carve_space_every_n_scans = 10
 
 --DENSE_MAP_BUILDER

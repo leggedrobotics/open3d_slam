@@ -36,15 +36,6 @@ int main(int argc, char** argv) {
   watch(param.mapper_.scanProcessing_.cropper_.croppingMaxRadius_);
   watch(param.mapper_.scanProcessing_.cropper_.croppingMinRadius_);
 
-//  watch(param.saving_.isSaveAtMissionEnd_);
-//  watch(param.saving_.isSaveMap_);
-//  watch(param.saving_.isSaveSubmaps_);
-//
-//  watch(param.motionCompensation_.isSpinningClockwise_);
-//  watch(param.motionCompensation_.isUndistortInputCloud_);
-//	watch(param.motionCompensation_.numPosesVelocityEstimation_);
-//	watch(param.motionCompensation_.scanDuration_);
-
   std::cout << "All done" << std::endl;
   return 0;
 }

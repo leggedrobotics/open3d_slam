@@ -203,6 +203,7 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 		adjacencyMatrix_.addEdge(id1, id2);
 //		std::cout << "Adding edge between " << id1 << " and " << id2 << std::endl;
 		insertBufferedScans(&submaps_.at(activeSubmapIdx_));
+		assert_true(!submaps_.at(activeSubmapIdx_).isEmpty(), "submap should not be empty after switching");
 	} else {
 		submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, true);
 	}

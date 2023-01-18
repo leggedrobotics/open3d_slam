@@ -28,7 +28,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   tf2_geometry_msgs
   rosbag
   interactive_markers
-  open3d_slam_yaml_io
   open3d_slam_lua_io
 )
 

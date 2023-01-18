@@ -8,7 +8,6 @@
 #include "open3d_slam_ros/creators.hpp"
 #include "open3d_slam/Parameters.hpp"
 #include "open3d_slam_ros/SlamMapInitializer.hpp"
-#include "open3d_slam_yaml_io/parameter_loaders.hpp"
 #include "open3d_slam_lua_io/parameter_loaders.hpp"
 
 
@@ -23,8 +22,6 @@ int main(int argc, char **argv) {
 
 	SlamParameters params;
 	io_lua::loadParameters(paramFolderPath, paramFilename, &params);
-//	MapperParameters params;
-//	io_yaml::loadParameters(paramFile, &params);
 
 	const bool isProcessAsFastAsPossible = nh->param<bool>("is_read_from_rosbag", false);
 	std::cout << "Is process as fast as possible: " << std::boolalpha << isProcessAsFastAsPossible << "\n";

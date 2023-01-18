@@ -178,42 +178,26 @@ void SlamWrapper::setMapSavingDirectoryPath(const std::string &path){
 	mapSavingFolderPath_ = path;
 }
 
-//std::string SlamWrapper::getParameterFilePath() const {
-//	return paramPath_;
-//}
-//
-//void SlamWrapper::setParameterFilePath(const std::string &path){
-//	paramPath_ = path;
-//}
-
 void SlamWrapper::loadParametersAndInitialize() {
 
 	//	auto &logger = open3d::utility::Logger::GetInstance();
 	//	logger.SetVerbosityLevel(open3d::utility::VerbosityLevel::Debug);
 
-//	const std::string paramFile = paramPath_;
-
-//	loadParameters(paramFile, &odometryParams_);
 	odometry_ = std::make_shared<o3d_slam::LidarOdometry>();
 	odometry_->setParameters(params_.odometry_);
 
 	submaps_ = std::make_shared<o3d_slam::SubmapCollection>();
 	submaps_->setFolderPath(folderPath_);
+
 	mapper_ = std::make_shared<o3d_slam::Mapper>(odometry_->getBuffer(), submaps_);
-//	loadParameters(paramFile, &params_.mapper_);
 	mapper_->setParameters(params_.mapper_);
 
 	optimizationProblem_ = std::make_shared<o3d_slam::OptimizationProblem>();
 	optimizationProblem_->setParameters(params_.mapper_);
 
-//	loadParameters(paramFile, &visualizationParameters_);
-
 	// set the verobsity for timing statistics
 	Timer::isDisablePrintInDestructor_ = !params_.mapper_.isPrintTimingStatistics_;
 
-//	loadParameters(paramFile, &params_.saving_);
-//
-//	loadParameters(paramFile, &params_.motionCompensation_Parameters_);
 	if (params_.motionCompensation_.isUndistortInputCloud_){
 		auto motionCompOdom = std::make_shared<ConstantVelocityMotionCompensation>(odometry_->getBuffer());
 		motionCompOdom->setParameters(params_.motionCompensation_);
@@ -367,9 +351,6 @@ void SlamWrapper::mappingWorker() {
 
 		checkIfOptimizedGraphAvailable();
 
-		// publish visualizatinos
-//		publishMaps(measurement.time_);
-
 		//just get the stats
 		const double timeMeasurement = mappingStatisticsTimer_.elapsedMsecSinceStopwatchStart();
 		mappingStatisticsTimer_.addMeasurementMsec(timeMeasurement);
@@ -391,7 +372,6 @@ void SlamWrapper::checkIfOptimizedGraphAvailable(){
 		updateSubmapsAndTrajectory();
 		const auto poseAfterUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
 		std::cout << "latest pose after update: \n " << asStringXYZRPY(poseAfterUpdate.transform_) << "\n";
-//			publishMaps(measurement.time_);
 		if (params_.mapper_.isDumpSubmapsToFileBeforeAndAfterLoopClosures_){
 			submaps_->dumpToFile(folderPath_, "after", false);
 		}
@@ -493,7 +473,6 @@ void SlamWrapper::updateSubmapsAndTrajectory() {
 	std::cout << "Updating the maps: \n";
 	const Timer t("submaps_update");
 	const auto optimizedTransformations = optimizationProblem_->getOptimizedTransformIncrements();
-	//todo this segfault!!!!
 	submaps_->transform(optimizedTransformations);
 
 	//get The correct time
@@ -515,7 +494,6 @@ void SlamWrapper::updateSubmapsAndTrajectory() {
 
 	//now here you would update the lc constraints
 	Constraints loopClosureConstraints = optimizationProblem_->getLoopClosureConstraints();
-//#pragma omp parallel for
 	for (int i = 0; i < loopClosureConstraints.size(); ++i) {
 		const Constraint &oldConstraint = loopClosureConstraints.at(i);
 		Constraint c = oldConstraint;
