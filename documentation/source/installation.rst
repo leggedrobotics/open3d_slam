@@ -37,7 +37,16 @@ Install with apt:
 
    sudo apt install ros-noetic-jsk-rviz-plugins
 
-4. open3d_catkin
+4. LUA
+~~~~~~~~~~~~~~~~~~~
+If you use open3d_slam_ros, the configs are loaded using LUA, as they allow for an easy configuration management with minimal duplicated code.
+
+Install with apt:
+.. code-block:: bash
+
+   sudo apt install liblua5.2-dev
+
+5. open3d_catkin
 ~~~~~~~~~~~~~~~~
 
 Follow the instructions to build :ref:`open3d_catkin <open3d_catkin_ref>`.
