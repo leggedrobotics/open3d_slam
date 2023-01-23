@@ -1,13 +1,19 @@
 /*
- * Parameters.cpp
+ * parameter_loaders.cpp
  *
- *  Created on: Sep 23, 2021
+ *  Created on: Nov 10, 2022
  *      Author: jelavice
  */
 
-#include "open3d_slam/Parameters.hpp"
+
+
+#include "open3d_slam_yaml_io/parameter_loaders.hpp"
+#include "open3d_slam/math.hpp"
+#include "open3d_slam/output.hpp"
+
 
 namespace o3d_slam {
+namespace io_yaml {
 
 namespace {
 template<typename T, typename Ret>
@@ -19,38 +25,16 @@ void loadIfKeyDefined(const YAML::Node &node, const std::string &key, Ret *value
 	}
 }
 
+const double kDegToRad = M_PI / 180.0;
+
 } //namespace
 
-
-void loadParameters(const std::string &filename, ConstantVelocityMotionCompensationParameters *p){
-	YAML::Node basenode = YAML::LoadFile(filename);
-	if (basenode.IsNull()) {
-		throw std::runtime_error("ConstantVelocityMotionCompensationParameters::loadParameters loading failed");
-	}
-	if (!basenode["motion_compensation"].IsDefined()){
-		std::cout << "motion_compensation not defined \n";
-		return;
-	}
-	loadParameters(basenode["motion_compensation"], p);
-}
 
 void loadParameters(const YAML::Node& node, ConstantVelocityMotionCompensationParameters* p) {
 	p->isUndistortInputCloud_ = node["is_undistort_scan"].as<bool>();
 	p->isSpinningClockwise_ = node["is_spinning_clockwise"].as<bool>();
 	p->scanDuration_ = node["scan_duration"].as<double>();
 	p->numPosesVelocityEstimation_ = node["num_poses_vel_estimation"].as<int>();
-}
-
-void loadParameters(const std::string &filename, SavingParameters *p){
-	YAML::Node basenode = YAML::LoadFile(filename);
-	if (basenode.IsNull()) {
-		throw std::runtime_error("SavingParameters::loadParameters loading failed");
-	}
-	if (!basenode["saving_parameters"].IsDefined()){
-		std::cout << "saving_parameters not defined \n";
-		return;
-	}
-	loadParameters(basenode["saving_parameters"], p);
 }
 
 void loadParameters(const YAML::Node &node, SavingParameters *p) {
@@ -72,7 +56,6 @@ void loadParameters(const YAML::Node &node, PlaceRecognitionConsistencyCheckPara
 }
 
 void loadParameters(const YAML::Node &node, PlaceRecognitionParameters *p){
-
 	p->normalEstimationRadius_ = node["feature_map_normal_estimation_radius"].as<double>();
 	p->featureVoxelSize_ = node["feature_voxel_size"].as<double>();
 	p->featureRadius_ = node["feature_radius"].as<double>();
@@ -101,18 +84,6 @@ void loadParameters(const YAML::Node &node, GlobalOptimizationParameters *p){
 	p->referenceNode_ = node["reference_node"].as<int>();
 }
 
-void loadParameters(const std::string &filename, VisualizationParameters *p){
-	YAML::Node basenode = YAML::LoadFile(filename);
-	if (basenode.IsNull()) {
-		throw std::runtime_error("VisualizationParameters::loadParameters loading failed");
-	}
-	if (!basenode["visualization"].IsDefined()){
-		std::cout << "visualization not defined \n";
-		return;
-	}
-	loadParameters(basenode["visualization"], p);
-}
-
 void loadParameters(const YAML::Node &node, VisualizationParameters *p){
 	p->assembledMapVoxelSize_ = node["assembled_map_voxel_size"].as<double>();
 	p->submapVoxelSize_ = node["submaps_voxel_size"].as<double>();
@@ -130,20 +101,9 @@ void loadParameters(const YAML::Node &node, CloudRegistrationParameters *p){
 	const std::string regTypeName = node["cloud_registration_type"].as<std::string>();
 	p->regType_ = CloudRegistrationStringToEnumMap.at(regTypeName);
 	loadParameters(node["icp_parameters"], &p->icp_);
-
 }
 
-void loadParameters(const std::string &filename, OdometryParameters *p){
-	YAML::Node basenode = YAML::LoadFile(filename);
-	if (basenode.IsNull()) {
-		throw std::runtime_error("Odometry::loadParameters loading failed");
-	}
-	if (!basenode["odometry"].IsDefined()){
-		std::cout << "odometry not defined \n";
-		return;
-	}
-	loadParameters(basenode["odometry"], p);
-}
+
 void loadParameters(const YAML::Node &node, OdometryParameters *p){
 	loadParameters(node["scan_matching"], &(p->scanMatcher_) );
 	loadParameters(node["scan_processing"], &(p->scanProcessing_) );
@@ -168,6 +128,7 @@ void loadParameters(const YAML::Node &node, SubmapParameters *p){
 	p->radius_ = node["size"].as<double>();
 	p->minNumRangeData_ = node["min_num_range_data"].as<int>();
 	p->adjacencyBasedRevisitingMinFitness_ = node["adjacency_based_revisiting_min_fitness"].as<double>();
+	p->numScansOverlap_ = node["submaps_num_scan_overlap"].as<int>();
 }
 
 void loadParameters(const YAML::Node& node, MapBuilderParameters* p) {
@@ -176,24 +137,10 @@ void loadParameters(const YAML::Node& node, MapBuilderParameters* p) {
 	loadParameters(node["scan_cropping"], &(p->cropper_));
 }
 
-void loadParameters(const std::string &filename, MapperParameters *p){
-	YAML::Node basenode = YAML::LoadFile(filename);
-	if (basenode.IsNull()) {
-		throw std::runtime_error("MapperParameters::loadParameters loading failed");
-	}
-	if (!basenode["mapping"].IsDefined()){
-		std::cout << "mapping not defined \n";
-		return;
-	}
-	loadParameters(basenode["mapping"], p);
-}
-
-
 void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	p->isBuildDenseMap_ = node["is_build_dense_map"].as<bool>();
 	p->isAttemptLoopClosures_ = node["is_attempt_loop_closures"].as<bool>();
 	p->minMovementBetweenMappingSteps_ = node["min_movement_between_mapping_steps"].as<double>();
-	p->numScansOverlap_ = node["submaps_num_scan_overlap"].as<int>();
 	p->isDumpSubmapsToFileBeforeAndAfterLoopClosures_ = node["dump_submaps_to_file_before_after_lc"].as<bool>();
 	p->isPrintTimingStatistics_ = node["is_print_timing_information"].as<bool>();
 	p->isRefineOdometryConstraintsBetweenSubmaps_ = node["is_refine_odometry_constraints_between_submaps"].as<bool>();
@@ -213,6 +160,7 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 		std::cout << "Using submap size as loop closure serach radius! \n";
 		p->placeRecognition_.loopClosureSearchRadius_ = p->submaps_.radius_; // default value
 	}
+	loadParameters(node["map_intializer"], &(p->mapInit_));
 }
 
 void loadParameters(const YAML::Node &node, ScanToMapRegistrationParameters *p){
@@ -235,5 +183,101 @@ void loadParameters(const YAML::Node &node, SpaceCarvingParameters *p){
 	p->minDotProductWithNormal_ = node["min_dot_product_with_normal"].as<double>();
 }
 
-} // namespace o3d_slam
 
+
+void loadParameters(const YAML::Node &node, SlamParameters *p){
+	if (node["mapping"].IsDefined()){
+		loadParameters(node["mapping"], &p->mapper_);
+	} else {
+		std::cout << "mapping parameters not defined \n";
+	}
+	if (node["visualization"].IsDefined()){
+		loadParameters(node["visualization"], &p->visualization_);
+	} else {
+		std::cout << "visualization parameters not defined \n";
+	}
+	if (node["saving_parameters"].IsDefined()){
+		loadParameters(node["saving_parameters"], &p->saving_);
+	} else {
+		std::cout << "saving_parameters not defined \n";
+	}
+	if (node["motion_compensation"].IsDefined()){
+		loadParameters(node["motion_compensation"], &p->motionCompensation_);
+	} else {
+		std::cout << "motion_compensation parameters not defined \n";
+	}
+	if (node["odometry"].IsDefined()){
+		loadParameters(node["odometry"], &p->odometry_);
+	} else {
+		std::cout << "odometry parameters not defined \n";
+	}
+
+}
+
+void loadParameters(const YAML::Node& node, MapInitializingParameters* p) {
+	p->frameId_ = node["frame_id"].as<std::string>();
+	p->pcdFilePath_ = node["pcd_file_path"].as<std::string>();
+	p->isInitializeInteractively_ = node["is_initialize_interactively"].as<bool>();
+	if (node["init_pose"].IsDefined()) {
+		loadParameters(node["init_pose"], &(p->initialPose_));
+	}
+}
+
+void loadParameters(const YAML::Node& node, Eigen::Isometry3d* T) {
+	Eigen::Isometry3d retVal = Eigen::Isometry3d::Identity();
+	if (node["orientation"].IsDefined()){
+		const auto &n = node["orientation"];
+		double roll(0.0),pitch(0.0),yaw(0.0);
+		if (n["roll"].IsDefined()){
+		  roll = n["roll"].as<double>() * kDegToRad;
+		}
+		if (n["pitch"].IsDefined()) {
+			pitch = n["pitch"].as<double>() * kDegToRad;
+		}
+		if (n["yaw"].IsDefined()){
+		  yaw = n["yaw"].as<double>() * kDegToRad;
+		}
+		const Eigen::Quaterniond q = fromRPY(roll,pitch,yaw).normalized();
+		retVal = makeTransform(Eigen::Vector3d::Zero(), q);
+	}
+	if (node["position"].IsDefined()){
+		const auto &n = node["position"];
+		if (n["x"].IsDefined()){
+		  retVal.translation().x() = n["x"].as<float>();
+		}
+		if (n["y"].IsDefined()) {
+			retVal.translation().y() = n["y"].as<float>();
+		}
+		if (n["z"].IsDefined()){
+			retVal.translation().z() = n["z"].as<float>();
+		}
+
+	}
+	std::cout << "here \n";
+	std::cout << asString(retVal) << "\n";
+	*T = retVal;
+}
+
+void loadParameters(const std::string &filename, SlamParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+	if (basenode.IsNull()) {
+		throw std::runtime_error("SlamParameters::loadParameters loading failed");
+	}
+	loadParameters(basenode, p);
+}
+
+void loadParameters(const std::string &filename, MapperParameters *p){
+	YAML::Node basenode = YAML::LoadFile(filename);
+	if (basenode.IsNull()) {
+		throw std::runtime_error("MapperParameters::loadParameters loading failed");
+	}
+	if (!basenode["mapping"].IsDefined()){
+		std::cout << "mapping not defined \n";
+		return;
+	}
+	loadParameters(basenode["mapping"], p);
+}
+
+
+} // namespace io_yaml
+} // namespace o3d_slam

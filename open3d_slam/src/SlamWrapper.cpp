@@ -53,12 +53,12 @@ SlamWrapper::~SlamWrapper() {
 		mappingWorker_.join();
 		std::cout << "Joined mapping worker \n";
 	}
-	if (mapperParams_.isAttemptLoopClosures_ && loopClosureWorker_.joinable()) {
+	if (params_.mapper_.isAttemptLoopClosures_ && loopClosureWorker_.joinable()) {
 		loopClosureWorker_.join();
 		std::cout << "Joined the loop closure worker \n";
 	}
 
-	if (mapperParams_.isBuildDenseMap_ && denseMapWorker_.joinable()) {
+	if (params_.mapper_.isBuildDenseMap_ && denseMapWorker_.joinable()) {
 		denseMapWorker_.join();
 		std::cout << "Joined the dense map worker! \n";
 	}
@@ -67,15 +67,15 @@ SlamWrapper::~SlamWrapper() {
 			<< mapperOnlyTimer_.getAvgMeasurementMsec() << " msec , frequency: "
 			<< 1e3 / mapperOnlyTimer_.getAvgMeasurementMsec() << " Hz \n";
 
-	if (savingParameters_.isSaveAtMissionEnd_){
+	if (params_.saving_.isSaveAtMissionEnd_){
 		std::cout << "Saving maps .... \n";
-		if (savingParameters_.isSaveMap_){
+		if (params_.saving_.isSaveMap_){
 			saveMap(mapSavingFolderPath_);
 		}
-		if (savingParameters_.isSaveSubmaps_){
+		if (params_.saving_.isSaveSubmaps_){
 			saveSubmaps(mapSavingFolderPath_);
 		}
-		if (mapperParams_.isBuildDenseMap_ && savingParameters_.isSaveDenseSubmaps_){
+		if (params_.mapper_.isBuildDenseMap_ && params_.saving_.isSaveDenseSubmaps_){
 			saveDenseSubmaps(mapSavingFolderPath_);
 		}
 		std::cout << "All done! \n";
@@ -85,7 +85,7 @@ SlamWrapper::~SlamWrapper() {
 }
 
 const MapperParameters &SlamWrapper::getMapperParameters() const{
-	return mapperParams_;
+	return params_.mapper_;
 }
 
 MapperParameters *SlamWrapper::getMapperParametersPtr(){
@@ -144,7 +144,7 @@ void SlamWrapper::finishProcessing() {
 	numLatesLoopClosureConstraints_ = -1;
 	submaps_->forceNewSubmapCreation();
 	while (isRunWorkers_) {
-		if (mapperParams_.isAttemptLoopClosures_) {
+		if (params_.mapper_.isAttemptLoopClosures_) {
 			computeFeaturesIfReady();
 			attemptLoopClosuresIfReady();
 		} else {
@@ -160,7 +160,7 @@ void SlamWrapper::finishProcessing() {
 			updateSubmapsAndTrajectory();
 			const auto poseAfterUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
 			std::cout << "latest pose after update: \n " << asStringXYZRPY(poseAfterUpdate.transform_) << "\n";
-			if (mapperParams_.isDumpSubmapsToFileBeforeAndAfterLoopClosures_) {
+			if (params_.mapper_.isDumpSubmapsToFileBeforeAndAfterLoopClosures_) {
 				submaps_->dumpToFile(folderPath_, "after", false);
 			}
 			break;
@@ -178,49 +178,32 @@ void SlamWrapper::setMapSavingDirectoryPath(const std::string &path){
 	mapSavingFolderPath_ = path;
 }
 
-std::string SlamWrapper::getParameterFilePath() const {
-	return paramPath_;
-}
-
-void SlamWrapper::setParameterFilePath(const std::string &path){
-	paramPath_ = path;
-}
-
 void SlamWrapper::loadParametersAndInitialize() {
 
 	//	auto &logger = open3d::utility::Logger::GetInstance();
 	//	logger.SetVerbosityLevel(open3d::utility::VerbosityLevel::Debug);
 
-	const std::string paramFile = paramPath_;
-	std::cout << "loading params from: " << paramFile << "\n";
-
-	loadParameters(paramFile, &odometryParams_);
 	odometry_ = std::make_shared<o3d_slam::LidarOdometry>();
-	odometry_->setParameters(odometryParams_);
+	odometry_->setParameters(params_.odometry_);
 
 	submaps_ = std::make_shared<o3d_slam::SubmapCollection>();
 	submaps_->setFolderPath(folderPath_);
+
 	mapper_ = std::make_shared<o3d_slam::Mapper>(odometry_->getBuffer(), submaps_);
-	o3d_slam::loadParameters(paramFile, &mapperParams_);
-	mapper_->setParameters(mapperParams_);
+	mapper_->setParameters(params_.mapper_);
 
 	optimizationProblem_ = std::make_shared<o3d_slam::OptimizationProblem>();
-	optimizationProblem_->setParameters(mapperParams_);
-
-	loadParameters(paramFile, &visualizationParameters_);
+	optimizationProblem_->setParameters(params_.mapper_);
 
 	// set the verobsity for timing statistics
-	Timer::isDisablePrintInDestructor_ = !mapperParams_.isPrintTimingStatistics_;
+	Timer::isDisablePrintInDestructor_ = !params_.mapper_.isPrintTimingStatistics_;
 
-	loadParameters(paramFile, &savingParameters_);
-	
-	loadParameters(paramFile, &motionCompensationParameters_);
-	if (motionCompensationParameters_.isUndistortInputCloud_){
+	if (params_.motionCompensation_.isUndistortInputCloud_){
 		auto motionCompOdom = std::make_shared<ConstantVelocityMotionCompensation>(odometry_->getBuffer());
-		motionCompOdom->setParameters(motionCompensationParameters_);
+		motionCompOdom->setParameters(params_.motionCompensation_);
 		motionCompensationOdom_ = motionCompOdom;
 		auto motionCompMap = std::make_shared<ConstantVelocityMotionCompensation>(mapper_->getMapToRangeSensorBuffer());
-		motionCompMap->setParameters(motionCompensationParameters_);
+		motionCompMap->setParameters(params_.motionCompensation_);
 		motionCompensationMap_ = motionCompMap;
 	}
 }
@@ -251,12 +234,12 @@ void SlamWrapper::startWorkers() {
 	mappingWorker_ = std::thread([this]() {
 		mappingWorker();
 	});
-	if (mapperParams_.isAttemptLoopClosures_) {
+	if (params_.mapper_.isAttemptLoopClosures_) {
 		loopClosureWorker_ = std::thread([this]() {
 			loopClosureWorker();
 		});
 	}
-	if (mapperParams_.isBuildDenseMap_) {
+	if (params_.mapper_.isBuildDenseMap_) {
 		denseMapWorker_ = std::thread([this]() {
 			denseMapWorker();
 		});
@@ -308,7 +291,7 @@ void SlamWrapper::odometryWorker() {
 
 		const double timeMeasurement = odometryStatisticsTimer_.elapsedMsecSinceStopwatchStart();
 		odometryStatisticsTimer_.addMeasurementMsec(timeMeasurement);
-		if (mapperParams_.isPrintTimingStatistics_ && odometryStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {
+		if (params_.mapper_.isPrintTimingStatistics_ && odometryStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {
 			std::cout << "Odometry timing stats: Avg execution time: "
 					<< odometryStatisticsTimer_.getAvgMeasurementMsec() << " msec , frequency: "
 					<< 1e3 / odometryStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
@@ -361,20 +344,17 @@ void SlamWrapper::mappingWorker() {
 			latestScanToMapRefinementTimestamp_ = measurement.time_;
 		}
 
-		if (mapperParams_.isAttemptLoopClosures_) {
+		if (params_.mapper_.isAttemptLoopClosures_) {
 			computeFeaturesIfReady();
 			attemptLoopClosuresIfReady();
 		}
 
 		checkIfOptimizedGraphAvailable();
 
-		// publish visualizatinos
-//		publishMaps(measurement.time_);
-
 		//just get the stats
 		const double timeMeasurement = mappingStatisticsTimer_.elapsedMsecSinceStopwatchStart();
 		mappingStatisticsTimer_.addMeasurementMsec(timeMeasurement);
-		if (mapperParams_.isPrintTimingStatistics_ && mappingStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {
+		if (params_.mapper_.isPrintTimingStatistics_ && mappingStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {
 			std::cout << "Mapper timing stats: Avg execution time: "
 					<< mappingStatisticsTimer_.getAvgMeasurementMsec() << " msec , frequency: "
 					<< 1e3 / mappingStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
@@ -392,8 +372,7 @@ void SlamWrapper::checkIfOptimizedGraphAvailable(){
 		updateSubmapsAndTrajectory();
 		const auto poseAfterUpdate = mapper_->getMapToRangeSensorBuffer().latest_measurement();
 		std::cout << "latest pose after update: \n " << asStringXYZRPY(poseAfterUpdate.transform_) << "\n";
-//			publishMaps(measurement.time_);
-		if (mapperParams_.isDumpSubmapsToFileBeforeAndAfterLoopClosures_){
+		if (params_.mapper_.isDumpSubmapsToFileBeforeAndAfterLoopClosures_){
 			submaps_->dumpToFile(folderPath_, "after", false);
 		}
 	}
@@ -414,7 +393,7 @@ void SlamWrapper::denseMapWorker() {
 
 		const double timeMeasurement = denseMapStatiscticsTimer_.elapsedMsecSinceStopwatchStart();
 		denseMapStatiscticsTimer_.addMeasurementMsec(timeMeasurement);
-		if (mapperParams_.isPrintTimingStatistics_ && denseMapStatiscticsTimer_.elapsedSec() > timingStatsEveryNsec) {
+		if (params_.mapper_.isPrintTimingStatistics_ && denseMapStatiscticsTimer_.elapsedSec() > timingStatsEveryNsec) {
 			std::cout << "Dense mapping timing stats: Avg execution time: "
 					<< denseMapStatiscticsTimer_.getAvgMeasurementMsec() << " msec , frequency: "
 					<< 1e3 / denseMapStatiscticsTimer_.getAvgMeasurementMsec() << " Hz \n";
@@ -475,7 +454,7 @@ void SlamWrapper::loopClosureWorker() {
 			optimizationProblem_->buildOptimizationProblem(*submaps_);
 
 //			optimizationProblem_->print();
-			if (mapperParams_.isDumpSubmapsToFileBeforeAndAfterLoopClosures_){
+			if (params_.mapper_.isDumpSubmapsToFileBeforeAndAfterLoopClosures_){
 				submaps_->dumpToFile(folderPath_, "before", false);
 				optimizationProblem_->dumpToFile(folderPath_ + "/poseGraph.json");
 			}
@@ -494,7 +473,6 @@ void SlamWrapper::updateSubmapsAndTrajectory() {
 	std::cout << "Updating the maps: \n";
 	const Timer t("submaps_update");
 	const auto optimizedTransformations = optimizationProblem_->getOptimizedTransformIncrements();
-	//todo this segfault!!!!
 	submaps_->transform(optimizedTransformations);
 
 	//get The correct time
@@ -516,7 +494,6 @@ void SlamWrapper::updateSubmapsAndTrajectory() {
 
 	//now here you would update the lc constraints
 	Constraints loopClosureConstraints = optimizationProblem_->getLoopClosureConstraints();
-//#pragma omp parallel for
 	for (int i = 0; i < loopClosureConstraints.size(); ++i) {
 		const Constraint &oldConstraint = loopClosureConstraints.at(i);
 		Constraint c = oldConstraint;

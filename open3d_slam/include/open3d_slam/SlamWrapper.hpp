@@ -83,32 +83,43 @@ private:
 
 
 protected:
-	// non ros types
+	// buffers
 	CircularBuffer<RegisteredPointCloud> registeredCloudBuffer_;
 	CircularBuffer<TimestampedPointCloud> odometryBuffer_, mappingBuffer_;
 	ThreadSafeBuffer<TimestampedSubmapId> loopClosureCandidates_;
-	MapperParameters mapperParams_;
-	OdometryParameters odometryParams_;
-	VisualizationParameters visualizationParameters_;
-	PointCloud rawCloudPrev_;
-	Constraints lastLoopClosureConstraints_;
+
+	// parameters
+	SlamParameters params_;
+//	MapperParameters mapperParams_;
+//	OdometryParameters odometryParams_;
+//	VisualizationParameters visualizationParameters_;
+//	SavingParameters savingParameters_;
+//	ConstantVelocityMotionCompensationParameters motionCompensationParameters_;
+	std::string folderPath_, mapSavingFolderPath_;
+
+	// modules
 	std::shared_ptr<MotionCompensation> motionCompensationOdom_,motionCompensationMap_;
 	std::shared_ptr<LidarOdometry> odometry_;
 	std::shared_ptr<Mapper> mapper_;
 	std::shared_ptr<SubmapCollection> submaps_;
 	std::shared_ptr<OptimizationProblem> optimizationProblem_;
-	std::string folderPath_, mapSavingFolderPath_, paramPath_;
+
+	// multithreading
 	std::thread odometryWorker_, mappingWorker_, loopClosureWorker_, denseMapWorker_;
 	std::future<void> computeFeaturesResult_;
+
+	// timing
 	Timer mappingStatisticsTimer_,odometryStatisticsTimer_, visualizationUpdateTimer_, denseMapVisualizationUpdateTimer_, denseMapStatiscticsTimer_;
-	bool isOptimizedGraphAvailable_ = false;
-	bool isRunWorkers_ = true;
 	Timer mapperOnlyTimer_;
-	SavingParameters savingParameters_;
 	Time latestScanToMapRefinementTimestamp_;
 	Time latestScanToScanRegistrationTimestamp_;
-	ConstantVelocityMotionCompensationParameters motionCompensationParameters_;
+
+	// bookkeeping
+	bool isOptimizedGraphAvailable_ = false;
+	bool isRunWorkers_ = true;
 	int numLatesLoopClosureConstraints_ = -1;
+	PointCloud rawCloudPrev_;
+	Constraints lastLoopClosureConstraints_;
 };
 
 } // namespace o3d_slam

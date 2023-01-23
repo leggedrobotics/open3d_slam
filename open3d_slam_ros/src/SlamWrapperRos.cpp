@@ -24,6 +24,7 @@
 #include "open3d_slam/constraint_builders.hpp"
 #include "open3d_slam/Odometry.hpp"
 #include "nav_msgs/Odometry.h"
+#include "open3d_slam_lua_io/parameter_loaders.hpp"
 
 #ifdef open3d_slam_ros_OPENMP_FOUND
 #include <omp.h>
@@ -52,7 +53,7 @@ SlamWrapperRos::~SlamWrapperRos() {
 		visualizationWorker_.join();
 		std::cout << "Joined visualization worker \n";
 	}
-  if (odometryParams_.isPublishOdometryMsgs_ && odomPublisherWorker_.joinable()) {
+  if (params_.odometry_.isPublishOdometryMsgs_ && odomPublisherWorker_.joinable()) {
       odomPublisherWorker_.join();
     std::cout << "Joined odom publisher worker \n";
   }
@@ -65,7 +66,7 @@ void SlamWrapperRos::startWorkers() {
 	visualizationWorker_ = std::thread([this]() {
 		visualizationWorker();
 	});
-	if (odometryParams_.isPublishOdometryMsgs_){
+	if (params_.odometry_.isPublishOdometryMsgs_){
     odomPublisherWorker_ = std::thread([this]() {
       odomPublisherWorker();
     });
@@ -193,8 +194,18 @@ void SlamWrapperRos::loadParametersAndInitialize() {
 
 	folderPath_ = ros::package::getPath("open3d_slam_ros") + "/data/";
 	mapSavingFolderPath_ = nh_->param<std::string>("map_saving_folder", folderPath_);
-	const std::string paramFile = nh_->param<std::string>("parameter_file_path", "");
-	setParameterFilePath(paramFile);
+
+//	const std::string paramFile = nh_->param<std::string>("parameter_file_path", "");
+//	setParameterFilePath(paramFile);
+//	io_yaml::loadParameters(paramFile, &params_);
+//
+	const std::string paramFolderPath = nh_->param<std::string>("parameter_folder_path", "");
+	const std::string paramFilename = nh_->param<std::string>("parameter_filename", "");
+	SlamParameters params;
+	io_lua::loadParameters(paramFolderPath, paramFilename, &params_);
+
+
+
 	BASE::loadParametersAndInitialize();
 }
 
@@ -221,7 +232,7 @@ void SlamWrapperRos::publishMapToOdomTf(const Time &time) {
 }
 
 void SlamWrapperRos::publishDenseMap(const Time &time) {
-	if (denseMapVisualizationUpdateTimer_.elapsedMsec() < visualizationParameters_.visualizeEveryNmsec_) {
+	if (denseMapVisualizationUpdateTimer_.elapsedMsec() < params_.visualization_.visualizeEveryNmsec_) {
 		return;
 	}
 	const auto denseMap = mapper_->getActiveSubmap().getDenseMapCopy(); //copy
@@ -230,7 +241,7 @@ void SlamWrapperRos::publishDenseMap(const Time &time) {
 }
 
 void SlamWrapperRos::publishMaps(const Time &time) {
-	if (visualizationUpdateTimer_.elapsedMsec() < visualizationParameters_.visualizeEveryNmsec_
+	if (visualizationUpdateTimer_.elapsedMsec() < params_.visualization_.visualizeEveryNmsec_
 			&& !isVisualizationFirstTime_) {
 		return;
 	}
@@ -238,7 +249,7 @@ void SlamWrapperRos::publishMaps(const Time &time) {
 	const ros::Time timestamp = toRos(time);
 	{
 		PointCloud map = mapper_->getAssembledMapPointCloud();
-		voxelize(visualizationParameters_.assembledMapVoxelSize_, &map);
+		voxelize(params_.visualization_.assembledMapVoxelSize_, &map);
 		o3d_slam::publishCloud(map, o3d_slam::frames::mapFrame, timestamp, assembledMapPub_);
 	}
 	o3d_slam::publishCloud(mapper_->getPreprocessedScan(), o3d_slam::frames::rangeSensorFrame, timestamp,
@@ -248,7 +259,7 @@ void SlamWrapperRos::publishMaps(const Time &time) {
 	if (submapsPub_.getNumSubscribers() > 0) {
 		open3d::geometry::PointCloud cloud;
 		o3d_slam::assembleColoredPointCloud(mapper_->getSubmaps(), &cloud);
-		voxelize(visualizationParameters_.submapVoxelSize_, &cloud);
+		voxelize(params_.visualization_.submapVoxelSize_, &cloud);
 		o3d_slam::publishCloud(cloud, o3d_slam::frames::mapFrame, timestamp, submapsPub_);
 	}
 
