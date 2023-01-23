@@ -42,6 +42,7 @@ Install with apt:
 If you use open3d_slam_ros, the configs are loaded using LUA, as they allow for an easy configuration management with minimal duplicated code.
 
 Install with apt:
+
 .. code-block:: bash
 
    sudo apt install liblua5.2-dev
