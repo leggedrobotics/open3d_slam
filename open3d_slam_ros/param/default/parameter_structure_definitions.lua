@@ -109,7 +109,6 @@ SCAN_TO_MAP_REGISTRATION_PARAMETERS = {
   scan_processing = deepcopy(SCAN_PROCESSING_PARAMETERS),
 }
 
-
 MAPPER_LOCALIZER_PARAMETERS = {
   is_print_timing_information = true,
   is_build_dense_map = false,
