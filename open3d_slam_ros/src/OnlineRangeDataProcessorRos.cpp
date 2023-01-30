@@ -35,11 +35,6 @@ void OnlineRangeDataProcessorRos::startProcessing() {
 }
 
 void OnlineRangeDataProcessorRos::processMeasurement(const PointCloud &cloud, const Time &timestamp) {
-
-	// Get the TF here, since we know the stamp clearly
-	// Process the cloud
-	// Call the wrapper to set the new pose.
-
 	slam_->addRangeScan(cloud, timestamp);
   o3d_slam::publishCloud(cloud, o3d_slam::frames::rangeSensorFrame, toRos(timestamp), rawCloudPub_);
 

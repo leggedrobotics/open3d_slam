@@ -296,6 +296,7 @@ void LuaLoader::loadParameters(const DictPtr dict, OdometryParameters *p){
 	loadIfDictionaryDefined(dict,"scan_matching", &p->scanMatcher_);
 	loadIfDictionaryDefined(dict,"scan_processing", &p->scanProcessing_);
 	loadBoolIfKeyDefined(dict, "is_publish_odometry_msgs", &p->isPublishOdometryMsgs_);
+	loadBoolIfKeyDefined(dict, "overwrite_with_tf", &p->overwriteWithTf);
 }
 
 void LuaLoader::loadParameters(const DictPtr dict, CloudRegistrationParameters *p){

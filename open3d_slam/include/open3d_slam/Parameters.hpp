@@ -89,6 +89,7 @@ struct OdometryParameters {
 	CloudRegistrationParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
   bool isPublishOdometryMsgs_ = false;
+  bool overwriteWithTf = false;
 };
 
 struct SpaceCarvingParameters{

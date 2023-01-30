@@ -108,6 +108,7 @@ void loadParameters(const YAML::Node &node, OdometryParameters *p){
 	loadParameters(node["scan_matching"], &(p->scanMatcher_) );
 	loadParameters(node["scan_processing"], &(p->scanProcessing_) );
 	loadIfKeyDefined<bool>(node,"is_publish_odometry_msgs", &p->isPublishOdometryMsgs_);
+	loadIfKeyDefined<bool>(node,"overwrite_with_tf", &p->overwriteWithTf);
 }
 
 void loadParameters(const YAML::Node &node, ScanProcessingParameters *p){

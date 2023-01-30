@@ -35,8 +35,6 @@
     <rosparam command="load" file="/home/ttuna/open3d_slam_ws/src/localization_manager.yaml" />
   </node>
 
-
-
 	<include
 		file="$(find open3d_slam_ros)/launch/vis.launch"
 		if="$(arg launch_rviz)">

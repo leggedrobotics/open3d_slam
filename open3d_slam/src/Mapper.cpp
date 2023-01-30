@@ -149,7 +149,6 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	// Debug Purposes, keep a prior buffer.
 	mapToRangeSensorPRIORBuffer_.push(timestamp, mapToRangeSensorEstimate);
 
-	//Transform mapToLiDAR = mapToLiDAR_;
 	isIgnoreOdometryPrediction_ = false;
 	const ProcessedScans processed = scan2MapReg_->processForScanMatchingAndMerging(rawScan, mapToRangeSensor_);
 
