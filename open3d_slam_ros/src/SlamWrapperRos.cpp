@@ -41,7 +41,6 @@ SlamWrapperRos::SlamWrapperRos(ros::NodeHandlePtr nh) :
 	tfBroadcaster_.reset(new tf2_ros::TransformBroadcaster());
 	prevPublishedTimeScanToScan_ = fromUniversal(0);
 	prevPublishedTimeScanToMap_ = fromUniversal(0);
-	std::cout << "SlamWrapperRos started" << std::endl;
 }
 
 SlamWrapperRos::~SlamWrapperRos() {
@@ -61,7 +60,6 @@ SlamWrapperRos::~SlamWrapperRos() {
 }
 
 void SlamWrapperRos::startWorkers() {
-	std::cout << "SlamWrapperRos startWorkers" << std::endl;
 	tfWorker_ = std::thread([this]() {
 		tfWorker();
 	});
@@ -78,8 +76,6 @@ void SlamWrapperRos::startWorkers() {
 }
 
 void SlamWrapperRos::odomPublisherWorker() {
-	std::cout << "Odom worker started" << std::endl;
-	ROS_INFO("TEEEEEEST");
     ros::Rate r(500.0);
     while (ros::ok()) {
 
@@ -168,6 +164,14 @@ void SlamWrapperRos::odomPublisherWorker() {
             publishIfSubscriberExists(odomMsg, scan2mapOdomPublisher_);
             prevPublishedTimeScanToMapOdom_ = latestScanToMap;
         }
+
+		// Publish scan2map initial guess
+		if(!isScanToMapAlreadyPublished && mapper_->hasPriorProcessedMeasurements()){
+			const Transform T_prior = mapper_->getMapToRangeSensorPRIOR(latestScanToMap);
+						geometry_msgs::TransformStamped transformMsg_prior = getTransformMsg(T_prior, latestScanToMap);
+			nav_msgs::Odometry odomMsg_prior = getOdomMsg(transformMsg_prior);
+			publishIfSubscriberExists(odomMsg_prior, scan2mapOdomPriorPublisher_);
+		}
 
         ros::spinOnce();
         r.sleep();
@@ -266,6 +270,7 @@ void SlamWrapperRos::loadParametersAndInitialize() {
 	scan2scanOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2scan_odometry", 1, true);
 	scan2mapTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("scan2map_transform", 1, true);
   scan2mapOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2map_odometry", 1, true);
+  scan2mapOdomPriorPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2map_odometry_prior", 1, true);
 
 	tfTransformPublisher_ = nh_->advertise<geometry_msgs::PoseStamped>("tf_turcan_lidar", 1, true);
 

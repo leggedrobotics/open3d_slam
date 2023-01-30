@@ -106,7 +106,6 @@ size_t SlamWrapper::getMappingBufferSizeLimit() const {
 }
 
 void SlamWrapper::addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp) {
-	std::cout << "Wrapper First" << std::endl;
 	updateFirstMeasurementTime(timestamp);
 	odometry_->mostUpToDateCloudStamp_ = timestamp;
 

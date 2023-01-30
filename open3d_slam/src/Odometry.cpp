@@ -30,8 +30,6 @@ PointCloudPtr LidarOdometry::preprocess(const PointCloud &in) const{
 }
 
 bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, const Time &timestamp) {
-	std::cout << "LiDAR odometry First" << std::endl;
-	isThereAnewCloud_=true;
 	if (cloudPrev_.IsEmpty()) {
 		auto preProcessed = preprocess(cloud);
 		cloudPrev_ = *preProcessed;

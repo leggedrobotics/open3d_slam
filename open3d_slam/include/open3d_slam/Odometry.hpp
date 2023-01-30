@@ -36,7 +36,6 @@ public:
 	TransformInterpolationBuffer odomToRangeSensorBuffer_;
 	Time lastMeasurementTimestamp_;
 	Time mostUpToDateCloudStamp_;
-	bool isThereAnewCloud_{false};
 
 private:
 

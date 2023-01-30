@@ -12,9 +12,13 @@ Panels:
         - /Axes1
         - /InteractiveMarkers1
         - /Odometry1
+        - /Odometry1/Shape1
         - /Pose1
         - /Odometry2
         - /Odometry2/Shape1
+        - /Odometry3
+        - /Odometry3/Shape1
+        - /Odometry4
       Splitter Ratio: 0.5
     Tree Height: 1012
   - Class: rviz/Selection
@@ -120,8 +124,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 3.7172434329986572
-        Min Value: -1.0811221599578857
+        Max Value: 7.31390905380249
+        Min Value: -6.724291801452637
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -207,7 +211,9 @@ Visualization Manager:
       Name: MarkerArray
       Namespaces:
         submap_0: true
+        submap_1: true
         submap_id_0: true
+        submap_id_1: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -274,7 +280,7 @@ Visualization Manager:
         Head Radius: 0.10000000149011612
         Shaft Length: 1
         Shaft Radius: 0.05000000074505806
-        Value: Axes
+        Value: Arrow
       Topic: /mapping_node/scan2map_odometry
       Unreliable: false
       Value: true
@@ -311,7 +317,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Keep: 5
       Name: Odometry
       Position Tolerance: 0.10000000149011612
@@ -327,6 +333,76 @@ Visualization Manager:
         Shaft Radius: 0.05000000074505806
         Value: Axes
       Topic: /mapping_node/scan2scan_odometry
+      Unreliable: false
+      Value: false
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: true
+      Enabled: true
+      Keep: 10
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Queue Size: 10
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 252; 233; 79
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic: /mapping_node/scan2map_odometry_prior
+      Unreliable: false
+      Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: true
+      Enabled: true
+      Keep: 1
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Queue Size: 10
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Axes
+      Topic: /mapping_node/scan2map_odometry
       Unreliable: false
       Value: true
   Enabled: true
@@ -357,7 +433,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 21.42783546447754
+      Distance: 4.58058500289917
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -365,17 +441,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.8071904182434082
-        Y: 4.744324684143066
-        Z: 0.9850988388061523
+        X: -14.962035179138184
+        Y: 2.204226016998291
+        Z: -0.6049578189849854
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0147968530654907
+      Pitch: 0.8947965502738953
       Target Frame: <Fixed Frame>
-      Yaw: 5.961440086364746
+      Yaw: 5.181437015533447
     Saved: ~
 Window Geometry:
   Displays:

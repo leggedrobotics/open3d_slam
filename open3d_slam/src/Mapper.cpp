@@ -50,6 +50,9 @@ void Mapper::loopClosureUpdate(const Transform &loopClosureCorrection) {
 bool Mapper::hasProcessedMeasurements() const {
 	return !mapToRangeSensorBuffer_.empty();
 }
+bool Mapper::hasPriorProcessedMeasurements() const {
+	return !mapToRangeSensorPRIORBuffer_.empty();
+}
 
 void Mapper::update(const MapperParameters &p) {
 	scan2MapReg_ = scanToMapRegistrationFactory(p);
@@ -64,6 +67,10 @@ Transform Mapper::getMapToOdom(const Time &timestamp) const {
 }
 Transform Mapper::getMapToRangeSensor(const Time &timestamp) const {
 	return getTransform(timestamp, mapToRangeSensorBuffer_);
+}
+
+Transform Mapper::getMapToRangeSensorPRIOR(const Time &timestamp) const {
+	return getTransform(timestamp, mapToRangeSensorPRIORBuffer_);
 }
 
 const SubmapCollection& Mapper::getSubmaps() const {
@@ -138,6 +145,9 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		const Transform odometryMotion = odomToRangeSensorPrev.inverse()*odomToRangeSensor;
 		mapToRangeSensorEstimate = mapToRangeSensorPrev_*odometryMotion ;
 	}
+
+	// Debug Purposes, keep a prior buffer.
+	mapToRangeSensorPRIORBuffer_.push(timestamp, mapToRangeSensorEstimate);
 
 	//Transform mapToLiDAR = mapToLiDAR_;
 	isIgnoreOdometryPrediction_ = false;
