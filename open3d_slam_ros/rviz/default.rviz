@@ -13,8 +13,10 @@ Panels:
         - /InteractiveMarkers1
         - /Odometry1
         - /Pose1
+        - /Odometry2
+        - /Odometry2/Shape1
       Splitter Ratio: 0.5
-    Tree Height: 772
+    Tree Height: 1012
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -72,7 +74,7 @@ Visualization Manager:
       duration: 500
       frame: range_sensor_o3d
       line_width: 0.10000000149011612
-    - Alpha: 1
+    - Alpha: 0.800000011920929
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
         Max Value: 28.160181045532227
@@ -83,7 +85,7 @@ Visualization Manager:
       Class: rviz/PointCloud2
       Color: 255; 255; 255
       Color Transformer: Intensity
-      Decay Time: 0
+      Decay Time: 150
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
@@ -92,7 +94,7 @@ Visualization Manager:
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
-      Size (Pixels): 2
+      Size (Pixels): 1
       Size (m): 0.009999999776482582
       Style: Points
       Topic: /mapping_node/raw_cloud
@@ -101,156 +103,10 @@ Visualization Manager:
       Use rainbow: true
       Value: true
     - Class: rviz/TF
-      Enabled: true
+      Enabled: false
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        LF_FOOT:
-          Value: true
-        LF_HAA:
-          Value: true
-        LF_HFE:
-          Value: true
-        LF_HIP:
-          Value: true
-        LF_KFE:
-          Value: true
-        LF_SHANK:
-          Value: true
-        LF_THIGH:
-          Value: true
-        LF_hip_fixed:
-          Value: true
-        LF_shank_fixed:
-          Value: true
-        LF_thigh_fixed:
-          Value: true
-        LH_FOOT:
-          Value: true
-        LH_HAA:
-          Value: true
-        LH_HFE:
-          Value: true
-        LH_HIP:
-          Value: true
-        LH_KFE:
-          Value: true
-        LH_SHANK:
-          Value: true
-        LH_THIGH:
-          Value: true
-        LH_hip_fixed:
-          Value: true
-        LH_shank_fixed:
-          Value: true
-        LH_thigh_fixed:
-          Value: true
-        RF_FOOT:
-          Value: true
-        RF_HAA:
-          Value: true
-        RF_HFE:
-          Value: true
-        RF_HIP:
-          Value: true
-        RF_KFE:
-          Value: true
-        RF_SHANK:
-          Value: true
-        RF_THIGH:
-          Value: true
-        RF_hip_fixed:
-          Value: true
-        RF_shank_fixed:
-          Value: true
-        RF_thigh_fixed:
-          Value: true
-        RH_FOOT:
-          Value: true
-        RH_HAA:
-          Value: true
-        RH_HFE:
-          Value: true
-        RH_HIP:
-          Value: true
-        RH_KFE:
-          Value: true
-        RH_SHANK:
-          Value: true
-        RH_THIGH:
-          Value: true
-        RH_hip_fixed:
-          Value: true
-        RH_shank_fixed:
-          Value: true
-        RH_thigh_fixed:
-          Value: true
-        base:
-          Value: true
-        base_inertia:
-          Value: true
-        battery:
-          Value: true
-        body_top:
-          Value: true
-        bottom_shell:
-          Value: true
-        depth_camera_front_camera:
-          Value: true
-        depth_camera_front_camera_parent:
-          Value: true
-        depth_camera_left_camera:
-          Value: true
-        depth_camera_left_camera_parent:
-          Value: true
-        depth_camera_rear_camera:
-          Value: true
-        depth_camera_rear_camera_parent:
-          Value: true
-        depth_camera_right_camera:
-          Value: true
-        depth_camera_right_camera_parent:
-          Value: true
-        docking_hatch_cover:
-          Value: true
-        face_front:
-          Value: true
-        face_rear:
-          Value: true
-        feetcenter:
-          Value: true
-        footprint:
-          Value: true
-        front_handle:
-          Value: true
-        handle:
-          Value: true
-        hatch:
-          Value: true
-        imu_link:
-          Value: true
-        lidar:
-          Value: true
-        lidar_cage:
-          Value: true
-        map:
-          Value: true
-        odom:
-          Value: true
-        point_cloud_odom:
-          Value: true
-        remote:
-          Value: true
-        top_shell:
-          Value: true
-        wide_angle_camera_front_camera:
-          Value: true
-        wide_angle_camera_front_camera_parent:
-          Value: true
-        wide_angle_camera_rear_camera:
-          Value: true
-        wide_angle_camera_rear_camera_parent:
-          Value: true
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
@@ -258,112 +114,14 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        odom:
-          base:
-            LF_HAA:
-              LF_HIP:
-                LF_hip_fixed:
-                  LF_HFE:
-                    LF_THIGH:
-                      LF_thigh_fixed:
-                        LF_KFE:
-                          LF_SHANK:
-                            LF_shank_fixed:
-                              LF_FOOT:
-                                {}
-            LH_HAA:
-              LH_HIP:
-                LH_hip_fixed:
-                  LH_HFE:
-                    LH_THIGH:
-                      LH_thigh_fixed:
-                        LH_KFE:
-                          LH_SHANK:
-                            LH_shank_fixed:
-                              LH_FOOT:
-                                {}
-            RF_HAA:
-              RF_HIP:
-                RF_hip_fixed:
-                  RF_HFE:
-                    RF_THIGH:
-                      RF_thigh_fixed:
-                        RF_KFE:
-                          RF_SHANK:
-                            RF_shank_fixed:
-                              RF_FOOT:
-                                {}
-            RH_HAA:
-              RH_HIP:
-                RH_hip_fixed:
-                  RH_HFE:
-                    RH_THIGH:
-                      RH_thigh_fixed:
-                        RH_KFE:
-                          RH_SHANK:
-                            RH_shank_fixed:
-                              RH_FOOT:
-                                {}
-            base_inertia:
-              {}
-            battery:
-              {}
-            body_top:
-              {}
-            bottom_shell:
-              {}
-            depth_camera_left_camera:
-              depth_camera_left_camera_parent:
-                {}
-            depth_camera_right_camera:
-              depth_camera_right_camera_parent:
-                {}
-            docking_hatch_cover:
-              {}
-            face_front:
-              depth_camera_front_camera:
-                depth_camera_front_camera_parent:
-                  {}
-              wide_angle_camera_front_camera:
-                wide_angle_camera_front_camera_parent:
-                  {}
-            face_rear:
-              depth_camera_rear_camera:
-                depth_camera_rear_camera_parent:
-                  {}
-              wide_angle_camera_rear_camera:
-                wide_angle_camera_rear_camera_parent:
-                  {}
-            front_handle:
-              {}
-            handle:
-              {}
-            hatch:
-              {}
-            imu_link:
-              {}
-            lidar_cage:
-              lidar:
-                {}
-            remote:
-              {}
-            top_shell:
-              {}
-          feetcenter:
-            {}
-          footprint:
-            {}
-          map:
-            {}
-          point_cloud_odom:
-            {}
+        {}
       Update Interval: 0
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 9.257129669189453
-        Min Value: -6.517117500305176
+        Max Value: 6.926648139953613
+        Min Value: -3.1547515392303467
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -504,7 +262,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Keep: 10
       Name: Odometry
       Position Tolerance: 0.10000000149011612
@@ -521,7 +279,7 @@ Visualization Manager:
         Value: Axes
       Topic: /mapping_node/scan2map_odometry
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.10000000149011612
@@ -538,11 +296,46 @@ Visualization Manager:
       Topic: /mapping_node/tf_turcan_lidar
       Unreliable: false
       Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: true
+      Enabled: true
+      Keep: 5
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Queue Size: 10
+      Shape:
+        Alpha: 1
+        Axes Length: 0.800000011920929
+        Axes Radius: 0.07999999821186066
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Axes
+      Topic: /mapping_node/scan2scan_odometry
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: map
+    Fixed Frame: map_new
     Frame Rate: 30
   Name: root
   Tools:
@@ -566,7 +359,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 6.249524116516113
+      Distance: 3.8564844131469727
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -574,25 +367,25 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -37.73238754272461
-        Y: 5.307146072387695
-        Z: -1.6080677509307861
+        X: -0.7941075563430786
+        Y: 20.662290573120117
+        Z: 0.12236357480287552
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4047974646091461
+      Pitch: 1.0347963571548462
       Target Frame: <Fixed Frame>
-      Yaw: 1.8482552766799927
+      Yaw: 0.013256072998046875
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1163
+  Height: 1403
   Hide Left Dock: false
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd000000040000000000000241000003cbfc020000000afb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000b0fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000003cb000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0056006900650077007300000002c2000000d5000000a400fffffffb0000000a0049006d006100670065000000010c0000028b0000000000000000000000010000010f0000035afc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d0000035a000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000078000000060fc0100000002fb0000000800540069006d0065010000000000000780000002eb00fffffffb0000000800540069006d0065010000000000000450000000000000000000000539000003cb00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd000000040000000000000241000004bbfc020000000afb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000b0fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000004bb000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0056006900650077007300000002c2000000d5000000a400fffffffb0000000a0049006d006100670065000000010c0000028b0000000000000000000000010000010f0000035afc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d0000035a000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000a0000000060fc0100000002fb0000000800540069006d0065010000000000000a00000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000007b9000004bb00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -601,6 +394,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: false
-  Width: 1920
-  X: 72
-  Y: 27
+  Width: 2560
+  X: 1920
+  Y: 0
