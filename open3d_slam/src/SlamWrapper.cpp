@@ -106,7 +106,9 @@ size_t SlamWrapper::getMappingBufferSizeLimit() const {
 }
 
 void SlamWrapper::addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp) {
+	std::cout << "Wrapper First" << std::endl;
 	updateFirstMeasurementTime(timestamp);
+	odometry_->mostUpToDateCloudStamp_ = timestamp;
 
 	auto removedNans = removePointsWithNonFiniteValues(cloud);
 	const TimestampedPointCloud timestampedCloud { timestamp, *removedNans };
@@ -326,6 +328,7 @@ void SlamWrapper::mappingWorker() {
 			std::cout << "earliest: " << toSecondsSinceFirstMeasurement(b.earliest_time()) << std::endl;
 			std::cout << "latest: " << toSecondsSinceFirstMeasurement(b.latest_time()) << std::endl;
 			std::cout << "requested: " << toSecondsSinceFirstMeasurement(measurement.time_) << std::endl;
+			std::cout << "Latest PC time: " << toSecondsSinceFirstMeasurement(odometry_->lastMeasurementTimestamp_) << std::endl;
 		}
 		const size_t activeSubmapIdx = mapper_->getActiveSubmap().getId();
 		mapperOnlyTimer_.startStopwatch();

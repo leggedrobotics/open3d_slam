@@ -84,6 +84,7 @@ void SlamMapInitializer::initialize(const MapInitializingParameters &params) {
   }
 
 }
+
 void SlamMapInitializer::initializeWorker() {
 	ros::Rate r(20);
 	const bool isMergeScansIntoMap = slamPtr_->getMapperParameters().isMergeScansIntoMap_;

@@ -89,16 +89,16 @@ void publishTfTransform(const Eigen::Matrix4d &Mat, const ros::Time &time, const
 }
 
 bool lookupTransform(const std::string &target_frame, const std::string &source_frame, const ros::Time &time,
-		const tf2_ros::Buffer &tfBuffer, Eigen::Isometry3d *transform) {
+		const tf2_ros::Buffer &tfBuffer, Eigen::Isometry3d& transform) {
 	geometry_msgs::TransformStamped transformStamped;
 	try {
 		transformStamped = tfBuffer.lookupTransform(target_frame, source_frame, time);
 	} catch (tf2::TransformException &ex) {
 		ROS_WARN("caught exception while looking up the tf: %s", ex.what());
-		*transform = Eigen::Isometry3d::Identity();
+		transform = Eigen::Isometry3d::Identity();
 		return false;
 	}
-	*transform = tf2::transformToEigen(transformStamped);
+	transform = tf2::transformToEigen(transformStamped);
 	return true;
 }
 

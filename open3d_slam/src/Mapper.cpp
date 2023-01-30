@@ -100,6 +100,8 @@ const ScanToMapRegistration &Mapper::getScanToMapRegistration() const{
 }
 
 bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &timestamp) {
+
+	latestCloudTimestamp_ = timestamp;
 	submaps_->setMapToRangeSensor(mapToRangeSensor_);
 
 	//insert first scan
@@ -136,8 +138,12 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		const Transform odometryMotion = odomToRangeSensorPrev.inverse()*odomToRangeSensor;
 		mapToRangeSensorEstimate = mapToRangeSensorPrev_*odometryMotion ;
 	}
+
+	//Transform mapToLiDAR = mapToLiDAR_;
 	isIgnoreOdometryPrediction_ = false;
 	const ProcessedScans processed = scan2MapReg_->processForScanMatchingAndMerging(rawScan, mapToRangeSensor_);
+
+	// Where the scan to map registration API
 	const RegistrationResult result = scan2MapReg_->scanToMapRegistration(*processed.match_, submaps_->getActiveSubmap(),
 			mapToRangeSensor_, mapToRangeSensorEstimate);
 	preProcessedScan_ = *processed.match_;

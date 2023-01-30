@@ -76,7 +76,7 @@ SCAN_MATCHING_PARAMETERS = {
 }
 
 ODOMETRY_PARAMETERS = {
-  is_publish_odometry_msgs = false,
+  is_publish_odometry_msgs = true,
   scan_matching = deepcopy(SCAN_MATCHING_PARAMETERS),
   scan_processing = deepcopy(SCAN_PROCESSING_PARAMETERS),
 }
@@ -113,7 +113,7 @@ SCAN_TO_MAP_REGISTRATION_PARAMETERS = {
 MAPPER_LOCALIZER_PARAMETERS = {
   is_print_timing_information = true,
   is_build_dense_map = false,
-  is_attempt_loop_closures = true,
+  is_attempt_loop_closures = false,
   is_use_map_initialization = false,
   is_merge_scans_into_map = false,
   dump_submaps_to_file_before_after_lc = false,
@@ -133,7 +133,7 @@ POSE = {
 
 MAP_INITIALIZER_PARAMETERS = {
   is_initialize_interactively = false,
-  frame_id = "map_o3d",
+  frame_id = "map_new",
   pcd_file_path = "",
   init_pose = POSE,
 }

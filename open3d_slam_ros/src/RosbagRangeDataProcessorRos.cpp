@@ -22,8 +22,7 @@
 namespace o3d_slam {
 
 RosbagRangeDataProcessorRos::RosbagRangeDataProcessorRos(ros::NodeHandlePtr nh) :
-		BASE(nh) {
-
+		BASE(nh){
 }
 
 void RosbagRangeDataProcessorRos::initialize() {

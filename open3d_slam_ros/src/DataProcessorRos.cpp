@@ -60,6 +60,7 @@ void DataProcessorRos::accumulateAndProcessRangeData(const PointCloud &cloud, co
 
 	numAccumulatedRangeDataCount_ = 0;
 	accumulatedCloud_.Clear();
+
 }
 
 } // namespace o3d_slam

@@ -48,12 +48,15 @@ public:
 	void loopClosureUpdate(const Transform &loopClosureCorrection);
 	bool hasProcessedMeasurements() const;
 	bool addRangeMeasurement(const PointCloud &cloud, const Time &timestamp);
+
+	Time lastMeasurementTimestamp_;
+
+	Time latestCloudTimestamp_;
 	
 private:
 	void update(const MapperParameters &p);
 	void checkTransformChainingAndPrintResult(bool isCheckTransformChainingAndPrintResult) const;
 
-	Time lastMeasurementTimestamp_;
 	Transform mapToRangeSensor_ = Transform::Identity();
 	Transform mapToRangeSensorPrev_ = Transform::Identity();
 	Transform mapToRangeSensorLastScanInsertion_ = Transform::Identity();

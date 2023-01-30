@@ -71,6 +71,10 @@ public:
 	bool saveMap(const std::string &directory);
 	bool saveDenseSubmaps(const std::string &directory);
 	bool saveSubmaps(const std::string &directory, const bool& isDenseMap=false);
+
+	std::shared_ptr<LidarOdometry> odometry_;
+	std::shared_ptr<Mapper> mapper_;
+
 private:
 	void checkIfOptimizedGraphAvailable();
 	void odometryWorker();
@@ -99,8 +103,6 @@ protected:
 
 	// modules
 	std::shared_ptr<MotionCompensation> motionCompensationOdom_,motionCompensationMap_;
-	std::shared_ptr<LidarOdometry> odometry_;
-	std::shared_ptr<Mapper> mapper_;
 	std::shared_ptr<SubmapCollection> submaps_;
 	std::shared_ptr<OptimizationProblem> optimizationProblem_;
 
