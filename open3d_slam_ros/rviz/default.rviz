@@ -120,8 +120,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 6.926648139953613
-        Min Value: -3.1547515392303467
+        Max Value: 3.7172434329986572
+        Min Value: -1.0811221599578857
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -207,9 +207,7 @@ Visualization Manager:
       Name: MarkerArray
       Namespaces:
         submap_0: true
-        submap_1: true
         submap_id_0: true
-        submap_id_1: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -262,7 +260,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: false
+      Enabled: true
       Keep: 10
       Name: Odometry
       Position Tolerance: 0.10000000149011612
@@ -279,7 +277,7 @@ Visualization Manager:
         Value: Axes
       Topic: /mapping_node/scan2map_odometry
       Unreliable: false
-      Value: false
+      Value: true
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.10000000149011612
@@ -359,7 +357,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.8564844131469727
+      Distance: 21.42783546447754
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -367,17 +365,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.7941075563430786
-        Y: 20.662290573120117
-        Z: 0.12236357480287552
+        X: -0.8071904182434082
+        Y: 4.744324684143066
+        Z: 0.9850988388061523
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0347963571548462
+      Pitch: 1.0147968530654907
       Target Frame: <Fixed Frame>
-      Yaw: 0.013256072998046875
+      Yaw: 5.961440086364746
     Saved: ~
 Window Geometry:
   Displays:
