@@ -63,8 +63,7 @@ void SlamMapInitializer::initialize(const MapInitializingParameters &params) {
 		std::cerr << "[Error] Initialization pointcloud not loaded" << std::endl;
   }
 
-  Transform initPose;
-	tf::poseMsgToEigen(params.initialMarkerPose_, initPose);
+  Transform initPose = params.initialPose_;
   slamPtr_->setInitialMap(raw_map);
   slamPtr_->setInitialTransform(initPose.matrix());
   std::cout << "init pose: " << asString(initPose) << std::endl;
@@ -85,6 +84,7 @@ void SlamMapInitializer::initialize(const MapInitializingParameters &params) {
   }
 
 }
+
 void SlamMapInitializer::initializeWorker() {
 	ros::Rate r(20);
 	const bool isMergeScansIntoMap = slamPtr_->getMapperParameters().isMergeScansIntoMap_;
@@ -142,7 +142,7 @@ visualization_msgs::InteractiveMarker SlamMapInitializer::createInteractiveMarke
   interactiveMarker.name = "Initial Pose";
   interactiveMarker.scale = 0.5;
   interactiveMarker.description = "Right click to see options";
-  interactiveMarker.pose = mapInitializerParams_.initialMarkerPose_;
+	tf::poseEigenToMsg(mapInitializerParams_.initialPose_, interactiveMarker.pose);
 
   // create a mesh marker
   const auto arrowMarker = []() {

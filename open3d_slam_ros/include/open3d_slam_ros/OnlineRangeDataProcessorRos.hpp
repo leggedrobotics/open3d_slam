@@ -31,7 +31,6 @@ private:
 	 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg);
 
 	ros::Subscriber cloudSubscriber_;
-
 };
 
 } // namespace o3d_slam

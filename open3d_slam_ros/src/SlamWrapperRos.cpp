@@ -24,6 +24,7 @@
 #include "open3d_slam/constraint_builders.hpp"
 #include "open3d_slam/Odometry.hpp"
 #include "nav_msgs/Odometry.h"
+#include "open3d_slam_lua_io/parameter_loaders.hpp"
 
 #ifdef open3d_slam_ros_OPENMP_FOUND
 #include <omp.h>
@@ -36,7 +37,7 @@ using namespace o3d_slam::frames;
 }
 
 SlamWrapperRos::SlamWrapperRos(ros::NodeHandlePtr nh) :
-		BASE(), nh_(nh) {
+		BASE(), nh_(nh), tfListener_(tfBuffer_){
 	tfBroadcaster_.reset(new tf2_ros::TransformBroadcaster());
 	prevPublishedTimeScanToScan_ = fromUniversal(0);
 	prevPublishedTimeScanToMap_ = fromUniversal(0);
@@ -52,7 +53,7 @@ SlamWrapperRos::~SlamWrapperRos() {
 		visualizationWorker_.join();
 		std::cout << "Joined visualization worker \n";
 	}
-  if (odometryParams_.isPublishOdometryMsgs_ && odomPublisherWorker_.joinable()) {
+  if (params_.odometry_.isPublishOdometryMsgs_ && odomPublisherWorker_.joinable()) {
       odomPublisherWorker_.join();
     std::cout << "Joined odom publisher worker \n";
   }
@@ -65,7 +66,7 @@ void SlamWrapperRos::startWorkers() {
 	visualizationWorker_ = std::thread([this]() {
 		visualizationWorker();
 	});
-	if (odometryParams_.isPublishOdometryMsgs_){
+	if (params_.odometry_.isPublishOdometryMsgs_){
     odomPublisherWorker_ = std::thread([this]() {
       odomPublisherWorker();
     });
@@ -106,6 +107,57 @@ void SlamWrapperRos::odomPublisherWorker() {
             prevPublishedTimeScanToScanOdom_ = latestScanToScan;
         }
 
+		if(params_.odometry_.overwriteWithTf){
+			// Reads the odom to 
+			readAndAppendTfPose();
+		}
+
+		/*
+		if(isTimeValid(mapper_->lastMeasurementTimestamp_)){
+
+			if (!tfBuffer_.canTransform("odom", "lidar", o3d_slam::toRos(mapper_->lastMeasurementTimestamp_), ros::Duration(0.1))) {
+				ROS_WARN("Requested transform from frames LIDAR TO ODOM with target timestamp lidar cannot be found.");
+			}else{
+				// Goal: Set the initial guess of the registration.
+				Transform test;
+				oldTime_ = o3d_slam::toRos(mapper_->lastMeasurementTimestamp_);
+				if(o3d_slam::lookupTransform("odom", "lidar", o3d_slam::toRos(mapper_->lastMeasurementTimestamp_), tfBuffer_, test))
+				{
+					ros::Duration dur(o3d_slam::toRos(mapper_->lastMeasurementTimestamp_) - oldTime_);
+					if(dur!=ros::Duration(0.0)){
+					//	std::cout << "Tf Transform: " << asString(test) << "\n";
+					//	std::cout << "Stamp: " << o3d_slam::toRos(mapper_->lastMeasurementTimestamp_) << "\n";
+					}
+				}
+
+				geometry_msgs::PoseStamped poseStampedMsg;
+
+				const Eigen::Vector3d pos = test.translation();
+				Eigen::Quaterniond rot(test.rotation());
+				rot.normalize();
+
+				poseStampedMsg.pose.position.x = pos.x();
+				poseStampedMsg.pose.position.y = pos.y();
+				poseStampedMsg.pose.position.z = pos.z();
+				poseStampedMsg.pose.orientation.x = rot.x();
+				poseStampedMsg.pose.orientation.y = rot.y();
+				poseStampedMsg.pose.orientation.z = rot.z();
+				poseStampedMsg.pose.orientation.w = rot.w();
+
+				poseStampedMsg.header.stamp = o3d_slam::toRos(mapper_->lastMeasurementTimestamp_);
+				poseStampedMsg.header.frame_id = "lidar";
+				publishIfSubscriberExists(poseStampedMsg, tfTransformPublisher_);
+
+
+				//ros::Time timestamp = toRos(mapper_->lastMeasurementTimestamp_);
+            	//geometry_msgs::TransformStamped transformMsg = o3d_slam::toRos(test.matrix(), timestamp, "odom", "lidar");
+
+				//nav_msgs::Odometry odomMsg = getOdomMsg(transformMsg);
+				//publishIfSubscriberExists(transformMsg, tfTransformPublisher_);
+			}
+		}
+		*/
+
         const Time latestScanToMap = latestScanToMapRefinementTimestamp_;
         const bool isScanToMapAlreadyPublished = latestScanToMap == prevPublishedTimeScanToMapOdom_;
         if (!isScanToMapAlreadyPublished && mapper_->hasProcessedMeasurements()) {
@@ -115,11 +167,43 @@ void SlamWrapperRos::odomPublisherWorker() {
 						publishIfSubscriberExists(transformMsg, scan2mapTransformPublisher_);
             publishIfSubscriberExists(odomMsg, scan2mapOdomPublisher_);
             prevPublishedTimeScanToMapOdom_ = latestScanToMap;
+
+			// Also publish the posestamped for the sensor fusion pipeline.
+			geometry_msgs::PoseStamped poseStampedMsg = TransformToPoseStamped(T, latestScanToMap);
+			publishIfSubscriberExists(poseStampedMsg, lidarPoseInMapPublisher_);
+
         }
+
+		// Publish scan2map initial guess
+		if(!isScanToMapAlreadyPublished && mapper_->hasPriorProcessedMeasurements()){
+			const Transform T_prior = mapper_->getMapToRangeSensorPRIOR(latestScanToMap);
+						geometry_msgs::TransformStamped transformMsg_prior = getTransformMsg(T_prior, latestScanToMap);
+			nav_msgs::Odometry odomMsg_prior = getOdomMsg(transformMsg_prior);
+			publishIfSubscriberExists(odomMsg_prior, scan2mapOdomPriorPublisher_);
+		}
 
         ros::spinOnce();
         r.sleep();
     }
+}
+
+geometry_msgs::PoseStamped SlamWrapperRos::TransformToPoseStamped(const Transform& T, const Time& time){
+	geometry_msgs::PoseStamped poseStampedMsg;
+	const Eigen::Vector3d pos = T.translation();
+	Eigen::Quaterniond rot(T.rotation());
+	rot.normalize();
+
+	poseStampedMsg.pose.position.x = pos.x();
+	poseStampedMsg.pose.position.y = pos.y();
+	poseStampedMsg.pose.position.z = pos.z();
+	poseStampedMsg.pose.orientation.x = rot.x();
+	poseStampedMsg.pose.orientation.y = rot.y();
+	poseStampedMsg.pose.orientation.z = rot.z();
+	poseStampedMsg.pose.orientation.w = rot.w();
+
+	poseStampedMsg.header.stamp = o3d_slam::toRos(time);
+	poseStampedMsg.header.frame_id = o3d_slam::frames::mapFrame;
+	return poseStampedMsg;
 }
 
 void SlamWrapperRos::tfWorker() {
@@ -132,9 +216,11 @@ void SlamWrapperRos::tfWorker() {
 		if (!isAlreadyPublished && odometry_->hasProcessedMeasurements()) {
 			const Transform T = odometry_->getOdomToRangeSensor(latestScanToScan);
 			ros::Time timestamp = toRos(latestScanToScan);
-			o3d_slam::publishTfTransform(T.matrix(), timestamp, odomFrame, rangeSensorFrame, tfBroadcaster_.get());
-			o3d_slam::publishTfTransform(T.matrix(), timestamp, mapFrame, "raw_odom_o3d", tfBroadcaster_.get());
-			prevPublishedTimeScanToScan_ = latestScanToScan;
+			if(!params_.odometry_.overwriteWithTf){
+				o3d_slam::publishTfTransform(T.matrix(), timestamp, odomFrame, rangeSensorFrame, tfBroadcaster_.get());
+				o3d_slam::publishTfTransform(T.matrix(), timestamp, mapFrame, "raw_odom_o3d", tfBroadcaster_.get());
+				prevPublishedTimeScanToScan_ = latestScanToScan;
+			}
 		}
 
 		const Time latestScanToMap = latestScanToMapRefinementTimestamp_;
@@ -170,6 +256,31 @@ void SlamWrapperRos::visualizationWorker() {
 	}
 }
 
+void SlamWrapperRos::readAndAppendTfPose(){
+	
+	const Time queryTime = odometry_->mostUpToDateCloudStamp_;
+	if(isTimeValid(queryTime)){
+
+		if(odometry_->odomToRangeSensorBuffer_.has(queryTime)){
+			return;
+		}
+
+		if (!tfBuffer_.canTransform(o3d_slam::frames::odomFrame, o3d_slam::frames::rangeSensorFrame, o3d_slam::toRos(queryTime), ros::Duration(0.05))) {
+			ROS_WARN("Requested transform from frames ODOM to Lidar with target timestamp lidar cannot be found.");
+		}else{
+			// Goal: Set the initial guess of the registration.
+			Transform tfQueriedodometry;
+			if(o3d_slam::lookupTransform(o3d_slam::frames::odomFrame, o3d_slam::frames::rangeSensorFrame, o3d_slam::toRos(queryTime), tfBuffer_, tfQueriedodometry))
+			{
+				//todo
+				// Possibly put a exception block and revert to LiDAR odometry pose as prior.
+			}
+			std::cout << "Latest TF query time: " << o3d_slam::toSecondsSinceFirstMeasurement(queryTime) << std::endl;
+			odometry_->odomToRangeSensorBuffer_.push(queryTime, tfQueriedodometry);
+		}
+	}
+}
+
 void SlamWrapperRos::loadParametersAndInitialize() {
 
 	odometryInputPub_ = nh_->advertise<sensor_msgs::PointCloud2>("odom_input", 1, true);
@@ -186,15 +297,26 @@ void SlamWrapperRos::loadParametersAndInitialize() {
 	scan2scanTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("scan2scan_transform", 1, true);
 	scan2scanOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2scan_odometry", 1, true);
 	scan2mapTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("scan2map_transform", 1, true);
-  scan2mapOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2map_odometry", 1, true);
+	scan2mapOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2map_odometry", 1, true);
+	scan2mapOdomPriorPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2map_odometry_prior", 1, true);
+
+	lidarPoseInMapPublisher_ = nh_->advertise<geometry_msgs::PoseStamped>("o3d_slam_lidar_pose_in_map", 1, false);
 
 	//	auto &logger = open3d::utility::Logger::GetInstance();
 	//	logger.SetVerbosityLevel(open3d::utility::VerbosityLevel::Debug);
 
 	folderPath_ = ros::package::getPath("open3d_slam_ros") + "/data/";
 	mapSavingFolderPath_ = nh_->param<std::string>("map_saving_folder", folderPath_);
-	const std::string paramFile = nh_->param<std::string>("parameter_file_path", "");
-	setParameterFilePath(paramFile);
+
+//	const std::string paramFile = nh_->param<std::string>("parameter_file_path", "");
+//	setParameterFilePath(paramFile);
+//	io_yaml::loadParameters(paramFile, &params_);
+//
+	const std::string paramFolderPath = nh_->param<std::string>("parameter_folder_path", "");
+	const std::string paramFilename = nh_->param<std::string>("parameter_filename", "");
+	SlamParameters params;
+	io_lua::loadParameters(paramFolderPath, paramFilename, &params_);
+
 	BASE::loadParametersAndInitialize();
 }
 
@@ -214,14 +336,23 @@ bool SlamWrapperRos::saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request 
 
 void SlamWrapperRos::publishMapToOdomTf(const Time &time) {
 	const ros::Time timestamp = toRos(time);
-	o3d_slam::publishTfTransform(mapper_->getMapToOdom(time).matrix(), timestamp, mapFrame, odomFrame,
-			tfBroadcaster_.get());
-	o3d_slam::publishTfTransform(mapper_->getMapToRangeSensor(time).matrix(), timestamp, mapFrame, "raw_rs_o3d",
-			tfBroadcaster_.get());
+
+
+	if(!params_.odometry_.overwriteWithTf){
+		o3d_slam::publishTfTransform(mapper_->getMapToOdom(time).matrix(), timestamp, mapFrame, odomFrame,
+				tfBroadcaster_.get());
+		o3d_slam::publishTfTransform(mapper_->getMapToRangeSensor(time).matrix(), timestamp, mapFrame, "raw_rs_o3d",
+				tfBroadcaster_.get());
+	}else{
+		// This line has changed such that map is a child of odom.
+		o3d_slam::publishTfTransform(mapper_->getMapToOdom(time).matrix().inverse(), timestamp, odomFrame, mapFrame,
+				tfBroadcaster_.get());
+	}
+
 }
 
 void SlamWrapperRos::publishDenseMap(const Time &time) {
-	if (denseMapVisualizationUpdateTimer_.elapsedMsec() < visualizationParameters_.visualizeEveryNmsec_) {
+	if (denseMapVisualizationUpdateTimer_.elapsedMsec() < params_.visualization_.visualizeEveryNmsec_) {
 		return;
 	}
 	const auto denseMap = mapper_->getActiveSubmap().getDenseMapCopy(); //copy
@@ -230,7 +361,7 @@ void SlamWrapperRos::publishDenseMap(const Time &time) {
 }
 
 void SlamWrapperRos::publishMaps(const Time &time) {
-	if (visualizationUpdateTimer_.elapsedMsec() < visualizationParameters_.visualizeEveryNmsec_
+	if (visualizationUpdateTimer_.elapsedMsec() < params_.visualization_.visualizeEveryNmsec_
 			&& !isVisualizationFirstTime_) {
 		return;
 	}
@@ -238,7 +369,7 @@ void SlamWrapperRos::publishMaps(const Time &time) {
 	const ros::Time timestamp = toRos(time);
 	{
 		PointCloud map = mapper_->getAssembledMapPointCloud();
-		voxelize(visualizationParameters_.assembledMapVoxelSize_, &map);
+		voxelize(params_.visualization_.assembledMapVoxelSize_, &map);
 		o3d_slam::publishCloud(map, o3d_slam::frames::mapFrame, timestamp, assembledMapPub_);
 	}
 	o3d_slam::publishCloud(mapper_->getPreprocessedScan(), o3d_slam::frames::rangeSensorFrame, timestamp,
@@ -248,7 +379,7 @@ void SlamWrapperRos::publishMaps(const Time &time) {
 	if (submapsPub_.getNumSubscribers() > 0) {
 		open3d::geometry::PointCloud cloud;
 		o3d_slam::assembleColoredPointCloud(mapper_->getSubmaps(), &cloud);
-		voxelize(visualizationParameters_.submapVoxelSize_, &cloud);
+		voxelize(params_.visualization_.submapVoxelSize_, &cloud);
 		o3d_slam::publishCloud(cloud, o3d_slam::frames::mapFrame, timestamp, submapsPub_);
 	}
 

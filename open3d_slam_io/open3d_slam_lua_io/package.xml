@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>open3d_slam_lua_io</name>
+  <version>0.0.0</version>
+  <description>Range sensor based mapping</description>
+
+  <maintainer email="jelavice@ethz.ch">Edo Jelavic</maintainer>
+
+
+  <!-- One license tag required, multiple allowed, one license per tag -->
+  <!-- Commonly used license strings: -->
+  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
+  <license>TODO</license>
+
+
+  <author email="jelavice@ethz.ch">Edo Jelavic</author>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>lua_parameter_dictionary</depend>
+  <depend>open3d_slam</depend>
+  <depend>rospack</depend>
+
+</package>

@@ -50,6 +50,9 @@ void Mapper::loopClosureUpdate(const Transform &loopClosureCorrection) {
 bool Mapper::hasProcessedMeasurements() const {
 	return !mapToRangeSensorBuffer_.empty();
 }
+bool Mapper::hasPriorProcessedMeasurements() const {
+	return !mapToRangeSensorPRIORBuffer_.empty();
+}
 
 void Mapper::update(const MapperParameters &p) {
 	scan2MapReg_ = scanToMapRegistrationFactory(p);
@@ -64,6 +67,10 @@ Transform Mapper::getMapToOdom(const Time &timestamp) const {
 }
 Transform Mapper::getMapToRangeSensor(const Time &timestamp) const {
 	return getTransform(timestamp, mapToRangeSensorBuffer_);
+}
+
+Transform Mapper::getMapToRangeSensorPRIOR(const Time &timestamp) const {
+	return getTransform(timestamp, mapToRangeSensorPRIORBuffer_);
 }
 
 const SubmapCollection& Mapper::getSubmaps() const {
@@ -100,6 +107,8 @@ const ScanToMapRegistration &Mapper::getScanToMapRegistration() const{
 }
 
 bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &timestamp) {
+
+	latestCloudTimestamp_ = timestamp;
 	submaps_->setMapToRangeSensor(mapToRangeSensor_);
 
 	//insert first scan
@@ -136,8 +145,14 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		const Transform odometryMotion = odomToRangeSensorPrev.inverse()*odomToRangeSensor;
 		mapToRangeSensorEstimate = mapToRangeSensorPrev_*odometryMotion ;
 	}
+
+	// Debug Purposes, keep a prior buffer.
+	mapToRangeSensorPRIORBuffer_.push(timestamp, mapToRangeSensorEstimate);
+
 	isIgnoreOdometryPrediction_ = false;
 	const ProcessedScans processed = scan2MapReg_->processForScanMatchingAndMerging(rawScan, mapToRangeSensor_);
+
+	// Where the scan to map registration API
 	const RegistrationResult result = scan2MapReg_->scanToMapRegistration(*processed.match_, submaps_->getActiveSubmap(),
 			mapToRangeSensor_, mapToRangeSensorEstimate);
 	preProcessedScan_ = *processed.match_;

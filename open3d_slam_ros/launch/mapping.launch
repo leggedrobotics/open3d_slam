@@ -3,9 +3,9 @@
 <launch>
 
 	<arg name="launch_prefix" default="" doc="gdb -ex run --args"/>
-	<arg name="launch_rviz" default="false" />
-	<arg name="cloud_topic" default="/rslidar_points" />
-	<arg name="parameter_filename" default="params_robosense_rs16.yaml"/>
+	<arg name="launch_rviz" default="true" />
+	<arg name="cloud_topic" default="/point_cloud_filter/lidar/point_cloud_filtered" />
+	<arg name="parameter_filename" default="param_velodyne_puck16.lua"/>
 	<arg name="parameter_folder_path" default="$(find open3d_slam_ros)/param/"/>
 	<arg name="map_saving_folder" default="$(find open3d_slam_ros)/data/maps/"/>
 	<arg name="num_accumulated_range_data" default="1"/>
@@ -17,20 +17,23 @@
 	<!-- END OF ARGS -->	
 
 	<param name="/use_sim_time" value="$(arg use_sim_time)" />
-	<arg name="parameter_file_path" 
-		default="$(arg parameter_folder_path)/$(arg parameter_filename)" /> 
 			
 	<node name="mapping_node" pkg="open3d_slam_ros"
 		type="mapping_node" output="screen" launch-prefix="$(arg launch_prefix)">
 
 		<param name="cloud_topic" type="string" value="$(arg cloud_topic)" />
-		<param name="parameter_file_path" type="string" value="$(arg parameter_file_path)" />
+		<param name="parameter_folder_path" type="string" value="$(arg parameter_folder_path)" />
+		<param name="parameter_filename" type="string" value="$(arg parameter_filename)" />
 		<param name="num_accumulated_range_data" value="$(arg num_accumulated_range_data)"/>
 		<param name="is_read_from_rosbag" value="$(arg is_read_from_rosbag)"/>
 		<param name="rosbag_filepath" value="$(arg rosbag_filepath)"/>
 		<param name="map_saving_folder" value="$(arg map_saving_folder)"/>
 	</node>
 
+  <node pkg="localization_manager_ros" type="localization_manager_ros_node" name="localization_manager" respawn="true" output="screen">
+    <rosparam command="load" file="/home/ttuna/open3d_slam_ws/src/frame_connectors.yaml"/>
+    <rosparam command="load" file="/home/ttuna/open3d_slam_ws/src/localization_manager.yaml" />
+  </node>
 
 	<include
 		file="$(find open3d_slam_ros)/launch/vis.launch"

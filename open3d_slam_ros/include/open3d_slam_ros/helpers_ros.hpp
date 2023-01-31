@@ -41,7 +41,7 @@ geometry_msgs::TransformStamped toRos(const Eigen::Matrix4d &Mat, const ros::Tim
 void publishTfTransform(const Eigen::Matrix4d &Mat, const ros::Time &time, const std::string &frame,
 		const std::string &childFrame, tf2_ros::TransformBroadcaster *broadcaster);
 bool lookupTransform(const std::string &target_frame, const std::string &source_frame, const ros::Time &time,const tf2_ros::Buffer &tfBuffer,
-		Eigen::Isometry3d *transform);
+		Eigen::Isometry3d& transform);
 
 ros::Time toRos(Time time);
 

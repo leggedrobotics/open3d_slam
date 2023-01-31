@@ -203,6 +203,7 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 		adjacencyMatrix_.addEdge(id1, id2);
 //		std::cout << "Adding edge between " << id1 << " and " << id2 << std::endl;
 		insertBufferedScans(&submaps_.at(activeSubmapIdx_));
+		assert_true(!submaps_.at(activeSubmapIdx_).isEmpty(), "submap should not be empty after switching");
 	} else {
 		submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, true);
 	}
@@ -216,8 +217,8 @@ void SubmapCollection::setParameters(const MapperParameters &p) {
 		submap.setParameters(p);
 	}
 	placeRecognition_.setParameters(p);
-	assert_gt<size_t>(params_.numScansOverlap_, 0, "Num scan overlap has to be > 0");
-	overlapScansBuffer_.set_size_limit(params_.numScansOverlap_);
+	assert_gt<size_t>(params_.submaps_.numScansOverlap_, 0, "Num scan overlap has to be > 0");
+	overlapScansBuffer_.set_size_limit(params_.submaps_.numScansOverlap_);
 }
 
 void SubmapCollection::computeFeatures(const TimestampedSubmapIds &finishedSubmapIds) {

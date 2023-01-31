@@ -41,19 +41,24 @@ public:
 	MapperParameters *getParametersPtr();
 	Transform getMapToOdom(const Time &timestamp) const;
 	Transform getMapToRangeSensor(const Time &timestamp) const;
+	Transform getMapToRangeSensorPRIOR(const Time &timestamp) const;
 	const TransformInterpolationBuffer& getMapToRangeSensorBuffer() const;
 	const PointCloud& getPreprocessedScan() const;
 	const ScanToMapRegistration &getScanToMapRegistration() const;
 
 	void loopClosureUpdate(const Transform &loopClosureCorrection);
 	bool hasProcessedMeasurements() const;
+	bool hasPriorProcessedMeasurements() const;
 	bool addRangeMeasurement(const PointCloud &cloud, const Time &timestamp);
+
+	Time lastMeasurementTimestamp_;
+	Time latestCloudTimestamp_;
+	TransformInterpolationBuffer mapToRangeSensorPRIORBuffer_;
 	
 private:
 	void update(const MapperParameters &p);
 	void checkTransformChainingAndPrintResult(bool isCheckTransformChainingAndPrintResult) const;
 
-	Time lastMeasurementTimestamp_;
 	Transform mapToRangeSensor_ = Transform::Identity();
 	Transform mapToRangeSensorPrev_ = Transform::Identity();
 	Transform mapToRangeSensorLastScanInsertion_ = Transform::Identity();

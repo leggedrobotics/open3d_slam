@@ -11,7 +11,10 @@
 #include <ros/package.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 #include <nav_msgs/Odometry.h>
+#include <geometry_msgs/PoseStamped.h>
 
 #include "open3d_slam/SlamWrapper.hpp"
 #include "open3d_slam_msgs/SaveMap.h"
@@ -30,6 +33,9 @@ public:
 	bool saveMapCallback(open3d_slam_msgs::SaveMap::Request &req, open3d_slam_msgs::SaveMap::Response &res);
 	bool saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request &req,
 			open3d_slam_msgs::SaveSubmaps::Response &res);
+
+	void readAndAppendTfPose();
+
 	void loadParametersAndInitialize() override;
 	void startWorkers() override;
 
@@ -43,11 +49,17 @@ private:
 	void publishDenseMap(const Time &time);
 	void publishMapToOdomTf(const Time &time);
 
+	// Given a transform T, and time converts into poseStamped msgs.
+	geometry_msgs::PoseStamped TransformToPoseStamped(const Transform& T, const Time& time);
+
 	ros::NodeHandlePtr nh_;
+	ros::Time oldTime_;
 	std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster_;
+	tf2_ros::Buffer tfBuffer_;
+	tf2_ros::TransformListener tfListener_;
 	ros::Publisher odometryInputPub_, mappingInputPub_, submapOriginsPub_, assembledMapPub_, denseMapPub_,
 			submapsPub_;
-	ros::Publisher scan2scanTransformPublisher_, scan2scanOdomPublisher_, scan2mapTransformPublisher_, scan2mapOdomPublisher_;
+	ros::Publisher scan2scanTransformPublisher_, scan2scanOdomPublisher_, scan2mapTransformPublisher_, scan2mapOdomPublisher_, scan2mapOdomPriorPublisher_, lidarPoseInMapPublisher_;
 	ros::ServiceServer saveMapSrv_, saveSubmapsSrv_;
 	bool isVisualizationFirstTime_ = true;
 	std::thread tfWorker_, visualizationWorker_, odomPublisherWorker_;

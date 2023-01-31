@@ -33,7 +33,12 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 	if (cloudPrev_.IsEmpty()) {
 		auto preProcessed = preprocess(cloud);
 		cloudPrev_ = *preProcessed;
-		odomToRangeSensorBuffer_.push(timestamp, odomToRangeSensorCumulative_);
+		if (!params_.overwriteWithTf)
+		{
+			odomToRangeSensorBuffer_.push(timestamp, odomToRangeSensorCumulative_);
+		}
+		
+		
 		lastMeasurementTimestamp_ = timestamp;
 		return true;
 	}
@@ -73,7 +78,10 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 	}
 
 	cloudPrev_ = std::move(*preProcessed);
-	odomToRangeSensorBuffer_.push(timestamp, odomToRangeSensorCumulative_);
+	if (!params_.overwriteWithTf)
+	{
+		odomToRangeSensorBuffer_.push(timestamp, odomToRangeSensorCumulative_);
+	}
 	lastMeasurementTimestamp_ = timestamp;
 	return isOdomOkay;
 }

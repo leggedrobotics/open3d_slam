@@ -5,7 +5,7 @@
 	<arg name="launch_prefix" default="" doc="gdb -ex run --args"/>
 	<arg name="launch_rviz" default="true" />
 	<arg name="cloud_topic" default="/rslidar_points" />
-	<arg name="parameter_filename" default="params_robosense_rs16.yaml"/>
+	<arg name="parameter_filename" default="param_robosense_rs16.lua"/>
 	<arg name="parameter_folder_path" default="$(find open3d_slam_ros)/param/"/>
 	<arg name="map_saving_folder" default="$(find open3d_slam_ros)/data/maps/"/>
 	<arg name="num_accumulated_range_data" default="1"/>
@@ -19,7 +19,7 @@
 	<!-- END OF ARGS -->	
 		
 	<arg name="rosbag_full_path" 
-		default="$(arg bag_folder_path)/$(arg bag_filename)" /> 
+		default="/media/ttuna/samsung_1T_hdd/AOW_tt_ar_localization/2023-01-09-17-41-40.bag" /> 
 
 	<include file="$(find open3d_slam_ros)/launch/mapping.launch">
 		<arg name="cloud_topic" value="$(arg cloud_topic)"/>

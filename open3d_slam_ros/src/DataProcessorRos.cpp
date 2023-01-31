@@ -17,7 +17,7 @@ DataProcessorRos::DataProcessorRos(ros::NodeHandlePtr nh) :
 		nh_(nh) {
 
 }
-;
+
 
 void DataProcessorRos::initCommonRosStuff() {
 	cloudTopic_ = nh_->param<std::string>("cloud_topic", "");
@@ -60,6 +60,7 @@ void DataProcessorRos::accumulateAndProcessRangeData(const PointCloud &cloud, co
 
 	numAccumulatedRangeDataCount_ = 0;
 	accumulatedCloud_.Clear();
+
 }
 
 } // namespace o3d_slam
