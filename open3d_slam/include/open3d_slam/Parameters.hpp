@@ -169,7 +169,7 @@ struct MapperParameters {
 	ScanToMapRegistrationParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
 	double minMovementBetweenMappingSteps_ = 0.0;
-	bool isIgnoreMinRefinementFitness_ = false;
+	bool isIgnoreMinRefinementFitness_ = false; // Dangerously kept secret. 
 	MapBuilderParameters mapBuilder_;
 	MapBuilderParameters denseMapBuilder_;
 	bool isBuildDenseMap_ = true;

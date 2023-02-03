@@ -30,10 +30,12 @@
 		<param name="map_saving_folder" value="$(arg map_saving_folder)"/>
 	</node>
 
+	<!--
   <node pkg="localization_manager_ros" type="localization_manager_ros_node" name="localization_manager" respawn="true" output="screen">
     <rosparam command="load" file="/home/ttuna/open3d_slam_ws/src/frame_connectors.yaml"/>
     <rosparam command="load" file="/home/ttuna/open3d_slam_ws/src/localization_manager.yaml" />
   </node>
+  -->
 
 	<include
 		file="$(find open3d_slam_ros)/launch/vis.launch"
