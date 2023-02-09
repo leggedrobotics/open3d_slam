@@ -107,10 +107,10 @@ void SlamWrapperRos::odomPublisherWorker() {
             prevPublishedTimeScanToScanOdom_ = latestScanToScan;
         }
 
-		if(params_.odometry_.overwriteWithTf){
+		//if(params_.odometry_.overwriteWithTf){
 			// Reads the odom to 
-			readAndAppendTfPose();
-		}
+		//	readAndAppendTfPose();
+		//}
 
 		/*
 		if(isTimeValid(mapper_->lastMeasurementTimestamp_)){
@@ -216,19 +216,19 @@ void SlamWrapperRos::tfWorker() {
 		if (!isAlreadyPublished && odometry_->hasProcessedMeasurements()) {
 			const Transform T = odometry_->getOdomToRangeSensor(latestScanToScan);
 			ros::Time timestamp = toRos(latestScanToScan);
-			if(!params_.odometry_.overwriteWithTf){
-				o3d_slam::publishTfTransform(T.matrix(), timestamp, odomFrame, rangeSensorFrame, tfBroadcaster_.get());
-				o3d_slam::publishTfTransform(T.matrix(), timestamp, mapFrame, "raw_odom_o3d", tfBroadcaster_.get());
-				prevPublishedTimeScanToScan_ = latestScanToScan;
-			}
+			//if(!params_.odometry_.overwriteWithTf){
+			//	o3d_slam::publishTfTransform(T.matrix(), timestamp, odomFrame, rangeSensorFrame, tfBroadcaster_.get());
+			//	o3d_slam::publishTfTransform(T.matrix(), timestamp, mapFrame, "raw_odom_o3d", tfBroadcaster_.get());
+			//	prevPublishedTimeScanToScan_ = latestScanToScan;
+			//}
 		}
 
 		const Time latestScanToMap = latestScanToMapRefinementTimestamp_;
 		const bool isScanToMapAlreadyPublished = latestScanToMap == prevPublishedTimeScanToMap_;
-		if (!isScanToMapAlreadyPublished && mapper_->hasProcessedMeasurements()) {
-			publishMapToOdomTf(latestScanToMap);
-			prevPublishedTimeScanToMap_ = latestScanToMap;
-		}
+		//if (!isScanToMapAlreadyPublished && mapper_->hasProcessedMeasurements()) {
+		//	publishMapToOdomTf(latestScanToMap);
+		//	prevPublishedTimeScanToMap_ = latestScanToMap;
+		//}
 
 		ros::spinOnce();
 		r.sleep();

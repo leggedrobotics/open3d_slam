@@ -62,6 +62,8 @@ public:
 	std::string getParameterFilePath() const;
 	std::pair<PointCloud,Time> getLatestRegisteredCloudTimestampPair() const;
 
+	void addOdometryPrior(const Time &queryTime, const Transform &transform);
+
 	void setDirectoryPath(const std::string &path);
 	void setMapSavingDirectoryPath(const std::string &path);
 	void setParameterFilePath(const std::string &path);
@@ -74,6 +76,15 @@ public:
 
 	std::shared_ptr<LidarOdometry> odometry_;
 	std::shared_ptr<Mapper> mapper_;
+
+	bool checkIfodomToRangeSensorBufferHasTime(const Time &queryTime);
+
+	Time latestScanToMapRefinementTimestamp_;
+	Transform latestScanToMapRefinedPose_;
+	bool isNewScan2MapRefinementAvailable_{false};
+
+	Transform getLatestOdometryPose();
+	SlamParameters params_;
 
 private:
 	void checkIfOptimizedGraphAvailable();
@@ -93,7 +104,7 @@ protected:
 	ThreadSafeBuffer<TimestampedSubmapId> loopClosureCandidates_;
 
 	// parameters
-	SlamParameters params_;
+	
 //	MapperParameters mapperParams_;
 //	OdometryParameters odometryParams_;
 //	VisualizationParameters visualizationParameters_;
@@ -113,7 +124,7 @@ protected:
 	// timing
 	Timer mappingStatisticsTimer_,odometryStatisticsTimer_, visualizationUpdateTimer_, denseMapVisualizationUpdateTimer_, denseMapStatiscticsTimer_;
 	Timer mapperOnlyTimer_;
-	Time latestScanToMapRefinementTimestamp_;
+	
 	Time latestScanToScanRegistrationTimestamp_;
 
 	// bookkeeping

@@ -27,7 +27,7 @@ public:
 	void accumulateAndProcessRangeData(const PointCloud &cloud, const Time &timestamp);
 	void initCommonRosStuff();
 	std::shared_ptr<SlamWrapper> getSlamPtr();
-
+	std::shared_ptr<SlamWrapper> slam_;
 
 protected:
 	size_t numAccumulatedRangeDataCount_ = 0;
@@ -36,7 +36,6 @@ protected:
 	PointCloud accumulatedCloud_;
 	ros::Publisher rawCloudPub_;
 	std::string cloudTopic_;
-	std::shared_ptr<SlamWrapper> slam_;
 	ros::NodeHandlePtr nh_;
 
 };

@@ -105,6 +105,11 @@ size_t SlamWrapper::getMappingBufferSizeLimit() const {
 	return mappingBuffer_.size_limit();
 }
 
+Transform SlamWrapper::getLatestOdometryPose(){
+
+	return getTransform(latestScanToMapRefinementTimestamp_, odometry_->getBuffer());
+}
+
 void SlamWrapper::addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp) {
 	updateFirstMeasurementTime(timestamp);
 	odometry_->mostUpToDateCloudStamp_ = timestamp;
@@ -302,6 +307,15 @@ void SlamWrapper::odometryWorker() {
 	} // end while
 
 }
+
+bool SlamWrapper::checkIfodomToRangeSensorBufferHasTime(const Time &queryTime){
+	return odometry_->odomToRangeSensorBuffer_.has(queryTime);
+}
+
+void SlamWrapper::addOdometryPrior(const Time &queryTime, const Transform &transform){
+	odometry_->odomToRangeSensorBuffer_.push(queryTime, transform);
+}
+
 void SlamWrapper::mappingWorker() {
 	while (isRunWorkers_) {
 		if (mappingBuffer_.empty()) {
@@ -336,6 +350,7 @@ void SlamWrapper::mappingWorker() {
 		mapperOnlyTimer_.addMeasurementMsec(timeElapsed);
 
 		if (mappingResult) {
+			isNewScan2MapRefinementAvailable_=true;
 			RegisteredPointCloud registeredCloud;
 			registeredCloud.submapId_ = activeSubmapIdx;
 			registeredCloud.raw_ = measurement;
@@ -344,6 +359,7 @@ void SlamWrapper::mappingWorker() {
 			registeredCloud.targetFrame_ = frames::mapFrame;
 			registeredCloudBuffer_.push(registeredCloud);
 			latestScanToMapRefinementTimestamp_ = measurement.time_;
+			latestScanToMapRefinedPose_ = mapper_->getMapToRangeSensor(measurement.time_);
 		}
 
 		if (params_.mapper_.isAttemptLoopClosures_) {
