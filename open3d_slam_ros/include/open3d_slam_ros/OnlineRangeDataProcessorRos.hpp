@@ -9,6 +9,7 @@
 #include <memory>
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
 #include "open3d_slam/SlamWrapper.hpp"
@@ -44,12 +45,15 @@ public:
 	nav_msgs::Odometry getOdomMsg(const geometry_msgs::TransformStamped &transformMsg);
 	geometry_msgs::TransformStamped getTransformMsg(const Transform &T, const ros::Time &timestamp, const std::string parent, const std::string child);
 
+	void poseStampedPriorCallback(const geometry_msgs::PoseStampedConstPtr& odometryPose);
+
 private:
 	 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg);
 
 	ros::Subscriber cloudSubscriber_;
+	ros::Subscriber priorPoseSubscriber_;
 	mutable std::mutex posePublishingMutex_;
-	std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster_;
+	std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster2_;
 };
 
 } // namespace o3d_slam

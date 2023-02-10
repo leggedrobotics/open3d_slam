@@ -112,7 +112,7 @@ Transform TransformInterpolationBuffer::lookup(const Time &time) const {
 //  std::cout << "right time: " << toSecondsSinceFirstMeasurement(getMeasurement->time_) << "\n";
 //  std::cout << "query time: " << toSecondsSinceFirstMeasurement(time) << "\n \n";
 //  std::cout << "times in buffer: \n";
-  printTimesCurrentlyInBuffer();
+//  printTimesCurrentlyInBuffer();
 
 	return interpolate(*start, *getMeasurement, time).transform_;
 }
@@ -151,7 +151,7 @@ size_t TransformInterpolationBuffer::size() const {
 
 void TransformInterpolationBuffer::printTimesCurrentlyInBuffer() const {
 	for (auto it = transforms_.cbegin(); it != transforms_.cend(); ++it) {
-		std::cout << toSecondsSinceFirstMeasurement(it->time_) << std::endl;
+		std::cout << "Seconds since first measurements:  " << toSecondsSinceFirstMeasurement(it->time_) << std::endl;
 	}
 }
 

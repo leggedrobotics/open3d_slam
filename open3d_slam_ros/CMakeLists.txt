@@ -15,6 +15,7 @@ set(SRC_FILES
   src/DataProcessorRos.cpp
   src/RosbagRangeDataProcessorRos.cpp
   src/Color.cpp
+  src/TrajectoryAlignment.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES

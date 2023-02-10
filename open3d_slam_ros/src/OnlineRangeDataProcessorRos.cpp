@@ -13,6 +13,11 @@
 #include "open3d_slam/time.hpp"
 #include "open3d_slam/frames.hpp"
 #include "open3d_slam_ros/SlamWrapperRos.hpp"
+#include "open3d_slam/output.hpp"
+
+#include <tf2/convert.h>
+#include <tf2_eigen/tf2_eigen.h>
+
 namespace o3d_slam {
 
 OnlineRangeDataProcessorRos::OnlineRangeDataProcessorRos(ros::NodeHandlePtr nh) :
@@ -30,6 +35,7 @@ void OnlineRangeDataProcessorRos::initialize() {
 void OnlineRangeDataProcessorRos::startProcessing() {
 	slam_->startWorkers();
 	cloudSubscriber_ = nh_->subscribe(cloudTopic_, 1, &OnlineRangeDataProcessorRos::cloudCallback,this);
+	priorPoseSubscriber_ = nh_->subscribe("/rowesys/estimator/pose_fused", 1, &OnlineRangeDataProcessorRos::poseStampedPriorCallback,this);
 	
 	posePublishingTimer_ = nh_->createTimer(ros::Duration(0.01), &OnlineRangeDataProcessorRos::posePublisherTimerCallback, this);
 
@@ -46,11 +52,36 @@ void OnlineRangeDataProcessorRos::startProcessing() {
 	slam_->stopWorkers();
 }
 
+void OnlineRangeDataProcessorRos::poseStampedPriorCallback(const geometry_msgs::PoseStampedConstPtr& odometryPose) {
+
+
+Transform transform;
+
+geometry_msgs::TransformStamped transformStamped;
+
+transformStamped.child_frame_id = o3d_slam::frames::rangeSensorFrame;
+transformStamped.header.frame_id = o3d_slam::frames::odomFrame;
+transformStamped.header.stamp = odometryPose->header.stamp;
+transformStamped.transform.translation.x = odometryPose->pose.position.x;
+transformStamped.transform.translation.y = odometryPose->pose.position.y;
+transformStamped.transform.translation.z = odometryPose->pose.position.z;
+
+transformStamped.transform.rotation.x = odometryPose->pose.orientation.x;
+transformStamped.transform.rotation.y = odometryPose->pose.orientation.y;
+transformStamped.transform.rotation.z = odometryPose->pose.orientation.z;
+transformStamped.transform.rotation.w = odometryPose->pose.orientation.w;
+
+transform = tf2::transformToEigen(transformStamped);
+
+slam_->addOdometryPrior(fromRos(odometryPose->header.stamp), transform);
+
+}
+
 void OnlineRangeDataProcessorRos::processMeasurement(const PointCloud &cloud, const Time &timestamp) {
 
 	if(slam_->params_.odometry_.overwriteWithTf){
 	// Get and set the point cloud registration prior from the tf.
-	getAndSetTfPrior(timestamp);
+	//getAndSetTfPrior(timestamp);
 	}
 
 	// Add the scan measurement
@@ -78,7 +109,7 @@ nav_msgs::Odometry OnlineRangeDataProcessorRos::getOdomMsg(const geometry_msgs::
 }
 
 void OnlineRangeDataProcessorRos::posePublisherTimerCallback(const ros::TimerEvent&){
-
+	
 	if(!slam_->isNewScan2MapRefinementAvailable_ || !slam_->params_.odometry_.overwriteWithTf){
 		return;
 	}
@@ -99,9 +130,7 @@ void OnlineRangeDataProcessorRos::posePublisherTimerCallback(const ros::TimerEve
 	}
 
 
-
 	Transform tfQueriedodometry;
-
 
 	if(o3d_slam::lookupTransform(o3d_slam::frames::odomFrame, o3d_slam::frames::rangeSensorFrame, ros::Time::now(), tfBuffer_, tfQueriedodometry))
 	{
@@ -122,10 +151,14 @@ void OnlineRangeDataProcessorRos::posePublisherTimerCallback(const ros::TimerEve
 		// The consolidated mapToOdom calculation. Expected to be more accurate if scan2map registration takes long.
 		Transform mapToOdomConsolidated = consolidatedMapToRangeSensor * tfQueriedodometry.inverse();
 
-		// Publish the slow but accurate map2odom.  Odom is the parent, map is the child.
-		o3d_slam::publishTfTransform(mapToOdom.matrix().inverse(), ros::Time::now(), o3d_slam::frames::odomFrame, o3d_slam::frames::mapFrame,
-				tfBroadcaster_.get());
+		std::cout << "Consolidated mapToOdom: " << o3d_slam::asString(mapToOdomConsolidated) << "\n";
+		std::cout << "mapToOdom: " << o3d_slam::asString(mapToOdom) << "\n";
 
+		
+		// Publish the slow but accurate map2odom.  Odom is the parent, map is the child.
+		o3d_slam::publishTfTransform(mapToOdom.matrix().inverse(),toRos(latestTransformTime), o3d_slam::frames::odomFrame, o3d_slam::frames::mapFrame,
+				tfBroadcaster2_.get());
+		/*
 		// Publish the fast but propagated map2odom.  Odom is the parent, map_consolidated is the child.
 		o3d_slam::publishTfTransform(mapToOdomConsolidated.matrix().inverse(), ros::Time::now(), o3d_slam::frames::odomFrame, "map_consolidated",
 				tfBroadcaster_.get());
@@ -134,18 +167,20 @@ void OnlineRangeDataProcessorRos::posePublisherTimerCallback(const ros::TimerEve
 		nav_msgs::Odometry consolidatedScan2mapodomMsg = getOdomMsg(consolidatedScan2maptransformMsg);
 		//publishIfSubscriberExists(consolidatedScan2maptransformMsg, consolidatedScan2mapTransformPublisher_);
 		publishIfSubscriberExists(consolidatedScan2mapodomMsg, consolidatedScan2mapOdomPublisher_);
+		*/
+		
 
 	}else{
 		ROS_WARN("TF did not provide prior. Tf based transforms not published.");
 	}
-
+	
 
 	// The getTransformMsg function has hard coded frame care.
 	geometry_msgs::TransformStamped scan2maptransformMsg = getTransformMsg(mapToRangeSensorTransform, ros::Time::now(), o3d_slam::frames::mapFrame,  o3d_slam::frames::rangeSensorFrame);
 	nav_msgs::Odometry scan2mapodomMsg = getOdomMsg(scan2maptransformMsg);
 	publishIfSubscriberExists(scan2maptransformMsg, scan2mapTransformPublisher_);
 	publishIfSubscriberExists(scan2mapodomMsg, scan2mapOdomPublisher_);
-
+	
 };
 
 
