@@ -171,6 +171,9 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 			return false;
 	}
 
+	// Note: possibly, use the best guess mapTORangeSensorEstimate if the result is not optima.
+	// One option to check if sensorMotion.norm() is too large.
+
 	// update transforms
 	mapToRangeSensor_.matrix() = result.transformation_;
 	mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);

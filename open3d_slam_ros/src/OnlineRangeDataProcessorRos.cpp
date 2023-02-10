@@ -37,20 +37,19 @@ void OnlineRangeDataProcessorRos::initialize() {
 void OnlineRangeDataProcessorRos::startProcessing() {
 	slam_->startWorkers();
 	cloudSubscriber_ = nh_->subscribe(cloudTopic_, 1, &OnlineRangeDataProcessorRos::cloudCallback,this);
+
+	// Relavent pose subscriber
 	priorPoseSubscriber_ = nh_->subscribe("/rowesys/estimator/pose_fused", 1, &OnlineRangeDataProcessorRos::poseStampedPriorCallback,this);
 	
 	posePublishingTimer_ = nh_->createTimer(ros::Duration(0.01), &OnlineRangeDataProcessorRos::posePublisherTimerCallback, this);
 
-	//registeredEnuCloudPublisherTimer_ = nh_->createTimer(ros::Duration(0.1), &OnlineRangeDataProcessorRos::registeredCloudPublisherCallback, this);
+	// Service to call to get the transformation.
 	alignWithWorld_ = nh_->advertiseService("align_world", &OnlineRangeDataProcessorRos::alignWithWorld, this);
 
-	registeredEnuCloud_ = nh_->advertise<sensor_msgs::PointCloud2>("registered_enu_cloud", 1, true);
+	//registeredEnuCloud_ = nh_->advertise<sensor_msgs::PointCloud2>("registered_enu_cloud", 1, true);
 
 	lidarPath_ = nh_->advertise<nav_msgs::Path>("/lidarPath", 1);
 	gnssPath_ = nh_->advertise<nav_msgs::Path>("/gnssPath", 1);
-
-	//before_lidarPath_ = nh_->advertise<nav_msgs::Path>("/before_lidarPath", 1);
-	//before_gnssPath_ = nh_->advertise<nav_msgs::Path>("/before_gnssPath", 1);
 
 	scan2scanTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("tt_scan2scan_transform", 1, true);
 	scan2scanOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("tt_scan2scan_odometry", 1, true);
@@ -68,27 +67,6 @@ bool OnlineRangeDataProcessorRos::alignWithWorld(std_srvs::EmptyRequest& /*req*/
 
 	auto tLidar = trajectoryAlignmentHandlerPtr_->getLidarTrajectory();
 	auto tGnss = trajectoryAlignmentHandlerPtr_->getGnssTrajectory();
-
-	/*
-	nav_msgs::Path path_before;
-	geometry_msgs::PoseStamped poseStamped_before;
-	for (auto pose : tLidar) {
-		Eigen::Vector4d transformablePoint;
-		transformablePoint.row(0).col(0) = pose.second.row(0).col(0);
-		transformablePoint.row(1).col(0) = pose.second.row(1).col(0);
-		transformablePoint.row(2).col(0) = pose.second.row(2).col(0);
-		transformablePoint.row(3).col(0) << 1.0;
-
-		poseStamped_before.header.stamp.sec = int(int(pose.first) / 1e9);
-		poseStamped_before.header.stamp.nsec = int(int(pose.first) % int(1e9));
-		poseStamped_before.pose.position.x = transformablePoint.row(0).col(0).value();
-		poseStamped_before.pose.position.y = transformablePoint.row(1).col(0).value();
-		poseStamped_before.pose.position.z = transformablePoint.row(2).col(0).value();
-
-		path_before.poses.push_back(poseStamped_before);
-
-	}
-	*/
 
 	if((tGnss.size()<5) || (tLidar.size()<5)){
 
@@ -114,9 +92,8 @@ bool OnlineRangeDataProcessorRos::alignWithWorld(std_srvs::EmptyRequest& /*req*/
 		transformablePoint.row(2).col(0) = pose.second.row(2).col(0);
 		transformablePoint.row(3).col(0) << 1.0;
 
+		// For timo: this is where you might need to optimize. Currently super naive, point-wise multiplication. Single threaded.
 		transformablePoint =  mapToWorld_.matrix() * transformablePoint;
-
-		//pose.second.col(0) = transformablePoint.col(0).head<3>();
 
 		poseStamped.header.stamp.sec = int(int(pose.first) / 1e9);
 		poseStamped.header.stamp.nsec = int(int(pose.first) % int(1e9));
@@ -125,18 +102,7 @@ bool OnlineRangeDataProcessorRos::alignWithWorld(std_srvs::EmptyRequest& /*req*/
 		poseStamped.pose.position.z = transformablePoint.row(2).col(0).value();
 
 		path.poses.push_back(poseStamped);
-
 	}
-
-	//for (auto pose : tLidar) {
-	//	poseStamped.header.stamp.sec = int(int(pose.first) / 1e9);
-	//	poseStamped.header.stamp.nsec = int(int(pose.first) % int(1e9));
-	//	poseStamped.pose.position.x = pose.second(0);
-	//	poseStamped.pose.position.y = pose.second(1);
-	//	poseStamped.pose.position.z = pose.second(2);
-
-	//	path.poses.push_back(poseStamped);
-	//}
 
 	lidarPath_.publish(path);
 
@@ -154,7 +120,9 @@ bool OnlineRangeDataProcessorRos::alignWithWorld(std_srvs::EmptyRequest& /*req*/
 	gnssPath_.publish(path);
 
 	slam_->setMapToEnu(mapToWorld_);
-	const bool savingResult = slam_->transformSaveMap("/home/ttuna/data/test", mapToWorld_);
+	std::string userName = getenv("USERNAME");
+	std::string folderPath = "/home/" + userName +"/data/fieldMap/";
+	const bool savingResult = slam_->transformSaveMap(folderPath, mapToWorld_);
 	
   return true;
 }
