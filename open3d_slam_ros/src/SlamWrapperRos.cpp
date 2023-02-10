@@ -339,10 +339,10 @@ void SlamWrapperRos::publishMapToOdomTf(const Time &time) {
 
 
 	if(!params_.odometry_.overwriteWithTf){
-		o3d_slam::publishTfTransform(mapper_->getMapToOdom(time).matrix(), timestamp, mapFrame, odomFrame,
-				tfBroadcaster_.get());
-		o3d_slam::publishTfTransform(mapper_->getMapToRangeSensor(time).matrix(), timestamp, mapFrame, "raw_rs_o3d",
-				tfBroadcaster_.get());
+		//o3d_slam::publishTfTransform(mapper_->getMapToOdom(time).matrix(), timestamp, mapFrame, odomFrame,
+		//		tfBroadcaster_.get());
+		//o3d_slam::publishTfTransform(mapper_->getMapToRangeSensor(time).matrix(), timestamp, mapFrame, "raw_rs_o3d",
+		//		tfBroadcaster_.get());
 	}else{
 		// This line has changed such that map is a child of odom.
 		o3d_slam::publishTfTransform(mapper_->getMapToOdom(time).matrix().inverse(), timestamp, odomFrame, mapFrame,
@@ -370,6 +370,8 @@ void SlamWrapperRos::publishMaps(const Time &time) {
 	{
 		PointCloud map = mapper_->getAssembledMapPointCloud();
 		voxelize(params_.visualization_.assembledMapVoxelSize_, &map);
+		
+		map = map.Transform(getMapToEnu().matrix());
 		o3d_slam::publishCloud(map, o3d_slam::frames::mapFrame, timestamp, assembledMapPub_);
 	}
 	o3d_slam::publishCloud(mapper_->getPreprocessedScan(), o3d_slam::frames::rangeSensorFrame, timestamp,

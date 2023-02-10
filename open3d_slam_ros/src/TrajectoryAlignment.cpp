@@ -8,7 +8,7 @@ Please see the LICENSE file that has been included as part of this package.
 // C++
 #include <iostream>
 // Package
-#include "open3d_slam_ros/TrajectoryAlignment.h"
+#include "open3d_slam_ros/TrajectoryAlignment.hpp"
 
 namespace o3d_slam {
 
@@ -111,13 +111,14 @@ bool TrajectoryAlignment::trajectoryAlignment(Trajectory& trajectoryA, Trajector
   return true;
 }
 
-bool TrajectoryAlignment::alignTrajectories(double& yaw) {
+bool TrajectoryAlignment::alignTrajectories(Transform& outputTransform) {
   std::cout << YELLOW_START << "Trajectory Alignment" << GREEN_START << " Current Distance (LiDAR/GNSS): " << COLOR_END
             << lidarTrajectory_.distance() << "/" << gnssTrajectory_.distance() << std::endl;
-  if (lidarTrajectory_.distance() < minDistanceHeadingInit_) return false;
-  if (!lidarTrajectory_.standing(lidarRate_, noMovementTime_, noMovementDistance_)) return false;
-  if (gnssTrajectory_.distance() < minDistanceHeadingInit_) return false;
-  if (!gnssTrajectory_.standing(gnssRate_, noMovementTime_, noMovementDistance_)) return false;
+
+  //if (lidarTrajectory_.distance() < minDistanceHeadingInit_) return false;
+  //if (!lidarTrajectory_.standing(lidarRate_, noMovementTime_, noMovementDistance_)) return false;
+  //if (gnssTrajectory_.distance() < minDistanceHeadingInit_) return false;
+  //if (!gnssTrajectory_.standing(gnssRate_, noMovementTime_, noMovementDistance_)) return false;
 
   // aligin trajectories
   Trajectory newLidarTrajectory;
@@ -134,11 +135,16 @@ bool TrajectoryAlignment::alignTrajectories(double& yaw) {
     std::cout << "TrajectoryAlignment::initializeYaw trajectoryAlignment failed." << std::endl;
     return false;
   }
-
+  Eigen::Vector3d translation = transform.col(3).head<3>();
   Eigen::Matrix3d rotation = transform.block<3, 3>(0, 0);
+
+  Eigen::Quaterniond quat = Eigen::Quaterniond(rotation);
+
+  outputTransform = makeTransform(translation, quat);
+
   double pitch = -asin(transform(2, 0));
   double roll = atan2(transform(2, 1), transform(2, 2));
-  yaw = atan2(transform(1, 0) / cos(pitch), transform(0, 0) / cos(pitch));
+  double yaw = atan2(transform(1, 0) / cos(pitch), transform(0, 0) / cos(pitch));
   std::cout << YELLOW_START << "Trajectory Alignment" << GREEN_START << " Initial Roll/Pitch/Yaw(deg):" << COLOR_END << roll * 180 / M_PI
             << "," << pitch * 180 / M_PI << "," << yaw * 180 / M_PI << std::endl;
 

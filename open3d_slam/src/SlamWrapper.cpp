@@ -42,6 +42,8 @@ SlamWrapper::SlamWrapper() {
 	registeredCloudBuffer_.set_size_limit(30);
 	motionCompensationOdom_ = std::make_shared<MotionCompensation>();
 	motionCompensationMap_ = std::make_shared<MotionCompensation>();
+	Eigen::Quaterniond q(1,0,0,0); 
+	mapToEnu_ = makeTransform(Eigen::Vector3d::Zero(3,1), q);
 }
 
 SlamWrapper::~SlamWrapper() {
@@ -107,7 +109,8 @@ size_t SlamWrapper::getMappingBufferSizeLimit() const {
 
 Transform SlamWrapper::getLatestOdometryPose(){
 
-	return getTransform(latestScanToMapRefinementTimestamp_, odometry_->getBuffer());
+	
+	return odometry_->odomToRangeSensorBuffer_.latest_measurement().transform_;
 }
 
 void SlamWrapper::addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp) {
@@ -263,6 +266,27 @@ bool SlamWrapper::saveMap(const std::string &directory) {
 	const std::string filename = directory + "map.pcd";
 	return saveToFile(filename, map);
 }
+
+Transform SlamWrapper::getMapToEnu(){
+
+	return mapToEnu_;
+}
+
+void SlamWrapper::setMapToEnu(const Transform& transform){
+
+	mapToEnu_ = transform;
+}
+
+bool SlamWrapper::transformSaveMap(const std::string &directory, const Transform& transform) {
+	std::cout << "Started to transform and save. Started transforming." << std::endl;
+	PointCloud map = mapper_->getAssembledMapPointCloud();
+	map = map.Transform(transform.matrix());
+	std::cout << "Transformed. Now saving." << std::endl;
+	createDirectoryOrNoActionIfExists(directory);
+	const std::string filename = directory + "map.pcd";
+	return saveToFile(filename, map);
+}
+
 bool SlamWrapper::saveDenseSubmaps(const std::string &directory) {
 	return saveSubmaps(directory, true);
 }

@@ -58,7 +58,7 @@ SCAN_CROPPING_PARAMETERS = {
 }
 
 SCAN_PROCESSING_PARAMETERS = {
-  voxel_size = 0.1,
+  voxel_size = 0.075,
   downsampling_ratio = 0.3,
   scan_cropping = deepcopy(SCAN_CROPPING_PARAMETERS),
 }
@@ -77,7 +77,7 @@ SCAN_MATCHING_PARAMETERS = {
 
 ODOMETRY_PARAMETERS = {
   overwrite_with_tf = true,
-  is_publish_odometry_msgs = true,
+  is_publish_odometry_msgs = false,
   scan_matching = deepcopy(SCAN_MATCHING_PARAMETERS),
   scan_processing = deepcopy(SCAN_PROCESSING_PARAMETERS),
 }

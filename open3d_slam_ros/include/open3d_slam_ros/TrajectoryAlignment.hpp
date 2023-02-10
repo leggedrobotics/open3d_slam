@@ -9,7 +9,8 @@ Please see the LICENSE file that has been included as part of this package.
 #include <Eigen/Eigen>
 #include <memory>
 // Package
-#include "open3d_slam_ros/Trajectory.h"
+#include "open3d_slam_ros/Trajectory.hpp"
+#include "open3d_slam/Transform.hpp"
 
 // Defined macros
 #define GREEN_START "\033[92m"
@@ -25,7 +26,7 @@ class TrajectoryAlignment {
   // Methods
   void addLidarPose(Eigen::Vector3d position, double time);
   void addGnssPose(Eigen::Vector3d position, double time);
-  bool alignTrajectories(double& yaw);
+  bool alignTrajectories(Transform& transform);
 
   // Setters
   void setGnssRate(const double gnssRate) { gnssRate_ = gnssRate; }

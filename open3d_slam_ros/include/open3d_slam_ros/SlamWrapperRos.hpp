@@ -38,6 +38,7 @@ public:
 
 	void loadParametersAndInitialize() override;
 	void startWorkers() override;
+	Transform mapToEnu_;
 
 private:
 

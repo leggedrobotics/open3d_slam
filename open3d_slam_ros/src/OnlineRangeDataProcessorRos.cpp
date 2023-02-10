@@ -29,6 +29,8 @@ void OnlineRangeDataProcessorRos::initialize() {
 	initCommonRosStuff();
 	slam_ = std::make_shared<SlamWrapperRos>(nh_);
 	slam_->loadParametersAndInitialize();
+	trajectoryAlignmentHandlerPtr_ = std::make_shared<o3d_slam::TrajectoryAlignmentHandler>();
+	trajectoryAlignmentHandlerPtr_->initHandler();
 	
 }
 
@@ -39,6 +41,16 @@ void OnlineRangeDataProcessorRos::startProcessing() {
 	
 	posePublishingTimer_ = nh_->createTimer(ros::Duration(0.01), &OnlineRangeDataProcessorRos::posePublisherTimerCallback, this);
 
+	//registeredEnuCloudPublisherTimer_ = nh_->createTimer(ros::Duration(0.1), &OnlineRangeDataProcessorRos::registeredCloudPublisherCallback, this);
+	alignWithWorld_ = nh_->advertiseService("align_world", &OnlineRangeDataProcessorRos::alignWithWorld, this);
+
+	registeredEnuCloud_ = nh_->advertise<sensor_msgs::PointCloud2>("registered_enu_cloud", 1, true);
+
+	lidarPath_ = nh_->advertise<nav_msgs::Path>("/lidarPath", 1);
+	gnssPath_ = nh_->advertise<nav_msgs::Path>("/gnssPath", 1);
+
+	//before_lidarPath_ = nh_->advertise<nav_msgs::Path>("/before_lidarPath", 1);
+	//before_gnssPath_ = nh_->advertise<nav_msgs::Path>("/before_gnssPath", 1);
 
 	scan2scanTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("tt_scan2scan_transform", 1, true);
 	scan2scanOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("tt_scan2scan_odometry", 1, true);
@@ -52,28 +64,125 @@ void OnlineRangeDataProcessorRos::startProcessing() {
 	slam_->stopWorkers();
 }
 
+bool OnlineRangeDataProcessorRos::alignWithWorld(std_srvs::EmptyRequest& /*req*/, std_srvs::EmptyResponse& /*res*/) {
+
+	auto tLidar = trajectoryAlignmentHandlerPtr_->getLidarTrajectory();
+	auto tGnss = trajectoryAlignmentHandlerPtr_->getGnssTrajectory();
+
+	/*
+	nav_msgs::Path path_before;
+	geometry_msgs::PoseStamped poseStamped_before;
+	for (auto pose : tLidar) {
+		Eigen::Vector4d transformablePoint;
+		transformablePoint.row(0).col(0) = pose.second.row(0).col(0);
+		transformablePoint.row(1).col(0) = pose.second.row(1).col(0);
+		transformablePoint.row(2).col(0) = pose.second.row(2).col(0);
+		transformablePoint.row(3).col(0) << 1.0;
+
+		poseStamped_before.header.stamp.sec = int(int(pose.first) / 1e9);
+		poseStamped_before.header.stamp.nsec = int(int(pose.first) % int(1e9));
+		poseStamped_before.pose.position.x = transformablePoint.row(0).col(0).value();
+		poseStamped_before.pose.position.y = transformablePoint.row(1).col(0).value();
+		poseStamped_before.pose.position.z = transformablePoint.row(2).col(0).value();
+
+		path_before.poses.push_back(poseStamped_before);
+
+	}
+	*/
+
+	if((tGnss.size()<5) || (tLidar.size()<5)){
+
+		std::cout << " NOT ENOUGH MEASUREMENTS TO ALIGN with world "<< std::endl;
+		return false;
+	}
+
+	if(!trajectoryAlignmentHandlerPtr_->alignTrajectories(mapToWorld_)){
+
+		std::cout << " AlignTrajectoriesFailed "<< std::endl;
+		return false;
+	}
+
+	nav_msgs::Path path;
+	geometry_msgs::PoseStamped poseStamped;
+	path.header.frame_id = "enu";
+	poseStamped.header.frame_id = "enu";
+
+	for (auto pose : tLidar) {
+		Eigen::Vector4d transformablePoint;
+		transformablePoint.row(0).col(0) = pose.second.row(0).col(0);
+		transformablePoint.row(1).col(0) = pose.second.row(1).col(0);
+		transformablePoint.row(2).col(0) = pose.second.row(2).col(0);
+		transformablePoint.row(3).col(0) << 1.0;
+
+		transformablePoint =  mapToWorld_.matrix() * transformablePoint;
+
+		//pose.second.col(0) = transformablePoint.col(0).head<3>();
+
+		poseStamped.header.stamp.sec = int(int(pose.first) / 1e9);
+		poseStamped.header.stamp.nsec = int(int(pose.first) % int(1e9));
+		poseStamped.pose.position.x = transformablePoint.row(0).col(0).value();
+		poseStamped.pose.position.y = transformablePoint.row(1).col(0).value();
+		poseStamped.pose.position.z = transformablePoint.row(2).col(0).value();
+
+		path.poses.push_back(poseStamped);
+
+	}
+
+	//for (auto pose : tLidar) {
+	//	poseStamped.header.stamp.sec = int(int(pose.first) / 1e9);
+	//	poseStamped.header.stamp.nsec = int(int(pose.first) % int(1e9));
+	//	poseStamped.pose.position.x = pose.second(0);
+	//	poseStamped.pose.position.y = pose.second(1);
+	//	poseStamped.pose.position.z = pose.second(2);
+
+	//	path.poses.push_back(poseStamped);
+	//}
+
+	lidarPath_.publish(path);
+
+	path.poses.clear();
+	path.header.frame_id = "enu";
+	poseStamped.header.frame_id = "enu";
+	for (auto pose : tGnss) {
+		poseStamped.header.stamp.sec = int(int(pose.first) / 1e9);
+		poseStamped.header.stamp.nsec = int(int(pose.first) % int(1e9));
+		poseStamped.pose.position.x = pose.second(0);
+		poseStamped.pose.position.y = pose.second(1);
+		poseStamped.pose.position.z = pose.second(2);
+		path.poses.push_back(poseStamped);
+	}
+	gnssPath_.publish(path);
+
+	slam_->setMapToEnu(mapToWorld_);
+	const bool savingResult = slam_->transformSaveMap("/home/ttuna/data/test", mapToWorld_);
+	
+  return true;
+}
+
 void OnlineRangeDataProcessorRos::poseStampedPriorCallback(const geometry_msgs::PoseStampedConstPtr& odometryPose) {
 
+	if(!slam_->params_.odometry_.overwriteWithTf){
+		return;
+	}
 
-Transform transform;
+	Transform transform;
+	geometry_msgs::TransformStamped transformStamped;
 
-geometry_msgs::TransformStamped transformStamped;
+	transformStamped.child_frame_id = o3d_slam::frames::rangeSensorFrame;
+	transformStamped.header.frame_id = o3d_slam::frames::odomFrame;
+	transformStamped.header.stamp = odometryPose->header.stamp;
+	transformStamped.transform.translation.x = odometryPose->pose.position.x;
+	transformStamped.transform.translation.y = odometryPose->pose.position.y;
+	transformStamped.transform.translation.z = odometryPose->pose.position.z;
 
-transformStamped.child_frame_id = o3d_slam::frames::rangeSensorFrame;
-transformStamped.header.frame_id = o3d_slam::frames::odomFrame;
-transformStamped.header.stamp = odometryPose->header.stamp;
-transformStamped.transform.translation.x = odometryPose->pose.position.x;
-transformStamped.transform.translation.y = odometryPose->pose.position.y;
-transformStamped.transform.translation.z = odometryPose->pose.position.z;
+	transformStamped.transform.rotation.x = odometryPose->pose.orientation.x;
+	transformStamped.transform.rotation.y = odometryPose->pose.orientation.y;
+	transformStamped.transform.rotation.z = odometryPose->pose.orientation.z;
+	transformStamped.transform.rotation.w = odometryPose->pose.orientation.w;
 
-transformStamped.transform.rotation.x = odometryPose->pose.orientation.x;
-transformStamped.transform.rotation.y = odometryPose->pose.orientation.y;
-transformStamped.transform.rotation.z = odometryPose->pose.orientation.z;
-transformStamped.transform.rotation.w = odometryPose->pose.orientation.w;
+	transform = tf2::transformToEigen(transformStamped);
 
-transform = tf2::transformToEigen(transformStamped);
-
-slam_->addOdometryPrior(fromRos(odometryPose->header.stamp), transform);
+	slam_->addOdometryPrior(fromRos(odometryPose->header.stamp), transform);
 
 }
 
@@ -108,19 +217,39 @@ nav_msgs::Odometry OnlineRangeDataProcessorRos::getOdomMsg(const geometry_msgs::
 	return odomMsg;
 }
 
-void OnlineRangeDataProcessorRos::posePublisherTimerCallback(const ros::TimerEvent&){
-	
-	if(!slam_->isNewScan2MapRefinementAvailable_ || !slam_->params_.odometry_.overwriteWithTf){
+void OnlineRangeDataProcessorRos::registeredCloudPublisherCallback(const ros::TimerEvent&){
+
+	/*
+	if(!scanToMapStarted_){
+		std::cout << "Scan to map not yet started." << std::endl;
 		return;
 	}
 
+	if((mapToWorld_.matrix() == Eigen::Matrix4d::Identity(4,4))){
+		std::cout << "Return since map to enu not calculated yet." << std::endl;
+		return;
+	}
+
+	auto cloudAndTimePair = slam_->getLatestRegisteredCloudTimestampPair();
+	cloudAndTimePair.first = cloudAndTimePair.first.Transform(mapToWorld_.matrix());
+	o3d_slam::publishCloud(cloudAndTimePair.first, "enu", toRos(cloudAndTimePair.second), registeredEnuCloud_);
+	*/
+
+}
+
+void OnlineRangeDataProcessorRos::posePublisherTimerCallback(const ros::TimerEvent&){
+	
+	if(!slam_->isNewScan2MapRefinementAvailable_){
+		return;
+	}
+
+	scanToMapStarted_ = true;
 
 	// Runs 100hz
 	Time latestTransformTime; 
 	Transform mapToRangeSensorTransform;
 
 	// Thread safety, memory access
-
 	{
 		std::lock_guard<std::mutex> methodLock(posePublishingMutex_);
 
@@ -129,14 +258,11 @@ void OnlineRangeDataProcessorRos::posePublisherTimerCallback(const ros::TimerEve
 		slam_->isNewScan2MapRefinementAvailable_=false;
 	}
 
-
 	Transform tfQueriedodometry;
-
+	// The odometry prior at the time of scan2map refinement
+	Transform latestOdomToRangeSensorInBuffer_ = slam_->getLatestOdometryPose();
 	if(o3d_slam::lookupTransform(o3d_slam::frames::odomFrame, o3d_slam::frames::rangeSensorFrame, ros::Time::now(), tfBuffer_, tfQueriedodometry))
 	{
-		// The odometry prior at the time of scan2map refinement
-		Transform latestOdomToRangeSensorInBuffer_ = slam_->getLatestOdometryPose();
-
 		// The odometry motion calculated between the odometry prior at the time opf Scan2map and the current odometry pose.
 		// Hypothesis: if scan2map refinement takes ages, this difference might be big.
 		// Otherwise expected to be near identical.
@@ -153,36 +279,34 @@ void OnlineRangeDataProcessorRos::posePublisherTimerCallback(const ros::TimerEve
 
 		std::cout << "Consolidated mapToOdom: " << o3d_slam::asString(mapToOdomConsolidated) << "\n";
 		std::cout << "mapToOdom: " << o3d_slam::asString(mapToOdom) << "\n";
-
 		
 		// Publish the slow but accurate map2odom.  Odom is the parent, map is the child.
-		o3d_slam::publishTfTransform(mapToOdom.matrix().inverse(),toRos(latestTransformTime), o3d_slam::frames::odomFrame, o3d_slam::frames::mapFrame,
-				tfBroadcaster2_.get());
+		//o3d_slam::publishTfTransform(mapToOdom.matrix().inverse(),toRos(latestTransformTime), o3d_slam::frames::odomFrame, o3d_slam::frames::mapFrame,
+		//		tfBroadcaster2_.get());
 		/*
 		// Publish the fast but propagated map2odom.  Odom is the parent, map_consolidated is the child.
 		o3d_slam::publishTfTransform(mapToOdomConsolidated.matrix().inverse(), ros::Time::now(), o3d_slam::frames::odomFrame, "map_consolidated",
 				tfBroadcaster_.get());
-
-		geometry_msgs::TransformStamped consolidatedScan2maptransformMsg = getTransformMsg(consolidatedMapToRangeSensor, ros::Time::now(), "map_consolidated",  o3d_slam::frames::rangeSensorFrame);
+		*/
+		geometry_msgs::TransformStamped consolidatedScan2maptransformMsg = getTransformMsg(consolidatedMapToRangeSensor, ros::Time::now(), "map_new",  o3d_slam::frames::rangeSensorFrame);
 		nav_msgs::Odometry consolidatedScan2mapodomMsg = getOdomMsg(consolidatedScan2maptransformMsg);
 		//publishIfSubscriberExists(consolidatedScan2maptransformMsg, consolidatedScan2mapTransformPublisher_);
 		publishIfSubscriberExists(consolidatedScan2mapodomMsg, consolidatedScan2mapOdomPublisher_);
-		*/
-		
 
 	}else{
 		ROS_WARN("TF did not provide prior. Tf based transforms not published.");
 	}
-	
 
 	// The getTransformMsg function has hard coded frame care.
 	geometry_msgs::TransformStamped scan2maptransformMsg = getTransformMsg(mapToRangeSensorTransform, ros::Time::now(), o3d_slam::frames::mapFrame,  o3d_slam::frames::rangeSensorFrame);
 	nav_msgs::Odometry scan2mapodomMsg = getOdomMsg(scan2maptransformMsg);
 	publishIfSubscriberExists(scan2maptransformMsg, scan2mapTransformPublisher_);
 	publishIfSubscriberExists(scan2mapodomMsg, scan2mapOdomPublisher_);
+
+	trajectoryAlignmentHandlerPtr_->addLidarPose(mapToRangeSensorTransform.translation(), o3d_slam::toRos(latestTransformTime).toSec());
+	trajectoryAlignmentHandlerPtr_->addGnssPose(latestOdomToRangeSensorInBuffer_.translation(), o3d_slam::toRos(latestTransformTime).toSec());
 	
 };
-
 
 void OnlineRangeDataProcessorRos::getAndSetTfPrior(const Time &queryTime){
 
@@ -208,8 +332,6 @@ void OnlineRangeDataProcessorRos::getAndSetTfPrior(const Time &queryTime){
 		
 		slam_->addOdometryPrior(queryTime, tfQueriedodometry);
 		}
-	
-
 }
 
 void OnlineRangeDataProcessorRos::cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {

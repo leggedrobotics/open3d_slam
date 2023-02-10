@@ -71,8 +71,12 @@ public:
 	void setInitialTransform(const Eigen::Matrix4d initialTransform);
 
 	bool saveMap(const std::string &directory);
+	bool transformSaveMap(const std::string &directory, const Transform& transform);
 	bool saveDenseSubmaps(const std::string &directory);
 	bool saveSubmaps(const std::string &directory, const bool& isDenseMap=false);
+
+	void setMapToEnu(const Transform& transform);
+	Transform getMapToEnu();
 
 	std::shared_ptr<LidarOdometry> odometry_;
 	std::shared_ptr<Mapper> mapper_;
@@ -85,6 +89,8 @@ public:
 
 	Transform getLatestOdometryPose();
 	SlamParameters params_;
+
+	Transform mapToEnu_;
 
 private:
 	void checkIfOptimizedGraphAvailable();

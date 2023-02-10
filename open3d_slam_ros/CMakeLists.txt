@@ -16,6 +16,7 @@ set(SRC_FILES
   src/RosbagRangeDataProcessorRos.cpp
   src/Color.cpp
   src/TrajectoryAlignment.cpp
+  src/TrajectoryAlignmentHandler.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES
@@ -30,6 +31,8 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   rosbag
   interactive_markers
   open3d_slam_lua_io
+  std_srvs
+  nav_msgs
 )
 
 find_package(Eigen3 REQUIRED)
