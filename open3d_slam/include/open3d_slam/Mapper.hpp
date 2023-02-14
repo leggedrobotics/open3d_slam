@@ -27,7 +27,7 @@ public:
 	using PointCloud = open3d::geometry::PointCloud;
 
 	Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer,
-			std::shared_ptr<SubmapCollection> submaps);
+	std::shared_ptr<SubmapCollection> submaps,const std::map<Time, Matrix6d>& covarianceBuffer);
 	~Mapper() = default;
 
 	void setParameters(const MapperParameters &p);
@@ -67,6 +67,7 @@ private:
 	bool isNewInitialValueSet_ = false;
 	bool isIgnoreOdometryPrediction_ = false;
 	std::shared_ptr<ScanToMapRegistration> scan2MapReg_;
+    std::map<Time, Matrix6d> covarianceBuffer_;
 
 };
 

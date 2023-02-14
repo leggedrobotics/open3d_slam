@@ -31,11 +31,13 @@ public:
 	void setParameters (const OdometryParameters &p);
 	const TransformInterpolationBuffer &getBuffer() const;
 	bool hasProcessedMeasurements() const;
-	void setInitialTransform(const Eigen::Matrix4d &initialTransform);
+	void setInitialTransform(const Eigen::Matrix4d& initialTransform);
+	const std::map<Time, Matrix6d>& getCovarianceBuffer() const;
 
 private:
 
 	PointCloudPtr preprocess(const PointCloud &in) const;
+		Matrix6d estimateCovariance(const PointCloud& ptIn, const PointCloud& registered, const Eigen::Matrix4d transformation);
 
 	TransformInterpolationBuffer odomToRangeSensorBuffer_;
 	open3d::geometry::PointCloud cloudPrev_;
@@ -46,6 +48,7 @@ private:
 	Eigen::Matrix4d initialTransform_ = Eigen::Matrix4d::Identity();
 	bool isInitialTransformSet_ = false;
 	std::shared_ptr<CloudRegistration> cloudRegistration_;
+	std::map<Time, Matrix6d> covariances_;
 };
 
 } // namespace o3d_slam

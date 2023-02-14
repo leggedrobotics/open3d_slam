@@ -173,14 +173,17 @@ void SubmapCollection::forceNewSubmapCreation(){
 	isForceNewSubmapCreation_ = false;
 }
 
-bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan,
-		const Transform &mapToRangeSensor, const Time &timestamp) {
-
+bool SubmapCollection::insertScan(const PointCloud& rawScan, const PointCloud& preProcessedScan, const Transform& mapToRangeSensor,
+																	const Time& timestamp) {
+	return insertScan(rawScan, preProcessedScan, mapToRangeSensor, Matrix6d::Zero(), timestamp);
+}
+bool SubmapCollection::insertScan(const PointCloud& rawScan, const PointCloud& preProcessedScan, const Transform& mapToRangeSensor,
+																	const Matrix6d& covariance, const Time& timestamp) {
 	mapToRangeSensor_ = mapToRangeSensor;
 	timestamp_ = timestamp;
 	if (submaps_.empty()) {
 		createNewSubmap(mapToRangeSensor_);
-		submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, true);
+		submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, covariance, true);
 		++numScansMergedInActiveSubmap_;
 		return true;
 	}
@@ -191,7 +194,7 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 	const bool isActiveSubmapChanged = prevActiveSubmapIdx != activeSubmapIdx_;
 	if (isActiveSubmapChanged) {
 		std::lock_guard<std::mutex> lck(featureComputationMutex_);
-		submaps_.at(prevActiveSubmapIdx).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, true);
+		submaps_.at(prevActiveSubmapIdx).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, covariance, true);
 		submaps_.at(prevActiveSubmapIdx).computeSubmapCenter();
 		std::cout << "Active submap changed from " << prevActiveSubmapIdx << " to " << activeSubmapIdx_ << "\n";
 		lastFinishedSubmapIdx_ = prevActiveSubmapIdx;
@@ -205,7 +208,7 @@ bool SubmapCollection::insertScan(const PointCloud &rawScan, const PointCloud &p
 		insertBufferedScans(&submaps_.at(activeSubmapIdx_));
 		assert_true(!submaps_.at(activeSubmapIdx_).isEmpty(), "submap should not be empty after switching");
 	} else {
-		submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, true);
+		submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, covariance, true);
 	}
 	++numScansMergedInActiveSubmap_;
 	return true;

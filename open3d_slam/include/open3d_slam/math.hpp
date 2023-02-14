@@ -27,6 +27,7 @@ Transform fromXYZandRPY(const Eigen::Vector3d &xyz, double roll, double pitch, d
 Transform fromXYZandRPY(double x, double y, double z, double roll, double pitch, double yaw);
 Transform fromXYZandQuaternion(double x, double y, double z, const Eigen::Quaterniond &q);
 Transform fromXYZandQuaternion(const Eigen::Vector3d &xyz, const Eigen::Quaterniond &q);
+Eigen::Matrix3d skew(const Eigen::Vector3d& vec);
 
 template<typename T>
 inline T getRollFromQuat(T w, T x, T y, T z)

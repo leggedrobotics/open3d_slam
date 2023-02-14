@@ -28,6 +28,8 @@ set(SRC_FILES
   src/VoxelHashMap.cpp
   src/ScanToMapRegistration.cpp
   src/CloudRegistration.cpp
+  src/Octree.cpp
+  src/Plane.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES
@@ -81,4 +83,3 @@ target_link_libraries(${PROJECT_NAME}
   yaml-cpp
   ${OpenMP_CXX_LIBRARIES}
 )
-

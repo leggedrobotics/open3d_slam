@@ -7,6 +7,7 @@
 
 #include "open3d_slam/Voxel.hpp"
 #include "open3d_slam/time.hpp"
+#include "open3d_slam/math.hpp"
 #include <numeric>
 #include <iostream>
 #include <unordered_set>
@@ -202,4 +203,72 @@ std::shared_ptr<PointCloud> removeDuplicatePointsWithinSameVoxels(const open3d::
 	return retVal;
 }
 
-} // namespace o3d_slam
+OctreeVoxelMap::OctreeVoxelMap() : OctreeVoxelMap(Eigen::Vector3d::Constant(0.25)) {}
+OctreeVoxelMap::OctreeVoxelMap(const Eigen::Vector3d& voxelSize) : BASE(voxelSize) {}
+void OctreeVoxelMap::insert(const PointCloud& cloud, const Matrix6d& poseCovariance) {
+	std::vector<PointWithCov> pts;
+	for (const auto& pt : cloud.points_) {
+		PointWithCov pc;
+		pc.point = pt;
+		double rangeNoise = 0.1;
+		double angleNoise = 0.025;
+		Eigen::Matrix3d covariance = calculatePointCovariance(pt, rangeNoise, angleNoise);
+		Eigen::Matrix3d skewPoint = skew(pt);
+		Eigen::Matrix3d rotationCovariance = poseCovariance.block<3, 3>(0, 0);
+		Eigen::Matrix3d translationCovariance = poseCovariance.block<3, 3>(3, 3);
+		pc.cov = (-skewPoint) * rotationCovariance * (-skewPoint).transpose() + translationCovariance;
+		pts.push_back(pc);
+	}
+	addPoints(pts);
+	initialized_ = true;
+}
+Eigen::Matrix3d OctreeVoxelMap::calculatePointCovariance(const Eigen::Vector3d& pt, const double rangeNoise, const double angleNoise) {
+	double distance = pt.norm();
+	double rangeVariance = rangeNoise * rangeNoise;
+	Eigen::Matrix2d angleVariance;
+	angleVariance << std::pow(std::sin(angleNoise), 2), 0, 0, std::pow(std::sin(angleNoise), 2);
+	Eigen::Vector3d direction = pt.normalized();
+	Eigen::Matrix3d directionHat = skew(direction);
+
+	Eigen::Vector3d baseVector1(1, 1, -(direction.x() + direction.y()) / direction.z());
+	baseVector1.normalize();
+	Eigen::Vector3d baseVector2 = baseVector1.cross(direction);
+	baseVector2.normalize();
+	Eigen::Matrix<double, 3, 2> normalBasis;
+	normalBasis << baseVector1, baseVector2;
+	Eigen::Matrix<double, 3, 2> A = distance * directionHat * normalBasis;
+	return direction * rangeVariance * direction.transpose() + A * angleVariance * A.transpose();
+}
+
+void OctreeVoxelMap::addPoints(const std::vector<PointWithCov>& pts) {
+	for (const auto& pt : pts) {
+		auto position = getVoxelIdx(pt.point, voxelSize_);
+		auto iter = voxels_.find(position);
+		if (iter != voxels_.end()) {
+			if (!initialized_) {
+				voxels_[position]->addWithoutUpdate(pt);
+			} else {
+				voxels_[position]->update(pt);
+			}
+		} else {
+			Octree* tree = new Octree(0, maxDepth_, planeThreshold_, planeUpdateThreshold_, pointUpdateThreshold_, maxCovPoints_, maxVoxelPoints_,
+																voxelSize_.x() / 2);
+			voxels_[position] = tree;
+			voxels_[position]->center.x() = (0.5 + position.x()) * voxelSize_.x();
+			voxels_[position]->center.y() = (0.5 + position.y()) * voxelSize_.y();
+			voxels_[position]->center.z() = (0.5 + position.z()) * voxelSize_.z();
+			if (!initialized_) {
+				voxels_[position]->addWithoutUpdate(pt);
+			} else {
+				voxels_[position]->update(pt);
+			}
+		}
+	}
+	if (!initialized_) {
+		for (auto& voxel : voxels_) {
+			voxel.second->initializeOctree();
+		}
+	}
+}
+
+}  // namespace o3d_slam

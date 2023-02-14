@@ -25,4 +25,9 @@ using Matrix6d = Eigen::Matrix<double, 6, 6>;
 using PointCloud = open3d::geometry::PointCloud;
 using PointCloudPtr = std::shared_ptr<PointCloud>;
 
+struct PointWithCov{
+    Eigen::Vector3d point;
+    Eigen::Matrix3d cov;
+};
+
 } //namespace o3d_slam

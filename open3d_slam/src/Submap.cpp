@@ -37,8 +37,13 @@ size_t Submap::getParentId() const {
 	return parentId_;
 }
 
-bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan,
-		const Transform &mapToRangeSensor, const Time &time, bool isPerformCarving) {
+bool Submap::insertScan(const PointCloud& rawScan, const PointCloud& preProcessedScan, const Transform& mapToRangeSensor, const Time& time,
+                        bool isPerformCarving) {
+  return insertScan(rawScan, preProcessedScan, mapToRangeSensor, time, Matrix6d::Zero(), isPerformCarving);
+}
+
+bool Submap::insertScan(const PointCloud& rawScan, const PointCloud& preProcessedScan, const Transform& mapToRangeSensor, const Time& time,
+                        const Matrix6d& covariances, bool isPerformCarving) {
 
 	if (preProcessedScan.IsEmpty()){
 		return true;
@@ -68,6 +73,10 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 					<< 1e3 / carvingStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
 			carvingStatisticsTimer_.reset();
 		}
+	}
+	if (!covariances.isZero()) {
+		// std::cout << "INSERT OCTREE" << std::endl;
+		octreeMap_.insert(*transformedCloud, covariances);
 	}
 	std::lock_guard<std::mutex> lck(mapPointCloudMutex_);
 	mapCloud_ += *transformedCloud;
@@ -177,6 +186,7 @@ Submap::Submap(const Submap &other) :
   mapToSubmap_ = other.mapToSubmap_;
   mapCloud_ = other.mapCloud_;
   sparseMapCloud_ = other.sparseMapCloud_;
+  octreeMap_ = other.octreeMap_;
 
 //	update(params_);
 }

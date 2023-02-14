@@ -27,22 +27,22 @@ namespace registration = open3d::pipelines::registration;
 const bool isCheckTransformChainingAndPrintResult = false;
 } // namespace
 
-Mapper::Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer,
-		std::shared_ptr<SubmapCollection> submaps) :
-		odomToRangeSensorBuffer_(odomToRangeSensorBuffer), submaps_(submaps) {
+Mapper::Mapper(const TransformInterpolationBuffer& odomToRangeSensorBuffer, std::shared_ptr<SubmapCollection> submaps,
+							 const std::map<Time, Matrix6d>& covarianceBuffer)
+		: odomToRangeSensorBuffer_(odomToRangeSensorBuffer), submaps_(submaps), covarianceBuffer_(covarianceBuffer) {
 	update(params_);
 }
 
-void Mapper::setParameters(const MapperParameters &p) {
+void Mapper::setParameters(const MapperParameters& p) {
 	params_ = p;
 	update(p);
 }
 
-MapperParameters *Mapper::getParametersPtr(){
+MapperParameters* Mapper::getParametersPtr() {
 	return &params_;
 }
 
-void Mapper::loopClosureUpdate(const Transform &loopClosureCorrection) {
+void Mapper::loopClosureUpdate(const Transform& loopClosureCorrection) {
 	mapToRangeSensor_ = loopClosureCorrection * mapToRangeSensor_;
 	mapToRangeSensorPrev_ = loopClosureCorrection * mapToRangeSensorPrev_;
 }
@@ -51,18 +51,18 @@ bool Mapper::hasProcessedMeasurements() const {
 	return !mapToRangeSensorBuffer_.empty();
 }
 
-void Mapper::update(const MapperParameters &p) {
+void Mapper::update(const MapperParameters& p) {
 	scan2MapReg_ = scanToMapRegistrationFactory(p);
 	submaps_->setParameters(p);
 }
 
-Transform Mapper::getMapToOdom(const Time &timestamp) const {
+Transform Mapper::getMapToOdom(const Time& timestamp) const {
 	const Transform odomToRangeSensor = getTransform(timestamp, odomToRangeSensorBuffer_);
 	const Transform mapToRangeSensor = getTransform(timestamp, mapToRangeSensorBuffer_);
 	return mapToRangeSensor * odomToRangeSensor.inverse();
-//	return getTransform(timestamp, mapToOdomBuffer_);
+	//	return getTransform(timestamp, mapToOdomBuffer_);
 }
-Transform Mapper::getMapToRangeSensor(const Time &timestamp) const {
+Transform Mapper::getMapToRangeSensor(const Time& timestamp) const {
 	return getTransform(timestamp, mapToRangeSensorBuffer_);
 }
 
@@ -171,8 +171,9 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	const Transform sensorMotion = mapToRangeSensorLastScanInsertion_.inverse() * mapToRangeSensor_;
 	const bool isMovedTooLittle = sensorMotion.translation().norm() < params_.minMovementBetweenMappingSteps_;
 	if (!isMovedTooLittle) {
-		//Timer t("scan_insertion_and_bookeeping");
-		submaps_->insertScan(rawScan, *processed.merge_, mapToRangeSensor_, timestamp);
+		// Timer t("scan_insertion_and_bookeeping");
+		Matrix6d covariance = covarianceBuffer_.at(timestamp);
+		submaps_->insertScan(rawScan, *processed.merge_, mapToRangeSensor_, covariance, timestamp);
 		mapToRangeSensorLastScanInsertion_ = mapToRangeSensor_;
 	}
 

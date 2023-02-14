@@ -39,6 +39,8 @@ public:
 	void setParameters(const MapperParameters &mapperParams);
 	bool insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan, const Transform &transform,
 			const Time &time, bool isPerformCarving);
+  bool insertScan(const PointCloud& rawScan, const PointCloud& preProcessedScan, const Transform& transform, const Time& time,
+      const Matrix6d& covariances, bool isPerformCarving);
 	bool insertScanDenseMap(const PointCloud &rawScan, const Transform &transform, const Time &time,
 			bool isPerformCarving);
 
@@ -62,6 +64,7 @@ public:
 	mutable PointCloud scanRef_;
 
 	Submap(const Submap &other);
+  OctreeVoxelMap octreeMap_;
 
 private:
 	void carve(const PointCloud &scan, const Eigen::Vector3d &sensorPosition,

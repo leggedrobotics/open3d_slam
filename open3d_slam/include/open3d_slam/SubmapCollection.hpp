@@ -41,6 +41,8 @@ public:
 
 	void setMapToRangeSensor(const Transform &T);
 	const Submap& getActiveSubmap() const;
+	bool insertScan(const PointCloud& rawScan, const PointCloud& preProcessedScan, const Transform& mapToRangeSensor,
+			const Matrix6d& covariance, const Time& timestamp);
 	bool insertScan(const PointCloud &rawScan, const PointCloud &preProcessedScan,
 			const Transform &mapToRangeSensor, const Time &timestamp);
 	void setParameters(const MapperParameters &p);

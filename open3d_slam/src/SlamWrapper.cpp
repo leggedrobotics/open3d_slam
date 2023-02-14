@@ -189,7 +189,7 @@ void SlamWrapper::loadParametersAndInitialize() {
 	submaps_ = std::make_shared<o3d_slam::SubmapCollection>();
 	submaps_->setFolderPath(folderPath_);
 
-	mapper_ = std::make_shared<o3d_slam::Mapper>(odometry_->getBuffer(), submaps_);
+	mapper_ = std::make_shared<o3d_slam::Mapper>(odometry_->getBuffer(), submaps_, odometry_->getCovarianceBuffer());
 	mapper_->setParameters(params_.mapper_);
 
 	optimizationProblem_ = std::make_shared<o3d_slam::OptimizationProblem>();
