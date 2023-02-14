@@ -25,6 +25,7 @@
 #include "open3d_slam/Odometry.hpp"
 #include "nav_msgs/Odometry.h"
 #include "open3d_slam_lua_io/parameter_loaders.hpp"
+#include "open3d_slam_ros/helpers_ros.hpp"
 
 #ifdef open3d_slam_ros_OPENMP_FOUND
 #include <omp.h>
@@ -188,6 +189,7 @@ void SlamWrapperRos::loadParametersAndInitialize() {
 	scan2scanOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2scan_odometry", 1, true);
 	scan2mapTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("scan2map_transform", 1, true);
   scan2mapOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2map_odometry", 1, true);
+  octreePub_ = nh_->advertise<visualization_msgs::MarkerArray>("voxelmap", 1, false);
 
 	//	auto &logger = open3d::utility::Logger::GetInstance();
 	//	logger.SetVerbosityLevel(open3d::utility::VerbosityLevel::Debug);
@@ -262,7 +264,7 @@ void SlamWrapperRos::publishMaps(const Time &time) {
 		voxelize(params_.visualization_.submapVoxelSize_, &cloud);
 		o3d_slam::publishCloud(cloud, o3d_slam::frames::mapFrame, timestamp, submapsPub_);
 	}
-
+	generateVoxelMapMarkerArray(mapper_->getSubmaps().getActiveSubmap().octreeMap_, octreePub_);
 	visualizationUpdateTimer_.reset();
 	isVisualizationFirstTime_ = false;
 }

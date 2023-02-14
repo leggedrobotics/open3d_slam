@@ -18,6 +18,7 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <ros/time.h>
 #include "open3d_slam/time.hpp"
+#include "open3d_slam/Voxel.hpp"
 
 
 namespace o3d_slam {
@@ -53,5 +54,5 @@ void publishIfSubscriberExists(const Msg &msg, const ros::Publisher &pub){
         pub.publish(msg);
     }
 }
-
+void generateVoxelMapMarkerArray(const OctreeVoxelMap& map, const ros::Publisher& pub);
 } /* namespace o3d_slam */

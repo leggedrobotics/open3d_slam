@@ -17,12 +17,104 @@
 #include <tf2_eigen/tf2_eigen.h>
 #include <nav_msgs/Odometry.h>
 #include "open3d_slam_ros/Color.hpp"
-
+#include "open3d_slam/frames.hpp"
 
 namespace o3d_slam {
+int id = 0;
 
-void publishSubmapCoordinateAxes(const SubmapCollection &submaps, const std::string &frame_id,
-		const ros::Time &timestamp, const ros::Publisher &pub) {
+void jetColormap(int value, int min_value, int max_value, float& r, float& g, float& b) {
+	float v = static_cast<float>(value - min_value) / static_cast<float>(max_value - min_value) * 4.0;
+	if (v < 1.0) {
+		r = 0.0;
+		g = 0.0;
+		b = 0.5 + 0.5 * v;
+	} else if (v < 2.0) {
+		r = 0.0;
+		g = 0.5 * (v - 1.0);
+		b = 1.0;
+	} else if (v < 3.0) {
+		r = 0.5 * (v - 2.0);
+		g = 1.0;
+		b = 1.0 - 0.5 * (v - 2.0);
+	} else if (v < 4.0) {
+		r = 1.0;
+		g = 1.0 - 0.5 * (v - 3.0);
+		b = 0.0;
+	} else {
+		r = 1.0 - 0.5 * (v - 4.0);
+		g = 0.0;
+		b = 0.0;
+	}
+}
+
+visualization_msgs::Marker generateVoxelMarker(Octree* octree) {
+	visualization_msgs::Marker box;
+	box.type = visualization_msgs::Marker::CUBE;
+	box.action = visualization_msgs::Marker::ADD;
+	box.pose.position.x = octree->center.x();
+	box.pose.position.y = octree->center.y();
+	box.pose.position.z = octree->center.z();
+	box.pose.orientation.x = 0;
+	box.pose.orientation.y = 0;
+	box.pose.orientation.z = 0;
+	box.pose.orientation.w = 1;
+	box.scale.x = octree->voxelSize * 2;
+	box.scale.y = octree->voxelSize * 2;
+	box.scale.z = octree->voxelSize * 2;
+	if (octree->planePtr->isPlane) {
+		box.color.r = 1;
+		box.color.g = 1;
+		box.color.b = 1;
+	} else {
+		jetColormap(octree->depth, 0, 5, box.color.r, box.color.g, box.color.b);
+	}
+	box.color.a = 0.5;
+	box.header.frame_id = o3d_slam::frames::mapFrame;
+	box.lifetime = ros::Duration();
+	box.ns = "voxels";
+	box.id = id++;
+
+	return box;
+}
+std::vector<visualization_msgs::Marker> traverseOctree(Octree* map) {
+	std::vector<visualization_msgs::Marker> markers;
+	bool hasNoLeaves = true;
+	for (auto leaf : map->leaves_) {
+		if (leaf != nullptr) {
+			hasNoLeaves = false;
+			auto subMarkers = traverseOctree(leaf);
+			markers.insert(markers.end(), subMarkers.begin(), subMarkers.end());
+		}
+	}
+	if (hasNoLeaves) {
+		markers.push_back(generateVoxelMarker(map));
+	}
+	return markers;
+}
+
+void generateVoxelMapMarkerArray(const OctreeVoxelMap& map, const ros::Publisher& pub) {
+	visualization_msgs::MarkerArray msg;
+	visualization_msgs::Marker delMark;
+	delMark.action = visualization_msgs::Marker::DELETEALL;
+	delMark.header.frame_id = o3d_slam::frames::mapFrame;
+	delMark.lifetime = ros::Duration();
+	delMark.ns = "voxels";
+	delMark.id = id++;
+
+	std::vector<visualization_msgs::Marker> markers;
+	for (auto el : map.voxels_) {
+		auto tmp = traverseOctree(el.second);
+		markers.insert(markers.end(), tmp.begin(), tmp.end());
+	}
+	msg.markers.push_back(delMark);
+	pub.publish(msg);
+
+	msg.markers = markers;
+	pub.publish(msg);
+}
+
+void publishSubmapCoordinateAxes(const SubmapCollection& submaps, const std::string& frame_id, const ros::Time& timestamp,
+																 const ros::Publisher& pub) {
 	visualization_msgs::MarkerArray msg;
 	int id = 0;
 	msg.markers.reserve(2 * submaps.getNumSubmaps());
