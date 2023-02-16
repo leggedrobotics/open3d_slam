@@ -9,109 +9,19 @@
 #include "open3d_slam/SubmapCollection.hpp"
 #include <random>
 // ros stuff
-#include "open3d_conversions/open3d_conversions.h"
 #include <eigen_conversions/eigen_msg.h>
+#include <nav_msgs/Odometry.h>
+#include <open3d/visualization/utility/DrawGeometry.h>
 #include <ros/ros.h>
-#include <tf2_ros/transform_broadcaster.h>
 #include <tf2/convert.h>
 #include <tf2_eigen/tf2_eigen.h>
-#include <nav_msgs/Odometry.h>
-#include "open3d_slam_ros/Color.hpp"
+#include <tf2_ros/transform_broadcaster.h>
+#include "open3d_conversions/open3d_conversions.h"
 #include "open3d_slam/frames.hpp"
+#include "open3d_slam_ros/Color.hpp"
 
 namespace o3d_slam {
-int id = 0;
 
-void jetColormap(int value, int min_value, int max_value, float& r, float& g, float& b) {
-	float v = static_cast<float>(value - min_value) / static_cast<float>(max_value - min_value) * 4.0;
-	if (v < 1.0) {
-		r = 0.0;
-		g = 0.0;
-		b = 0.5 + 0.5 * v;
-	} else if (v < 2.0) {
-		r = 0.0;
-		g = 0.5 * (v - 1.0);
-		b = 1.0;
-	} else if (v < 3.0) {
-		r = 0.5 * (v - 2.0);
-		g = 1.0;
-		b = 1.0 - 0.5 * (v - 2.0);
-	} else if (v < 4.0) {
-		r = 1.0;
-		g = 1.0 - 0.5 * (v - 3.0);
-		b = 0.0;
-	} else {
-		r = 1.0 - 0.5 * (v - 4.0);
-		g = 0.0;
-		b = 0.0;
-	}
-}
-
-visualization_msgs::Marker generateVoxelMarker(Octree* octree) {
-	visualization_msgs::Marker box;
-	box.type = visualization_msgs::Marker::CUBE;
-	box.action = visualization_msgs::Marker::ADD;
-	box.pose.position.x = octree->center.x();
-	box.pose.position.y = octree->center.y();
-	box.pose.position.z = octree->center.z();
-	box.pose.orientation.x = 0;
-	box.pose.orientation.y = 0;
-	box.pose.orientation.z = 0;
-	box.pose.orientation.w = 1;
-	box.scale.x = octree->voxelSize * 2;
-	box.scale.y = octree->voxelSize * 2;
-	box.scale.z = octree->voxelSize * 2;
-	if (octree->planePtr->isPlane) {
-		box.color.r = 1;
-		box.color.g = 1;
-		box.color.b = 1;
-	} else {
-		jetColormap(octree->depth, 0, 5, box.color.r, box.color.g, box.color.b);
-	}
-	box.color.a = 0.5;
-	box.header.frame_id = o3d_slam::frames::mapFrame;
-	box.lifetime = ros::Duration();
-	box.ns = "voxels";
-	box.id = id++;
-
-	return box;
-}
-std::vector<visualization_msgs::Marker> traverseOctree(Octree* map) {
-	std::vector<visualization_msgs::Marker> markers;
-	bool hasNoLeaves = true;
-	for (auto leaf : map->leaves_) {
-		if (leaf != nullptr) {
-			hasNoLeaves = false;
-			auto subMarkers = traverseOctree(leaf);
-			markers.insert(markers.end(), subMarkers.begin(), subMarkers.end());
-		}
-	}
-	if (hasNoLeaves) {
-		markers.push_back(generateVoxelMarker(map));
-	}
-	return markers;
-}
-
-void generateVoxelMapMarkerArray(const OctreeVoxelMap& map, const ros::Publisher& pub) {
-	visualization_msgs::MarkerArray msg;
-	visualization_msgs::Marker delMark;
-	delMark.action = visualization_msgs::Marker::DELETEALL;
-	delMark.header.frame_id = o3d_slam::frames::mapFrame;
-	delMark.lifetime = ros::Duration();
-	delMark.ns = "voxels";
-	delMark.id = id++;
-
-	std::vector<visualization_msgs::Marker> markers;
-	for (auto el : map.voxels_) {
-		auto tmp = traverseOctree(el.second);
-		markers.insert(markers.end(), tmp.begin(), tmp.end());
-	}
-	msg.markers.push_back(delMark);
-	pub.publish(msg);
-
-	msg.markers = markers;
-	pub.publish(msg);
-}
 
 void publishSubmapCoordinateAxes(const SubmapCollection& submaps, const std::string& frame_id, const ros::Time& timestamp,
 																 const ros::Publisher& pub) {
@@ -278,5 +188,56 @@ Time fromRos(const ::ros::Time &time) {
 	return fromUniversal(
 			(time.sec + kUtsEpochOffsetFromUnixEpochInSeconds) * 10000000ll + (time.nsec + 50) / 100); // + 50 to get the rounding correct.
 }
+
+void open3dToRos(const open3d::geometry::MeshBase &mesh, const std::string &frameId,
+                 open3d_slam_msgs::PolygonMesh &msg) {
+
+        enum XYZ {
+          x, y, z
+        };
+        // Constructing the vertices pointcloud
+        using namespace open3d::geometry;
+        PointCloud pointCloud;
+        const int nVertices = mesh.vertices_.size();
+        pointCloud.points_ = mesh.vertices_;
+
+        // Mesh to PC color change.
+        pointCloud.colors_.resize(nVertices);
+        pointCloud.colors_ = mesh.vertex_colors_;
+
+        open3d_conversions::open3dToRos(pointCloud, msg.cloud, frameId);
+
+        if (mesh.GetGeometryType() != Geometry::GeometryType::TriangleMesh) {
+                throw std::runtime_error("Only triangle mesh supported for now!");
+        }
+
+        const TriangleMesh &triangleMesh = static_cast<const TriangleMesh&>(mesh);
+
+        // add triangles
+        const int nTriangles = triangleMesh.triangles_.size();
+        msg.polygons.reserve(nTriangles);
+        for (int i = 0; i < nTriangles; ++i) {
+                open3d_slam_msgs::Vertices triangle;
+                triangle.vertices.resize(3);
+                triangle.vertices[x] = triangleMesh.triangles_.at(i).x();
+                triangle.vertices[y] = triangleMesh.triangles_.at(i).y();
+                triangle.vertices[z] = triangleMesh.triangles_.at(i).z();
+                msg.polygons.push_back(triangle);
+        }
+
+}
+
+void publishMesh(open3d::geometry::TriangleMesh& mesh, ros::Publisher pub){
+        if(!mesh.triangles_.empty()) {
+                open3d_slam_msgs::PolygonMesh meshMsg;
+                open3dToRos(mesh, o3d_slam::frames::mapFrame, meshMsg);
+                meshMsg.header.frame_id = o3d_slam::frames::mapFrame;
+                pub.publish(meshMsg);
+                std::shared_ptr<open3d::geometry::TriangleMesh> meshPtr = std::make_shared<open3d::geometry::TriangleMesh>(mesh);
+                //open3d::visualization::DrawGeometries({meshPtr});
+        }
+}
+
+
 
 } /* namespace o3d_slam */

@@ -54,5 +54,5 @@ void publishIfSubscriberExists(const Msg &msg, const ros::Publisher &pub){
         pub.publish(msg);
     }
 }
-void generateVoxelMapMarkerArray(const OctreeVoxelMap& map, const ros::Publisher& pub);
+void publishMesh(open3d::geometry::TriangleMesh& mesh, ros::Publisher pub);
 } /* namespace o3d_slam */

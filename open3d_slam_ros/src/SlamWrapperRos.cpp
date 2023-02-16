@@ -189,7 +189,9 @@ void SlamWrapperRos::loadParametersAndInitialize() {
 	scan2scanOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2scan_odometry", 1, true);
 	scan2mapTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("scan2map_transform", 1, true);
   scan2mapOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2map_odometry", 1, true);
-  octreePub_ = nh_->advertise<visualization_msgs::MarkerArray>("voxelmap", 1, false);
+  meshPub_ = nh_->advertise<open3d_slam_msgs::PolygonMesh>("mesh", 1, true);
+  voxelMapPub_ = nh_->advertise<sensor_msgs::PointCloud2>("voxelMap",1,true);
+  vertexPub_ = nh_->advertise<sensor_msgs::PointCloud2>("vertexMap",1,true);
 
 	//	auto &logger = open3d::utility::Logger::GetInstance();
 	//	logger.SetVerbosityLevel(open3d::utility::VerbosityLevel::Debug);
@@ -264,7 +266,14 @@ void SlamWrapperRos::publishMaps(const Time &time) {
 		voxelize(params_.visualization_.submapVoxelSize_, &cloud);
 		o3d_slam::publishCloud(cloud, o3d_slam::frames::mapFrame, timestamp, submapsPub_);
 	}
-	generateVoxelMapMarkerArray(mapper_->getSubmaps().getActiveSubmap().octreeMap_, octreePub_);
+        auto o3DMesh = mapper_->getSubmaps().getActiveSubmap().meshMap_.toO3dMesh();
+        auto vertexMap = mapper_->getSubmaps().getActiveSubmap().meshMap_.allPts_;
+        auto voxelMap = mapper_->getSubmaps().getActiveSubmap().meshMap_.getVoxelCloud();
+
+        publishMesh(o3DMesh, meshPub_);
+        o3d_slam::publishCloud(vertexMap,o3d_slam::frames::mapFrame,timestamp,vertexPub_);
+        o3d_slam::publishCloud(voxelMap,o3d_slam::frames::mapFrame,timestamp,voxelMapPub_);
+
 	visualizationUpdateTimer_.reset();
 	isVisualizationFirstTime_ = false;
 }
