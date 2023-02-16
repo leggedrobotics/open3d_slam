@@ -13,7 +13,7 @@
 #include <mutex>
 #include <open3d_slam/VoxelHashMap.hpp>
 #include <open3d_slam/Transform.hpp>
-#include <open3d_slam/Octree.hpp>
+
 
 namespace o3d_slam {
 
@@ -78,6 +78,7 @@ public:
 std::shared_ptr<PointCloud> removeDuplicatePointsWithinSameVoxels(const open3d::geometry::PointCloud& cloud,
 																																	const Eigen::Vector3d& voxelSize);
 
+/*#include "open3d_slam/Octree.hpp"
 class OctreeVoxelMap : public VoxelHashMap<Octree*> {
 	using BASE = VoxelHashMap<Octree*>;
 
@@ -97,6 +98,6 @@ class OctreeVoxelMap : public VoxelHashMap<Octree*> {
 	int planeUpdateThreshold_ = 20;
 	int pointUpdateThreshold_ = 5;
 	double planeThreshold_ = 0.01;
-};
+};*/
 
 } // namespace o3d_slam

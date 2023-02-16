@@ -16,6 +16,7 @@
 #include "open3d_slam/Transform.hpp"
 #include <open3d/pipelines/registration/Feature.h>
 #include "open3d_slam/Voxel.hpp"
+#include "MeshVoxel.hpp"
 
 namespace o3d_slam {
 
@@ -64,7 +65,7 @@ public:
 	mutable PointCloud scanRef_;
 
 	Submap(const Submap &other);
-  OctreeVoxelMap octreeMap_;
+	MeshMap meshMap_;
 
 private:
 	void carve(const PointCloud &scan, const Eigen::Vector3d &sensorPosition,
@@ -95,6 +96,7 @@ private:
 	ColorRangeCropper colorCropper_;
 	mutable std::mutex denseMapMutex_;
 	mutable std::mutex mapPointCloudMutex_;
+        mutable std::mutex meshMapLock_;
 };
 
 } // namespace o3d_slam

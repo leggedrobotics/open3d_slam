@@ -415,5 +415,22 @@ std::shared_ptr<PointCloud> removePointsWithNonFiniteValues(const PointCloud &cl
 	return filtered;
 }
 
+
+std::vector<Eigen::Vector3d> getPointSetFromIdx(const std::vector<int>& idxs, const PointCloud& pc){
+        std::vector<Eigen::Vector3d> pointSet;
+        pointSet.reserve(idxs.size());
+        for(const auto& idx: idxs){
+                pointSet.push_back(pc.points_[idx]);
+        }
+        return pointSet;
+}
+std::vector<Eigen::Vector3d> getPointSetFromIdx(const std::unordered_set<int>& idxs, const PointCloud& pc){
+        std::vector<Eigen::Vector3d> pointSet;
+        pointSet.reserve(idxs.size());
+        for(const auto& idx: idxs){
+                pointSet.push_back(pc.points_[idx]);
+        }
+        return pointSet;
+}
 } /* namespace o3d_slam */
 

@@ -10,14 +10,20 @@
 namespace o3d_slam {
 class Plane {
  public:
-  void initialize(const std::vector<PointWithCov>& pts);
-  void update(const std::vector<PointWithCov>& pts);
+  void initialize(const std::vector<Eigen::Vector3d>& pts);
+  void update(const std::vector<Eigen::Vector3d>& pts);
   bool isPlane = false;
   bool isInitialized = false;
   int id;
+  Eigen::Vector3d getPlaneCenter(){return center_;};
+  Eigen::Vector3d getPlaneNormal(){return normal_;};
+  Eigen::Matrix<double,3,2> getTangentialBase(){
+  Eigen::Matrix<double,3,2> base;
+  base << u_,v_;
+  return base;
+  };
 
  private:
-  Matrix6d planeCov_ = Matrix6d::Zero();
   Eigen::Matrix3d cov_ = Eigen::Matrix3d::Zero();
   Eigen::Vector3d center_ = Eigen::Vector3d::Zero();
   Eigen::Vector3d normal_ = Eigen::Vector3d::Zero();

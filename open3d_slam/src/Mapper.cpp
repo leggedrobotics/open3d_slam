@@ -172,11 +172,9 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	const bool isMovedTooLittle = sensorMotion.translation().norm() < params_.minMovementBetweenMappingSteps_;
 	if (!isMovedTooLittle) {
 		// Timer t("scan_insertion_and_bookeeping");
-		Matrix6d covariance = covarianceBuffer_.at(timestamp);
-		submaps_->insertScan(rawScan, *processed.merge_, mapToRangeSensor_, covariance, timestamp);
+		submaps_->insertScan(rawScan, *processed.merge_, mapToRangeSensor_, Matrix6d::Zero(), timestamp);
 		mapToRangeSensorLastScanInsertion_ = mapToRangeSensor_;
 	}
-
 	lastMeasurementTimestamp_ = timestamp;
 	mapToRangeSensorPrev_ = mapToRangeSensor_;
 	return true;

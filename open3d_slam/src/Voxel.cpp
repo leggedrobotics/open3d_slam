@@ -203,7 +203,11 @@ std::shared_ptr<PointCloud> removeDuplicatePointsWithinSameVoxels(const open3d::
 	return retVal;
 }
 
-OctreeVoxelMap::OctreeVoxelMap() : OctreeVoxelMap(Eigen::Vector3d::Constant(0.25)) {}
+//////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////
+
+/*OctreeVoxelMap::OctreeVoxelMap() : OctreeVoxelMap(Eigen::Vector3d::Constant(0.25)) {}
 OctreeVoxelMap::OctreeVoxelMap(const Eigen::Vector3d& voxelSize) : BASE(voxelSize) {}
 void OctreeVoxelMap::insert(const PointCloud& cloud, const Matrix6d& poseCovariance) {
 	std::vector<PointWithCov> pts;
@@ -216,7 +220,7 @@ void OctreeVoxelMap::insert(const PointCloud& cloud, const Matrix6d& poseCovaria
 		Eigen::Matrix3d skewPoint = skew(pt);
 		Eigen::Matrix3d rotationCovariance = poseCovariance.block<3, 3>(0, 0);
 		Eigen::Matrix3d translationCovariance = poseCovariance.block<3, 3>(3, 3);
-		pc.cov = (-skewPoint) * rotationCovariance * (-skewPoint).transpose() + translationCovariance;
+		//pc.cov = (-skewPoint) * rotationCovariance * (-skewPoint).transpose() + translationCovariance;
 		pts.push_back(pc);
 	}
 	addPoints(pts);
@@ -269,6 +273,6 @@ void OctreeVoxelMap::addPoints(const std::vector<PointWithCov>& pts) {
 			voxel.second->initializeOctree();
 		}
 	}
-}
+}*/
 
 }  // namespace o3d_slam

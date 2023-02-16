@@ -1,0 +1,3 @@
+[submodule "open3d_slam/thirdparty/delaunator-cpp"]
+	path = open3d_slam/thirdparty/delaunator-cpp
+	url = git@github.com:delfrrr/delaunator-cpp.git

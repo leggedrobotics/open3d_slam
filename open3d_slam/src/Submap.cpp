@@ -74,10 +74,10 @@ bool Submap::insertScan(const PointCloud& rawScan, const PointCloud& preProcesse
 			carvingStatisticsTimer_.reset();
 		}
 	}
-	if (!covariances.isZero()) {
-		// std::cout << "INSERT OCTREE" << std::endl;
-		octreeMap_.insert(*transformedCloud, covariances);
-	}
+				if(!isEmpty()){
+								std::lock_guard<std::mutex> lck{meshMapLock_};
+								meshMap_.addNewPointCloud(*transformedCloud);
+				}
 	std::lock_guard<std::mutex> lck(mapPointCloudMutex_);
 	mapCloud_ += *transformedCloud;
 	mapBuilderCropper_->setPose(mapToRangeSensor);
@@ -186,7 +186,7 @@ Submap::Submap(const Submap &other) :
   mapToSubmap_ = other.mapToSubmap_;
   mapCloud_ = other.mapCloud_;
   sparseMapCloud_ = other.sparseMapCloud_;
-  octreeMap_ = other.octreeMap_;
+  //octreeMap_ = other.octreeMap_;
 
 //	update(params_);
 }

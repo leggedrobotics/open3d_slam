@@ -55,4 +55,12 @@ std::vector<Eigen::Vector3i> getKeysOfCarvedPoints(const PointCloud &scan,
 
 std::shared_ptr<PointCloud> removePointsWithNonFiniteValues(const PointCloud& in);
 
+template<typename T>
+void appendToSet(std::unordered_set<T>& vec, const std::vector<T>& other){
+    vec.insert(other.begin(),other.end());
+}
+
+std::vector<Eigen::Vector3d> getPointSetFromIdx(const std::vector<int>& idxs, const PointCloud& pc);
+std::vector<Eigen::Vector3d> getPointSetFromIdx(const std::unordered_set<int>& idxs, const PointCloud& pc);
+
 } /* namespace o3d_slam */

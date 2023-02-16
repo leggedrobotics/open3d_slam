@@ -28,9 +28,9 @@ set(SRC_FILES
   src/VoxelHashMap.cpp
   src/ScanToMapRegistration.cpp
   src/CloudRegistration.cpp
-  src/Octree.cpp
+  #src/Octree.cpp
   src/Plane.cpp
-)
+  src/MeshVoxel.cpp)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   open3d_catkin
@@ -40,7 +40,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 
 find_package(Eigen3 REQUIRED)
 find_package(Boost QUIET REQUIRED COMPONENTS serialization filesystem system program_options)
-
 find_package(OpenMP QUIET)
 if (OpenMP_FOUND)
   add_compile_options("${OpenMP_CXX_FLAGS}")
@@ -62,12 +61,15 @@ catkin_package(
   DEPENDS 
 )
 
+set(DELAUNATOR_INCLUDE_DIRS "thirdparty/delaunator-cpp/include")
+
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIR}
   ${OpenMP_CXX_INCLUDE_DIRS}
+  ${DELAUNATOR_INCLUDE_DIRS}
 )
 
 add_library(${PROJECT_NAME}
