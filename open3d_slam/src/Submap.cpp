@@ -74,14 +74,14 @@ bool Submap::insertScan(const PointCloud& rawScan, const PointCloud& preProcesse
 			carvingStatisticsTimer_.reset();
 		}
 	}
-				if(!isEmpty()){
-								std::lock_guard<std::mutex> lck{meshMapLock_};
-								meshMap_.addNewPointCloud(*transformedCloud);
-				}
 	std::lock_guard<std::mutex> lck(mapPointCloudMutex_);
 	mapCloud_ += *transformedCloud;
 	mapBuilderCropper_->setPose(mapToRangeSensor);
 	voxelizeInsideCroppingVolume(*mapBuilderCropper_, params_.mapBuilder_, &mapCloud_);
+	MaxRadiusCroppingVolume meshCropper(15);
+	meshCropper.setPose(mapToRangeSensor);
+	PointCloudPtr meshInput = meshCropper.crop(mapCloud_);
+	meshMap_.addNewPointCloud(*meshInput);
 	++nScansInsertedMap_;
 	return true;
 }

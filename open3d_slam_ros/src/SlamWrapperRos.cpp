@@ -268,11 +268,11 @@ void SlamWrapperRos::publishMaps(const Time &time) {
 	}
         auto o3DMesh = mapper_->getSubmaps().getActiveSubmap().meshMap_.toO3dMesh();
         auto vertexMap = mapper_->getSubmaps().getActiveSubmap().meshMap_.allPts_;
-        auto voxelMap = mapper_->getSubmaps().getActiveSubmap().meshMap_.getVoxelCloud();
+        //auto voxelMap = mapper_->getSubmaps().getActiveSubmap().meshMap_.getVoxelCloud();
 
         publishMesh(o3DMesh, meshPub_);
         o3d_slam::publishCloud(vertexMap,o3d_slam::frames::mapFrame,timestamp,vertexPub_);
-        o3d_slam::publishCloud(voxelMap,o3d_slam::frames::mapFrame,timestamp,voxelMapPub_);
+        //o3d_slam::publishCloud(voxelMap,o3d_slam::frames::mapFrame,timestamp,voxelMapPub_);
 
 	visualizationUpdateTimer_.reset();
 	isVisualizationFirstTime_ = false;
