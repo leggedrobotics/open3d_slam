@@ -192,6 +192,8 @@ void SlamWrapper::loadParametersAndInitialize() {
 	mapper_ = std::make_shared<o3d_slam::Mapper>(odometry_->getBuffer(), submaps_, odometry_->getCovarianceBuffer());
 	mapper_->setParameters(params_.mapper_);
 
+	mesher_ = std::make_shared<o3d_slam::Mesher>();
+
 	optimizationProblem_ = std::make_shared<o3d_slam::OptimizationProblem>();
 	optimizationProblem_->setParameters(params_.mapper_);
 
@@ -234,6 +236,10 @@ void SlamWrapper::startWorkers() {
 	mappingWorker_ = std::thread([this]() {
 		mappingWorker();
 	});
+	meshingWorker_ = std::thread([this]() {
+		meshingWorker();
+	});
+
 	if (params_.mapper_.isAttemptLoopClosures_) {
 		loopClosureWorker_ = std::thread([this]() {
 			loopClosureWorker();
@@ -342,6 +348,15 @@ void SlamWrapper::mappingWorker() {
 			registeredCloud.targetFrame_ = frames::mapFrame;
 			registeredCloudBuffer_.push(registeredCloud);
 			latestScanToMapRefinementTimestamp_ = measurement.time_;
+
+			RegisteredPointCloud registeredMap;
+			registeredMap.raw_.cloud_ = mapper_->getAssembledMapPointCloud();;
+			registeredMap.raw_.time_ = measurement.time_;
+			registeredMap.submapId_ = -1;
+			registeredMap.transform_ = mapper_->getMapToRangeSensor(measurement.time_);
+			registeredMap.sourceFrame_ = frames::rangeSensorFrame;
+			registeredMap.targetFrame_ = frames::mapFrame;
+			meshingBuffer_.push(registeredMap);
 		}
 
 		if (params_.mapper_.isAttemptLoopClosures_) {
@@ -362,6 +377,30 @@ void SlamWrapper::mappingWorker() {
 		}
 
 	} // while (isRunWorkers_)
+}
+
+void SlamWrapper::meshingWorker(){
+	while(isRunWorkers_){
+					if(meshingBuffer_.empty()){
+									std::this_thread::sleep_for(std::chrono::milliseconds(50));
+									continue;
+					}
+					meshingStatisticsTimer_.startStopwatch();
+
+					const RegisteredPointCloud meshingCloud_ = meshingBuffer_.pop();
+					mesher_->addNewPointCloud(meshingCloud_.raw_.cloud_,meshingCloud_.transform_);
+
+
+
+					const double elapsedTime = meshingStatisticsTimer_.elapsedMsecSinceStopwatchStart();
+					meshingStatisticsTimer_.addMeasurementMsec(elapsedTime);
+					if(meshingStatisticsTimer_.elapsedSec() > timingStatsEveryNsec){
+									std::cout << "Meshing timing stats: Avg execution time: "
+														<< meshingStatisticsTimer_.getAvgMeasurementMsec() << " msec , frequency: "
+														<< 1e3 / meshingStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
+									meshingStatisticsTimer_.reset();
+					}
+	}
 }
 
 void SlamWrapper::checkIfOptimizedGraphAvailable(){

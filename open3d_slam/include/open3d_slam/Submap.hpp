@@ -65,8 +65,6 @@ public:
 	mutable PointCloud scanRef_;
 
 	Submap(const Submap &other);
-	MeshMap meshMap_;
-
 private:
 	void carve(const PointCloud &scan, const Eigen::Vector3d &sensorPosition,
 			const SpaceCarvingParameters &param, VoxelizedPointCloud *cloud);

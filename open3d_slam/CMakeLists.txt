@@ -30,7 +30,8 @@ set(SRC_FILES
   src/CloudRegistration.cpp
   #src/Octree.cpp
   src/Plane.cpp
-  src/MeshVoxel.cpp)
+  src/MeshVoxel.cpp
+  src/Mesher.cpp)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   open3d_catkin
@@ -62,6 +63,7 @@ catkin_package(
 )
 
 set(DELAUNATOR_INCLUDE_DIRS "thirdparty/delaunator-cpp/include")
+set(IKD_INCLUDE_DIRS "thirdparty/ikd-Tree/ikd-Tree")
 
 include_directories(
   include
@@ -70,6 +72,7 @@ include_directories(
   ${Boost_INCLUDE_DIR}
   ${OpenMP_CXX_INCLUDE_DIRS}
   ${DELAUNATOR_INCLUDE_DIRS}
+  ${IKD_INCLUDE_DIRS}
 )
 
 add_library(${PROJECT_NAME}

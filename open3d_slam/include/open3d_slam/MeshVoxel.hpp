@@ -74,12 +74,14 @@ class MeshMap {
   void mesh();
   open3d::geometry::TriangleMesh toO3dMesh() const;
   PointCloud allPts_;
-  MeshMap() { ikdTree_ = std::make_unique<ikd::KD_TREE<Eigen::Vector3d>>(0.3, 0.6, 0.01); }
+  MeshMap(double downsampleSize, double newVertexThreshould, double voxelSize)
+      : downsampleVoxelSize_(downsampleSize), newVertexThreshold_(newVertexThreshould), l2VoxelSize_(voxelSize) {
+    ikdTree_ = std::make_unique<ikd::KD_TREE<Eigen::Vector3d>>(0.3, 0.6, 0.01);
+  };
 
   void removePoints(PointCloud& cloud);
 
  private:
-
   std::unordered_map<Eigen::Vector3i, MeshVoxel, EigenVec3iHash> l2Voxels_;
   std::unordered_map<int, Triangle> triangles_;
   std::unordered_map<int, std::unordered_set<int>> vertexToTriangles_;

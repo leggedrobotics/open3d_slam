@@ -78,10 +78,6 @@ bool Submap::insertScan(const PointCloud& rawScan, const PointCloud& preProcesse
 	mapCloud_ += *transformedCloud;
 	mapBuilderCropper_->setPose(mapToRangeSensor);
 	voxelizeInsideCroppingVolume(*mapBuilderCropper_, params_.mapBuilder_, &mapCloud_);
-	MaxRadiusCroppingVolume meshCropper(15);
-	meshCropper.setPose(mapToRangeSensor);
-	PointCloudPtr meshInput = meshCropper.crop(mapCloud_);
-	meshMap_.addNewPointCloud(*meshInput);
 	++nScansInsertedMap_;
 	return true;
 }

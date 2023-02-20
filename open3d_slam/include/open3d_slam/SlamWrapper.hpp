@@ -80,11 +80,13 @@ private:
 	void attemptLoopClosuresIfReady();
 	void updateSubmapsAndTrajectory();
 	void denseMapWorker();
+	void meshingWorker();
+
 
 
 protected:
 	// buffers
-	CircularBuffer<RegisteredPointCloud> registeredCloudBuffer_;
+	CircularBuffer<RegisteredPointCloud> registeredCloudBuffer_,meshingBuffer_;
 	CircularBuffer<TimestampedPointCloud> odometryBuffer_, mappingBuffer_;
 	ThreadSafeBuffer<TimestampedSubmapId> loopClosureCandidates_;
 
@@ -103,13 +105,14 @@ protected:
 	std::shared_ptr<Mapper> mapper_;
 	std::shared_ptr<SubmapCollection> submaps_;
 	std::shared_ptr<OptimizationProblem> optimizationProblem_;
+	std::shared_ptr<Mesher> mesher_;
 
 	// multithreading
-	std::thread odometryWorker_, mappingWorker_, loopClosureWorker_, denseMapWorker_;
+	std::thread odometryWorker_, mappingWorker_, loopClosureWorker_, denseMapWorker_, meshingWorker_;
 	std::future<void> computeFeaturesResult_;
 
 	// timing
-	Timer mappingStatisticsTimer_,odometryStatisticsTimer_, visualizationUpdateTimer_, denseMapVisualizationUpdateTimer_, denseMapStatiscticsTimer_;
+	Timer mappingStatisticsTimer_,odometryStatisticsTimer_, visualizationUpdateTimer_, denseMapVisualizationUpdateTimer_, denseMapStatiscticsTimer_,meshingStatisticsTimer_;
 	Timer mapperOnlyTimer_;
 	Time latestScanToMapRefinementTimestamp_;
 	Time latestScanToScanRegistrationTimestamp_;
