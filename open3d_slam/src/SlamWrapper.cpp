@@ -7,22 +7,22 @@
 
 #include "open3d_slam/SlamWrapper.hpp"
 
-#include <chrono>
 #include <open3d/Open3D.h>
+#include <chrono>
+#include "open3d_slam/Mapper.hpp"
+#include "open3d_slam/MotionCompensation.hpp"
+#include "open3d_slam/Odometry.hpp"
+#include "open3d_slam/OptimizationProblem.hpp"
 #include "open3d_slam/Parameters.hpp"
+#include "open3d_slam/ScanToMapRegistration.hpp"
+#include "open3d_slam/assert.hpp"
+#include "open3d_slam/constraint_builders.hpp"
+#include "open3d_slam/croppers.hpp"
 #include "open3d_slam/frames.hpp"
 #include "open3d_slam/helpers.hpp"
-#include "open3d_slam/time.hpp"
 #include "open3d_slam/math.hpp"
-#include "open3d_slam/croppers.hpp"
 #include "open3d_slam/output.hpp"
-#include "open3d_slam/Mapper.hpp"
-#include "open3d_slam/assert.hpp"
-#include "open3d_slam/OptimizationProblem.hpp"
-#include "open3d_slam/constraint_builders.hpp"
-#include "open3d_slam/Odometry.hpp"
-#include "open3d_slam/MotionCompensation.hpp"
-#include "open3d_slam/ScanToMapRegistration.hpp"
+#include "open3d_slam/time.hpp"
 
 #ifdef open3d_slam_OPENMP_FOUND
 #include <omp.h>
@@ -380,6 +380,7 @@ void SlamWrapper::mappingWorker() {
 }
 
 void SlamWrapper::meshingWorker(){
+        int nPointCloudsInserted = 0;
 	while(isRunWorkers_){
 					if(meshingBuffer_.empty()){
 									std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -389,6 +390,10 @@ void SlamWrapper::meshingWorker(){
 
 					const RegisteredPointCloud meshingCloud_ = meshingBuffer_.pop();
 					mesher_->addNewPointCloud(meshingCloud_.raw_.cloud_,meshingCloud_.transform_);
+                                        ++nPointCloudsInserted;
+                                        if (nPointCloudsInserted%5 ==0){
+                                                                        mesher_->mesh();
+                                        }
 
 
 
@@ -399,6 +404,7 @@ void SlamWrapper::meshingWorker(){
 														<< meshingStatisticsTimer_.getAvgMeasurementMsec() << " msec , frequency: "
 														<< 1e3 / meshingStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
 									meshingStatisticsTimer_.reset();
+                                                                        mesher_->getMeshMap()->printMeshingStats();
 					}
 	}
 }

@@ -416,7 +416,7 @@ std::shared_ptr<PointCloud> removePointsWithNonFiniteValues(const PointCloud &cl
 }
 
 
-std::vector<Eigen::Vector3d> getPointSetFromIdx(const std::vector<int>& idxs, const PointCloud& pc){
+std::vector<Eigen::Vector3d> getPointSetFromIdx(const std::vector<size_t>& idxs, const PointCloud& pc){
         std::vector<Eigen::Vector3d> pointSet;
         pointSet.reserve(idxs.size());
         for(const auto& idx: idxs){
@@ -424,7 +424,7 @@ std::vector<Eigen::Vector3d> getPointSetFromIdx(const std::vector<int>& idxs, co
         }
         return pointSet;
 }
-std::vector<Eigen::Vector3d> getPointSetFromIdx(const std::unordered_set<int>& idxs, const PointCloud& pc){
+std::vector<Eigen::Vector3d> getPointSetFromIdx(const std::unordered_set<size_t>& idxs, const PointCloud& pc){
         std::vector<Eigen::Vector3d> pointSet;
         pointSet.reserve(idxs.size());
         for(const auto& idx: idxs){

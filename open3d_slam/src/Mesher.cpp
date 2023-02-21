@@ -10,4 +10,7 @@ void Mesher::addNewPointCloud(const PointCloud& pc, const Eigen::Isometry3d& map
   PointCloudPtr meshInput = meshCropper.crop(pc);
   meshMap_->addNewPointCloud(*meshInput);
 }
+void Mesher::mesh(){
+  meshMap_->mesh();
+}
 }  // namespace o3d_slam

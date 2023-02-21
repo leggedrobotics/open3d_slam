@@ -9,6 +9,7 @@
 #include <open3d/geometry/TriangleMesh.h>
 #include <open3d/visualization/visualizer/O3DVisualizer.h>
 #include <Eigen/Core>
+#include <iostream>
 #include <memory>
 #include <mutex>
 #include <unordered_map>
@@ -17,6 +18,7 @@
 #include "../../thirdparty/ikd-Tree/ikd-Tree/ikd_Tree.hpp"
 #include "open3d_slam/Plane.hpp"
 #include "open3d_slam/VoxelHashMap.hpp"
+#include "open3d_slam/time.hpp"
 #include "open3d_slam/typedefs.hpp"
 
 namespace o3d_slam {
@@ -25,10 +27,17 @@ struct Triangle {
   int i, j, k;
   Triangle(int i, int j, int k) : i(i), j(j), k(k){};
   bool operator==(const Triangle& other) const {
-    return (i == other.i || i == other.j || i == other.j) && (j == other.i || j == other.j || j == other.j) &&
-           (k == other.i || k == other.j || k == other.j);
+    return (i == other.i || i == other.j || i == other.k) && (j == other.i || j == other.j || j == other.k) &&
+           (k == other.i || k == other.j || k == other.k);
   }
   Eigen::Vector3i toEigen() const { return {i, j, k}; }
+  bool isDegenerate() const {
+    std::unordered_set<int> points;
+    points.insert(i);
+    points.insert(j);
+    points.insert(k);
+    return points.size() < 3;
+  }
 };
 
 class MeshMap;
@@ -48,7 +57,7 @@ class MeshVoxel {
   void addPoint(int vert);
 
   bool isUpdated() const { return isModified_; };
-  std::vector<int> getPoints() const { return pts_; };
+  std::vector<size_t> getPoints() const { return pts_; };
   Plane* getPlanePtr() {
     if (!planePtr_->isInitialized) {
       initPlane();
@@ -58,7 +67,7 @@ class MeshVoxel {
   void deactivate() { isModified_ = false; };
 
  private:
-  std::vector<int> pts_;
+  std::vector<size_t> pts_;
   std::unique_ptr<Plane> planePtr_;
   double voxelSize_;
   std::shared_ptr<MeshMap> parentMap_;
@@ -79,25 +88,37 @@ class MeshMap {
     ikdTree_ = std::make_unique<ikd::KD_TREE<Eigen::Vector3d>>(0.3, 0.6, 0.01);
   };
 
-  void removePoints(PointCloud& cloud);
+  void printMeshingStats() {
+    std::cout << "Meshing timing stats ADDING: Avg execution time: " << addingTimer_.getAvgMeasurementMsec()
+              << " msec , frequency: " << 1e3 / addingTimer_.getAvgMeasurementMsec() << " Hz \n";
+    addingTimer_.reset();
+    std::cout << "Meshing timing stats MESHING: Avg execution time: " << meshingTimer_.getAvgMeasurementMsec()
+              << " msec , frequency: " << 1e3 / meshingTimer_.getAvgMeasurementMsec() << " Hz \n";
+    meshingTimer_.reset();
+  };
 
  private:
   std::unordered_map<Eigen::Vector3i, MeshVoxel, EigenVec3iHash> l2Voxels_;
-  std::unordered_map<int, Triangle> triangles_;
-  std::unordered_map<int, std::unordered_set<int>> vertexToTriangles_;
+  std::unordered_map<size_t, Triangle> triangles_;
+  std::unordered_map<size_t, std::unordered_set<size_t>> vertexToTriangles_;
 
   double downsampleVoxelSize_ = 0.1;
   double newVertexThreshold_ = 0.1;
   double l2VoxelSize_ = 0.4;
+  int meshCount_ = 0;
 
-  std::vector<int> getVoxelVertexSet(const MeshVoxel& voxel);
-  std::vector<Triangle> triangulateVertexSetForVoxel(MeshVoxel& voxel, const std::vector<int>& vertices) const;
-  std::unordered_set<int> getTriangleIndexesForVertex(const int& vertex);
-  void pullTriangles(std::vector<int>& vertices, std::vector<Triangle>& pulledTriangles, std::vector<int>& pulledIdx);
-  void eraseTriangle(const int& triIdx);
+  size_t nextTriIdx_ = 0;
+
+  std::vector<size_t> getVoxelVertexSet(const MeshVoxel& voxel);
+  std::vector<Triangle> triangulateVertexSetForVoxel(MeshVoxel& voxel, const std::vector<size_t>& vertices) const;
+  std::unordered_set<size_t> getTriangleIndexesForVertex(const size_t& vertex);
+  void pullTriangles(const std::vector<size_t>& vertices, std::vector<Triangle>& pulledTriangles, std::vector<size_t>& pulledIdx);
+  void eraseTriangle(const size_t& triIdx);
   void addTriangle(const Triangle& tri);
-  mutable std::mutex meshLock_;
+  mutable std::mutex triangleLock_, verToTriLock_, voxelLock_, vertexLock_;
   std::unique_ptr<ikd::KD_TREE<Eigen::Vector3d>> ikdTree_;
+  Timer addingTimer_, meshingTimer_;
+  void cleanup();
 };
 }  // namespace o3d_slam
 

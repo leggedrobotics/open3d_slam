@@ -18,6 +18,7 @@
 #include "open3d_slam/CircularBuffer.hpp"
 #include "open3d_slam/ThreadSafeBuffer.hpp"
 #include "open3d_slam/Constraint.hpp"
+#include "open3d_slam/Mesher.hpp"
 
 
 namespace o3d_slam {
