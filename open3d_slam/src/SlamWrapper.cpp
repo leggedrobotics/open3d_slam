@@ -193,6 +193,7 @@ void SlamWrapper::loadParametersAndInitialize() {
 	mapper_->setParameters(params_.mapper_);
 
 	mesher_ = std::make_shared<o3d_slam::Mesher>();
+	mesher_->setParameters(params_.mesher_);
 
 	optimizationProblem_ = std::make_shared<o3d_slam::OptimizationProblem>();
 	optimizationProblem_->setParameters(params_.mapper_);

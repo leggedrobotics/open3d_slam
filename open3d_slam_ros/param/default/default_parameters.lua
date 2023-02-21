@@ -13,4 +13,5 @@ DEFAULT_PARAMETERS = {
   global_optimization = deepcopy(GLOBAL_OPTIMIZATION_PARAMETERS),
   map_initializer = deepcopy(MAP_INITIALIZER_PARAMETERS),
   place_recognition = deepcopy(PLACE_RECOGNITION_PARAMETERS),
+  meshing = deepcopy(MESHING_PARAMETERS),
 }

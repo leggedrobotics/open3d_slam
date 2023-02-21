@@ -215,6 +215,7 @@ void LuaLoader::loadParameters(const std::string &folderpath, const std::string 
 	loadIfDictionaryDefined(dict,"mapper_localizer", &p->mapper_);
 	loadIfDictionaryDefined(dict,"map_initializer", &p->mapper_.mapInit_);
 	loadIfDictionaryDefined(dict,"place_recognition", &p->mapper_.placeRecognition_);
+	loadIfDictionaryDefined(dict,"meshing",&p->mesher_);
 	if (!isKeyDefinedMultiLevel(dict,{"place_recognition","loop_closure_search_radius"})){
 		std::cout << "Using submap size as loop closure serach radius! \n";
 		p->mapper_.placeRecognition_.loopClosureSearchRadius_ = p->mapper_.submaps_.radius_; // default value
@@ -370,6 +371,13 @@ void LuaLoader::loadParameters(const DictPtr dict, SpaceCarvingParameters *p){
 	loadDoubleIfKeyDefined(dict, "max_raytracing_length", &p->maxRaytracingLength_);
 	loadDoubleIfKeyDefined(dict, "truncation_distance", &p->truncationDistance_);
 	loadIntIfKeyDefined(dict, "carve_space_every_n_scans", &p->carveSpaceEveryNscans_);
+}
+
+void LuaLoader::loadParameters(const DictPtr dict, MeshingParameters *p){
+	loadDoubleIfKeyDefined(dict, "meshing_voxel_size", &p->meshingVoxelSize_);
+	loadDoubleIfKeyDefined(dict, "new_vertex_distance_threshold", &p->newVertexDistanceThreshold_);
+	loadDoubleIfKeyDefined(dict, "downsampling_voxel_size", &p->downsamplingVoxelSize_);
+	loadDoubleIfKeyDefined(dict, "voxel_dilation_ratio",&p->voxelDilationRatio_);
 }
 
 void LuaLoader::loadParameters(const DictPtr dict, Eigen::Isometry3d *T) {

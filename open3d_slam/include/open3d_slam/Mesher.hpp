@@ -5,7 +5,9 @@
 #ifndef O3D_SLAM_MESHER_HPP
 #define O3D_SLAM_MESHER_HPP
 #include <iostream>
+#include <utility>
 #include "MeshVoxel.hpp"
+#include "Parameters.hpp"
 #include "croppers.hpp"
 
 namespace o3d_slam {
@@ -14,39 +16,37 @@ class Mesher {
   using MeshMapPtr = std::shared_ptr<MeshMap>;
 
   struct MeshSubMap {
-    int submapId_;
+    size_t submapId_;
     MeshMapPtr map_;
 
-    MeshSubMap(size_t submapId, MeshMapPtr map) : submapId_(submapId), map_(map){};
+    MeshSubMap(const size_t& submapId, MeshMapPtr map) : submapId_(submapId), map_(std::move(map)){};
   };
 
-  Mesher(){
-      addNewSubmap(activeMapIdx_);
-  };
+  Mesher() { addNewSubmap(activeMapIdx_); }
 
   void addNewPointCloud(const PointCloud& pc, const Eigen::Isometry3d& mapToPc);
-  MeshMapPtr getActiveMeshMap() { try{
-      return meshMaps_.at(activeMapIdx_).map_;
-
-    } catch (std::out_of_range& e) {
-      std::cout << "trying to access " << activeMapIdx_ <<" when size is" << meshMaps_.size() <<std::endl;
-      return nullptr;
-    }
-  };
+  MeshMapPtr getActiveMeshMap() { return meshMaps_.at(activeMapIdx_).map_; };
 
   void switchActiveSubmap(size_t newSubmapId);
-  size_t getActiveMeshMapId(){
-    return activeMapIdx_;
-  };
+  size_t getActiveMeshMapId() const { return activeMapIdx_; };
 
   void mesh();
+
+  void updateParameters();
+  void setParameters(MeshingParameters params) {
+    params_ = params;
+    updateParameters();
+  };
 
  private:
   std::unordered_map<size_t, MeshSubMap> meshMaps_;
   size_t activeMapIdx_ = 0;
+  MeshingParameters params_;
+
   void addNewSubmap(size_t submapId) {
-    std::cout << "Adding new Submap " << submapId << std::endl;
-    meshMaps_.insert(std::make_pair(submapId, MeshSubMap(submapId, std::make_shared<MeshMap>(0.3, 0.15, 0.6))));
+    meshMaps_.insert(std::make_pair(
+        submapId, MeshSubMap(submapId, std::make_shared<MeshMap>(params_.downsamplingVoxelSize_, params_.newVertexDistanceThreshold_,
+                                                                 params_.meshingVoxelSize_, params_.voxelDilationRatio_))));
   }
 };
 }  // namespace o3d_slam

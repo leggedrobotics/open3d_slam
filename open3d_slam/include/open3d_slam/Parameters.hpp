@@ -204,6 +204,13 @@ struct ConstantVelocityMotionCompensationParameters {
 	int numPosesVelocityEstimation_ = 3;
 };
 
+struct MeshingParameters {
+        double meshingVoxelSize_ = 0.4;
+        double downsamplingVoxelSize_ = 0.3;
+        double newVertexDistanceThreshold_ = 0.15;
+        double voxelDilationRatio_ = 0.5;
+};
+
 
 struct SlamParameters {
 	MapperParameters mapper_;
@@ -211,6 +218,7 @@ struct SlamParameters {
 	VisualizationParameters visualization_;
 	SavingParameters saving_;
 	ConstantVelocityMotionCompensationParameters motionCompensation_;
+	MeshingParameters mesher_;
 };
 
 } // namespace o3d_slam

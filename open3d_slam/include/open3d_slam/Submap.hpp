@@ -94,7 +94,6 @@ private:
 	ColorRangeCropper colorCropper_;
 	mutable std::mutex denseMapMutex_;
 	mutable std::mutex mapPointCloudMutex_;
-        mutable std::mutex meshMapLock_;
 };
 
 } // namespace o3d_slam

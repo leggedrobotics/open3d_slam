@@ -16,6 +16,7 @@
 #include <unordered_set>
 #include <vector>
 #include "../../thirdparty/ikd-Tree/ikd-Tree/ikd_Tree.hpp"
+#include "open3d_slam/Parameters.hpp"
 #include "open3d_slam/Plane.hpp"
 #include "open3d_slam/VoxelHashMap.hpp"
 #include "open3d_slam/time.hpp"
@@ -24,15 +25,16 @@
 namespace o3d_slam {
 
 struct Triangle {
-  int i, j, k;
-  Triangle(int i, int j, int k) : i(i), j(j), k(k){};
+  size_t i, j, k;
+  Triangle(size_t i, size_t j, size_t k) : i(i), j(j), k(k){};
   bool operator==(const Triangle& other) const {
     return (i == other.i || i == other.j || i == other.k) && (j == other.i || j == other.j || j == other.k) &&
            (k == other.i || k == other.j || k == other.k);
   }
   Eigen::Vector3i toEigen() const { return {i, j, k}; }
+  std::vector<size_t> toVector() { return {i, j, k}; }
   bool isDegenerate() const {
-    std::unordered_set<int> points;
+    std::unordered_set<size_t> points;
     points.insert(i);
     points.insert(j);
     points.insert(k);
@@ -83,29 +85,27 @@ class MeshMap {
   void mesh();
   open3d::geometry::TriangleMesh toO3dMesh() const;
   PointCloud allPts_;
-  MeshMap(double downsampleSize, double newVertexThreshould, double voxelSize)
-      : downsampleVoxelSize_(downsampleSize), newVertexThreshold_(newVertexThreshould), l2VoxelSize_(voxelSize) {
+  MeshMap(double downsampleSize, double newVertexThreshould, double voxelSize, double dilationRatio)
+      : downsampleVoxelSize_(downsampleSize),
+        newVertexThreshold_(newVertexThreshould),
+        voxelSize_(voxelSize),
+        dilationRatio_(dilationRatio) {
     ikdTree_ = std::make_unique<ikd::KD_TREE<Eigen::Vector3d>>(0.3, 0.6, 0.01);
   };
 
-  void printMeshingStats() {
-    std::cout << "Meshing timing stats ADDING: Avg execution time: " << addingTimer_.getAvgMeasurementMsec()
-              << " msec , frequency: " << 1e3 / addingTimer_.getAvgMeasurementMsec() << " Hz \n";
-    addingTimer_.reset();
-    std::cout << "Meshing timing stats MESHING: Avg execution time: " << meshingTimer_.getAvgMeasurementMsec()
-              << " msec , frequency: " << 1e3 / meshingTimer_.getAvgMeasurementMsec() << " Hz \n";
-    meshingTimer_.reset();
-  };
+  void printMeshingStats();
+  void updateParameters(MeshingParameters params);
 
  private:
-  std::unordered_map<Eigen::Vector3i, MeshVoxel, EigenVec3iHash> l2Voxels_;
+  std::unordered_map<Eigen::Vector3i, MeshVoxel, EigenVec3iHash> voxels_;
   std::unordered_map<size_t, Triangle> triangles_;
   std::unordered_map<size_t, std::unordered_set<size_t>> vertexToTriangles_;
 
   double downsampleVoxelSize_ = 0.1;
   double newVertexThreshold_ = 0.1;
-  double l2VoxelSize_ = 0.4;
+  double voxelSize_ = 0.4;
   int meshCount_ = 0;
+  double dilationRatio_ = 0.5;
 
   size_t nextTriIdx_ = 0;
 

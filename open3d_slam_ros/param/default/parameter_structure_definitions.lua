@@ -168,3 +168,9 @@ PLACE_RECOGNITION_PARAMETERS = {
   consistency_check = deepcopy(LOOP_CLOSURE_CONSISTENCY_CHECK_PARAMETERS),
 }
 
+MESHING_PARAMETERS = {
+  meshing_voxel_size = 0.6,
+  new_vertex_distance_threshold = 0.15,
+  downsampling_voxel_size = 0.3,
+  voxel_dilation_ratio = 0.75,
+}

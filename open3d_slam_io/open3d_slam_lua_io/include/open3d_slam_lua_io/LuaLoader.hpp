@@ -58,6 +58,7 @@ private:
 	void loadParameters(const DictPtr dict, ScanCroppingParameters *p);
 	void loadParameters(const DictPtr dict, ScanToMapRegistrationParameters *p);
 	void loadParameters(const DictPtr dict, MapInitializingParameters *p);
+	void loadParameters(const DictPtr dict, MeshingParameters *p);
 	void loadParameters(const DictPtr dict, Eigen::Isometry3d* T);
 
 

@@ -40,11 +40,11 @@ void MeshMap::addNewPointCloud(const PointCloud& pc) {
         ikdTree_->Nearest_Search(pt, 20, pts, distances);
         if (*std::min_element(distances.begin(), distances.end()) >= (newVertexThreshold_ * newVertexThreshold_)) {
           allPts_.points_.push_back(pt);
-          Eigen::Vector3i idx = getVoxelIdx(pt, Eigen::Vector3d::Constant(l2VoxelSize_));
-          if (l2Voxels_.find(idx) == l2Voxels_.end()) {
-            l2Voxels_.insert(std::make_pair(idx, MeshVoxel(l2VoxelSize_, this)));
+          Eigen::Vector3i idx = getVoxelIdx(pt, Eigen::Vector3d::Constant(voxelSize_));
+          if (voxels_.find(idx) == voxels_.end()) {
+            voxels_.insert(std::make_pair(idx, MeshVoxel(voxelSize_, this)));
           }
-          l2Voxels_.at(idx).addPoint(allPts_.points_.size() - 1);
+          voxels_.at(idx).addPoint(allPts_.points_.size() - 1);
           std::vector<Eigen::Vector3d> ptAdd = {pt};
           ikdTree_->Add_Points(ptAdd, false);
         }
@@ -75,9 +75,9 @@ void MeshMap::mesh() {
   meshingTimer_.startStopwatch();
   std::mutex globalListMutex;
   std::vector<Triangle> globalTrisToAdd;
-  std::unordered_set<int> globalTrisToDelete;
+  std::unordered_set<size_t> globalTrisToDelete;
   std::vector<Eigen::Vector3i> updateIndices;
-  for (auto& it : l2Voxels_) {
+  for (auto& it : voxels_) {
     if (it.second.isUpdated() && it.second.getPoints().size() > 3) {
       updateIndices.push_back(it.first);
     }
@@ -85,8 +85,8 @@ void MeshMap::mesh() {
 
 #pragma omp parallel for default(none) shared(updateIndices, globalTrisToAdd, globalTrisToDelete, globalListMutex)
   for (const auto& idx : updateIndices) {
-    std::vector<size_t> vertices = getVoxelVertexSet(l2Voxels_.at(idx));
-    std::vector<Triangle> newTris = triangulateVertexSetForVoxel(l2Voxels_.at(idx), vertices);
+    std::vector<size_t> vertices = getVoxelVertexSet(voxels_.at(idx));
+    std::vector<Triangle> newTris = triangulateVertexSetForVoxel(voxels_.at(idx), vertices);
     std::vector<Triangle> pulledTris;
     std::vector<size_t> pulledTriIdx;
     pullTriangles(vertices, pulledTris, pulledTriIdx);
@@ -103,7 +103,7 @@ void MeshMap::mesh() {
         }
       }
     }
-    l2Voxels_.at(idx).deactivate();
+    voxels_.at(idx).deactivate();
   }
   {
     std::unique_lock<std::mutex> triLock{triangleLock_, std::defer_lock};
@@ -184,7 +184,7 @@ std::vector<size_t> MeshMap::getVoxelVertexSet(const MeshVoxel& voxel) {
   auto pts = getPointSetFromIdx(vertices, allPts_);
   for (const auto& pt : pts) {
     std::vector<Eigen::Vector3d> ptSearch;
-    ikdTree_->Radius_Search(pt, l2VoxelSize_ * 0.5, ptSearch);
+    ikdTree_->Radius_Search(pt, voxelSize_ * dilationRatio_, ptSearch);
     for (const auto& p : ptSearch) {
       auto it = std::find(allPts_.points_.begin(), allPts_.points_.end(), p);
       long idx = it - allPts_.points_.begin();
@@ -252,18 +252,18 @@ open3d::geometry::TriangleMesh MeshMap::toO3dMesh() const {
   return mesh;
 }
 
-/*void MeshMap::removePoints(PointCloud& cloud) {
-  std::vector<Eigen::Vector3d> removePts;
-  removePts.reserve(cloud.points_.size());
-  for (const auto& pt : cloud.points_) {
-    std::vector<Eigen::Vector3d> pts;
-    std::vector<double> distances;
-    ikdTree_->Nearest_Search(pt, 50, pts, distances);
-    removePts.push_back(pts[0]);
-  }
-  allPts_.points_.erase(std::remove_if(allPts_.points_.begin(), allPts_.points_.end(),
-                                       [&](const auto& x) { return std::find(removePts.begin(), removePts.end(), x) != removePts.end(); }),
-                        allPts_.points_.end());
-  ikdTree_->Delete_Points(removePts);
-}*/
+void MeshMap::printMeshingStats() {
+  std::cout << "Meshing timing stats ADDING: Avg execution time: " << addingTimer_.getAvgMeasurementMsec()
+            << " msec , frequency: " << 1e3 / addingTimer_.getAvgMeasurementMsec() << " Hz \n";
+  addingTimer_.reset();
+  std::cout << "Meshing timing stats MESHING: Avg execution time: " << meshingTimer_.getAvgMeasurementMsec()
+            << " msec , frequency: " << 1e3 / meshingTimer_.getAvgMeasurementMsec() << " Hz \n";
+  meshingTimer_.reset();
+}
+
+void MeshMap::updateParameters(MeshingParameters params) {
+  downsampleVoxelSize_ = params.downsamplingVoxelSize_;
+  voxelSize_ = params.meshingVoxelSize_;
+  newVertexThreshold_ = params.newVertexDistanceThreshold_;
+}
 }  // namespace o3d_slam

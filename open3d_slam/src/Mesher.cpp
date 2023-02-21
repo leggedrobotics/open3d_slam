@@ -19,6 +19,13 @@ void Mesher::switchActiveSubmap(size_t newSubmapId) {
     addNewSubmap(newSubmapId);
   }
   activeMapIdx_ = newSubmapId;
+}
+void Mesher::updateParameters(){
+  std::cout << params_.downsamplingVoxelSize_ << std::endl;
+    for(auto& map : meshMaps_){
+    map.second.map_->updateParameters(params_);
+    }
+
 };
 
 }  // namespace o3d_slam
