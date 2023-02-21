@@ -266,8 +266,8 @@ void SlamWrapperRos::publishMaps(const Time &time) {
 		voxelize(params_.visualization_.submapVoxelSize_, &cloud);
 		o3d_slam::publishCloud(cloud, o3d_slam::frames::mapFrame, timestamp, submapsPub_);
 	}
-        auto o3DMesh = mesher_->getMeshMap()->toO3dMesh();
-        auto vertexMap = mesher_->getMeshMap()->allPts_;
+        auto o3DMesh = mesher_->getActiveMeshMap()->toO3dMesh();
+        auto vertexMap = mesher_->getActiveMeshMap()->allPts_;
 
         publishMesh(o3DMesh, meshPub_);
         o3d_slam::publishCloud(vertexMap,o3d_slam::frames::mapFrame,timestamp,vertexPub_);

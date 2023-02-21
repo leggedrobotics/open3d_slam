@@ -350,9 +350,9 @@ void SlamWrapper::mappingWorker() {
 			latestScanToMapRefinementTimestamp_ = measurement.time_;
 
 			RegisteredPointCloud registeredMap;
-			registeredMap.raw_.cloud_ = mapper_->getAssembledMapPointCloud();;
+			registeredMap.raw_.cloud_ = mapper_->getActiveSubmap().getMapPointCloud();
 			registeredMap.raw_.time_ = measurement.time_;
-			registeredMap.submapId_ = -1;
+			registeredMap.submapId_ = activeSubmapIdx;
 			registeredMap.transform_ = mapper_->getMapToRangeSensor(measurement.time_);
 			registeredMap.sourceFrame_ = frames::rangeSensorFrame;
 			registeredMap.targetFrame_ = frames::mapFrame;
@@ -379,34 +379,36 @@ void SlamWrapper::mappingWorker() {
 	} // while (isRunWorkers_)
 }
 
-void SlamWrapper::meshingWorker(){
+void SlamWrapper::meshingWorker() {
         int nPointCloudsInserted = 0;
-	while(isRunWorkers_){
-					if(meshingBuffer_.empty()){
-									std::this_thread::sleep_for(std::chrono::milliseconds(50));
-									continue;
-					}
-					meshingStatisticsTimer_.startStopwatch();
+        while (isRunWorkers_) {
+                if (meshingBuffer_.empty()) {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                        continue;
+                }
+                meshingStatisticsTimer_.startStopwatch();
 
-					const RegisteredPointCloud meshingCloud_ = meshingBuffer_.pop();
-					mesher_->addNewPointCloud(meshingCloud_.raw_.cloud_,meshingCloud_.transform_);
-                                        ++nPointCloudsInserted;
-                                        if (nPointCloudsInserted%5 ==0){
-                                                                        mesher_->mesh();
-                                        }
+                const RegisteredPointCloud meshingCloud = meshingBuffer_.pop();
+                if (meshingCloud.submapId_ != mesher_->getActiveMeshMapId()) {
+                        std::cout << "Switch mesh map to " << meshingCloud.submapId_ << std::endl;
+                        mesher_->switchActiveSubmap(meshingCloud.submapId_);
+                        nPointCloudsInserted = 0;
+                }
+                mesher_->addNewPointCloud(meshingCloud.raw_.cloud_, meshingCloud.transform_);
+                ++nPointCloudsInserted;
+                if (nPointCloudsInserted % 2 == 0) {
+                        mesher_->mesh();
+                }
 
-
-
-					const double elapsedTime = meshingStatisticsTimer_.elapsedMsecSinceStopwatchStart();
-					meshingStatisticsTimer_.addMeasurementMsec(elapsedTime);
-					if(meshingStatisticsTimer_.elapsedSec() > timingStatsEveryNsec){
-									std::cout << "Meshing timing stats: Avg execution time: "
-														<< meshingStatisticsTimer_.getAvgMeasurementMsec() << " msec , frequency: "
-														<< 1e3 / meshingStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
-									meshingStatisticsTimer_.reset();
-                                                                        mesher_->getMeshMap()->printMeshingStats();
-					}
-	}
+                const double elapsedTime = meshingStatisticsTimer_.elapsedMsecSinceStopwatchStart();
+                meshingStatisticsTimer_.addMeasurementMsec(elapsedTime);
+                if (meshingStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {
+                        std::cout << "Meshing timing stats: Avg execution time: " << meshingStatisticsTimer_.getAvgMeasurementMsec()
+                                  << " msec , frequency: " << 1e3 / meshingStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
+                        meshingStatisticsTimer_.reset();
+                        mesher_->getActiveMeshMap()->printMeshingStats();
+                }
+        }
 }
 
 void SlamWrapper::checkIfOptimizedGraphAvailable(){

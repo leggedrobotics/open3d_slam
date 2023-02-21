@@ -11,20 +11,43 @@
 namespace o3d_slam {
 class Mesher {
  public:
+  using MeshMapPtr = std::shared_ptr<MeshMap>;
+
+  struct MeshSubMap {
+    int submapId_;
+    MeshMapPtr map_;
+
+    MeshSubMap(size_t submapId, MeshMapPtr map) : submapId_(submapId), map_(map){};
+  };
+
   Mesher(){
-    meshMap_ = std::make_shared<MeshMap>(0.3,0.15,0.6);
+      addNewSubmap(activeMapIdx_);
   };
 
   void addNewPointCloud(const PointCloud& pc, const Eigen::Isometry3d& mapToPc);
-  std::shared_ptr<MeshMap> getMeshMap(){
-    return meshMap_;
+  MeshMapPtr getActiveMeshMap() { try{
+      return meshMaps_.at(activeMapIdx_).map_;
+
+    } catch (std::out_of_range& e) {
+      std::cout << "trying to access " << activeMapIdx_ <<" when size is" << meshMaps_.size() <<std::endl;
+      return nullptr;
+    }
+  };
+
+  void switchActiveSubmap(size_t newSubmapId);
+  size_t getActiveMeshMapId(){
+    return activeMapIdx_;
   };
 
   void mesh();
 
  private:
-  std::shared_ptr<MeshMap> meshMap_;
-
+  std::unordered_map<size_t, MeshSubMap> meshMaps_;
+  size_t activeMapIdx_ = 0;
+  void addNewSubmap(size_t submapId) {
+    std::cout << "Adding new Submap " << submapId << std::endl;
+    meshMaps_.insert(std::make_pair(submapId, MeshSubMap(submapId, std::make_shared<MeshMap>(0.3, 0.15, 0.6))));
+  }
 };
 }  // namespace o3d_slam
 #endif  // O3D_SLAM_MESHER_HPP

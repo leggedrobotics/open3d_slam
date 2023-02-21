@@ -8,9 +8,17 @@ void Mesher::addNewPointCloud(const PointCloud& pc, const Eigen::Isometry3d& map
   MaxRadiusCroppingVolume meshCropper(15);
   meshCropper.setPose(mapToPc);
   PointCloudPtr meshInput = meshCropper.crop(pc);
-  meshMap_->addNewPointCloud(*meshInput);
+  getActiveMeshMap()->addNewPointCloud(*meshInput);
 }
-void Mesher::mesh(){
-  meshMap_->mesh();
+void Mesher::mesh() {
+  getActiveMeshMap()->mesh();
 }
+
+void Mesher::switchActiveSubmap(size_t newSubmapId) {
+  if (meshMaps_.find(newSubmapId) == meshMaps_.end()) {
+    addNewSubmap(newSubmapId);
+  }
+  activeMapIdx_ = newSubmapId;
+};
+
 }  // namespace o3d_slam
