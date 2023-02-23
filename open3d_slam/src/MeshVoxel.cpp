@@ -9,11 +9,15 @@
 
 namespace o3d_slam {
 void MeshVoxel::initPlane() {
-  std::vector<Eigen::Vector3d> pointSet = getPointSetFromIdx(pts_, parentMap_->allPts_);
+  std::vector<Eigen::Vector3d> pointSet = parentMap_->getPoints(pts_);
   planePtr_->initialize(pointSet);
 }
-void MeshVoxel::addPoint(int vert) {
+void MeshVoxel::addPoint(size_t vert) {
   pts_.push_back(vert);
+  isModified_ = true;
+}
+void MeshVoxel::removePoint(size_t vert) {
+  pts_.erase(std::remove(pts_.begin(), pts_.end(), vert), pts_.end());
   isModified_ = true;
 }
 
@@ -27,9 +31,16 @@ void MeshMap::addNewPointCloud(const PointCloud& pc) {
     std::unique_lock<std::mutex> voxLock{voxelLock_, std::defer_lock};
     std::lock(voxLock, vertLock);
 
-    if (allPts_.points_.empty()) {
-      allPts_ += *downsampled;
-      ikdTree_->Build(allPts_.points_);
+    if(points_.empty()){
+      for(const auto& pt:downsampled->points_){
+        points_.insert(PointPair(nextVertIdx_++,pt));
+        Eigen::Vector3i idx = getVoxelIdx(pt, Eigen::Vector3d::Constant(voxelSize_));
+        if (voxels_.find(idx) == voxels_.end()) {
+          voxels_.insert(std::make_pair(idx, MeshVoxel(voxelSize_, this)));
+        }
+        voxels_.at(idx).addPoint(nextVertIdx_-1);
+      }
+      ikdTree_->Build(downsampled->points_);
     } else {
       for (const auto& pt : downsampled->points_) {
         std::vector<Eigen::Vector3d> pts;
@@ -38,12 +49,12 @@ void MeshMap::addNewPointCloud(const PointCloud& pc) {
         pts.reserve(20);
         ikdTree_->Nearest_Search(pt, 20, pts, distances);
         if (*std::min_element(distances.begin(), distances.end()) >= (newVertexThreshold_ * newVertexThreshold_)) {
-          allPts_.points_.push_back(pt);
+          points_.insert(PointPair(nextVertIdx_++,pt));
           Eigen::Vector3i idx = getVoxelIdx(pt, Eigen::Vector3d::Constant(voxelSize_));
           if (voxels_.find(idx) == voxels_.end()) {
             voxels_.insert(std::make_pair(idx, MeshVoxel(voxelSize_, this)));
           }
-          voxels_.at(idx).addPoint(allPts_.points_.size() - 1);
+          voxels_.at(idx).addPoint(nextVertIdx_-1);
           std::vector<Eigen::Vector3d> ptAdd = {pt};
           ikdTree_->Add_Points(ptAdd, false);
         }
@@ -53,6 +64,46 @@ void MeshMap::addNewPointCloud(const PointCloud& pc) {
   const double elapsed = addingTimer_.elapsedMsecSinceStopwatchStart();
   addingTimer_.addMeasurementMsec(elapsed);
   // mesh();
+}
+void MeshMap::removePoints(const PointCloud& pts) {
+  {
+    std::unique_lock<std::mutex> vertLock{vertexLock_, std::defer_lock};
+    std::unique_lock<std::mutex> voxLock{voxelLock_, std::defer_lock};
+    std::unique_lock<std::mutex> vttLock{verToTriLock_, std::defer_lock};
+    std::lock(voxLock, vertLock, vttLock);
+    std::unordered_set<size_t> trisToDelete;
+    for (const auto& pt : pts.points_) {
+      std::vector<Eigen::Vector3d> nearest;
+      std::vector<double> distances;
+      ikdTree_->Nearest_Search(pt, 1, nearest, distances);
+      if (!nearest.empty()) {
+        Eigen::Vector3d toRemove = nearest[0];
+        Eigen::Vector3i voxelIdx = getVoxelIdx(toRemove, Eigen::Vector3d::Constant(voxelSize_));
+
+        auto itToRemove = points_.right.find(toRemove);
+        if (itToRemove != points_.right.end()) {
+          size_t ptIdx = itToRemove->second;
+          if (vertexToTriangles_.find(ptIdx) != vertexToTriangles_.end()) {
+            trisToDelete.insert(vertexToTriangles_.at(ptIdx).begin(), vertexToTriangles_.at(ptIdx).end());
+          }
+          if (voxels_.find(voxelIdx) != voxels_.end()) {
+            voxels_.at(voxelIdx).removePoint(ptIdx);
+          }
+          // allPts_.points_.erase(el);
+          points_.left.erase(ptIdx);
+        }
+        ikdTree_->Delete_Points(nearest);
+      } else {
+        std::cout << "no point found" << std::endl;
+      }
+    }
+    std::lock_guard<std::mutex> lck{triangleLock_};
+    for (const auto& tri : trisToDelete) {
+      eraseTriangle(tri);
+    }
+    std::cout << "Removed " << pts.points_.size() << " points." << std::endl;
+  }
+  mesh();
 }
 
 void MeshMap::cleanup() {
@@ -65,7 +116,6 @@ void MeshMap::cleanup() {
   }
   std::cout << "removed " << cnt << " degenerate tris" << std::endl;
 }
-
 void MeshMap::mesh() {
   if (meshCount_ == 5) {
     cleanup();
@@ -124,6 +174,7 @@ void MeshMap::mesh() {
   meshingTimer_.addMeasurementMsec(elapsed);
   meshCount_++;
 }
+
 void MeshMap::addTriangle(const Triangle& tri) {
   size_t idx = nextTriIdx_++;
   triangles_.insert(std::make_pair(idx, tri));
@@ -131,7 +182,6 @@ void MeshMap::addTriangle(const Triangle& tri) {
   vertexToTriangles_[tri.j].insert(idx);
   vertexToTriangles_[tri.k].insert(idx);
 }
-
 void MeshMap::eraseTriangle(const size_t& triIdx) {
   if (triangles_.find(triIdx) == triangles_.end()) {
     return;
@@ -184,25 +234,23 @@ std::vector<size_t> MeshMap::getVoxelVertexSet(const MeshVoxel& voxel) {
   std::lock_guard<std::mutex> lck{vertexLock_};
   std::unordered_set<size_t> vertices;
   appendToSet(vertices, voxel.getPoints());
-  auto pts = getPointSetFromIdx(vertices, allPts_);
+  auto pts = getPoints(std::vector<size_t>(vertices.begin(),vertices.end()));
   for (const auto& pt : pts) {
     std::vector<Eigen::Vector3d> ptSearch;
     ikdTree_->Radius_Search(pt, voxelSize_ * dilationRatio_, ptSearch);
     for (const auto& p : ptSearch) {
-      auto it = std::find(allPts_.points_.begin(), allPts_.points_.end(), p);
-      long idx = it - allPts_.points_.begin();
-      vertices.insert((int)idx);
+      auto ptIdx = points_.right.find(p)->second;
+      vertices.insert(ptIdx);
     }
   }
   return {vertices.begin(), vertices.end()};
 }
-
 std::vector<Triangle> MeshMap::triangulateVertexSetForVoxel(MeshVoxel& voxel, const std::vector<size_t>& vertices) const {
   auto ptr = voxel.getPlanePtr();
-  ptr->initialize(getPointSetFromIdx(voxel.getPoints(), allPts_));
+  ptr->initialize(getPoints(voxel.getPoints()));
   Eigen::Vector3d q = ptr->getPlaneCenter();
   Eigen::Matrix<double, 3, 2> tangBase = ptr->getTangentialBase();
-  auto meshVertices = getPointSetFromIdx(vertices, allPts_);
+  auto meshVertices = getPoints(vertices);
   std::vector<Eigen::Vector2d> projectedVertices;
   projectedVertices.reserve(meshVertices.size());
 
@@ -223,12 +271,19 @@ std::vector<Triangle> MeshMap::triangulateVertexSetForVoxel(MeshVoxel& voxel, co
     for (size_t i = 0; i < delaunay.triangles.size(); i += 3) {
       triangles.emplace_back(vertices[delaunay.triangles[i]], vertices[delaunay.triangles[i + 1]], vertices[delaunay.triangles[i + 2]]);
     }
-  } catch(std::runtime_error& e){
-    //pass
+  } catch (std::runtime_error& e) {
+    // could not triangulate, but we don't care
   }
   return triangles;
 }
-
+std::vector<Eigen::Vector3d> MeshMap::getPoints(const std::vector<size_t>& vertices) const {
+  std::vector<Eigen::Vector3d> pts;
+  pts.reserve(vertices.size());
+  for(const auto& vert:vertices){
+    pts.push_back(points_.left.at(vert));
+  }
+  return pts;
+}
 std::unordered_set<size_t> MeshMap::getTriangleIndexesForVertex(const size_t& vertex) {
   std::lock_guard<std::mutex> lck{verToTriLock_};
   if (vertexToTriangles_.find(vertex) != vertexToTriangles_.end()) {
@@ -236,17 +291,26 @@ std::unordered_set<size_t> MeshMap::getTriangleIndexesForVertex(const size_t& ve
   }
   return {};
 }
+
 open3d::geometry::TriangleMesh MeshMap::toO3dMesh() const {
   std::unique_lock<std::mutex> vertL{vertexLock_, std::defer_lock};
   std::unique_lock<std::mutex> triL{triangleLock_, std::defer_lock};
   std::lock(vertL, triL);
 
   open3d::geometry::TriangleMesh mesh;
+  std::unordered_map<size_t,size_t> vertIdxToMeshIdx;
   std::vector<Eigen::Vector3i> triList;
-  mesh.vertices_ = allPts_.points_;
+  for(const auto& vert:points_.left){
+    vertIdxToMeshIdx.insert(std::make_pair(vert.first,mesh.vertices_.size()));
+    mesh.vertices_.push_back(vert.second);
+  }
+  //mesh.vertices_ = allPts_.points_;
+
+
   triList.reserve(triangles_.size());
   for (const auto& tri : triangles_) {
-    triList.push_back(tri.second.toEigen());
+    Triangle t = tri.second;
+    triList.emplace_back(vertIdxToMeshIdx.at(t.i),vertIdxToMeshIdx.at(t.j),vertIdxToMeshIdx.at(t.k));
   }
   mesh.triangles_ = triList;
   /*  mesh = mesh.RemoveUnreferencedVertices();
@@ -269,7 +333,6 @@ void MeshMap::printMeshingStats() {
             << " msec , frequency: " << 1e3 / meshingTimer_.getAvgMeasurementMsec() << " Hz \n";
   meshingTimer_.reset();
 }
-
 void MeshMap::updateParameters(MeshingParameters params) {
   downsampleVoxelSize_ = params.downsamplingVoxelSize_;
   voxelSize_ = params.meshingVoxelSize_;

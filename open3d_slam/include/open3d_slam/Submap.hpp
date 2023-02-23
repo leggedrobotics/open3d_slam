@@ -64,6 +64,14 @@ public:
 	mutable PointCloud toRemove_;
 	mutable PointCloud scanRef_;
 
+        PointCloud getCarvedPoints() const{
+          if(isCarvedLastScan_) {
+            isCarvedLastScan_ = false;
+            return toRemove_;
+          }
+          return {};
+        };
+
 	Submap(const Submap &other);
 private:
 	void carve(const PointCloud &scan, const Eigen::Vector3d &sensorPosition,
@@ -94,6 +102,7 @@ private:
 	ColorRangeCropper colorCropper_;
 	mutable std::mutex denseMapMutex_;
 	mutable std::mutex mapPointCloudMutex_;
+        mutable bool isCarvedLastScan_ = false;
 };
 
 } // namespace o3d_slam

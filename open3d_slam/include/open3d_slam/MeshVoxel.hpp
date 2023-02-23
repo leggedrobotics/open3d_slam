@@ -9,6 +9,8 @@
 #include <open3d/geometry/TriangleMesh.h>
 #include <open3d/visualization/visualizer/O3DVisualizer.h>
 #include <Eigen/Core>
+#include <boost/bimap.hpp>
+#include <boost/bimap/unordered_set_of.hpp>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -21,7 +23,6 @@
 #include "open3d_slam/VoxelHashMap.hpp"
 #include "open3d_slam/time.hpp"
 #include "open3d_slam/typedefs.hpp"
-
 namespace o3d_slam {
 
 struct Triangle {
@@ -42,6 +43,18 @@ struct Triangle {
   }
 };
 
+struct EigenVec3dHash {
+  size_t operator()(const Eigen::Vector3d& vec) const {
+    size_t seed = 0;
+    for (size_t i = 0; i < vec.size(); ++i) {
+      double elem = vec(i);
+      seed ^= std::hash<double>()(elem) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    }
+    return seed;
+  }
+};
+
+
 class MeshMap;
 class MeshVoxel {
  public:
@@ -56,7 +69,8 @@ class MeshVoxel {
 
   MeshVoxel(const MeshVoxel& v) = delete;
 
-  void addPoint(int vert);
+  void addPoint(size_t vert);
+  void removePoint(size_t vert);
 
   bool isUpdated() const { return isModified_; };
   std::vector<size_t> getPoints() const { return pts_; };
@@ -84,7 +98,6 @@ class MeshMap {
   void addNewPointCloud(const PointCloud& pc);
   void mesh();
   open3d::geometry::TriangleMesh toO3dMesh() const;
-  PointCloud allPts_;
   MeshMap(double downsampleSize, double newVertexThreshould, double voxelSize, double dilationRatio)
       : downsampleVoxelSize_(downsampleSize),
         newVertexThreshold_(newVertexThreshould),
@@ -95,8 +108,20 @@ class MeshMap {
 
   void printMeshingStats();
   void updateParameters(MeshingParameters params);
+  void removePoints(const PointCloud& pts);
+  std::vector<Eigen::Vector3d> getVertices(){
+    std::vector<Eigen::Vector3d> vertices;
+    vertices.reserve(points_.left.size());
+    for(const auto& it : points_.left){
+      vertices.push_back(it.second);
+    }
+    return vertices;
+  };
 
  private:
+  using PointMap = boost::bimaps::bimap<boost::bimaps::unordered_set_of<size_t>, boost::bimaps::unordered_set_of<Eigen::Vector3d,EigenVec3dHash>>;
+  using PointPair = PointMap::value_type;
+  PointMap points_;
   std::unordered_map<Eigen::Vector3i, MeshVoxel, EigenVec3iHash> voxels_;
   std::unordered_map<size_t, Triangle> triangles_;
   std::unordered_map<size_t, std::unordered_set<size_t>> vertexToTriangles_;
@@ -108,6 +133,7 @@ class MeshMap {
   double dilationRatio_ = 0.5;
 
   size_t nextTriIdx_ = 0;
+  size_t nextVertIdx_ = 0;
 
   std::vector<size_t> getVoxelVertexSet(const MeshVoxel& voxel);
   std::vector<Triangle> triangulateVertexSetForVoxel(MeshVoxel& voxel, const std::vector<size_t>& vertices) const;
@@ -119,6 +145,7 @@ class MeshMap {
   std::unique_ptr<ikd::KD_TREE<Eigen::Vector3d>> ikdTree_;
   Timer addingTimer_, meshingTimer_;
   void cleanup();
+  std::vector<Eigen::Vector3d> getPoints(const std::vector<size_t>& vertices) const;
 };
 }  // namespace o3d_slam
 

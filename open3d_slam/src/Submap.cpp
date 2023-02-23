@@ -131,6 +131,7 @@ void Submap::carve(const PointCloud &rawScan, const Transform &mapToRangeSensor,
 	toRemove_ = std::move(*(map->SelectByIndex(idxsToRemove)));
 	scanRef_ = std::move(*scan);
 //	std::cout << "Would remove: " << idxsToRemove.size() << std::endl;
+        isCarvedLastScan_ = true;
 	removeByIds(idxsToRemove, map);
 }
 

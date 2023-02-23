@@ -87,7 +87,7 @@ private:
 
 protected:
 	// buffers
-	CircularBuffer<RegisteredPointCloud> registeredCloudBuffer_,meshingBuffer_;
+	CircularBuffer<RegisteredPointCloud> registeredCloudBuffer_,meshingBuffer_, removalBuffer_;
 	CircularBuffer<TimestampedPointCloud> odometryBuffer_, mappingBuffer_;
 	ThreadSafeBuffer<TimestampedSubmapId> loopClosureCandidates_;
 

@@ -31,6 +31,7 @@ class Mesher {
   size_t getActiveMeshMapId() const { return activeMapIdx_; };
 
   void mesh();
+  void removePoints(const PointCloud& pts);
 
   void updateParameters();
   void setParameters(MeshingParameters params) {

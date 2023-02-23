@@ -28,4 +28,8 @@ void Mesher::updateParameters(){
 
 };
 
+void Mesher::removePoints(const PointCloud& pts){
+    getActiveMeshMap()->removePoints(pts);
+}
+
 }  // namespace o3d_slam

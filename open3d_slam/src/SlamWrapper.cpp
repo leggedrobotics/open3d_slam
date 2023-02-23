@@ -62,6 +62,10 @@ SlamWrapper::~SlamWrapper() {
 		denseMapWorker_.join();
 		std::cout << "Joined the dense map worker! \n";
 	}
+        if(params_.mesher_.isMeshing_ && meshingWorker_.joinable()){
+                meshingWorker_.join();
+                std::cout << "Joined the meshing worker! \n";
+        }
 
 	std::cout << "    Scan insertion: Avg execution time: "
 			<< mapperOnlyTimer_.getAvgMeasurementMsec() << " msec , frequency: "
@@ -360,6 +364,14 @@ void SlamWrapper::mappingWorker() {
 			registeredMap.sourceFrame_ = frames::rangeSensorFrame;
 			registeredMap.targetFrame_ = frames::mapFrame;
 			meshingBuffer_.push(registeredMap);
+
+			RegisteredPointCloud removalCloud;
+			removalCloud.submapId_ = activeSubmapIdx;
+			removalCloud.raw_.cloud_ = mapper_->getActiveSubmap().getCarvedPoints();
+			removalCloud.transform_ = mapper_->getMapToRangeSensor(measurement.time_);
+			removalCloud.sourceFrame_ = frames::rangeSensorFrame;
+			removalCloud.targetFrame_ = frames::mapFrame;
+			removalBuffer_.push(removalCloud);
 		}
 
 		if (params_.mapper_.isAttemptLoopClosures_) {
@@ -398,6 +410,12 @@ void SlamWrapper::meshingWorker() {
                         nPointCloudsInserted = 0;
                 }
                 mesher_->addNewPointCloud(meshingCloud.raw_.cloud_, meshingCloud.transform_);
+                if (!removalBuffer_.empty()) {
+                        const RegisteredPointCloud removed = removalBuffer_.pop();
+                        if (!removed.raw_.cloud_.IsEmpty()) {
+                                mesher_->removePoints(removed.raw_.cloud_);
+                        }
+                }
                 ++nPointCloudsInserted;
                 if (nPointCloudsInserted % 2 == 0) {
                         mesher_->mesh();
