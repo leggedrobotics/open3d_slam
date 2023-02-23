@@ -3,7 +3,6 @@
 //
 
 #include "open3d_slam/MeshVoxel.hpp"
-#include <open3d/visualization/utility/DrawGeometry.h>
 #include <iostream>
 #include "delaunator.hpp"
 #include "open3d_slam/helpers.hpp"
@@ -78,7 +77,7 @@ void MeshMap::mesh() {
   std::unordered_set<size_t> globalTrisToDelete;
   std::vector<Eigen::Vector3i> updateIndices;
   for (auto& it : voxels_) {
-    if (it.second.isUpdated() && it.second.getPoints().size() > 3) {
+    if (it.second.isUpdated()) {
       updateIndices.push_back(it.first);
     }
   }
@@ -86,20 +85,24 @@ void MeshMap::mesh() {
 #pragma omp parallel for default(none) shared(updateIndices, globalTrisToAdd, globalTrisToDelete, globalListMutex)
   for (const auto& idx : updateIndices) {
     std::vector<size_t> vertices = getVoxelVertexSet(voxels_.at(idx));
+    if (vertices.size() < 3) {
+      continue;
+    }
     std::vector<Triangle> newTris = triangulateVertexSetForVoxel(voxels_.at(idx), vertices);
     std::vector<Triangle> pulledTris;
     std::vector<size_t> pulledTriIdx;
     pullTriangles(vertices, pulledTris, pulledTriIdx);
     {
       std::lock_guard<std::mutex> lck{globalListMutex};
-      for (const auto& tri : newTris) {
-        if (std::find(pulledTris.begin(), pulledTris.end(), tri) == pulledTris.end()) {
-          globalTrisToAdd.push_back(tri);
-        }
-      }
       for (int j = 0; j < pulledTris.size(); j++) {
         if (std::find(newTris.begin(), newTris.end(), pulledTris.at(j)) == newTris.end()) {
           globalTrisToDelete.insert(pulledTriIdx[j]);
+        }
+      }
+
+      for (const auto& tri : newTris) {
+        if (std::find(pulledTris.begin(), pulledTris.end(), tri) == pulledTris.end()) {
+          globalTrisToAdd.push_back(tri);
         }
       }
     }
@@ -196,6 +199,7 @@ std::vector<size_t> MeshMap::getVoxelVertexSet(const MeshVoxel& voxel) {
 
 std::vector<Triangle> MeshMap::triangulateVertexSetForVoxel(MeshVoxel& voxel, const std::vector<size_t>& vertices) const {
   auto ptr = voxel.getPlanePtr();
+  ptr->initialize(getPointSetFromIdx(voxel.getPoints(), allPts_));
   Eigen::Vector3d q = ptr->getPlaneCenter();
   Eigen::Matrix<double, 3, 2> tangBase = ptr->getTangentialBase();
   auto meshVertices = getPointSetFromIdx(vertices, allPts_);
@@ -212,10 +216,15 @@ std::vector<Triangle> MeshMap::triangulateVertexSetForVoxel(MeshVoxel& voxel, co
     delaunayInput.push_back(pt.x());
     delaunayInput.push_back(pt.y());
   }
-  delaunator::Delaunator delaunay(delaunayInput);
   std::vector<Triangle> triangles;
-  for (size_t i = 0; i < delaunay.triangles.size(); i += 3) {
-    triangles.emplace_back(vertices[delaunay.triangles[i]], vertices[delaunay.triangles[i + 1]], vertices[delaunay.triangles[i + 2]]);
+  try {
+    delaunator::Delaunator delaunay(delaunayInput);
+
+    for (size_t i = 0; i < delaunay.triangles.size(); i += 3) {
+      triangles.emplace_back(vertices[delaunay.triangles[i]], vertices[delaunay.triangles[i + 1]], vertices[delaunay.triangles[i + 2]]);
+    }
+  } catch(std::runtime_error& e){
+    //pass
   }
   return triangles;
 }
@@ -240,11 +249,11 @@ open3d::geometry::TriangleMesh MeshMap::toO3dMesh() const {
     triList.push_back(tri.second.toEigen());
   }
   mesh.triangles_ = triList;
-  mesh = mesh.RemoveUnreferencedVertices();
-  mesh = mesh.RemoveDuplicatedTriangles();
-  mesh = mesh.RemoveDuplicatedVertices();
-  mesh = mesh.RemoveDegenerateTriangles();
-  // mesh = mesh.RemoveNonManifoldEdges();
+  /*  mesh = mesh.RemoveUnreferencedVertices();
+    mesh = mesh.RemoveDuplicatedTriangles();
+    mesh = mesh.RemoveDuplicatedVertices();
+    mesh = mesh.RemoveDegenerateTriangles();
+    mesh = mesh.RemoveNonManifoldEdges();*/
 
   auto colors = std::vector<Eigen::Vector3d>(mesh.vertices_.size());
   mesh.vertex_colors_ = colors;
