@@ -59,5 +59,12 @@ params.place_recognition.consistency_check.max_drift_z = 40.0 --m
 --SAVING
 params.saving.save_map = false
 
+--MESHING
+params.meshing.is_meshing = true;
+params.meshing.voxel_dilation_ratio = 0.35
+params.meshing.downsampling_voxel_size = 0.2
+params.meshing.meshing_voxel_size = 0.6
+params.meshing.new_vertex_distance_threshold = 0.15
+
 
 return params

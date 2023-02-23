@@ -169,6 +169,7 @@ PLACE_RECOGNITION_PARAMETERS = {
 }
 
 MESHING_PARAMETERS = {
+  is_meshing = true,
   meshing_voxel_size = 0.6,
   new_vertex_distance_threshold = 0.15,
   downsampling_voxel_size = 0.3,

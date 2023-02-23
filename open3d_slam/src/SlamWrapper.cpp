@@ -237,9 +237,11 @@ void SlamWrapper::startWorkers() {
 	mappingWorker_ = std::thread([this]() {
 		mappingWorker();
 	});
-	meshingWorker_ = std::thread([this]() {
-		meshingWorker();
-	});
+        if(params_.mesher_.isMeshing_) {
+                meshingWorker_ = std::thread([this]() {
+                  meshingWorker();
+                });
+        }
 
 	if (params_.mapper_.isAttemptLoopClosures_) {
 		loopClosureWorker_ = std::thread([this]() {

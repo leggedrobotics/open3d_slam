@@ -28,7 +28,7 @@ params.map_initializer.init_pose.pitch = 0.0
 params.map_initializer.init_pose.yaw = 0.0
 
 --SUBMAP
-params.submap.submap_size = 20.0 --meters
+params.submap.submap_size = 30.0 --meters
 
 
 --MAP_BUILDER
@@ -58,6 +58,12 @@ params.place_recognition.consistency_check.max_drift_z = 40.0 --m
 
 --SAVING
 params.saving.save_map = false
+
+
+params.meshing.is_meshing = true;
+params.meshing.voxel_dilation_ratio = 0.35
+params.meshing.downsampling_voxel_size = 0.2
+
 
 
 return params

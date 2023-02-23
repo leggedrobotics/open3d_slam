@@ -378,6 +378,7 @@ void LuaLoader::loadParameters(const DictPtr dict, MeshingParameters *p){
 	loadDoubleIfKeyDefined(dict, "new_vertex_distance_threshold", &p->newVertexDistanceThreshold_);
 	loadDoubleIfKeyDefined(dict, "downsampling_voxel_size", &p->downsamplingVoxelSize_);
 	loadDoubleIfKeyDefined(dict, "voxel_dilation_ratio",&p->voxelDilationRatio_);
+        loadBoolIfKeyDefined(dict, "is_meshing",&p->isMeshing_);
 }
 
 void LuaLoader::loadParameters(const DictPtr dict, Eigen::Isometry3d *T) {

@@ -209,6 +209,7 @@ struct MeshingParameters {
         double downsamplingVoxelSize_ = 0.3;
         double newVertexDistanceThreshold_ = 0.15;
         double voxelDilationRatio_ = 0.5;
+        bool isMeshing_ = true;
 };
 
 
