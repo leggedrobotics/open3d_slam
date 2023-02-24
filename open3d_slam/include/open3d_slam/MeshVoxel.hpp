@@ -33,7 +33,7 @@ struct Triangle {
            (k == other.i || k == other.j || k == other.k);
   }
   Eigen::Vector3i toEigen() const { return {i, j, k}; }
-  std::vector<size_t> toVector() { return {i, j, k}; }
+  std::vector<size_t> toVector() const { return {i, j, k}; }
   bool isDegenerate() const {
     std::unordered_set<size_t> points;
     points.insert(i);
@@ -54,7 +54,6 @@ struct EigenVec3dHash {
   }
 };
 
-
 class MeshMap;
 class MeshVoxel {
  public:
@@ -69,8 +68,8 @@ class MeshVoxel {
 
   MeshVoxel(const MeshVoxel& v) = delete;
 
-  void addPoint(size_t vert);
-  void removePoint(size_t vert);
+  bool addPoint(size_t vert);
+  bool removePoint(size_t vert);
 
   bool isUpdated() const { return isModified_; };
   std::vector<size_t> getPoints() const { return pts_; };
@@ -88,6 +87,7 @@ class MeshVoxel {
   double voxelSize_;
   std::shared_ptr<MeshMap> parentMap_;
   bool isModified_ = false;
+  int updateCount_ = 0;
   void initPlane();
 };
 
@@ -109,10 +109,10 @@ class MeshMap {
   void printMeshingStats();
   void updateParameters(MeshingParameters params);
   void removePoints(const PointCloud& pts);
-  std::vector<Eigen::Vector3d> getVertices(){
+  std::vector<Eigen::Vector3d> getVertices() {
     std::vector<Eigen::Vector3d> vertices;
     vertices.reserve(points_.left.size());
-    for(const auto& it : points_.left){
+    for (const auto& it : points_.left) {
       vertices.push_back(it.second);
     }
     return vertices;
@@ -142,11 +142,12 @@ class MeshMap {
   void pullTriangles(const std::vector<size_t>& vertices, std::vector<Triangle>& pulledTriangles, std::vector<size_t>& pulledIdx);
   void eraseTriangle(const size_t& triIdx);
   void addTriangle(const Triangle& tri);
-  mutable std::mutex triangleLock_, verToTriLock_, voxelLock_, vertexLock_,meshLock_;
+  mutable std::mutex triangleLock_, verToTriLock_, voxelLock_, vertexLock_, meshLock_;
   std::unique_ptr<ikd::KD_TREE<Eigen::Vector3d>> ikdTree_;
   Timer addingTimer_, meshingTimer_;
   void cleanup();
   std::vector<Eigen::Vector3d> getPoints(const std::vector<size_t>& vertices) const;
+  std::vector<size_t> dilateVertexSet(const std::unordered_set<size_t>& vertices, const double& dilationRadius);
 };
 }  // namespace o3d_slam
 

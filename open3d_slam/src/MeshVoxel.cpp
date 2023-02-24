@@ -4,7 +4,7 @@
 
 #include "open3d_slam/MeshVoxel.hpp"
 #include <iostream>
-#include "delaunator.hpp"
+#include "delaunator-header-only.hpp"
 #include "open3d_slam/helpers.hpp"
 
 namespace o3d_slam {
@@ -12,13 +12,23 @@ void MeshVoxel::initPlane() {
   std::vector<Eigen::Vector3d> pointSet = parentMap_->getPoints(pts_);
   planePtr_->initialize(pointSet);
 }
-void MeshVoxel::addPoint(size_t vert) {
-  pts_.push_back(vert);
+bool MeshVoxel::addPoint(size_t vert) {
   isModified_ = true;
+  if (updateCount_ < 15) {
+    pts_.push_back(vert);
+    updateCount_++;
+    return true;
+  }
+  return false;
 }
-void MeshVoxel::removePoint(size_t vert) {
-  pts_.erase(std::remove(pts_.begin(), pts_.end(), vert), pts_.end());
+bool MeshVoxel::removePoint(size_t vert) {
   isModified_ = true;
+  if (updateCount_ < 15) {
+    pts_.erase(std::remove(pts_.begin(), pts_.end(), vert), pts_.end());
+    updateCount_++;
+    return true;
+  }
+  return false;
 }
 
 void MeshMap::addNewPointCloud(const PointCloud& pc) {
@@ -86,12 +96,15 @@ void MeshMap::removePoints(const PointCloud& pts) {
           if (vertexToTriangles_.find(ptIdx) != vertexToTriangles_.end()) {
             trisToDelete.insert(vertexToTriangles_.at(ptIdx).begin(), vertexToTriangles_.at(ptIdx).end());
           }
+          bool gotRemoved = false;
           if (voxels_.find(voxelIdx) != voxels_.end()) {
-            voxels_.at(voxelIdx).removePoint(ptIdx);
+            gotRemoved = voxels_.at(voxelIdx).removePoint(ptIdx);
           }
-          points_.left.erase(ptIdx);
+          if (gotRemoved) {
+            points_.left.erase(ptIdx);
+            ikdTree_->Delete_Points(nearest);
+          }
         }
-        ikdTree_->Delete_Points(nearest);
       }
     }
 
@@ -107,10 +120,6 @@ void MeshMap::removePoints(const PointCloud& pts) {
 void MeshMap::cleanup() {}
 void MeshMap::mesh() {
   std::lock_guard<std::mutex> lck{meshLock_};
-  if (meshCount_ == 5) {
-    cleanup();
-    meshCount_ = 0;
-  }
   meshingTimer_.startStopwatch();
   std::mutex globalListMutex;
   std::vector<Triangle> globalTrisToAdd;
@@ -227,19 +236,23 @@ void MeshMap::pullTriangles(const std::vector<size_t>& vertices, std::vector<Tri
 std::vector<size_t> MeshMap::getVoxelVertexSet(const MeshVoxel& voxel) {
   std::unordered_set<size_t> vertices;
   appendToSet(vertices, voxel.getPoints());
+  return dilateVertexSet(vertices, voxelSize_ * dilationRatio_);
+}
+std::vector<size_t> MeshMap::dilateVertexSet(const std::unordered_set<size_t>& vertices, const double& dilationRadius) {
+  std::unordered_set<size_t> vertexSet = vertices;
   auto pts = getPoints(std::vector<size_t>(vertices.begin(), vertices.end()));
   {
     std::lock_guard<std::mutex> lck{vertexLock_};
     for (const auto& pt : pts) {
       std::vector<Eigen::Vector3d> ptSearch;
-      ikdTree_->Radius_Search(pt, voxelSize_ * dilationRatio_, ptSearch);
+      ikdTree_->Radius_Search(pt, dilationRadius, ptSearch);
       for (const auto& p : ptSearch) {
         auto ptIdx = points_.right.find(p)->second;
-        vertices.insert(ptIdx);
+        vertexSet.insert(ptIdx);
       }
     }
   }
-  return {vertices.begin(), vertices.end()};
+  return {vertexSet.begin(), vertexSet.end()};
 }
 std::vector<Triangle> MeshMap::triangulateVertexSetForVoxel(MeshVoxel& voxel, const std::vector<size_t>& vertices) const {
   auto ptr = voxel.getPlanePtr();
