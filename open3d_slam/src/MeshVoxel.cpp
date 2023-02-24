@@ -269,7 +269,15 @@ std::vector<Triangle> MeshMap::triangulateVertexSetForVoxel(MeshVoxel& voxel, co
     delaunator::Delaunator delaunay(delaunayInput);
 
     for (size_t i = 0; i < delaunay.triangles.size(); i += 3) {
-      triangles.emplace_back(vertices[delaunay.triangles[i]], vertices[delaunay.triangles[i + 1]], vertices[delaunay.triangles[i + 2]]);
+      Eigen::Vector3d AB = meshVertices[delaunay.triangles[i + 1]] - meshVertices[delaunay.triangles[i]];
+      Eigen::Vector3d AC = meshVertices[delaunay.triangles[i + 2]] - meshVertices[delaunay.triangles[i]];
+      Eigen::Vector3d BC = meshVertices[delaunay.triangles[i + 2]] - meshVertices[delaunay.triangles[i + 1]];
+      double area = (AB.cross(AC)).norm() / 2;
+      double perim = AB.norm() + AC.norm() + BC.norm();
+      double sliverParameter = (2 * area) / perim;
+      if (sliverParameter > sliverThreshold_) {
+        triangles.emplace_back(vertices[delaunay.triangles[i]], vertices[delaunay.triangles[i + 1]], vertices[delaunay.triangles[i + 2]]);
+      }
     }
   } catch (std::runtime_error& e) {
     // could not triangulate, but we don't care

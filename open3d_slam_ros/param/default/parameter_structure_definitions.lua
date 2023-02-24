@@ -174,4 +174,5 @@ MESHING_PARAMETERS = {
   new_vertex_distance_threshold = 0.15,
   downsampling_voxel_size = 0.3,
   voxel_dilation_ratio = 0.75,
+  sliver_deletion_threshold = 0.0075,
 }

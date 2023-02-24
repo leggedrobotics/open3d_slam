@@ -129,6 +129,7 @@ class MeshMap {
   double downsampleVoxelSize_ = 0.1;
   double newVertexThreshold_ = 0.1;
   double voxelSize_ = 0.4;
+  double sliverThreshold_ = 0.0075;
   int meshCount_ = 0;
   double dilationRatio_ = 0.5;
 
