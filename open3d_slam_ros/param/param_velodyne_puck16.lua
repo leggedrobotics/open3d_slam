@@ -10,15 +10,18 @@ params.odometry.scan_processing.downsampling_ratio = 1.0
 --MAPPER_LOCALIZER
 params.mapper_localizer.is_merge_scans_into_map = false
 params.mapper_localizer.is_build_dense_map = false
-params.mapper_localizer.is_use_map_initialization = false
 params.mapper_localizer.is_print_timing_information = true
 params.mapper_localizer.scan_to_map_registration.scan_processing.voxel_size = 0.05
 params.mapper_localizer.scan_to_map_registration.scan_processing.downsampling_ratio = 0.1
 params.mapper_localizer.scan_to_map_registration.scan_processing.scan_cropping.cropping_radius_max = 50.0
 params.mapper_localizer.scan_to_map_registration.icp.max_correspondence_dist = 0.5
+params.mapper_localizer.is_attempt_loop_closures = true
 
 --MAP_INITIALIZER
-params.map_initializer.pcd_file_path = ""
+params.map_initializer.pcd_file_path = "/home/<enter path>/map.pcd"
+params.map_initializer.is_initialize_interactively = false
+params.mapper_localizer.is_use_map_initialization = false
+
 params.map_initializer.init_pose.x = 0.0
 params.map_initializer.init_pose.y = 0.0
 params.map_initializer.init_pose.z = 0.0
