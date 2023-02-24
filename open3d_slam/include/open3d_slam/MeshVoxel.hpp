@@ -142,7 +142,7 @@ class MeshMap {
   void pullTriangles(const std::vector<size_t>& vertices, std::vector<Triangle>& pulledTriangles, std::vector<size_t>& pulledIdx);
   void eraseTriangle(const size_t& triIdx);
   void addTriangle(const Triangle& tri);
-  mutable std::mutex triangleLock_, verToTriLock_, voxelLock_, vertexLock_;
+  mutable std::mutex triangleLock_, verToTriLock_, voxelLock_, vertexLock_,meshLock_;
   std::unique_ptr<ikd::KD_TREE<Eigen::Vector3d>> ikdTree_;
   Timer addingTimer_, meshingTimer_;
   void cleanup();
