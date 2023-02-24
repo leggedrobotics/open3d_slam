@@ -70,12 +70,13 @@ void MeshMap::removePoints(const PointCloud& pts) {
     std::unique_lock<std::mutex> vertLock{vertexLock_, std::defer_lock};
     std::unique_lock<std::mutex> voxLock{voxelLock_, std::defer_lock};
     std::unique_lock<std::mutex> vttLock{verToTriLock_, std::defer_lock};
-    std::lock(voxLock, vertLock, vttLock);
+    std::unique_lock<std::mutex> triLock{triangleLock_, std::defer_lock};
+    std::lock(voxLock, vertLock, vttLock, triLock);
     for (const auto& pt : pts.points_) {
       std::vector<Eigen::Vector3d> nearest;
       std::vector<double> distances;
       ikdTree_->Nearest_Search(pt, 1, nearest, distances);
-      if (!nearest.empty()) {
+      if (!nearest.empty() && distances[0] < voxelSize_ * voxelSize_) {
         Eigen::Vector3d toRemove = nearest[0];
         Eigen::Vector3i voxelIdx = getVoxelIdx(toRemove, Eigen::Vector3d::Constant(voxelSize_));
 
@@ -91,29 +92,19 @@ void MeshMap::removePoints(const PointCloud& pts) {
           points_.left.erase(ptIdx);
         }
         ikdTree_->Delete_Points(nearest);
-      } else {
-        std::cout << "no point found" << std::endl;
       }
     }
-  }
+
     for (const auto& tri : trisToDelete) {
       eraseTriangle(tri);
     }
-    std::cout << "Removed " << pts.points_.size() << " points." << std::endl;
+  }
+  std::cout << "Removed " << pts.points_.size() << " points." << std::endl;
 
   mesh();
 }
 
-void MeshMap::cleanup() {
-  int cnt = 0;
-  for (auto tri : triangles_) {
-    if (tri.second.isDegenerate()) {
-      eraseTriangle(tri.first);
-      cnt++;
-    }
-  }
-  // std::cout << "removed " << cnt << " degenerate tris" << std::endl;
-}
+void MeshMap::cleanup() {}
 void MeshMap::mesh() {
   std::lock_guard<std::mutex> lck{meshLock_};
   if (meshCount_ == 5) {
@@ -131,7 +122,7 @@ void MeshMap::mesh() {
     }
   }
 
-//#pragma omp parallel for default(none) shared(updateIndices, globalTrisToAdd, globalTrisToDelete, globalListMutex)
+#pragma omp parallel for default(none) shared(updateIndices, globalTrisToAdd, globalTrisToDelete, globalListMutex) num_threads(4)
   for (const auto& idx : updateIndices) {
     std::vector<size_t> vertices = getVoxelVertexSet(voxels_.at(idx));
     if (vertices.size() < 3) {
@@ -157,11 +148,16 @@ void MeshMap::mesh() {
     }
     voxels_.at(idx).deactivate();
   }
-  for (const auto& tri : globalTrisToAdd) {
-    addTriangle(tri);
-  }
-  for (const auto& triIdx : globalTrisToDelete) {
-    eraseTriangle(triIdx);
+  {
+    std::unique_lock<std::mutex> triLock{triangleLock_, std::defer_lock};
+    std::unique_lock<std::mutex> vttLock{verToTriLock_, std::defer_lock};
+    std::lock(triLock, vttLock);
+    for (const auto& tri : globalTrisToAdd) {
+      addTriangle(tri);
+    }
+    for (const auto& triIdx : globalTrisToDelete) {
+      eraseTriangle(triIdx);
+    }
   }
   const double elapsed = meshingTimer_.elapsedMsecSinceStopwatchStart();
   meshingTimer_.addMeasurementMsec(elapsed);
@@ -169,9 +165,6 @@ void MeshMap::mesh() {
 }
 
 void MeshMap::addTriangle(const Triangle& tri) {
-  std::unique_lock<std::mutex> triLock{triangleLock_, std::defer_lock};
-  std::unique_lock<std::mutex> vttLock{verToTriLock_, std::defer_lock};
-  std::lock(triLock, vttLock);
   size_t idx = nextTriIdx_++;
   triangles_.insert(std::make_pair(idx, tri));
   vertexToTriangles_[tri.i].insert(idx);
@@ -179,9 +172,6 @@ void MeshMap::addTriangle(const Triangle& tri) {
   vertexToTriangles_[tri.k].insert(idx);
 }
 void MeshMap::eraseTriangle(const size_t& triIdx) {
-  std::unique_lock<std::mutex> triLock{triangleLock_, std::defer_lock};
-  std::unique_lock<std::mutex> vttLock{verToTriLock_, std::defer_lock};
-  std::lock(triLock, vttLock);
   if (triangles_.find(triIdx) == triangles_.end()) {
     return;
   }
@@ -190,6 +180,9 @@ void MeshMap::eraseTriangle(const size_t& triIdx) {
   isDeleted &= vertexToTriangles_[t.i].erase(triIdx);
   isDeleted &= vertexToTriangles_[t.j].erase(triIdx);
   isDeleted &= vertexToTriangles_[t.k].erase(triIdx);
+  if (vertexToTriangles_.at(t.i).empty()) vertexToTriangles_.erase(t.i);
+  if (vertexToTriangles_.at(t.j).empty()) vertexToTriangles_.erase(t.j);
+  if (vertexToTriangles_.at(t.k).empty()) vertexToTriangles_.erase(t.k);
   triangles_.erase(triIdx);
   if (!isDeleted) {
     std::cout << "SOMETHING WENT WRONG DELETING!!!" << std::endl;
@@ -307,23 +300,30 @@ std::unordered_set<size_t> MeshMap::getTriangleIndexesForVertex(const size_t& ve
 }
 
 open3d::geometry::TriangleMesh MeshMap::toO3dMesh() const {
+  std::unique_lock<std::mutex> triLock{triangleLock_, std::defer_lock};
+  std::unique_lock<std::mutex> vertLock{vertexLock_, std::defer_lock};
+  std::lock(triLock, vertLock);
+
   open3d::geometry::TriangleMesh mesh;
-  std::unordered_map<size_t, size_t> vertIdxToMeshIdx;
   std::vector<Eigen::Vector3i> triList;
-  {
-    std::lock_guard<std::mutex> lck{vertexLock_};
-    for (const auto& vert : points_.left) {
-      vertIdxToMeshIdx.insert(std::make_pair(vert.first, mesh.vertices_.size()));
-      mesh.vertices_.push_back(vert.second);
-    }
-  }
+
   triList.reserve(triangles_.size());
-  {
-    std::lock_guard<std::mutex> lck{triangleLock_};
-    for (const auto& tri : triangles_) {
-      Triangle t = tri.second;
-      triList.emplace_back(vertIdxToMeshIdx.at(t.i), vertIdxToMeshIdx.at(t.j), vertIdxToMeshIdx.at(t.k));
+  std::unordered_map<size_t, size_t> vertIdxToMeshIdx;
+  for (const auto& tri : triangles_) {
+    Triangle t = tri.second;
+    if (vertIdxToMeshIdx.find(t.i) == vertIdxToMeshIdx.end()) {
+      mesh.vertices_.push_back(points_.left.at(t.i));
+      vertIdxToMeshIdx.insert(std::make_pair(t.i, mesh.vertices_.size() - 1));
     }
+    if (vertIdxToMeshIdx.find(t.j) == vertIdxToMeshIdx.end()) {
+      mesh.vertices_.push_back(points_.left.at(t.j));
+      vertIdxToMeshIdx.insert(std::make_pair(t.j, mesh.vertices_.size() - 1));
+    }
+    if (vertIdxToMeshIdx.find(t.k) == vertIdxToMeshIdx.end()) {
+      mesh.vertices_.push_back(points_.left.at(t.k));
+      vertIdxToMeshIdx.insert(std::make_pair(t.k, mesh.vertices_.size() - 1));
+    }
+    triList.emplace_back(vertIdxToMeshIdx.at(t.i), vertIdxToMeshIdx.at(t.j), vertIdxToMeshIdx.at(t.k));
   }
   mesh.triangles_ = triList;
   /*  mesh = mesh.RemoveUnreferencedVertices();
