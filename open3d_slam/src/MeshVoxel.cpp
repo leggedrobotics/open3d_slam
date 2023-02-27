@@ -50,14 +50,14 @@ void MeshMap::addNewPointCloud(const PointCloud& pc) {
         }
         voxels_.at(idx).addPoint(nextVertIdx_ - 1);
       }
-      ikdTree_->Build(downsampled->points_);
+      ikdTree_->build(downsampled->points_);
     } else {
       for (const auto& pt : downsampled->points_) {
         std::vector<Eigen::Vector3d> pts;
         std::vector<double> distances;
         distances.reserve(20);
         pts.reserve(20);
-        ikdTree_->Nearest_Search(pt, 20, pts, distances);
+        ikdTree_->searchNearest(pt, 20, pts, distances);
         if (*std::min_element(distances.begin(), distances.end()) >= (newVertexThreshold_ * newVertexThreshold_)) {
           points_.insert(PointPair(nextVertIdx_++, pt));
           Eigen::Vector3i idx = getVoxelIdx(pt, Eigen::Vector3d::Constant(voxelSize_));
@@ -65,8 +65,7 @@ void MeshMap::addNewPointCloud(const PointCloud& pc) {
             voxels_.insert(std::make_pair(idx, MeshVoxel(voxelSize_, this)));
           }
           voxels_.at(idx).addPoint(nextVertIdx_ - 1);
-          std::vector<Eigen::Vector3d> ptAdd = {pt};
-          ikdTree_->Add_Points(ptAdd, false);
+          ikdTree_->addPoint(pt, false);
         }
       }
     }
@@ -85,7 +84,7 @@ void MeshMap::removePoints(const PointCloud& pts) {
     for (const auto& pt : pts.points_) {
       std::vector<Eigen::Vector3d> nearest;
       std::vector<double> distances;
-      ikdTree_->Nearest_Search(pt, 1, nearest, distances);
+      ikdTree_->searchNearest(pt, 1, nearest, distances);
       if (!nearest.empty() && distances[0] < voxelSize_ * voxelSize_) {
         Eigen::Vector3d toRemove = nearest[0];
         Eigen::Vector3i voxelIdx = getVoxelIdx(toRemove, Eigen::Vector3d::Constant(voxelSize_));
@@ -102,7 +101,7 @@ void MeshMap::removePoints(const PointCloud& pts) {
           }
           if (gotRemoved) {
             points_.left.erase(ptIdx);
-            ikdTree_->Delete_Points(nearest);
+            ikdTree_->deletePoints(nearest);
           }
         }
       }
@@ -245,7 +244,7 @@ std::vector<size_t> MeshMap::dilateVertexSet(const std::unordered_set<size_t>& v
     std::lock_guard<std::mutex> lck{vertexLock_};
     for (const auto& pt : pts) {
       std::vector<Eigen::Vector3d> ptSearch;
-      ikdTree_->Radius_Search(pt, dilationRadius, ptSearch);
+      ikdTree_->searchRadius(pt, dilationRadius, ptSearch);
       for (const auto& p : ptSearch) {
         auto ptIdx = points_.right.find(p)->second;
         vertexSet.insert(ptIdx);

@@ -1,6 +1,6 @@
 [submodule "open3d_slam/thirdparty/ikd-Tree"]
 	path = open3d_slam/thirdparty/ikd-Tree
-	url = git@github.com:vell001/ikd-Tree.git
+	url = git@github.com:spof95/ikd-Tree.git
 [submodule "open3d_slam/thirdparty/delaunator-cpp"]
 	path = open3d_slam/thirdparty/delaunator-cpp
 	url = git@github.com:abellgithub/delaunator-cpp.git

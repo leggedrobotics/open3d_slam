@@ -103,7 +103,7 @@ class MeshMap {
         newVertexThreshold_(newVertexThreshould),
         voxelSize_(voxelSize),
         dilationRatio_(dilationRatio) {
-    ikdTree_ = std::make_unique<ikd::KD_TREE<Eigen::Vector3d>>(0.3, 0.6, 0.01);
+    ikdTree_ = std::make_unique<ikdTree::KdTree<double>>(0.3, 0.6, 0.01);
   };
 
   void printMeshingStats();
@@ -143,7 +143,7 @@ class MeshMap {
   void eraseTriangle(const size_t& triIdx);
   void addTriangle(const Triangle& tri);
   mutable std::mutex triangleLock_, verToTriLock_, voxelLock_, vertexLock_, meshLock_;
-  std::unique_ptr<ikd::KD_TREE<Eigen::Vector3d>> ikdTree_;
+  std::unique_ptr<ikdTree::KdTree<double>> ikdTree_;
   Timer addingTimer_, meshingTimer_;
   void cleanup();
   std::vector<Eigen::Vector3d> getPoints(const std::vector<size_t>& vertices) const;
