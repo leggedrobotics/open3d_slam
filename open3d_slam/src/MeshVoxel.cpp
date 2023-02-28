@@ -35,7 +35,7 @@ void MeshMap::addNewPointCloud(const PointCloud& pc) {
   addingTimer_.startStopwatch();
   auto cleaned = pc.RemoveStatisticalOutliers(50, 1);
   PointCloudPtr downsampled = std::get<0>(cleaned)->VoxelDownSample(downsampleVoxelSize_);
-  if(shouldFilter_) {
+  if (shouldFilter_) {
     downsampled = guidedFiltering(downsampled, filterEps_, filterRadius_);
   }
 
@@ -81,6 +81,10 @@ void MeshMap::addNewPointCloud(const PointCloud& pc) {
   addingTimer_.addMeasurementMsec(elapsed);
 }
 void MeshMap::removePoints(const PointCloud& pts) {
+  auto mapBbox = ikdTree_->treeRange();
+  open3d::geometry::AxisAlignedBoundingBox bbox(Eigen::Vector3d(mapBbox.minVertex), Eigen::Vector3d(mapBbox.maxVertex));
+  auto cropped = pts.Crop(bbox);
+  int removeCtr = 0;
   std::unordered_set<size_t> trisToDelete;
   {
     std::unique_lock<std::mutex> vertLock{vertexLock_, std::defer_lock};
@@ -88,11 +92,11 @@ void MeshMap::removePoints(const PointCloud& pts) {
     std::unique_lock<std::mutex> vttLock{verToTriLock_, std::defer_lock};
     std::unique_lock<std::mutex> triLock{triangleLock_, std::defer_lock};
     std::lock(voxLock, vertLock, vttLock, triLock);
-    for (const auto& pt : pts.points_) {
+    for (const auto& pt : cropped->points_) {
       std::vector<Eigen::Vector3d> nearest;
       std::vector<double> distances;
       ikdTree_->searchNearest(pt, 1, nearest, distances);
-      if (!nearest.empty() && distances[0] < voxelSize_ * voxelSize_) {
+      if (!nearest.empty()&& distances[0] <= 2*(voxelSize_ * voxelSize_)) {
         Eigen::Vector3d toRemove = nearest[0];
         Eigen::Vector3i voxelIdx = getVoxelIdx(toRemove, Eigen::Vector3d::Constant(voxelSize_));
 
@@ -107,6 +111,7 @@ void MeshMap::removePoints(const PointCloud& pts) {
             gotRemoved = voxels_.at(voxelIdx).removePoint(ptIdx);
           }
           if (gotRemoved) {
+            removeCtr++;
             points_.left.erase(ptIdx);
             ikdTree_->deletePoints(nearest);
           }
@@ -118,7 +123,7 @@ void MeshMap::removePoints(const PointCloud& pts) {
       eraseTriangle(tri);
     }
   }
-  std::cout << "Removed " << pts.points_.size() << " points." << std::endl;
+  std::cout << "Removed " << cropped->points_.size() << " points. (" << removeCtr << " points actually deleted)" << std::endl;
 
   mesh();
 }
