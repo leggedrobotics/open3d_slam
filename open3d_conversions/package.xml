@@ -19,5 +19,7 @@
   <depend>eigen</depend>
   <depend>open3d_catkin</depend>
   <depend>open3d_slam_msgs</depend>
+  <depend>mesh_msgs</depend>
+  <depend>geometry_msgs</depend>
   
 </package>

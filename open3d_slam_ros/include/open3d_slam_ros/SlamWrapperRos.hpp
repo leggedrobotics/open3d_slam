@@ -46,7 +46,8 @@ private:
 	ros::NodeHandlePtr nh_;
 	std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster_;
 	ros::Publisher odometryInputPub_, mappingInputPub_, submapOriginsPub_, assembledMapPub_, denseMapPub_,
-			submapsPub_, meshPub_, voxelMapPub_, vertexPub_;
+			submapsPub_, meshPub_,
+            mesherInputPub_, vertexPub_;
 	ros::Publisher scan2scanTransformPublisher_, scan2scanOdomPublisher_, scan2mapTransformPublisher_, scan2mapOdomPublisher_;
 	ros::ServiceServer saveMapSrv_, saveSubmapsSrv_;
 	bool isVisualizationFirstTime_ = true;

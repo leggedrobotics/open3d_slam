@@ -11,6 +11,8 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   sensor_msgs
   open3d_catkin
   open3d_slam_msgs
+  mesh_msgs
+  geometry_msgs
 )
 
 find_package(catkin REQUIRED COMPONENTS

@@ -121,6 +121,11 @@ class MeshMap {
     }
     return vertices;
   };
+  PointCloud getMeshingInput() {
+    std::lock_guard<std::mutex> lck{meshCloudLock_};
+    if (mesherInput_ != nullptr) return *mesherInput_;
+    return {};
+  };
 
  private:
   using PointMap =

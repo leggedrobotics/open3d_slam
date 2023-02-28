@@ -123,7 +123,6 @@ void MeshMap::removePoints(const PointCloud& pts) {
   mesh();
 }
 
-void MeshMap::cleanup() {}
 void MeshMap::mesh() {
   std::lock_guard<std::mutex> lck{meshLock_};
   meshingTimer_.startStopwatch();

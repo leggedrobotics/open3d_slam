@@ -54,5 +54,5 @@ void publishIfSubscriberExists(const Msg &msg, const ros::Publisher &pub){
         pub.publish(msg);
     }
 }
-void publishMesh(open3d::geometry::TriangleMesh& mesh, ros::Publisher pub);
+void publishMesh(const open3d::geometry::MeshBase& mesh, const std::string& frame_id, const ros::Time& timestamp, ros::Publisher& pub);
 } /* namespace o3d_slam */

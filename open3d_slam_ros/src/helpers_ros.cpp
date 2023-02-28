@@ -10,6 +10,7 @@
 #include <random>
 // ros stuff
 #include <eigen_conversions/eigen_msg.h>
+#include <mesh_msgs/MeshGeometryStamped.h>
 #include <nav_msgs/Odometry.h>
 #include <open3d/visualization/utility/DrawGeometry.h>
 #include <ros/ros.h>
@@ -226,18 +227,15 @@ void open3dToRos(const open3d::geometry::MeshBase &mesh, const std::string &fram
         }
 
 }
-
-void publishMesh(open3d::geometry::TriangleMesh& mesh, ros::Publisher pub){
-        if(!mesh.triangles_.empty()) {
-                open3d_slam_msgs::PolygonMesh meshMsg;
-                open3dToRos(mesh, o3d_slam::frames::mapFrame, meshMsg);
-                meshMsg.header.frame_id = o3d_slam::frames::mapFrame;
-                pub.publish(meshMsg);
-                std::shared_ptr<open3d::geometry::TriangleMesh> meshPtr = std::make_shared<open3d::geometry::TriangleMesh>(mesh);
-                //open3d::visualization::DrawGeometries({meshPtr});
-        }
+void publishMesh(const open3d::geometry::MeshBase& mesh, const std::string& frame_id, const ros::Time& timestamp, ros::Publisher& pub) {
+        mesh_msgs::MeshGeometryStamped meshMsg;
+        mesh_msgs::MeshGeometry geometry;
+        open3d_conversions::open3dToRos(mesh, frame_id, geometry);
+        meshMsg.header.frame_id = frame_id;
+        meshMsg.header.stamp = timestamp;
+        meshMsg.mesh_geometry = geometry;
+        meshMsg.uuid = "mesh";
+        pub.publish(meshMsg);
 }
-
-
 
 } /* namespace o3d_slam */

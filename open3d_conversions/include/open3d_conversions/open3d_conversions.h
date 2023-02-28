@@ -22,6 +22,8 @@
 // ROS
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
+#include <mesh_msgs/MeshGeometry.h>
+#include <geometry_msgs/Point.h>
 
 // Eigen
 #include <Eigen/Dense>
@@ -30,6 +32,7 @@
 #include <string>
 
 #include "open3d_slam_msgs/PolygonMesh.h"
+
 
 namespace open3d_conversions
 {
@@ -79,6 +82,8 @@ void rosToOpen3d(const sensor_msgs::PointCloud2ConstPtr& ros_pc2, open3d::t::geo
 
 
 void open3dToRos(const open3d::geometry::MeshBase &mesh, const std::string &frameId,  open3d_slam_msgs::PolygonMesh &msg);
+void open3dToRos(const open3d::geometry::MeshBase &mesh, const std::string &frameId,  mesh_msgs::MeshGeometry &msg);
+
 
 
 void rosToOpen3d(const open3d_slam_msgs::PolygonMesh &msg, open3d::geometry::TriangleMesh &mesh);
