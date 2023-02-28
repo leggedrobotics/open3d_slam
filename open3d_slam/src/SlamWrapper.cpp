@@ -42,6 +42,8 @@ SlamWrapper::SlamWrapper() {
 	registeredCloudBuffer_.set_size_limit(30);
 	motionCompensationOdom_ = std::make_shared<MotionCompensation>();
 	motionCompensationMap_ = std::make_shared<MotionCompensation>();
+	Eigen::Quaterniond q(1,0,0,0); 
+	mapToEnu_ = makeTransform(Eigen::Vector3d::Zero(3,1), q);
 }
 
 SlamWrapper::~SlamWrapper() {
@@ -105,6 +107,11 @@ size_t SlamWrapper::getMappingBufferSizeLimit() const {
 	return mappingBuffer_.size_limit();
 }
 
+Transform SlamWrapper::getLatestOdometryPose(){
+
+	return odometry_->odomToRangeSensorBuffer_.latest_measurement().transform_;
+}
+
 void SlamWrapper::addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp) {
 	updateFirstMeasurementTime(timestamp);
 	odometry_->mostUpToDateCloudStamp_ = timestamp;
@@ -119,6 +126,13 @@ void SlamWrapper::addRangeScan(const open3d::geometry::PointCloud cloud, const T
 		}
 	}
 	odometryBuffer_.push(timestampedCloud);
+}
+
+o3d_slam::SlamWrapper::RegisteredPointCloud SlamWrapper::getLatestRegisteredCloud() {
+	if (registeredCloudBuffer_.empty()) {
+		return RegisteredPointCloud();
+	}
+	return registeredCloudBuffer_.peek_back();
 }
 
 std::pair<PointCloud, Time> SlamWrapper::getLatestRegisteredCloudTimestampPair() const {
@@ -190,7 +204,8 @@ void SlamWrapper::loadParametersAndInitialize() {
 	submaps_ = std::make_shared<o3d_slam::SubmapCollection>();
 	submaps_->setFolderPath(folderPath_);
 
-	mapper_ = std::make_shared<o3d_slam::Mapper>(odometry_->getBuffer(), submaps_);
+	mapper_ = std::make_shared<o3d_slam::Mapper>(odometry_->getBuffer(), odometry_->getScan2ScanBuffer(), submaps_);
+	params_.mapper_.compensateWithScanToScanIfNecessary_ = params_.odometry_.compensateWithScanToScanIfNecessary_;
 	mapper_->setParameters(params_.mapper_);
 
 	optimizationProblem_ = std::make_shared<o3d_slam::OptimizationProblem>();
@@ -258,6 +273,31 @@ bool SlamWrapper::saveMap(const std::string &directory) {
 	const std::string filename = directory + "map.pcd";
 	return saveToFile(filename, map);
 }
+
+Transform SlamWrapper::getMapToEnu(){
+
+	return mapToEnu_;
+}
+
+void SlamWrapper::setMapToEnu(const Transform& transform){
+
+	mapToEnu_ = transform;
+}
+
+Transform SlamWrapper::getMapToRangeSensorPrior(const Time &timestamp) const {
+	return getTransform(timestamp, mapper_->mapToRangeSensorPriorBuffer_);
+}
+
+bool SlamWrapper::transformSaveMap(const std::string &directory, const Transform& transform) {
+	std::cout << "Started to transform and save. Started transforming." << std::endl;
+	PointCloud map = mapper_->getAssembledMapPointCloud();
+	map = map.Transform(transform.matrix());
+	std::cout << "Transformed. Now saving." << std::endl;
+	createDirectoryOrNoActionIfExists(directory);
+	const std::string filename = directory + "map.pcd";
+	return saveToFile(filename, map);
+}
+
 bool SlamWrapper::saveDenseSubmaps(const std::string &directory) {
 	return saveSubmaps(directory, true);
 }
@@ -302,6 +342,15 @@ void SlamWrapper::odometryWorker() {
 	} // end while
 
 }
+
+bool SlamWrapper::checkIfodomToRangeSensorBufferHasTime(const Time &queryTime){
+	return odometry_->odomToRangeSensorBuffer_.has(queryTime);
+}
+
+void SlamWrapper::addOdometryPrior(const Time &queryTime, const Transform &transform){
+	odometry_->odomToRangeSensorBuffer_.push(queryTime, transform);
+}
+
 void SlamWrapper::mappingWorker() {
 	while (isRunWorkers_) {
 		if (mappingBuffer_.empty()) {
@@ -335,7 +384,10 @@ void SlamWrapper::mappingWorker() {
 		const double timeElapsed = 	mapperOnlyTimer_.elapsedMsecSinceStopwatchStart();
 		mapperOnlyTimer_.addMeasurementMsec(timeElapsed);
 
+		std::cout << "Registration Elapsed Time: " << timeElapsed << " msec \n";
+
 		if (mappingResult) {
+			isNewScan2MapRefinementAvailable_=true;
 			RegisteredPointCloud registeredCloud;
 			registeredCloud.submapId_ = activeSubmapIdx;
 			registeredCloud.raw_ = measurement;
@@ -344,6 +396,7 @@ void SlamWrapper::mappingWorker() {
 			registeredCloud.targetFrame_ = frames::mapFrame;
 			registeredCloudBuffer_.push(registeredCloud);
 			latestScanToMapRefinementTimestamp_ = measurement.time_;
+			latestScanToMapRefinedPose_ = mapper_->getMapToRangeSensor(measurement.time_);
 		}
 
 		if (params_.mapper_.isAttemptLoopClosures_) {

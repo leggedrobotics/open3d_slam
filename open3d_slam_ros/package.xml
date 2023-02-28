@@ -28,6 +28,8 @@
   <depend>interactive_markers</depend>
   <depend>rosbag</depend>
   <depend>open3d_slam_lua_io</depend>
+  <depend>std_srvs</depend>
+  <depend>nav_msgs</depend>
 
 
 </package>

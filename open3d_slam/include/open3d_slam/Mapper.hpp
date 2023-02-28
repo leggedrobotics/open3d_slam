@@ -26,7 +26,7 @@ public:
 
 	using PointCloud = open3d::geometry::PointCloud;
 
-	Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer,
+	Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer, const TransformInterpolationBuffer &scan2scanOdomToRangeSensorBuffer,
 			std::shared_ptr<SubmapCollection> submaps);
 	~Mapper() = default;
 
@@ -41,7 +41,7 @@ public:
 	MapperParameters *getParametersPtr();
 	Transform getMapToOdom(const Time &timestamp) const;
 	Transform getMapToRangeSensor(const Time &timestamp) const;
-	Transform getMapToRangeSensorPRIOR(const Time &timestamp) const;
+	Transform getMapToRangeSensorPrior(const Time &timestamp) const;
 	const TransformInterpolationBuffer& getMapToRangeSensorBuffer() const;
 	const PointCloud& getPreprocessedScan() const;
 	const ScanToMapRegistration &getScanToMapRegistration() const;
@@ -53,7 +53,7 @@ public:
 
 	Time lastMeasurementTimestamp_;
 	Time latestCloudTimestamp_;
-	TransformInterpolationBuffer mapToRangeSensorPRIORBuffer_;
+	TransformInterpolationBuffer mapToRangeSensorPriorBuffer_;
 	
 private:
 	void update(const MapperParameters &p);
@@ -67,6 +67,7 @@ private:
 	std::mutex mapManipulationMutex_;
 	std::shared_ptr<SubmapCollection> submaps_;
 	const TransformInterpolationBuffer &odomToRangeSensorBuffer_;
+	const TransformInterpolationBuffer &scan2scanOdomToRangeSensorBuffer_;
 	TransformInterpolationBuffer mapToRangeSensorBuffer_;
 	open3d::geometry::PointCloud preProcessedScan_;
 	bool isNewInitialValueSet_ = false;

@@ -31,11 +31,16 @@ public:
 	void setParameters (const OdometryParameters &p);
 	const TransformInterpolationBuffer &getBuffer() const;
 	bool hasProcessedMeasurements() const;
+	bool scan2scanHasProcessedMeasurements() const;
 	void setInitialTransform(const Eigen::Matrix4d &initialTransform);
 
+	const TransformInterpolationBuffer& getScan2ScanBuffer() const;
+	const Transform getScan2ScanOdomToRangeSensor(const Time &t) const;
+
 	TransformInterpolationBuffer odomToRangeSensorBuffer_;
-	Time lastMeasurementTimestamp_;
-	Time mostUpToDateCloudStamp_;
+	TransformInterpolationBuffer scan2scanOdomToRangeSensorBuffer_;
+	Time lastMeasurementTimestamp_ = Time::min();
+	Time mostUpToDateCloudStamp_ = Time::min();
 
 private:
 
