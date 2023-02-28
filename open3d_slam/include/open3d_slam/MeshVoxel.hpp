@@ -70,6 +70,7 @@ class MeshVoxel {
 
   bool addPoint(size_t vert);
   bool removePoint(size_t vert);
+  void initPlane();
 
   bool isUpdated() const { return isModified_; };
   std::vector<size_t> getPoints() const { return pts_; };
@@ -88,7 +89,6 @@ class MeshVoxel {
   std::shared_ptr<MeshMap> parentMap_;
   bool isModified_ = false;
   int updateCount_ = 0;
-  void initPlane();
 };
 
 class MeshMap {

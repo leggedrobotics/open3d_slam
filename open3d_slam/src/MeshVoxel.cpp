@@ -260,8 +260,8 @@ std::vector<size_t> MeshMap::dilateVertexSet(const std::unordered_set<size_t>& v
   return {vertexSet.begin(), vertexSet.end()};
 }
 std::vector<Triangle> MeshMap::triangulateVertexSetForVoxel(MeshVoxel& voxel, const std::vector<size_t>& vertices) const {
+  voxel.initPlane();
   auto ptr = voxel.getPlanePtr();
-  ptr->initialize(getPoints(voxel.getPoints()));
   Eigen::Vector3d q = ptr->getPlaneCenter();
   Eigen::Matrix<double, 3, 2> tangBase = ptr->getTangentialBase();
   auto meshVertices = getPoints(vertices);
