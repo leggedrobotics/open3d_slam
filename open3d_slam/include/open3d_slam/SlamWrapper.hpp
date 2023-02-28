@@ -34,12 +34,6 @@ class SlamWrapper {
 		PointCloud cloud_;
 	};
 
-	struct RegisteredPointCloud{
-		TimestampedPointCloud raw_;
-		Transform transform_;
-		std::string sourceFrame_, targetFrame_;
-		size_t submapId_;
-	};
 
 public:
 	SlamWrapper();
@@ -53,6 +47,13 @@ public:
 	virtual void stopWorkers();
 	virtual void finishProcessing();
 
+	struct RegisteredPointCloud{
+		TimestampedPointCloud raw_;
+		Transform transform_;
+		std::string sourceFrame_, targetFrame_;
+		size_t submapId_;
+	};
+
 	const MapperParameters &getMapperParameters() const;
 	MapperParameters *getMapperParametersPtr();
 	size_t getOdometryBufferSize() const;
@@ -63,6 +64,8 @@ public:
 	std::pair<PointCloud,Time> getLatestRegisteredCloudTimestampPair() const;
 
 	void addOdometryPrior(const Time &queryTime, const Transform &transform);
+
+	Transform getMapToRangeSensorPrior(const Time &timestamp) const;
 
 	void setDirectoryPath(const std::string &path);
 	void setMapSavingDirectoryPath(const std::string &path);
@@ -91,6 +94,8 @@ public:
 	SlamParameters params_;
 
 	Transform mapToEnu_;
+
+	RegisteredPointCloud getLatestRegisteredCloud();
 
 private:
 	void checkIfOptimizedGraphAvailable();

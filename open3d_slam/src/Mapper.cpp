@@ -27,9 +27,9 @@ namespace registration = open3d::pipelines::registration;
 const bool isCheckTransformChainingAndPrintResult = false;
 } // namespace
 
-Mapper::Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer,
+Mapper::Mapper(const TransformInterpolationBuffer &odomToRangeSensorBuffer, const TransformInterpolationBuffer &scan2scanOdomToRangeSensorBuffer,
 		std::shared_ptr<SubmapCollection> submaps) :
-		odomToRangeSensorBuffer_(odomToRangeSensorBuffer), submaps_(submaps) {
+		odomToRangeSensorBuffer_(odomToRangeSensorBuffer), scan2scanOdomToRangeSensorBuffer_(scan2scanOdomToRangeSensorBuffer), submaps_(submaps) {
 	update(params_);
 }
 
@@ -51,7 +51,7 @@ bool Mapper::hasProcessedMeasurements() const {
 	return !mapToRangeSensorBuffer_.empty();
 }
 bool Mapper::hasPriorProcessedMeasurements() const {
-	return !mapToRangeSensorPRIORBuffer_.empty();
+	return !mapToRangeSensorPriorBuffer_.empty();
 }
 
 void Mapper::update(const MapperParameters &p) {
@@ -69,8 +69,8 @@ Transform Mapper::getMapToRangeSensor(const Time &timestamp) const {
 	return getTransform(timestamp, mapToRangeSensorBuffer_);
 }
 
-Transform Mapper::getMapToRangeSensorPRIOR(const Time &timestamp) const {
-	return getTransform(timestamp, mapToRangeSensorPRIORBuffer_);
+Transform Mapper::getMapToRangeSensorPrior(const Time &timestamp) const {
+	return getTransform(timestamp, mapToRangeSensorPriorBuffer_);
 }
 
 const SubmapCollection& Mapper::getSubmaps() const {
@@ -128,26 +128,48 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		std::cerr << "\n\n !!!!! MAPER WARNING: Measurements came out of order!!!! \n\n";
 		return false;
 	}
-
-	bool isOdomOkay = odomToRangeSensorBuffer_.has(timestamp);
-	if (!isOdomOkay) {
-		std::cerr << "WARNING: odomToRangeSensorBuffer_ DOES NOT HAVE THE DESIRED TRANSFORM! \n";
-		std::cerr << "  going to attempt the scan to map refinement anyway \n";
-	}
-
-	checkTransformChainingAndPrintResult(isCheckTransformChainingAndPrintResult);
-
+	
 	Transform mapToRangeSensorEstimate =  mapToRangeSensorPrev_;
+	Transform odometryMotion = Transform::Identity();
 
+	// If the odometry is available through tf or external data.
+	bool isOdomOkay = odomToRangeSensorBuffer_.has(timestamp);
+	
 	if (isOdomOkay && !isNewInitialValueSet_ && !isIgnoreOdometryPrediction_){
 		const Transform odomToRangeSensor = getTransform(timestamp, odomToRangeSensorBuffer_);
 		const Transform odomToRangeSensorPrev = getTransform(lastMeasurementTimestamp_, odomToRangeSensorBuffer_);
-		const Transform odometryMotion = odomToRangeSensorPrev.inverse()*odomToRangeSensor;
-		mapToRangeSensorEstimate = mapToRangeSensorPrev_*odometryMotion ;
+		odometryMotion = odomToRangeSensorPrev.inverse()*odomToRangeSensor;
+
+		// Compare the motion to the maximum allowed motion. If the motion is too much, dont use the tf based odometry.
+		isOdomOkay = isOdomOkay && (std::abs(odometryMotion.translation().matrix().norm()) < params_.maxMotionTranslationGuessFitness_);
+		
+		// Calculate the rotation angle
+		Eigen::AngleAxisd angleAxis(odometryMotion.rotation().matrix());
+		
+		// Compare the rotation angle. If the rotation is too much, dont use the tf based odometry.
+		isOdomOkay = isOdomOkay && (std::abs(angleAxis.angle()) < params_.maxMotionRotationGuessFitness_);
+	}else{
+		std::cerr << "\n\n !!!!! TF based odometry is not avaiable or bad. !!!! \n\n";
+	}
+	
+	if (params_.compensateWithScanToScanIfNecessary_)
+	{
+		if ((!isOdomOkay) && (scan2scanOdomToRangeSensorBuffer_.has(timestamp)) && !isNewInitialValueSet_ && !isIgnoreOdometryPrediction_) {
+			//std::cerr << "WARNING: odomToRangeSensorBuffer_ DOES NOT HAVE THE DESIRED TRANSFORM! \n";
+			//std::cerr << "  going to attempt the scan to map refinement anyway \n";
+			const Transform odomToRangeSensor = getTransform(timestamp, scan2scanOdomToRangeSensorBuffer_);
+			const Transform odomToRangeSensorPrev = getTransform(lastMeasurementTimestamp_, scan2scanOdomToRangeSensorBuffer_);
+			odometryMotion = odomToRangeSensorPrev.inverse()*odomToRangeSensor;
+
+			std::cerr << "\n\n !!!!! Using scan2scan based odometry as a complementary measure. !!!! \n\n";
+		}
 	}
 
+	// Use the available odometry to predict the best guess of the mapToRangeSensor.
+	mapToRangeSensorEstimate = mapToRangeSensorPrev_*odometryMotion ;
+
 	// Debug Purposes, keep a prior buffer.
-	mapToRangeSensorPRIORBuffer_.push(timestamp, mapToRangeSensorEstimate);
+	mapToRangeSensorPriorBuffer_.push(timestamp, mapToRangeSensorEstimate);
 
 	isIgnoreOdometryPrediction_ = false;
 	const ProcessedScans processed = scan2MapReg_->processForScanMatchingAndMerging(rawScan, mapToRangeSensor_);
@@ -171,13 +193,24 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 			return false;
 	}
 
-	// Note: possibly, use the best guess mapTORangeSensorEstimate if the result is not optima.
-	// One option to check if sensorMotion.norm() is too large.
-
 	// update transforms
 	mapToRangeSensor_.matrix() = result.transformation_;
-	mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
-	submaps_->setMapToRangeSensor(mapToRangeSensor_);
+
+	const Transform mapMotion = mapToRangeSensorEstimate.inverse() * mapToRangeSensor_;
+	const Eigen::AngleAxisd angleAxis(mapMotion.rotation().matrix());
+	const double absAngle = std::abs(angleAxis.angle()); 
+	const double translationNorm = mapMotion.translation().matrix().norm();
+
+	if((absAngle > params_.maxMotionRotation_) || (translationNorm > params_.maxMotionTranslation_)){
+		std::cout << "Rotation angle: " << absAngle << " Translation Norm: " << translationNorm << std::endl;
+		mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensorEstimate);
+		submaps_->setMapToRangeSensor(mapToRangeSensorEstimate);
+		return true;
+	}
+	else{
+		mapToRangeSensorBuffer_.push(timestamp, mapToRangeSensor_);
+		submaps_->setMapToRangeSensor(mapToRangeSensor_);
+	}
 
 	if (params_.isUseInitialMap_ && !params_.isMergeScansIntoMap_){
 		lastMeasurementTimestamp_ = timestamp;

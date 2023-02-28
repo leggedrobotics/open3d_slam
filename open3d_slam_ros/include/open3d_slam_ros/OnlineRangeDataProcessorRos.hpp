@@ -21,6 +21,7 @@
 #include <mutex>
 #include <std_srvs/Empty.h>
 #include <nav_msgs/Path.h>
+#include <nav_msgs/Odometry.h>
 
 namespace o3d_slam {
 
@@ -35,50 +36,72 @@ public:
 	 void startProcessing() override;
 	 void processMeasurement(const PointCloud &cloud, const Time &timestamp) override;
 
-	 void getAndSetTfPrior(const Time &timestamp);
+	// Queires tf to get the odom to range sensor transform.
+	bool getAndSetTfPrior(const Time &timestamp);
 
 	void posePublisherTimerCallback(const ros::TimerEvent&);
 
 	void registeredCloudPublisherCallback(const ros::TimerEvent&);
 
-	bool alignWithWorld(std_srvs::EmptyRequest& req, std_srvs::EmptyResponse& res);
-
+	// Handler for trajectory alingment. Copied from JNs code.
 	std::shared_ptr<o3d_slam::TrajectoryAlignmentHandler> trajectoryAlignmentHandlerPtr_;
 
-	tf2_ros::Buffer tfBuffer_;
-	tf2_ros::TransformListener tfListener_;
+	// Publishers
+	ros::Publisher scan2mapTransformPublisher_, scan2mapOdometryPublisher_, scan2mapOdometryPriorPublisher_ , consolidatedScan2mapOdomPublisher_, registeredCloudPub_;
 
-	ros::Timer posePublishingTimer_;
-	ros::Timer registeredEnuCloudPublisherTimer_;
+	void poseStampedPriorCallback(const nav_msgs::Odometry::ConstPtr& odometryPose);
 
-	ros::Publisher scan2scanTransformPublisher_, scan2scanOdomPublisher_, scan2mapTransformPublisher_, scan2mapOdomPublisher_, scan2mapOdomPriorPublisher_ , consolidatedScan2mapOdomPublisher_;
+	// Publishers vol_2.
+	ros::Publisher lidarPathPublisher_;
+	ros::Publisher gnssPathPublisher_;
+	ros::Publisher registeredEnuCloud_;
+	ros::Publisher lidarPoseInMapPathPublisher_;
+	ros::Publisher consolidatedLidarPoseInMapPathPublisher_;
 
+	// Path messages
+	nav_msgs::Path lidarPathInMap;
+	nav_msgs::Path consolidatedLiDARpathInMap;
+
+	// Container for map to world transform. In this case the world is the ENU frame. ENU frame is defined by the GNSS poses.
+	Transform mapToWorld_;
+
+private:
+	void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg);
+
+	// Align with the world. In this case the world is the poses that were defined in ENU frame.
+	bool alignWithWorld(std_srvs::EmptyRequest& req, std_srvs::EmptyResponse& res);
+
+	// Helper functions to convert between ROS and Open3D types.
 	nav_msgs::Odometry getOdomMsg(const geometry_msgs::TransformStamped &transformMsg);
 	geometry_msgs::TransformStamped getTransformMsg(const Transform &T, const ros::Time &timestamp, const std::string parent, const std::string child);
 
-	void poseStampedPriorCallback(const geometry_msgs::PoseStampedConstPtr& odometryPose);
+	// Helper function to check if the cloud was already published.
+	bool isRegisteredCloudAlreadyPublished(const Time &timestamp);
 
-	Transform mapToWorld_;
-
-  ros::Publisher lidarPath_;
-  ros::Publisher gnssPath_;
-  ros::Publisher registeredEnuCloud_;
-
-  ros::Publisher before_gnssPath_;
-  ros::Publisher before_lidarPath_;
-
-  nav_msgs::PathPtr measMapGnssPathPtr_;
-  nav_msgs::PathPtr measMapLidarPathPtr_;
-  bool scanToMapStarted_ = false;
-
-private:
-	 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg);
-
+	// Service to align with the world.
 	ros::ServiceServer alignWithWorld_;
+
+	// Subscribers
 	ros::Subscriber cloudSubscriber_;
 	ros::Subscriber priorPoseSubscriber_;
+
+	// Mutex
 	mutable std::mutex posePublishingMutex_;
-	std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster2_;
+
+	// Helper flag
+	bool scanToMapStarted_ = false;
+
+	// Ros timers
+	ros::Timer posePublishingTimer_;
+	ros::Timer registeredEnuCloudPublisherTimer_;
+
+	// Tf
+	std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster_;
+	tf2_ros::Buffer tfBuffer_;
+	tf2_ros::TransformListener tfListener_;
+
+	o3d_slam::Time lastPublishedRegisteredCloudTime_ = o3d_slam::Time::max();
+
 };
 
 } // namespace o3d_slam

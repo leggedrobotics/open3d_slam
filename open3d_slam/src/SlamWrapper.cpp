@@ -109,7 +109,6 @@ size_t SlamWrapper::getMappingBufferSizeLimit() const {
 
 Transform SlamWrapper::getLatestOdometryPose(){
 
-	
 	return odometry_->odomToRangeSensorBuffer_.latest_measurement().transform_;
 }
 
@@ -127,6 +126,13 @@ void SlamWrapper::addRangeScan(const open3d::geometry::PointCloud cloud, const T
 		}
 	}
 	odometryBuffer_.push(timestampedCloud);
+}
+
+o3d_slam::SlamWrapper::RegisteredPointCloud SlamWrapper::getLatestRegisteredCloud() {
+	if (registeredCloudBuffer_.empty()) {
+		return RegisteredPointCloud();
+	}
+	return registeredCloudBuffer_.peek_back();
 }
 
 std::pair<PointCloud, Time> SlamWrapper::getLatestRegisteredCloudTimestampPair() const {
@@ -198,7 +204,8 @@ void SlamWrapper::loadParametersAndInitialize() {
 	submaps_ = std::make_shared<o3d_slam::SubmapCollection>();
 	submaps_->setFolderPath(folderPath_);
 
-	mapper_ = std::make_shared<o3d_slam::Mapper>(odometry_->getBuffer(), submaps_);
+	mapper_ = std::make_shared<o3d_slam::Mapper>(odometry_->getBuffer(), odometry_->getScan2ScanBuffer(), submaps_);
+	params_.mapper_.compensateWithScanToScanIfNecessary_ = params_.odometry_.compensateWithScanToScanIfNecessary_;
 	mapper_->setParameters(params_.mapper_);
 
 	optimizationProblem_ = std::make_shared<o3d_slam::OptimizationProblem>();
@@ -275,6 +282,10 @@ Transform SlamWrapper::getMapToEnu(){
 void SlamWrapper::setMapToEnu(const Transform& transform){
 
 	mapToEnu_ = transform;
+}
+
+Transform SlamWrapper::getMapToRangeSensorPrior(const Time &timestamp) const {
+	return getTransform(timestamp, mapper_->mapToRangeSensorPriorBuffer_);
 }
 
 bool SlamWrapper::transformSaveMap(const std::string &directory, const Transform& transform) {
@@ -372,6 +383,8 @@ void SlamWrapper::mappingWorker() {
 		const bool mappingResult = mapper_->addRangeMeasurement(measurement.cloud_, measurement.time_);
 		const double timeElapsed = 	mapperOnlyTimer_.elapsedMsecSinceStopwatchStart();
 		mapperOnlyTimer_.addMeasurementMsec(timeElapsed);
+
+		std::cout << "Registration Elapsed Time: " << timeElapsed << " msec \n";
 
 		if (mappingResult) {
 			isNewScan2MapRefinementAvailable_=true;

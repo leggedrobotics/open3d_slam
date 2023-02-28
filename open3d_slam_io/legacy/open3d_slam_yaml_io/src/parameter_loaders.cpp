@@ -108,7 +108,12 @@ void loadParameters(const YAML::Node &node, OdometryParameters *p){
 	loadParameters(node["scan_matching"], &(p->scanMatcher_) );
 	loadParameters(node["scan_processing"], &(p->scanProcessing_) );
 	loadIfKeyDefined<bool>(node,"is_publish_odometry_msgs", &p->isPublishOdometryMsgs_);
-	loadIfKeyDefined<bool>(node,"overwrite_with_tf", &p->overwriteWithTf);
+	loadIfKeyDefined<bool>(node,"overwrite_with_tf", &p->overwriteWithTf_);
+	loadIfKeyDefined<bool>(node,"listen_prior_from_topic", &p->listenPriorFromTopic_);
+	loadIfKeyDefined<bool>(node,"compensate_with_scan_to_scan_if_necessary", &p->compensateWithScanToScanIfNecessary_);
+	loadIfKeyDefined<bool>(node,"disable_scan_to_scan_odometry", &p->disableScanToScanOdometry_);
+	loadIfKeyDefined<std::string>(node,"prior_topic_name", &p->priorTopicName_);
+	loadIfKeyDefined<bool>(node,"publish_map_to_odom_tf", &p->publishMapToOdomTfTransform_);
 }
 
 void loadParameters(const YAML::Node &node, ScanProcessingParameters *p){

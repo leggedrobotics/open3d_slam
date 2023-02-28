@@ -92,7 +92,7 @@ bool lookupTransform(const std::string &target_frame, const std::string &source_
 		const tf2_ros::Buffer &tfBuffer, Eigen::Isometry3d& transform) {
 	geometry_msgs::TransformStamped transformStamped;
 	try {
-		transformStamped = tfBuffer.lookupTransform(target_frame, source_frame, time, ros::Duration(0.2));
+		transformStamped = tfBuffer.lookupTransform(target_frame, source_frame, time, ros::Duration(0.05));
 	} catch (tf2::TransformException &ex) {
 		ROS_WARN("caught exception while looking up the tf: %s", ex.what());
 		transform = Eigen::Isometry3d::Identity();

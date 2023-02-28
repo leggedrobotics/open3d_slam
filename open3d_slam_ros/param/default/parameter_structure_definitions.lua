@@ -76,8 +76,13 @@ SCAN_MATCHING_PARAMETERS = {
 }
 
 ODOMETRY_PARAMETERS = {
-  overwrite_with_tf = true,
-  is_publish_odometry_msgs = true,
+  overwrite_with_tf = true, -- if true, the odometry will be overwritten with the tf
+  listen_prior_from_topic = false, -- if true, the odometry will be populated from the prior topic. Use either this option or overwrite_with_tf.
+  priorTopicName_ = "/state_estimator/odometry",
+  compensate_with_scan_to_scan_if_necessary = false, -- if true, the odometry will be compensated with scan to scan if the prior is not available.
+  disable_scan_to_scan_odometry = true,
+  publish_map_to_odom_tf = true,
+  is_publish_odometry_msgs = false,
   scan_matching = deepcopy(SCAN_MATCHING_PARAMETERS),
   scan_processing = deepcopy(SCAN_PROCESSING_PARAMETERS),
 }
@@ -114,7 +119,7 @@ SCAN_TO_MAP_REGISTRATION_PARAMETERS = {
 MAPPER_LOCALIZER_PARAMETERS = {
   is_print_timing_information = true,
   is_build_dense_map = false,
-  is_attempt_loop_closures = true,
+  is_attempt_loop_closures = false,
   is_use_map_initialization = false,
   is_merge_scans_into_map = false,
   dump_submaps_to_file_before_after_lc = false,
@@ -133,7 +138,7 @@ POSE = {
 }
 
 MAP_INITIALIZER_PARAMETERS = {
-  is_initialize_interactively = false,
+  is_initialize_interactively = true,
   frame_id = "map_new",
   pcd_file_path = "",
   init_pose = POSE,

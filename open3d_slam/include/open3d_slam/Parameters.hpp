@@ -89,7 +89,12 @@ struct OdometryParameters {
 	CloudRegistrationParameters scanMatcher_;
 	ScanProcessingParameters scanProcessing_;
   bool isPublishOdometryMsgs_ = false;
-  bool overwriteWithTf = false;
+  bool overwriteWithTf_ = false;
+  bool listenPriorFromTopic_ = false;
+  bool compensateWithScanToScanIfNecessary_ = false;
+  bool disableScanToScanOdometry_ = false;
+  std::string priorTopicName_ = "/state_estimator/odometry";
+  bool publishMapToOdomTfTransform_ = false;
 };
 
 struct SpaceCarvingParameters{
@@ -181,8 +186,13 @@ struct MapperParameters {
 	bool isPrintTimingStatistics_ = true;
 	bool isRefineOdometryConstraintsBetweenSubmaps_ = false;
 	bool isUseInitialMap_ = false;
-  bool isMergeScansIntoMap_ = true;
-  MapInitializingParameters mapInit_;
+	bool isMergeScansIntoMap_ = true;
+	MapInitializingParameters mapInit_;
+	double maxMotionTranslation_ = 50.0;
+	double maxMotionRotation_ = 50.0;
+	double maxMotionRotationGuessFitness_ = 50.0;
+	double maxMotionTranslationGuessFitness_ = 50.0;
+	bool compensateWithScanToScanIfNecessary_ = false;
 };
 
 struct VisualizationParameters {
