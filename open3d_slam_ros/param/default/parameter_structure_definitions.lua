@@ -175,4 +175,7 @@ MESHING_PARAMETERS = {
   downsampling_voxel_size = 0.3,
   voxel_dilation_ratio = 0.75,
   sliver_deletion_threshold = 0.0075,
+  should_filter = true,
+  filter_eps = 0.1,
+  filter_radius = 0.3,
 }

@@ -357,8 +357,9 @@ void SlamWrapper::mappingWorker() {
 			latestScanToMapRefinementTimestamp_ = measurement.time_;
 
 			RegisteredPointCloud registeredMap;
-			registeredMap.raw_.cloud_ = mapper_->getActiveSubmap().getMapPointCloud();
-			registeredMap.raw_.time_ = measurement.time_;
+			//registeredMap.raw_.cloud_ = mapper_->getActiveSubmap().getMapPointCloud();
+			//registeredMap.raw_.time_ = measurement.time_;
+                        registeredMap.raw_ = measurement;
 			registeredMap.submapId_ = activeSubmapIdx;
 			registeredMap.transform_ = mapper_->getMapToRangeSensor(measurement.time_);
 			registeredMap.sourceFrame_ = frames::rangeSensorFrame;
@@ -409,7 +410,8 @@ void SlamWrapper::meshingWorker() {
                         mesher_->switchActiveSubmap(meshingCloud.submapId_);
                         nPointCloudsInserted = 0;
                 }
-                mesher_->addNewPointCloud(meshingCloud.raw_.cloud_, meshingCloud.transform_);
+                PointCloudPtr transformedCloud = transform(meshingCloud.transform_.matrix(),meshingCloud.raw_.cloud_);
+                mesher_->addNewPointCloud(*transformedCloud, meshingCloud.transform_);
                 if (!removalBuffer_.empty()) {
                         const RegisteredPointCloud removed = removalBuffer_.pop();
                         if (!removed.raw_.cloud_.IsEmpty()) {

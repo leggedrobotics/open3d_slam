@@ -66,6 +66,9 @@ params.meshing.downsampling_voxel_size = 0.2
 params.meshing.meshing_voxel_size = 0.6
 params.meshing.new_vertex_distance_threshold = 0.15
 params.meshing.sliver_deletion_threshold = 0.01
+params.meshing.should_filter = true
+params.meshing.filter_eps = 0.01
+params.meshing.filter_radius = 0.3
 
 
 return params

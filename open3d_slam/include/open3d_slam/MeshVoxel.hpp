@@ -17,7 +17,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include "../../thirdparty/ikd-Tree/ikd-Tree/ikd_Tree.hpp"
+#include "../../thirdparty/ikd-Tree/ikd-Tree/ikd_tree.hpp"
 #include "open3d_slam/Parameters.hpp"
 #include "open3d_slam/Plane.hpp"
 #include "open3d_slam/VoxelHashMap.hpp"
@@ -98,11 +98,15 @@ class MeshMap {
   void addNewPointCloud(const PointCloud& pc);
   void mesh();
   open3d::geometry::TriangleMesh toO3dMesh() const;
-  MeshMap(double downsampleSize, double newVertexThreshould, double voxelSize, double dilationRatio)
+  MeshMap(double downsampleSize, double newVertexThreshould, double voxelSize, double dilationRatio, bool shouldFilter, double filterEps,
+          double filterRadius)
       : downsampleVoxelSize_(downsampleSize),
         newVertexThreshold_(newVertexThreshould),
         voxelSize_(voxelSize),
-        dilationRatio_(dilationRatio) {
+        dilationRatio_(dilationRatio),
+        shouldFilter_(shouldFilter),
+        filterEps_(filterEps),
+        filterRadius_(filterRadius) {
     ikdTree_ = std::make_unique<ikdTree::KdTree<double>>(0.3, 0.6, 0.01);
   };
 
@@ -119,7 +123,8 @@ class MeshMap {
   };
 
  private:
-  using PointMap = boost::bimaps::bimap<boost::bimaps::unordered_set_of<size_t>, boost::bimaps::unordered_set_of<Eigen::Vector3d,EigenVec3dHash>>;
+  using PointMap =
+      boost::bimaps::bimap<boost::bimaps::unordered_set_of<size_t>, boost::bimaps::unordered_set_of<Eigen::Vector3d, EigenVec3dHash>>;
   using PointPair = PointMap::value_type;
   PointMap points_;
   std::unordered_map<Eigen::Vector3i, MeshVoxel, EigenVec3iHash> voxels_;
@@ -132,6 +137,9 @@ class MeshMap {
   double sliverThreshold_ = 0.0075;
   int meshCount_ = 0;
   double dilationRatio_ = 0.5;
+  bool shouldFilter_ = true;
+  double filterEps_ = 0.01;
+  double filterRadius_ = 0.3;
 
   size_t nextTriIdx_ = 0;
   size_t nextVertIdx_ = 0;
@@ -142,12 +150,13 @@ class MeshMap {
   void pullTriangles(const std::vector<size_t>& vertices, std::vector<Triangle>& pulledTriangles, std::vector<size_t>& pulledIdx);
   void eraseTriangle(const size_t& triIdx);
   void addTriangle(const Triangle& tri);
-  mutable std::mutex triangleLock_, verToTriLock_, voxelLock_, vertexLock_, meshLock_;
+  mutable std::mutex triangleLock_, verToTriLock_, voxelLock_, vertexLock_, meshLock_, meshCloudLock_;
   std::unique_ptr<ikdTree::KdTree<double>> ikdTree_;
   Timer addingTimer_, meshingTimer_;
-  void cleanup();
   std::vector<Eigen::Vector3d> getPoints(const std::vector<size_t>& vertices) const;
   std::vector<size_t> dilateVertexSet(const std::unordered_set<size_t>& vertices, const double& dilationRadius);
+  PointCloudPtr guidedFiltering(const PointCloudPtr& in, double eps, double radius);
+  PointCloudPtr mesherInput_;
 };
 }  // namespace o3d_slam
 

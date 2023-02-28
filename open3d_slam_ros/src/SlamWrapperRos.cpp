@@ -269,8 +269,9 @@ void SlamWrapperRos::publishMaps(const Time &time) {
         auto o3DMesh = mesher_->getActiveMeshMap()->toO3dMesh();
         auto vertexMap = open3d::geometry::PointCloud(mesher_->getActiveMeshMap()->getVertices());
 
-        publishMesh(o3DMesh, meshPub_);
-        o3d_slam::publishCloud(vertexMap,o3d_slam::frames::mapFrame,timestamp,vertexPub_);
+        if(!o3DMesh.IsEmpty()) {
+                publishMesh(o3DMesh, o3d_slam::frames::mapFrame, timestamp, meshPub_);
+        }
 
 	visualizationUpdateTimer_.reset();
 	isVisualizationFirstTime_ = false;

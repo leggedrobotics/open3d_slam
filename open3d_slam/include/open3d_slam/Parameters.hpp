@@ -211,6 +211,9 @@ struct MeshingParameters {
         double voxelDilationRatio_ = 0.5;
         double sliverDeletionThreshold_ = 0.0075;
         bool isMeshing_ = true;
+        bool shouldFilter_ = true;
+        double filterEps_ = 0.01;
+        double filterRadius_ = 0.3;
 };
 
 

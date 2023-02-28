@@ -35,7 +35,14 @@ void MeshMap::addNewPointCloud(const PointCloud& pc) {
   addingTimer_.startStopwatch();
   auto cleaned = pc.RemoveStatisticalOutliers(50, 1);
   PointCloudPtr downsampled = std::get<0>(cleaned)->VoxelDownSample(downsampleVoxelSize_);
+  if(shouldFilter_) {
+    downsampled = guidedFiltering(downsampled, filterEps_, filterRadius_);
+  }
 
+  {
+    std::lock_guard<std::mutex> lck{meshCloudLock_};
+    mesherInput_ = downsampled;
+  }
   {
     std::unique_lock<std::mutex> vertLock{vertexLock_, std::defer_lock};
     std::unique_lock<std::mutex> voxLock{voxelLock_, std::defer_lock};
@@ -363,5 +370,42 @@ void MeshMap::updateParameters(MeshingParameters params) {
   downsampleVoxelSize_ = params.downsamplingVoxelSize_;
   voxelSize_ = params.meshingVoxelSize_;
   newVertexThreshold_ = params.newVertexDistanceThreshold_;
+  shouldFilter_ = params.shouldFilter_;
+  filterEps_ = params.filterEps_;
+  filterRadius_ = params.filterRadius_;
+}
+
+PointCloudPtr MeshMap::guidedFiltering(const PointCloudPtr& in, double eps, double radius) {
+  open3d::geometry::KDTreeFlann kdTree;
+  kdTree.SetGeometry(*in);
+  PointCloudPtr out = std::make_shared<PointCloud>();
+  std::mutex outCloudLock;
+  out->points_.reserve(in->points_.size());
+#pragma omp parallel for default(shared) num_threads(4)
+  for (const auto& pt : in->points_) {
+    std::vector<int> indices;
+    std::vector<double> distances;
+    kdTree.SearchRadius(pt, radius, indices, distances);
+    if (indices.size() < 3) continue;
+    PointCloudPtr neighbours = in->SelectByIndex(std::vector<size_t>(indices.begin(), indices.end()));
+    Eigen::MatrixXd ptMatrix(3, neighbours->points_.size());
+    for (int i = 0; i < neighbours->points_.size(); i++) {
+      ptMatrix.col(i) = neighbours->points_[i];
+    }
+
+    Eigen::Vector3d mean = ptMatrix.rowwise().mean();
+    ptMatrix.transposeInPlace();
+    Eigen::MatrixXd centered = ptMatrix.rowwise() - ptMatrix.colwise().mean();
+    Eigen::Matrix3d cov = (centered.adjoint() * centered) / double(ptMatrix.rows() - 1);
+    Eigen::Matrix3d e = (cov + eps * Eigen::Matrix3d::Identity()).inverse();
+
+    Eigen::Matrix3d A = cov * e;
+    Eigen::Vector3d b = mean - A * mean;
+    {
+      std::lock_guard<std::mutex> lck{outCloudLock};
+      out->points_.emplace_back(A * pt + b);
+    }
+  }
+  return out;
 }
 }  // namespace o3d_slam

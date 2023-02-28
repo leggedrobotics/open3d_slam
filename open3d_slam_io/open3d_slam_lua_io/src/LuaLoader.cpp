@@ -380,6 +380,9 @@ void LuaLoader::loadParameters(const DictPtr dict, MeshingParameters *p){
 	loadDoubleIfKeyDefined(dict, "voxel_dilation_ratio",&p->voxelDilationRatio_);
         loadDoubleIfKeyDefined(dict, "sliver_deletion_threshold", &p->sliverDeletionThreshold_);
         loadBoolIfKeyDefined(dict, "is_meshing",&p->isMeshing_);
+        loadBoolIfKeyDefined(dict,"should_filter",&p->shouldFilter_);
+        loadDoubleIfKeyDefined(dict,"filter_eps",&p->filterEps_);
+        loadDoubleIfKeyDefined(dict,"filter_radius",&p->filterRadius_);
 }
 
 void LuaLoader::loadParameters(const DictPtr dict, Eigen::Isometry3d *T) {
