@@ -378,6 +378,7 @@ void MeshMap::updateParameters(MeshingParameters params) {
   shouldFilter_ = params.shouldFilter_;
   filterEps_ = params.filterEps_;
   filterRadius_ = params.filterRadius_;
+  voxelMaxUpdateCount_ = params.voxelMaxUpdates_;
 }
 
 PointCloudPtr MeshMap::guidedFiltering(const PointCloudPtr& in, double eps, double radius) {

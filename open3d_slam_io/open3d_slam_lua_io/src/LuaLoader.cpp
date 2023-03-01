@@ -383,6 +383,7 @@ void LuaLoader::loadParameters(const DictPtr dict, MeshingParameters *p){
         loadBoolIfKeyDefined(dict,"should_filter",&p->shouldFilter_);
         loadDoubleIfKeyDefined(dict,"filter_eps",&p->filterEps_);
         loadDoubleIfKeyDefined(dict,"filter_radius",&p->filterRadius_);
+        loadIntIfKeyDefined(dict,"voxel_max_updates", &p->voxelMaxUpdates_);
 }
 
 void LuaLoader::loadParameters(const DictPtr dict, Eigen::Isometry3d *T) {

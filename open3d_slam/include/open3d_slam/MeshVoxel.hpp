@@ -91,15 +91,16 @@ class MeshMap {
   void addNewPointCloud(const PointCloud& pc);
   void mesh();
   open3d::geometry::TriangleMesh toO3dMesh() const;
-  MeshMap(double downsampleSize, double newVertexThreshould, double voxelSize, double dilationRatio, bool shouldFilter, double filterEps,
-          double filterRadius)
+  MeshMap(double downsampleSize, double newVertexThreshold, double voxelSize, double dilationRatio, bool shouldFilter, double filterEps,
+          double filterRadius, int voxelMaxUpdates)
       : downsampleVoxelSize_(downsampleSize),
-        newVertexThreshold_(newVertexThreshould),
+        newVertexThreshold_(newVertexThreshold),
         voxelSize_(voxelSize),
         dilationRatio_(dilationRatio),
         shouldFilter_(shouldFilter),
         filterEps_(filterEps),
-        filterRadius_(filterRadius) {
+        filterRadius_(filterRadius),
+        voxelMaxUpdateCount_(voxelMaxUpdates) {
     ikdTree_ = std::make_unique<ikdTree::KdTree<double>>(0.3, 0.6, 0.01);
   };
 

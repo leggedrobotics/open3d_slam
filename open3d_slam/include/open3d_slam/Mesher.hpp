@@ -46,9 +46,10 @@ class Mesher {
 
   void addNewSubmap(size_t submapId) {
     meshMaps_.insert(std::make_pair(
-        submapId, MeshSubMap(submapId, std::make_shared<MeshMap>(params_.downsamplingVoxelSize_, params_.newVertexDistanceThreshold_,
-                                                                 params_.meshingVoxelSize_, params_.voxelDilationRatio_,
-                                                                 params_.shouldFilter_, params_.filterEps_, params_.filterRadius_))));
+        submapId,
+        MeshSubMap(submapId, std::make_shared<MeshMap>(params_.downsamplingVoxelSize_, params_.newVertexDistanceThreshold_,
+                                                       params_.meshingVoxelSize_, params_.voxelDilationRatio_, params_.shouldFilter_,
+                                                       params_.filterEps_, params_.filterRadius_, params_.voxelMaxUpdates_))));
   }
 };
 }  // namespace o3d_slam

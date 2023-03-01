@@ -178,4 +178,5 @@ MESHING_PARAMETERS = {
   should_filter = true,
   filter_eps = 0.1,
   filter_radius = 0.3,
+  voxel_max_updates = 50,
 }
