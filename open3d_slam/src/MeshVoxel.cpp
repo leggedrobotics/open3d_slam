@@ -41,11 +41,11 @@ void MeshMap::addNewPointCloud(const PointCloud& pc) {
   if (shouldFilter_) {
     downsampled = guidedFiltering(downsampled, filterEps_, filterRadius_);
   }
-
   {
     std::lock_guard<std::mutex> lck{meshCloudLock_};
     mesherInput_ = downsampled;
   }
+
   {
     std::unique_lock<std::mutex> vertLock{vertexLock_, std::defer_lock};
     std::unique_lock<std::mutex> voxLock{voxelLock_, std::defer_lock};
@@ -53,12 +53,7 @@ void MeshMap::addNewPointCloud(const PointCloud& pc) {
 
     if (points_.empty()) {
       for (const auto& pt : downsampled->points_) {
-        points_.insert(PointPair(nextVertIdx_++, pt));
-        Eigen::Vector3i idx = getVoxelIdx(pt, Eigen::Vector3d::Constant(voxelSize_));
-        if (voxels_.find(idx) == voxels_.end()) {
-          voxels_.insert(std::make_pair(idx, MeshVoxel(voxelSize_, this)));
-        }
-        voxels_.at(idx).addPoint(nextVertIdx_ - 1);
+        insertPoint(pt);
       }
       ikdTree_->build(downsampled->points_);
     } else {
@@ -69,12 +64,7 @@ void MeshMap::addNewPointCloud(const PointCloud& pc) {
         pts.reserve(20);
         ikdTree_->searchNearest(pt, 20, pts, distances);
         if (*std::min_element(distances.begin(), distances.end()) >= (newVertexThreshold_ * newVertexThreshold_)) {
-          points_.insert(PointPair(nextVertIdx_++, pt));
-          Eigen::Vector3i idx = getVoxelIdx(pt, Eigen::Vector3d::Constant(voxelSize_));
-          if (voxels_.find(idx) == voxels_.end()) {
-            voxels_.insert(std::make_pair(idx, MeshVoxel(voxelSize_, this)));
-          }
-          voxels_.at(idx).addPoint(nextVertIdx_ - 1);
+          insertPoint(pt);
           ikdTree_->addPoint(pt, false);
         }
       }
@@ -82,6 +72,14 @@ void MeshMap::addNewPointCloud(const PointCloud& pc) {
   }
   const double elapsed = addingTimer_.elapsedMsecSinceStopwatchStart();
   addingTimer_.addMeasurementMsec(elapsed);
+}
+void MeshMap::insertPoint(const Eigen::Vector3d& pt) {
+  points_.insert(PointPair(nextVertIdx_++, pt));
+  Eigen::Vector3i idx = getVoxelIdx(pt, Eigen::Vector3d::Constant(voxelSize_));
+  if (voxels_.find(idx) == voxels_.end()) {
+    voxels_.insert(std::make_pair(idx, MeshVoxel(voxelSize_, voxelMaxUpdateCount_, this)));
+  }
+  voxels_.at(idx).addPoint(nextVertIdx_ - 1);
 }
 void MeshMap::removePoints(const PointCloud& pts) {
   auto mapBbox = ikdTree_->treeRange();
@@ -99,7 +97,7 @@ void MeshMap::removePoints(const PointCloud& pts) {
       std::vector<Eigen::Vector3d> nearest;
       std::vector<double> distances;
       ikdTree_->searchNearest(pt, 1, nearest, distances);
-      if (!nearest.empty()&& distances[0] <= 2*(voxelSize_ * voxelSize_)) {
+      if (!nearest.empty() && distances[0] <= 2 * (voxelSize_ * voxelSize_)) {
         Eigen::Vector3d toRemove = nearest[0];
         Eigen::Vector3i voxelIdx = getVoxelIdx(toRemove, Eigen::Vector3d::Constant(voxelSize_));
 
