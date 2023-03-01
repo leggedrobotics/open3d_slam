@@ -26,7 +26,6 @@
 #include "nav_msgs/Odometry.h"
 #include "open3d_slam_lua_io/parameter_loaders.hpp"
 #include "open3d_slam_ros/helpers_ros.hpp"
-#include <mesh_msgs/MeshGeometryStamped.h>
 
 #ifdef open3d_slam_ros_OPENMP_FOUND
 #include <omp.h>
@@ -190,7 +189,7 @@ void SlamWrapperRos::loadParametersAndInitialize() {
 	scan2scanOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2scan_odometry", 1, true);
 	scan2mapTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("scan2map_transform", 1, true);
   scan2mapOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2map_odometry", 1, true);
-  meshPub_ = nh_->advertise<mesh_msgs::MeshGeometryStamped>("mesh", 1, true);
+  meshPub_ = nh_->advertise<open3d_slam_msgs::PolygonMesh>("mesh", 1, true);
   mesherInputPub_ = nh_->advertise<sensor_msgs::PointCloud2>("mesherInput",1,true);
   vertexPub_ = nh_->advertise<sensor_msgs::PointCloud2>("vertexMap",1,true);
 

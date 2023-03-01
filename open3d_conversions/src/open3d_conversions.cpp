@@ -301,6 +301,8 @@ void open3dToRos(const open3d::geometry::MeshBase &mesh, const std::string &fram
 		msg.polygons.push_back(triangle);
 	}
 
+        msg.header.frame_id = frameId;
+
 
 }
 
