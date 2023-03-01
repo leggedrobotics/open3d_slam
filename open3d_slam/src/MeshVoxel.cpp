@@ -9,12 +9,14 @@
 
 namespace o3d_slam {
 void MeshVoxel::initPlane() {
-  std::vector<Eigen::Vector3d> pointSet = parentMap_->getPoints(pts_);
-  planePtr_->initialize(pointSet);
+  if (updateCount_ < maxUpdateCount_) {
+    std::vector<Eigen::Vector3d> pointSet = parentMap_->getPoints(pts_);
+    planePtr_->initialize(pointSet);
+  }
 }
 bool MeshVoxel::addPoint(size_t vert) {
   isModified_ = true;
-  if (updateCount_ < 15) {
+  if (updateCount_ < maxUpdateCount_) {
     pts_.push_back(vert);
     updateCount_++;
     return true;
@@ -23,7 +25,7 @@ bool MeshVoxel::addPoint(size_t vert) {
 }
 bool MeshVoxel::removePoint(size_t vert) {
   isModified_ = true;
-  if (updateCount_ < 15) {
+  if (updateCount_ < maxUpdateCount_) {
     pts_.erase(std::remove(pts_.begin(), pts_.end(), vert), pts_.end());
     updateCount_++;
     return true;
@@ -33,8 +35,8 @@ bool MeshVoxel::removePoint(size_t vert) {
 
 void MeshMap::addNewPointCloud(const PointCloud& pc) {
   addingTimer_.startStopwatch();
-  auto cleaned = pc.RemoveStatisticalOutliers(50, 1);
-  PointCloudPtr downsampled = std::get<0>(cleaned)->VoxelDownSample(downsampleVoxelSize_);
+  // auto cleaned = pc.RemoveStatisticalOutliers(25, 1);
+  PointCloudPtr downsampled = pc.VoxelDownSample(downsampleVoxelSize_);
   if (shouldFilter_) {
     downsampled = guidedFiltering(downsampled, filterEps_, filterRadius_);
   }

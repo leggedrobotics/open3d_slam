@@ -48,7 +48,8 @@ struct EigenVec3dHash {
 class MeshMap;
 class MeshVoxel {
  public:
-  MeshVoxel(double voxelSize, MeshMap* parentMap) : voxelSize_(voxelSize), parentMap_(parentMap), planePtr_(std::make_unique<Plane>()){};
+  MeshVoxel(double voxelSize, int maximumUpdateCount, MeshMap* parentMap)
+      : voxelSize_(voxelSize), maxUpdateCount_(maximumUpdateCount), parentMap_(parentMap), planePtr_(std::make_unique<Plane>()){};
 
   MeshVoxel(MeshVoxel&& voxel) noexcept
       : voxelSize_(voxel.voxelSize_),
@@ -80,6 +81,7 @@ class MeshVoxel {
   std::shared_ptr<MeshMap> parentMap_;
   bool isModified_ = false;
   int updateCount_ = 0;
+  int maxUpdateCount_ = 50;
 };
 
 class MeshMap {
@@ -136,6 +138,7 @@ class MeshMap {
   bool shouldFilter_ = true;
   double filterEps_ = 0.01;
   double filterRadius_ = 0.3;
+  int voxelMaxUpdateCount_ = 50;
 
   size_t nextTriIdx_ = 0;
   size_t nextVertIdx_ = 0;
@@ -153,6 +156,7 @@ class MeshMap {
   std::vector<size_t> dilateVertexSet(const std::unordered_set<size_t>& vertices, const double& dilationRadius);
   PointCloudPtr guidedFiltering(const PointCloudPtr& in, double eps, double radius);
   PointCloudPtr mesherInput_;
+  void insertPoint(const Eigen::Vector3d& pt);
 };
 }  // namespace o3d_slam
 
