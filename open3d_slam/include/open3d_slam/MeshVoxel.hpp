@@ -32,15 +32,6 @@ struct Triangle {
     return (i == other.i || i == other.j || i == other.k) && (j == other.i || j == other.j || j == other.k) &&
            (k == other.i || k == other.j || k == other.k);
   }
-  Eigen::Vector3i toEigen() const { return {i, j, k}; }
-  std::vector<size_t> toVector() const { return {i, j, k}; }
-  bool isDegenerate() const {
-    std::unordered_set<size_t> points;
-    points.insert(i);
-    points.insert(j);
-    points.insert(k);
-    return points.size() < 3;
-  }
 };
 
 struct EigenVec3dHash {
