@@ -247,11 +247,24 @@ void MeshMap::pullTriangles(const std::vector<size_t>& vertices, std::vector<Tri
 std::vector<size_t> MeshMap::getVoxelVertexSet(const MeshVoxel& voxel) {
   std::unordered_set<size_t> vertices;
   appendToSet(vertices, voxel.getPoints());
-  return dilateVertexSet(vertices, voxelSize_ * dilationRatio_);
+  return dilateVertexSet(vertices);
 }
-std::vector<size_t> MeshMap::dilateVertexSet(const std::unordered_set<size_t>& vertices, const double& dilationRadius) {
+std::vector<size_t> MeshMap::dilateVertexSet(const std::unordered_set<size_t>& vertices) {
   std::unordered_set<size_t> vertexSet = vertices;
   auto pts = getPoints(std::vector<size_t>(vertices.begin(), vertices.end()));
+  Eigen::Vector3d vertexSetCentroid = std::accumulate(pts.begin(), pts.end(), Eigen::Vector3d::Zero().eval());
+  vertexSetCentroid /= pts.size();
+  auto distToLidar = (mapToRange_.translation() - vertexSetCentroid).norm();
+  auto it = std::lower_bound(dilationDistances_.begin(), dilationDistances_.end(), distToLidar);
+  int idx;
+  if (it == dilationDistances_.end()) {
+    idx = dilationDistances_.size() - 1;
+  } else {
+    idx = std::distance(dilationDistances_.begin(), it);
+  }
+
+  //std::cout << "Distance: " << distToLidar << ", using dilation ratio " << dilationRatios_[idx] << std::endl;
+  double dilationRadius = voxelSize_ * dilationRatios_[idx];
   {
     std::lock_guard<std::mutex> lck{vertexLock_};
     for (const auto& pt : pts) {

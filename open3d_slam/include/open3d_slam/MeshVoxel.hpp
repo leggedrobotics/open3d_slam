@@ -88,6 +88,7 @@ class MeshMap {
   friend class MeshVoxel;
 
  public:
+  void setMapToRange(Eigen::Isometry3d mapToRange) { mapToRange_ = mapToRange; };
   void addNewPointCloud(const PointCloud& pc);
   void mesh();
   open3d::geometry::TriangleMesh toO3dMesh() const;
@@ -136,6 +137,10 @@ class MeshMap {
   double sliverThreshold_ = 0.0075;
   int meshCount_ = 0;
   double dilationRatio_ = 0.5;
+
+  std::vector<double> dilationDistances_ = {0, 5, 7.5, 10};
+  std::vector<double> dilationRatios_ = {0.25, 0.35, 0.45, 0.6};
+
   bool shouldFilter_ = true;
   double filterEps_ = 0.01;
   double filterRadius_ = 0.3;
@@ -143,6 +148,8 @@ class MeshMap {
 
   size_t nextTriIdx_ = 0;
   size_t nextVertIdx_ = 0;
+
+  Eigen::Isometry3d mapToRange_ = Eigen::Isometry3d::Identity();
 
   std::vector<size_t> getVoxelVertexSet(const MeshVoxel& voxel);
   std::vector<Triangle> triangulateVertexSetForVoxel(MeshVoxel& voxel, const std::vector<size_t>& vertices) const;
@@ -154,7 +161,7 @@ class MeshMap {
   std::unique_ptr<ikdTree::KdTree<double>> ikdTree_;
   Timer addingTimer_, meshingTimer_;
   std::vector<Eigen::Vector3d> getPoints(const std::vector<size_t>& vertices) const;
-  std::vector<size_t> dilateVertexSet(const std::unordered_set<size_t>& vertices, const double& dilationRadius);
+  std::vector<size_t> dilateVertexSet(const std::unordered_set<size_t>& vertices);
   PointCloudPtr guidedFiltering(const PointCloudPtr& in, double eps, double radius);
   PointCloudPtr mesherInput_;
   void insertPoint(const Eigen::Vector3d& pt);

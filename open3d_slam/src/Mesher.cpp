@@ -8,6 +8,7 @@ void Mesher::addNewPointCloud(const PointCloud& pc, const Eigen::Isometry3d& map
   MaxRadiusCroppingVolume meshCropper(15);
   meshCropper.setPose(mapToPc);
   PointCloudPtr meshInput = meshCropper.crop(pc);
+  getActiveMeshMap()->setMapToRange(mapToPc);
   getActiveMeshMap()->addNewPointCloud(*meshInput);
 }
 void Mesher::mesh() {
