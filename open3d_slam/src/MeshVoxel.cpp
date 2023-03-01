@@ -3,6 +3,7 @@
 //
 
 #include "open3d_slam/MeshVoxel.hpp"
+#include <open3d/geometry/BoundingVolume.h>
 #include <iostream>
 #include "delaunator-header-only.hpp"
 #include "open3d_slam/helpers.hpp"
