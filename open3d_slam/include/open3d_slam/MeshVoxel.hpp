@@ -93,7 +93,7 @@ class MeshMap {
   void mesh();
   open3d::geometry::TriangleMesh toO3dMesh() const;
   MeshMap(double downsampleSize, double newVertexThreshold, double voxelSize, double dilationRatio, bool shouldFilter, double filterEps,
-          double filterRadius, int voxelMaxUpdates)
+          double filterRadius, int voxelMaxUpdates, double sliverDeletionThreshold)
       : downsampleVoxelSize_(downsampleSize),
         newVertexThreshold_(newVertexThreshold),
         voxelSize_(voxelSize),
@@ -101,7 +101,8 @@ class MeshMap {
         shouldFilter_(shouldFilter),
         filterEps_(filterEps),
         filterRadius_(filterRadius),
-        voxelMaxUpdateCount_(voxelMaxUpdates) {
+        voxelMaxUpdateCount_(voxelMaxUpdates),
+        sliverThreshold_(sliverDeletionThreshold) {
     ikdTree_ = std::make_unique<ikdTree::KdTree<double>>(0.3, 0.6, 0.01);
   };
 
