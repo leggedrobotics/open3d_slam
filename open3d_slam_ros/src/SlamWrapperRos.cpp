@@ -60,17 +60,21 @@ SlamWrapperRos::~SlamWrapperRos() {
 }
 
 void SlamWrapperRos::startWorkers() {
+	/*
 	tfWorker_ = std::thread([this]() {
 		tfWorker();
-	});
-	visualizationWorker_ = std::thread([this]() {
-		visualizationWorker();
 	});
 	if (params_.odometry_.isPublishOdometryMsgs_){
     odomPublisherWorker_ = std::thread([this]() {
       odomPublisherWorker();
     });
+	
 	}
+	*/
+
+	visualizationWorker_ = std::thread([this]() {
+		visualizationWorker();
+	});
 
 	BASE::startWorkers();
 }

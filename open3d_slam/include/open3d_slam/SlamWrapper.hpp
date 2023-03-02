@@ -18,6 +18,9 @@
 #include "open3d_slam/CircularBuffer.hpp"
 #include "open3d_slam/ThreadSafeBuffer.hpp"
 #include "open3d_slam/Constraint.hpp"
+#include <ros/ros.h>
+#include <ros/package.h>
+#include <chrono>
 
 
 namespace o3d_slam {
@@ -97,6 +100,21 @@ public:
 
 	RegisteredPointCloud getLatestRegisteredCloud();
 
+	ros::Time getCurrentTimeAfterRegistration();
+	ros::Time getCurrentTimeBeforeRegistration();
+
+	std::chrono::high_resolution_clock::time_point getBeforeRegistrationTime();
+	std::chrono::high_resolution_clock::time_point getAfterRegistrationTime();
+
+	ros::Time currrentTimeAfterRegistration_;
+	ros::Time currrentTimeBeforeRegistration_;
+
+	std::chrono::high_resolution_clock::time_point beforeRegistration_;
+	std::chrono::high_resolution_clock::time_point afterRegistration_;
+
+	// Mutex
+	mutable std::mutex posePublishingMutex_;
+
 private:
 	void checkIfOptimizedGraphAvailable();
 	void odometryWorker();
@@ -144,6 +162,7 @@ protected:
 	int numLatesLoopClosureConstraints_ = -1;
 	PointCloud rawCloudPrev_;
 	Constraints lastLoopClosureConstraints_;
+
 };
 
 } // namespace o3d_slam

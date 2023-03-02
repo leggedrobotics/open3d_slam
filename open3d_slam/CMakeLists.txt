@@ -31,6 +31,8 @@ set(SRC_FILES
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES
+  roscpp
+  roslib
   open3d_catkin
 )
    

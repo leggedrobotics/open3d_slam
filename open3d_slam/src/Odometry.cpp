@@ -20,7 +20,7 @@ namespace o3d_slam {
 LidarOdometry::LidarOdometry() {
 	cropper_ = std::make_shared<CroppingVolume>();
 	cloudRegistration_ = cloudRegistrationFactory(params_.scanMatcher_);
-	cloudPrev_ = PointCloud();
+	//cloudPrev_ = PointCloud();
 }
 
 PointCloudPtr LidarOdometry::preprocess(const PointCloud &in) const{
@@ -39,6 +39,7 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 	}
 
 	if (cloudPrev_.IsEmpty()) {
+		std::cout << "EMPTY SCAN ADDING INITIAL ODOM. \n";
 		auto preProcessed = preprocess(cloud);
 		cloudPrev_ = *preProcessed;
 		scan2scanOdomToRangeSensorBuffer_.push(timestamp, odomToRangeSensorCumulative_);

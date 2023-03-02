@@ -38,13 +38,13 @@ void OnlineRangeDataProcessorRos::initialize() {
 void OnlineRangeDataProcessorRos::startProcessing() {
 	slam_->startWorkers();
 	// Multithreaded spinner.
-	ros::MultiThreadedSpinner spinner(4);
+	//ros::MultiThreadedSpinner spinner(12);
 	
 	// Main topic subscriber
 	cloudSubscriber_ = nh_->subscribe(cloudTopic_, 1, &OnlineRangeDataProcessorRos::cloudCallback,this);
 
 	// Relavent pose subscriber
-	priorPoseSubscriber_ = nh_->subscribe<nav_msgs::Odometry>("/state_estimator/odometry", 1000, &OnlineRangeDataProcessorRos::poseStampedPriorCallback, this); //ros::TransportHints().tcpNoDelay()
+	priorPoseSubscriber_ = nh_->subscribe<nav_msgs::Odometry>("/state_estimator/odometry", 1000, &OnlineRangeDataProcessorRos::poseStampedPriorCallback, this, ros::TransportHints().tcpNoDelay());
 	
 	// Timers to publish data
 	posePublishingTimer_ = nh_->createTimer(ros::Duration(0.01), &OnlineRangeDataProcessorRos::posePublisherTimerCallback, this);
@@ -61,6 +61,7 @@ void OnlineRangeDataProcessorRos::startProcessing() {
 	consolidatedLidarPoseInMapPathPublisher_ = nh_->advertise<nav_msgs::Path>("/consolidatedLidarPoseInMapPath", 1);
 
 	// Publishers for the poses
+	consolidatedScan2mapTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("const_tt_scan2map_transform", 1, true);
 	scan2mapTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("tt_scan2map_transform", 1, true);
 	scan2mapOdometryPublisher_ = nh_->advertise<nav_msgs::Odometry>("tt_scan2map_odometry", 1, true);
 	scan2mapOdometryPriorPublisher_ = nh_->advertise<nav_msgs::Odometry>("tt_scan2map_odometry_prior", 1, true);
@@ -71,9 +72,9 @@ void OnlineRangeDataProcessorRos::startProcessing() {
 	// Registered cloud
 	registeredCloudPub_ = nh_->advertise<sensor_msgs::PointCloud2>("registered_cloud", 1, true);
 
-	spinner.spin();
+	//spinner.spin();
 
-	//ros::spin();
+	ros::spin();
 	slam_->stopWorkers();
 }
 
@@ -173,6 +174,9 @@ void OnlineRangeDataProcessorRos::poseStampedPriorCallback(const nav_msgs::Odome
 
 void OnlineRangeDataProcessorRos::processMeasurement(const PointCloud &cloud, const Time &timestamp) {
 
+
+	callbackLatestTimestamp_ = timestamp;
+
 	if(slam_->params_.odometry_.overwriteWithTf_){
 	//Get and set the point cloud registration prior from the tf.
 		if(!getAndSetTfPrior(timestamp)){
@@ -180,10 +184,10 @@ void OnlineRangeDataProcessorRos::processMeasurement(const PointCloud &cloud, co
 			return;
 		}
 	}
-
 	// Add the scan measurement
 	slam_->addRangeScan(cloud, timestamp);
-	
+	pcArriveTime_ = std::chrono:: high_resolution_clock::now();
+	rosTimeAtTheTimeOfTheLastCallback_ = ros::Time::now();
 	// Publish the raw point cloud, immediately.
   	o3d_slam::publishCloud(cloud , o3d_slam::frames::rangeSensorFrame, toRos(timestamp), rawCloudPub_);
 }
@@ -238,17 +242,24 @@ bool OnlineRangeDataProcessorRos::isRegisteredCloudAlreadyPublished(const Time &
 
 void OnlineRangeDataProcessorRos::posePublisherTimerCallback(const ros::TimerEvent&){
 	
+
 	if(!slam_->isNewScan2MapRefinementAvailable_){
 		//std::cout << "Scan to map registration has not yet started." << std::endl;
 		return;
 	}
+
+	willPublish_ = std::chrono:: high_resolution_clock::now();
+
+
+	std::chrono::duration<double> time_span =  std::chrono::duration_cast< std::chrono::duration<double>>(willPublish_ - pcArriveTime_);
+	std::cout << "Point cloud arrival to enabled publishing: " << time_span.count() * 1e+3 << " ms" << std::endl;
 
 	Time latestTransformTime; 
 	Transform mapToRangeSensorTransform;
 	Transform latestOdomToRangeSensorInBuffer_ = slam_->getLatestOdometryPose();
 	{
 		// Thread safety, memory access
-		std::lock_guard<std::mutex> methodLock(posePublishingMutex_);
+		std::lock_guard<std::mutex> methodLock(slam_->posePublishingMutex_);
 
 		mapToRangeSensorTransform = slam_->latestScanToMapRefinedPose_;
 		latestTransformTime = slam_->latestScanToMapRefinementTimestamp_;
@@ -315,7 +326,30 @@ void OnlineRangeDataProcessorRos::posePublisherTimerCallback(const ros::TimerEve
 
 		//std::cout << "Consolidated mapToOdom: " << o3d_slam::asString(mapToOdomConsolidated) << "\n";
 		ros::Duration timeDifference = currentTime - o3d_slam::toRos(latestTransformTime);
-		ROS_INFO_STREAM("Time difference: " << timeDifference.toNSec() * 1e-9 << " s");
+		ROS_INFO_STREAM("Time difference Current Time - latestTransformTime: " << timeDifference.toNSec() * 1e-6 << " ms");
+
+		ros::Duration timeDifference3 = currentTime - o3d_slam::toRos(callbackLatestTimestamp_);
+		ROS_INFO_STREAM("Time difference Current Time - timeStampOfTheLastArrivedCloud: " << timeDifference3.toNSec() * 1e-6 << " ms");
+
+		ros::Duration timeDifferenceBeforeRegister = slam_->getCurrentTimeBeforeRegistration() - rosTimeAtTheTimeOfTheLastCallback_;
+		ROS_INFO_STREAM("Time difference Ros time before registration - rosTimeAtTheTimeOfTheLastPointCloud_: " << timeDifferenceBeforeRegister.toNSec() * 1e-6 << " ms");
+
+		ros::Duration timeDifferenceAfterRegister = slam_->getCurrentTimeAfterRegistration() - rosTimeAtTheTimeOfTheLastCallback_;
+		ROS_INFO_STREAM("Time difference Ros time after registration - rosTimeAtTheTimeOfTheLastPointCloud_: " << timeDifferenceAfterRegister.toNSec() * 1e-6 << " ms");
+
+		std::chrono::duration<double> time_spanBefore =  std::chrono::duration_cast< std::chrono::duration<double>>(slam_->getBeforeRegistrationTime() - pcArriveTime_);
+		std::cout << "Before Registration (HighRes) - time when last cloud arrived (highRes): " << time_spanBefore.count() * 1e+3 << " ms" << std::endl;
+
+		std::chrono::duration<double> time_spanAfter =  std::chrono::duration_cast< std::chrono::duration<double>>(slam_->getAfterRegistrationTime() - pcArriveTime_);
+		std::cout << "After Registration (HighRes) - time when last cloud arrived (highRes): " << time_spanAfter.count() * 1e+3 << " ms" << std::endl;
+
+		ros::Duration timeDifferenceAfterRegisterDiff =currentTime - rosTimeAtTheTimeOfTheLastCallback_;
+		ROS_INFO_STREAM("Time difference currentTime - rosTimeAtTheTimeOfTheLastCallback_: " << timeDifferenceAfterRegisterDiff.toNSec() * 1e-6 << " ms");
+
+		// Difference of above 2
+		//ros::Duration timeDifference2 = o3d_slam::toRos(callbackLatestTimestamp_) - o3d_slam::toRos(latestTransformTime);
+		//ROS_INFO_STREAM("Time difference timeStampOfTheLastArrivedCloud - latestTransformTime " << timeDifference2.toNSec() * 1e-6 << " ms");
+
 		
 		// Publish the fast but propagated map2odom.  Odom is the parent, map_consolidated is the child.
 		o3d_slam::publishTfTransform(mapToOdomConsolidated.matrix().inverse(), currentTime, o3d_slam::frames::odomFrame, "map_consolidated",
@@ -323,7 +357,7 @@ void OnlineRangeDataProcessorRos::posePublisherTimerCallback(const ros::TimerEve
 		
 		geometry_msgs::TransformStamped consolidatedScan2maptransformMsg = getTransformMsg(consolidatedMapToRangeSensor, currentTime, o3d_slam::frames::mapFrame,  o3d_slam::frames::rangeSensorFrame);
 		nav_msgs::Odometry consolidatedScan2mapodomMsg = getOdomMsg(consolidatedScan2maptransformMsg);
-		//publishIfSubscriberExists(consolidatedScan2maptransformMsg, consolidatedScan2mapTransformPublisher_);
+		publishIfSubscriberExists(consolidatedScan2maptransformMsg, consolidatedScan2mapTransformPublisher_);
 		publishIfSubscriberExists(consolidatedScan2mapodomMsg, consolidatedScan2mapOdomPublisher_);
 
 		geometry_msgs::PoseStamped poseStamped;
@@ -389,7 +423,20 @@ void OnlineRangeDataProcessorRos::cloudCallback(const sensor_msgs::PointCloud2Co
 	open3d::geometry::PointCloud cloud;
 	open3d_conversions::rosToOpen3d(msg, cloud, false);
 	const Time timestamp = fromRos(msg->header.stamp);
-	accumulateAndProcessRangeData(cloud, timestamp);
+	ros::Time currentTime = ros::Time::now();
+
+	//accumulateAndProcessRangeData(cloud, timestamp);
+
+	if (cloud.IsEmpty()) {
+		std::cout << "Trying to insert and empyt cloud!!! Skipping the measurement \n";
+		return;
+	}
+
+	ros::Duration timeDifferenceAfterRegister = ros::Time::now() - msg->header.stamp;
+	ROS_INFO_STREAM("Time difference Current time - pcArrivalStamp: " << timeDifferenceAfterRegister.toNSec() * 1e-6 << " ms");
+
+	processMeasurement(cloud, timestamp);
+
 }
 
 

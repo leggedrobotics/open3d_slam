@@ -57,6 +57,9 @@ public:
 	ros::Publisher registeredEnuCloud_;
 	ros::Publisher lidarPoseInMapPathPublisher_;
 	ros::Publisher consolidatedLidarPoseInMapPathPublisher_;
+	ros::Publisher consolidatedScan2mapTransformPublisher_;
+
+	Time callbackLatestTimestamp_ = Time::min();
 
 	// Path messages
 	nav_msgs::Path lidarPathInMap;
@@ -64,6 +67,11 @@ public:
 
 	// Container for map to world transform. In this case the world is the ENU frame. ENU frame is defined by the GNSS poses.
 	Transform mapToWorld_;
+
+	ros::Time rosTimeAtTheTimeOfTheLastCallback_;
+
+	std::chrono::high_resolution_clock::time_point willPublish_;
+	std::chrono::high_resolution_clock::time_point pcArriveTime_;
 
 private:
 	void cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg);
@@ -85,8 +93,7 @@ private:
 	ros::Subscriber cloudSubscriber_;
 	ros::Subscriber priorPoseSubscriber_;
 
-	// Mutex
-	mutable std::mutex posePublishingMutex_;
+
 
 	// Helper flag
 	bool scanToMapStarted_ = false;

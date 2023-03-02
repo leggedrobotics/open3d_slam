@@ -151,7 +151,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	}else{
 		std::cerr << "\n\n !!!!! TF based odometry is not avaiable or bad. !!!! \n\n";
 	}
-	
+
 	if (params_.compensateWithScanToScanIfNecessary_)
 	{
 		if ((!isOdomOkay) && (scan2scanOdomToRangeSensorBuffer_.has(timestamp)) && !isNewInitialValueSet_ && !isIgnoreOdometryPrediction_) {
