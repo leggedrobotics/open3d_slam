@@ -21,15 +21,25 @@ void Mesher::switchActiveSubmap(size_t newSubmapId) {
   }
   activeMapIdx_ = newSubmapId;
 }
-void Mesher::updateParameters(){
-    for(auto& map : meshMaps_){
+void Mesher::updateParameters() {
+  for (auto& map : meshMaps_) {
     map.second.map_->updateParameters(params_);
-    }
-
+  }
 };
 
-void Mesher::removePoints(const PointCloud& pts){
-    getActiveMeshMap()->removePoints(pts);
+void Mesher::removePoints(const PointCloud& pts) {
+  getActiveMeshMap()->removePoints(pts);
+}
+
+open3d::geometry::TriangleMesh Mesher::getAggregatedMesh() {
+  open3d::geometry::TriangleMesh mesh;
+  for (const auto& map : meshMaps_) {
+    mesh += map.second.map_->toO3dMesh();
+  }
+  mesh.RemoveDuplicatedVertices();
+  mesh.RemoveDuplicatedTriangles();
+  mesh.RemoveUnreferencedVertices();
+  return mesh;
 }
 
 }  // namespace o3d_slam

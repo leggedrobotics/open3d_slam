@@ -39,6 +39,8 @@ class Mesher {
     updateParameters();
   };
 
+  open3d::geometry::TriangleMesh getAggregatedMesh();
+
  private:
   std::unordered_map<size_t, MeshSubMap> meshMaps_;
   size_t activeMapIdx_ = 0;

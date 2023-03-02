@@ -187,13 +187,14 @@ void SlamWrapperRos::loadParametersAndInitialize() {
 
 	scan2scanTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("scan2scan_transform", 1, true);
 	scan2scanOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2scan_odometry", 1, true);
-	scan2mapTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("scan2map_transform", 1, true);
-  scan2mapOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2map_odometry", 1, true);
-  meshPub_ = nh_->advertise<open3d_slam_msgs::PolygonMesh>("mesh", 1, true);
-  mesherInputPub_ = nh_->advertise<sensor_msgs::PointCloud2>("mesherInput",1,true);
-  vertexPub_ = nh_->advertise<sensor_msgs::PointCloud2>("vertexMap",1,true);
+        scan2mapTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("scan2map_transform", 1, true);
+        scan2mapOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2map_odometry", 1, true);
+        meshPub_ = nh_->advertise<open3d_slam_msgs::PolygonMesh>("mesh", 1, true);
+        mesherInputPub_ = nh_->advertise<sensor_msgs::PointCloud2>("mesherInput", 1, true);
+        vertexPub_ = nh_->advertise<sensor_msgs::PointCloud2>("vertexMap", 1, true);
+        aggregatedMeshPub_ = nh_->advertise<open3d_slam_msgs::PolygonMesh>("assembled_mesh", 1, true);
 
-	//	auto &logger = open3d::utility::Logger::GetInstance();
+        //	auto &logger = open3d::utility::Logger::GetInstance();
 	//	logger.SetVerbosityLevel(open3d::utility::VerbosityLevel::Debug);
 
 	folderPath_ = ros::package::getPath("open3d_slam_ros") + "/data/";
@@ -266,18 +267,30 @@ void SlamWrapperRos::publishMaps(const Time &time) {
 		voxelize(params_.visualization_.submapVoxelSize_, &cloud);
 		o3d_slam::publishCloud(cloud, o3d_slam::frames::mapFrame, timestamp, submapsPub_);
 	}
-        auto o3DMesh = mesher_->getActiveMeshMap()->toO3dMesh();
-        auto vertexMap = open3d::geometry::PointCloud(mesher_->getActiveMeshMap()->getVertices());
-        PointCloud mesherInput = mesher_->getActiveMeshMap()->getMeshingInput();
 
-        if(!o3DMesh.IsEmpty()) {
-                publishMesh(o3DMesh, o3d_slam::frames::mapFrame, timestamp, meshPub_);
+        if (meshPub_.getNumSubscribers() > 0) {
+                auto o3DMesh = mesher_->getActiveMeshMap()->toO3dMesh();
+                if (!o3DMesh.IsEmpty()) {
+                        publishMesh(o3DMesh, o3d_slam::frames::mapFrame, timestamp, meshPub_);
+                }
         }
-        std::string frame = o3d_slam::frames::mapFrame;
-        o3d_slam::publishCloud(vertexMap,frame ,timestamp,vertexPub_);
-        o3d_slam::publishCloud(mesherInput,frame,timestamp, mesherInputPub_);
 
-	visualizationUpdateTimer_.reset();
+        if (vertexPub_.getNumSubscribers() > 0) {
+                PointCloud vertexMap = open3d::geometry::PointCloud(mesher_->getActiveMeshMap()->getVertices());
+
+                o3d_slam::publishCloud(vertexMap, o3d_slam::frames::mapFrame, timestamp, vertexPub_);
+        }
+
+        if (mesherInputPub_.getNumSubscribers() > 0) {
+                PointCloud mesherInput = mesher_->getActiveMeshMap()->getMeshingInput();
+                o3d_slam::publishCloud(mesherInput, o3d_slam::frames::mapFrame, timestamp, mesherInputPub_);
+        }
+
+        if (aggregatedMeshPub_.getNumSubscribers() > 0) {
+                publishMesh(mesher_->getAggregatedMesh(), o3d_slam::frames::mapFrame, timestamp, aggregatedMeshPub_);
+        }
+
+        visualizationUpdateTimer_.reset();
 	isVisualizationFirstTime_ = false;
 }
 
