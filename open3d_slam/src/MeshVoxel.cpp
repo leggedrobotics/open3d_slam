@@ -16,19 +16,19 @@ void MeshVoxel::initPlane() {
   }
 }
 bool MeshVoxel::addPoint(size_t vert) {
-  isModified_ = true;
   if (updateCount_ < maxUpdateCount_) {
     pts_.push_back(vert);
     updateCount_++;
+    isModified_ = true;
     return true;
   }
   return false;
 }
 bool MeshVoxel::removePoint(size_t vert) {
-  isModified_ = true;
   if (updateCount_ < maxUpdateCount_) {
     pts_.erase(std::remove(pts_.begin(), pts_.end(), vert), pts_.end());
     updateCount_++;
+    isModified_ = true;
     return true;
   }
   return false;

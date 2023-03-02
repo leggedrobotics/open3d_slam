@@ -49,16 +49,42 @@ class MeshMap;
 class MeshVoxel {
  public:
   MeshVoxel(double voxelSize, int maximumUpdateCount, MeshMap* parentMap)
-      : voxelSize_(voxelSize), maxUpdateCount_(maximumUpdateCount), parentMap_(parentMap), planePtr_(std::make_unique<Plane>()){};
+      : voxelSize_(voxelSize), parentMap_(parentMap), planePtr_(std::make_unique<Plane>()) {
+    maxUpdateCount_ = maximumUpdateCount;
+  };
 
   MeshVoxel(MeshVoxel&& voxel) noexcept
       : voxelSize_(voxel.voxelSize_),
-        parentMap_(voxel.parentMap_),
-        pts_(voxel.pts_),
+        parentMap_(std::move(voxel.parentMap_)),
+        pts_(std::move(voxel.pts_)),
         planePtr_(std::move(voxel.planePtr_)),
-        isModified_(voxel.isModified_){};
+        isModified_(voxel.isModified_),
+        updateCount_(voxel.updateCount_),
+        maxUpdateCount_(voxel.maxUpdateCount_){};
 
+  MeshVoxel& operator=(const MeshVoxel& v) {
+    planePtr_ = std::make_unique<Plane>(*v.planePtr_);
+    voxelSize_ = v.voxelSize_;
+    parentMap_ = v.parentMap_;
+    pts_ = v.pts_;
+    isModified_ = v.isModified_;
+    updateCount_ = v.updateCount_;
+    maxUpdateCount_ = v.maxUpdateCount_;
+    return *this;
+  }
+
+  MeshVoxel& operator=(MeshVoxel&& v)  noexcept {
+    planePtr_ = std::move(v.planePtr_);
+    voxelSize_ = v.voxelSize_;
+    parentMap_ = std::move(v.parentMap_);
+    pts_ = std::move(v.pts_);
+    isModified_ = v.isModified_;
+    updateCount_ = v.updateCount_;
+    maxUpdateCount_ = v.maxUpdateCount_;
+    return *this;
+  }
   MeshVoxel(const MeshVoxel& v) = delete;
+  MeshVoxel() : planePtr_(std::make_unique<Plane>()), parentMap_(nullptr) {};
 
   bool addPoint(size_t vert);
   bool removePoint(size_t vert);
@@ -77,7 +103,7 @@ class MeshVoxel {
  private:
   std::vector<size_t> pts_;
   std::unique_ptr<Plane> planePtr_;
-  double voxelSize_;
+  double voxelSize_ = 0.6;
   std::shared_ptr<MeshMap> parentMap_;
   bool isModified_ = false;
   int updateCount_ = 0;
