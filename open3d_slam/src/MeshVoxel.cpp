@@ -400,7 +400,7 @@ PointCloudPtr MeshMap::guidedFiltering(const PointCloudPtr& in, double eps, doub
   PointCloudPtr out = std::make_shared<PointCloud>();
   std::mutex outCloudLock;
   out->points_.reserve(in->points_.size());
-#pragma omp parallel for default(shared) num_threads(4)
+#pragma omp parallel for default(none) shared(in, kdTree, radius, eps, out, outCloudLock) num_threads(4)
   for (const auto& pt : in->points_) {
     std::vector<int> indices;
     std::vector<double> distances;
