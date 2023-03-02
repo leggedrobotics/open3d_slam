@@ -36,11 +36,11 @@ bool MeshVoxel::removePoint(size_t vert) {
 
 void MeshMap::addNewPointCloud(const PointCloud& pc) {
   addingTimer_.startStopwatch();
-  // auto cleaned = pc.RemoveStatisticalOutliers(25, 1);
   PointCloudPtr downsampled = pc.VoxelDownSample(downsampleVoxelSize_);
   if (shouldFilter_) {
     downsampled = guidedFiltering(downsampled, filterEps_, filterRadius_);
   }
+  downsampled = std::get<0>(downsampled->RemoveStatisticalOutliers(25, 1));
   {
     std::lock_guard<std::mutex> lck{meshCloudLock_};
     mesherInput_ = downsampled;
