@@ -62,9 +62,7 @@ catkin_package(
   DEPENDS 
 )
 
-set(DELAUNATOR_INCLUDE_DIRS "thirdparty/delaunator-cpp/include")
-set(IKD_INCLUDE_DIRS "thirdparty/ikd-Tree/ikd-Tree")
-set(CDT_INCLUDE_DIRS "thirdparty/CDT/CDT/include")
+
 
 
 include_directories(
@@ -73,9 +71,6 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIR}
   ${OpenMP_CXX_INCLUDE_DIRS}
-  ${DELAUNATOR_INCLUDE_DIRS}
-  ${IKD_INCLUDE_DIRS}
-  ${CDT_INCLUDE_DIRS}
 )
 
 add_library(${PROJECT_NAME}

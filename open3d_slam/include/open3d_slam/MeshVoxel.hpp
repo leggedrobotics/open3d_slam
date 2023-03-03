@@ -23,7 +23,7 @@
 #include "open3d_slam/VoxelHashMap.hpp"
 #include "open3d_slam/time.hpp"
 #include "open3d_slam/typedefs.hpp"
-#include "CDT.h"
+#include "../../thirdparty/CDT/CDT/include/CDT.h"
 namespace o3d_slam {
 
 struct Triangle {
