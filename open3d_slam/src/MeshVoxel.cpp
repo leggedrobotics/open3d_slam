@@ -107,7 +107,7 @@ void MeshMap::removePoints(const PointCloud& pts) {
           std::unordered_set<size_t> potentialTrisToDelete;
           size_t ptIdx = itToRemove->second;
           if (vertexToTriangles_.find(ptIdx) != vertexToTriangles_.end()) {
-            trisToDelete.insert(vertexToTriangles_.at(ptIdx).begin(), vertexToTriangles_.at(ptIdx).end());
+            potentialTrisToDelete.insert(vertexToTriangles_.at(ptIdx).begin(), vertexToTriangles_.at(ptIdx).end());
           }
           bool gotRemoved = false;
           if (voxels_.find(voxelIdx) != voxels_.end()) {
@@ -117,14 +117,30 @@ void MeshMap::removePoints(const PointCloud& pts) {
             removeCtr++;
             points_.left.erase(ptIdx);
             ikdTree_->deletePoints(nearest);
+            removedPts.insert(ptIdx);
+            trisToDelete.insert(potentialTrisToDelete.begin(), potentialTrisToDelete.end());
           }
         }
       }
     }
+  }
 
+  std::set<size_t> triPoints;
+  {
+    std::unique_lock<std::mutex> triLock{triangleLock_, std::defer_lock};
+    std::unique_lock<std::mutex> vttLock{verToTriLock_, std::defer_lock};
+    std::lock(triLock, vttLock);
     for (const auto& tri : trisToDelete) {
+      auto tv = triangles_.at(tri).toVector();
+      triPoints.insert(tv.begin(), tv.end());
       eraseTriangle(tri);
     }
+  }
+  std::vector<size_t> remainingPts;
+  std::set_difference(triPoints.begin(), triPoints.end(), removedPts.begin(), removedPts.end(), std::back_inserter(remainingPts));
+  auto rpts = getPoints(remainingPts);
+  for (const auto& pt : rpts) {
+    voxels_.at(getVoxelIdx(pt, Eigen::Vector3d::Constant(voxelSize_))).activate();
   }
   std::cout << "Removed " << cropped->points_.size() << " points. (" << removeCtr << " points actually deleted)" << std::endl;
 

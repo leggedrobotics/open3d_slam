@@ -32,6 +32,7 @@ struct Triangle {
     return (i == other.i || i == other.j || i == other.k) && (j == other.i || j == other.j || j == other.k) &&
            (k == other.i || k == other.j || k == other.k);
   }
+  std::vector<size_t> toVector() { return {i, j, k}; };
 };
 
 struct EigenVec3dHash {
@@ -99,6 +100,7 @@ class MeshVoxel {
     return planePtr_.get();
   }
   void deactivate() { isModified_ = false; };
+  void activate() { isModified_ = true; }
 
  private:
   std::vector<size_t> pts_;
