@@ -11,6 +11,7 @@
 #include <ros/package.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/transform_listener.h>
 #include <nav_msgs/Odometry.h>
 
 #include "open3d_slam/SlamWrapper.hpp"
@@ -45,14 +46,17 @@ private:
 
 	ros::NodeHandlePtr nh_;
 	std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster_;
+        std::unique_ptr<tf2_ros::TransformListener> tfListener_;
+        tf2_ros::Buffer tfBuffer_;
         ros::Publisher odometryInputPub_, mappingInputPub_, submapOriginsPub_, assembledMapPub_, denseMapPub_, submapsPub_, meshPub_,
             aggregatedMeshPub_, mesherInputPub_, vertexPub_;
         ros::Publisher scan2scanTransformPublisher_, scan2scanOdomPublisher_, scan2mapTransformPublisher_, scan2mapOdomPublisher_;
-	ros::ServiceServer saveMapSrv_, saveSubmapsSrv_;
-	bool isVisualizationFirstTime_ = true;
-	std::thread tfWorker_, visualizationWorker_, odomPublisherWorker_;
-	Time prevPublishedTimeScanToScan_, prevPublishedTimeScanToMap_;
-  Time prevPublishedTimeScanToScanOdom_, prevPublishedTimeScanToMapOdom_;
+        ros::ServiceServer saveMapSrv_, saveSubmapsSrv_;
+        bool isVisualizationFirstTime_ = true;
+        std::thread tfWorker_, visualizationWorker_, odomPublisherWorker_;
+        Time prevPublishedTimeScanToScan_, prevPublishedTimeScanToMap_;
+        Time prevPublishedTimeScanToScanOdom_, prevPublishedTimeScanToMapOdom_;
+        Eigen::Isometry3d lidarToMap_;
 };
 
 } // namespace o3d_slam

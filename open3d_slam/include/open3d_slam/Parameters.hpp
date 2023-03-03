@@ -215,6 +215,8 @@ struct MeshingParameters {
         double filterEps_ = 0.01;
         double filterRadius_ = 0.3;
         int voxelMaxUpdates_ = 50;
+        bool shouldTransformMesh_ = false;
+        std::string meshFrame_ = "map";
 };
 
 

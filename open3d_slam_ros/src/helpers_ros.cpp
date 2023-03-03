@@ -96,7 +96,7 @@ bool lookupTransform(const std::string &target_frame, const std::string &source_
 	try {
 		transformStamped = tfBuffer.lookupTransform(target_frame, source_frame, time);
 	} catch (tf2::TransformException &ex) {
-		ROS_WARN("caught exception while looking up the tf: %s", ex.what());
+		//ROS_WARN("caught exception while looking up the tf: %s", ex.what());
 		*transform = Eigen::Isometry3d::Identity();
 		return false;
 	}

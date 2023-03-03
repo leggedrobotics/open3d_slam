@@ -42,6 +42,7 @@ SlamWrapperRos::SlamWrapperRos(ros::NodeHandlePtr nh) :
 	tfBroadcaster_.reset(new tf2_ros::TransformBroadcaster());
 	prevPublishedTimeScanToScan_ = fromUniversal(0);
 	prevPublishedTimeScanToMap_ = fromUniversal(0);
+        tfListener_ = std::make_unique<tf2_ros::TransformListener>(tfBuffer_);
 }
 
 SlamWrapperRos::~SlamWrapperRos() {
@@ -145,10 +146,16 @@ void SlamWrapperRos::tfWorker() {
 			publishMapToOdomTf(latestScanToMap);
 			prevPublishedTimeScanToMap_ = latestScanToMap;
 		}
+                if (params_.mesher_.shouldTransformMesh_) {
+                        if (!lookupTransform(params_.mesher_.meshFrame_, o3d_slam::frames::mapFrame, ros::Time(0), tfBuffer_,
+                                             &lidarToMap_)) {
+                          lidarToMap_ = Eigen::Isometry3d::Identity();
+                        }
+                }
 
-		ros::spinOnce();
-		r.sleep();
-	}
+                ros::spinOnce();
+                r.sleep();
+        }
 }
 void SlamWrapperRos::visualizationWorker() {
 	ros::WallRate r(20.0);
@@ -269,9 +276,14 @@ void SlamWrapperRos::publishMaps(const Time &time) {
 	}
 
         if (meshPub_.getNumSubscribers() > 0) {
-                auto o3DMesh = mesher_->getActiveMeshMap()->toO3dMesh();
-                if (!o3DMesh.IsEmpty()) {
-                        publishMesh(o3DMesh, o3d_slam::frames::mapFrame, timestamp, meshPub_);
+                auto mesh = mesher_->getActiveMeshMap()->toO3dMesh();
+                if (!mesh.IsEmpty()) {
+                        std::string frame = o3d_slam::frames::mapFrame;
+                        if (params_.mesher_.shouldTransformMesh_) {
+                          mesh = mesh.Transform(lidarToMap_.matrix());
+                          frame = params_.mesher_.meshFrame_;
+                        }
+                        publishMesh(mesh, frame, timestamp, meshPub_);
                 }
         }
 
@@ -287,7 +299,15 @@ void SlamWrapperRos::publishMaps(const Time &time) {
         }
 
         if (aggregatedMeshPub_.getNumSubscribers() > 0) {
-                publishMesh(mesher_->getAggregatedMesh(), o3d_slam::frames::mapFrame, timestamp, aggregatedMeshPub_);
+                auto mesh = mesher_->getAggregatedMesh();
+                if (!mesh.IsEmpty()) {
+                        std::string frame = o3d_slam::frames::mapFrame;
+                        if (params_.mesher_.shouldTransformMesh_) {
+                          mesh = mesh.Transform(lidarToMap_.matrix());
+                          frame = params_.mesher_.meshFrame_;
+                        }
+                        publishMesh(mesh, "map", timestamp, aggregatedMeshPub_);
+                }
         }
 
         visualizationUpdateTimer_.reset();

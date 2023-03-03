@@ -70,6 +70,8 @@ params.meshing.should_filter = true
 params.meshing.filter_eps = 0.1
 params.meshing.filter_radius = 0.6
 params.meshing.voxel_max_updates = 20
+params.meshing.should_transform_mesh = true
+params.meshing.mesh_fram = "map"
 
 
 return params
