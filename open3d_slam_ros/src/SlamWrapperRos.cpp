@@ -217,13 +217,13 @@ void SlamWrapperRos::loadParametersAndInitialize() {
 bool SlamWrapperRos::saveMapCallback(open3d_slam_msgs::SaveMap::Request &req,
 		open3d_slam_msgs::SaveMap::Response &res) {
 	const bool savingResult = saveMap(mapSavingFolderPath_);
-	res.statusMessage = savingResult ? "Map saved to: " + mapSavingFolderPath_ : "Error while saving map";
+	res.status_message = savingResult ? "Map saved to: " + mapSavingFolderPath_ : "Error while saving map";
 	return true;
 }
 bool SlamWrapperRos::saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request &req,
 		open3d_slam_msgs::SaveSubmaps::Response &res) {
 	const bool savingResult = saveSubmaps(mapSavingFolderPath_);
-	res.statusMessage =
+	res.status_message =
 			savingResult ? "Submaps saved to: " + mapSavingFolderPath_ : "Error while saving submaps";
 	return true;
 }
