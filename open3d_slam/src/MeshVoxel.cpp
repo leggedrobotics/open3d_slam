@@ -5,15 +5,12 @@
 #include "open3d_slam/MeshVoxel.hpp"
 #include <open3d/geometry/BoundingVolume.h>
 #include <iostream>
-#include "delaunator-header-only.hpp"
 #include "open3d_slam/helpers.hpp"
 
 namespace o3d_slam {
 void MeshVoxel::initPlane() {
-  if (updateCount_ < maxUpdateCount_) {
-    std::vector<Eigen::Vector3d> pointSet = parentMap_->getPoints(pts_);
-    planePtr_->initialize(pointSet);
-  }
+  std::vector<Eigen::Vector3d> pointSet = parentMap_->getPoints(pts_);
+  planePtr_->initialize(pointSet);
 }
 bool MeshVoxel::addPoint(size_t vert) {
   if (updateCount_ < maxUpdateCount_) {
@@ -160,7 +157,7 @@ void MeshMap::mesh() {
     }
   }
 
-#pragma omp parallel for default(none) shared(updateIndices, globalTrisToAdd, globalTrisToDelete, globalListMutex) num_threads(4)
+  // #pragma omp parallel for default(none) shared(updateIndices, globalTrisToAdd, globalTrisToDelete, globalListMutex) num_threads(4)
   for (const auto& idx : updateIndices) {
     std::vector<size_t> vertices = getVoxelVertexSet(voxels_.at(idx));
     if (vertices.size() < 3) {
@@ -297,6 +294,7 @@ std::vector<size_t> MeshMap::dilateVertexSet(const std::unordered_set<size_t>& v
   return {vertexSet.begin(), vertexSet.end()};
 }
 std::vector<Triangle> MeshMap::triangulateVertexSetForVoxel(MeshVoxel& voxel, const std::vector<size_t>& vertices) const {
+  if (vertices.size() < 3) return {};  // We need at least 3 vertices for a triangle
   voxel.initPlane();
   auto ptr = voxel.getPlanePtr();
   Eigen::Vector3d q = ptr->getPlaneCenter();
@@ -309,32 +307,37 @@ std::vector<Triangle> MeshMap::triangulateVertexSetForVoxel(MeshVoxel& voxel, co
   for (const auto& vert : meshVertices) {
     projectedVertices.push_back(projectToPlane(vert));
   }
-  std::vector<double> delaunayInput;
-  delaunayInput.reserve(projectedVertices.size() * 2);
-  for (const auto& pt : projectedVertices) {
-    delaunayInput.push_back(pt.x());
-    delaunayInput.push_back(pt.y());
-  }
   std::vector<Triangle> triangles;
-  try {
-    delaunator::Delaunator delaunay(delaunayInput);
-
-    for (size_t i = 0; i < delaunay.triangles.size(); i += 3) {
-      Eigen::Vector3d AB = meshVertices[delaunay.triangles[i + 1]] - meshVertices[delaunay.triangles[i]];
-      Eigen::Vector3d AC = meshVertices[delaunay.triangles[i + 2]] - meshVertices[delaunay.triangles[i]];
-      Eigen::Vector3d BC = meshVertices[delaunay.triangles[i + 2]] - meshVertices[delaunay.triangles[i + 1]];
-      double area = (AB.cross(AC)).norm() / 2;
-      double perim = AB.norm() + AC.norm() + BC.norm();
-      double sliverParameter = (2 * area) / perim;
-      if (sliverParameter > sliverThreshold_) {
-        triangles.emplace_back(vertices[delaunay.triangles[i]], vertices[delaunay.triangles[i + 1]], vertices[delaunay.triangles[i + 2]]);
-      }
+  CDT::Triangulation<double> triangulator;
+  auto dups = CDT::FindDuplicates<double>(
+      projectedVertices.begin(), projectedVertices.end(), [](Eigen::Vector2d p) { return p.x() * 100; },
+      [](Eigen::Vector2d p) { return p.y() * 100; });
+  if (!dups.duplicates.empty()) {
+    std::cout << "Found duplicate vertices in input, skipping triangulation step..." << std::endl;
+    return {};
+  }
+  triangulator.insertVertices(
+      projectedVertices.begin(), projectedVertices.end(), [](Eigen::Vector2d p) { return p.x() * 100; },
+      [](Eigen::Vector2d p) { return p.y() * 100; });
+  triangulator.eraseSuperTriangle();
+  for (const auto tri : triangulator.triangles) {
+    double sliverParameter = calculateSliverParameter(meshVertices, tri);
+    if (sliverParameter > sliverThreshold_) {
+      triangles.emplace_back(vertices[tri.vertices[0]], vertices[tri.vertices[1]], vertices[tri.vertices[2]]);
     }
-  } catch (std::runtime_error& e) {
-    // could not triangulate, but we don't care
   }
   return triangles;
 }
+double MeshMap::calculateSliverParameter(const std::vector<Eigen::Vector3d>& meshVertices, const CDT::Triangle& tri) {
+  Eigen::Vector3d AB = meshVertices[tri.vertices[1]] - meshVertices[tri.vertices[0]];
+  Eigen::Vector3d AC = meshVertices[tri.vertices[2]] - meshVertices[tri.vertices[0]];
+  Eigen::Vector3d BC = meshVertices[tri.vertices[2]] - meshVertices[tri.vertices[1]];
+  double area = (AB.cross(AC)).norm() / 2;
+  double perim = AB.norm() + AC.norm() + BC.norm();
+  double sliverParameter = (2 * area) / perim;
+  return sliverParameter;
+}
+
 std::vector<Eigen::Vector3d> MeshMap::getPoints(const std::vector<size_t>& vertices) const {
   std::vector<Eigen::Vector3d> pts;
   pts.reserve(vertices.size());

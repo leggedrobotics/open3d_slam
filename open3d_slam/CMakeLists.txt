@@ -64,6 +64,8 @@ catkin_package(
 
 set(DELAUNATOR_INCLUDE_DIRS "thirdparty/delaunator-cpp/include")
 set(IKD_INCLUDE_DIRS "thirdparty/ikd-Tree/ikd-Tree")
+set(CDT_INCLUDE_DIRS "thirdparty/CDT/CDT/include")
+
 
 include_directories(
   include
@@ -73,6 +75,7 @@ include_directories(
   ${OpenMP_CXX_INCLUDE_DIRS}
   ${DELAUNATOR_INCLUDE_DIRS}
   ${IKD_INCLUDE_DIRS}
+  ${CDT_INCLUDE_DIRS}
 )
 
 add_library(${PROJECT_NAME}

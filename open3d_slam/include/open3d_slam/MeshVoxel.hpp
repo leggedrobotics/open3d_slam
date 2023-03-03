@@ -23,6 +23,7 @@
 #include "open3d_slam/VoxelHashMap.hpp"
 #include "open3d_slam/time.hpp"
 #include "open3d_slam/typedefs.hpp"
+#include "CDT.h"
 namespace o3d_slam {
 
 struct Triangle {
@@ -197,6 +198,7 @@ class MeshMap {
   PointCloudPtr guidedFiltering(const PointCloudPtr& in, double eps, double radius);
   PointCloudPtr mesherInput_;
   void insertPoint(const Eigen::Vector3d& pt);
+  static double calculateSliverParameter(const std::vector<Eigen::Vector3d>& meshVertices, const CDT::Triangle& tri);
 };
 }  // namespace o3d_slam
 
