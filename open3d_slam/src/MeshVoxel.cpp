@@ -87,6 +87,7 @@ void MeshMap::removePoints(const PointCloud& pts) {
   auto cropped = pts.Crop(bbox);
   int removeCtr = 0;
   std::unordered_set<size_t> trisToDelete;
+  std::set<size_t> removedPts;
   {
     std::unique_lock<std::mutex> vertLock{vertexLock_, std::defer_lock};
     std::unique_lock<std::mutex> voxLock{voxelLock_, std::defer_lock};
@@ -103,6 +104,7 @@ void MeshMap::removePoints(const PointCloud& pts) {
 
         auto itToRemove = points_.right.find(toRemove);
         if (itToRemove != points_.right.end()) {
+          std::unordered_set<size_t> potentialTrisToDelete;
           size_t ptIdx = itToRemove->second;
           if (vertexToTriangles_.find(ptIdx) != vertexToTriangles_.end()) {
             trisToDelete.insert(vertexToTriangles_.at(ptIdx).begin(), vertexToTriangles_.at(ptIdx).end());
@@ -392,6 +394,14 @@ void MeshMap::updateParameters(MeshingParameters params) {
   filterEps_ = params.filterEps_;
   filterRadius_ = params.filterRadius_;
   voxelMaxUpdateCount_ = params.voxelMaxUpdates_;
+  std::cout << "Downsample Size:\t\t" << downsampleVoxelSize_ << "m\n"
+            << "New Vertex Threshold:\t\t" << newVertexThreshold_ << "m\n"
+            << "Voxel Size:\t\t\t" << voxelSize_ << "m\n"
+            << "Should Filter:\t\t\t" << shouldFilter_ << "\n"
+            << "Filter Epsilon:\t\t\t" << filterEps_ << "\n"
+            << "Filter Radius:\t\t\t" << filterRadius_ << "m\n"
+            << "Maximum Voxel Updates:\t\t" << voxelMaxUpdateCount_ << "\n"
+            << "Sliver Deletion Threshold:\t" << sliverThreshold_ << std::endl;
 }
 
 PointCloudPtr MeshMap::guidedFiltering(const PointCloudPtr& in, double eps, double radius) {

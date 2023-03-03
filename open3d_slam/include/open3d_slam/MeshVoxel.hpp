@@ -131,15 +131,7 @@ class MeshMap {
         sliverThreshold_(sliverDeletionThreshold) {
     std::cout << "#########################\n"
               << "## MeshMap initialized ##\n"
-              << "#########################\n"
-              << "Downsample Size:\t\t" << downsampleVoxelSize_ << "m\n"
-              << "New Vertex Threshold:\t\t" << newVertexThreshold_ << "m\n"
-              << "Voxel Size:\t\t\t" << voxelSize_ << "m\n"
-              << "Should Filter:\t\t\t" << shouldFilter_ << "\n"
-              << "Filter Epsilon:\t\t\t" << filterEps_ << "\n"
-              << "Filter Radius:\t\t\t" << filterRadius_ << "m\n"
-              << "Maximum Voxel Updates:\t\t" << voxelMaxUpdateCount_ << "\n"
-              << "Sliver Deletion Threshold:\t" << sliverThreshold_ << std::endl;
+              << "#########################\n";
     ikdTree_ = std::make_unique<ikdTree::KdTree<double>>(0.3, 0.6, 0.01);
   };
 
