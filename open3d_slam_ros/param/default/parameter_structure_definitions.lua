@@ -180,5 +180,5 @@ MESHING_PARAMETERS = {
   filter_radius = 0.3,
   voxel_max_updates = 50,
   should_transform_mesh = false,
-  mesh_frame = "map"
+  mesh_frame = "map",
 }

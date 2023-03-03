@@ -306,7 +306,7 @@ void SlamWrapperRos::publishMaps(const Time &time) {
                           mesh = mesh.Transform(lidarToMap_.matrix());
                           frame = params_.mesher_.meshFrame_;
                         }
-                        publishMesh(mesh, "map", timestamp, aggregatedMeshPub_);
+                        publishMesh(mesh, frame, timestamp, aggregatedMeshPub_);
                 }
         }
 
