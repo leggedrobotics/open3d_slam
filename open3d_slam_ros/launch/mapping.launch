@@ -2,6 +2,10 @@
 
 <launch>
 
+	<!-- Timo special 
+	<node pkg="tf2_ros" type="static_transform_publisher" name="static_tf_fake" args="0.855 0 0.042 0 0 -0.324043 0.9460423 base_link lidar_t" />
+	<node pkg="tf2_ros" type="static_transform_publisher" name="static_tf_fake_enu_to_map_init" args="0 0 0 0 0 0 1 enu map_new" />-->
+
 	<arg name="launch_prefix" default="" doc="gdb -ex run --args"/>
 	<arg name="launch_rviz" default="true" />
 	<arg name="cloud_topic" default="/point_cloud_filter/lidar/point_cloud_filtered" />
@@ -11,8 +15,7 @@
 	<arg name="num_accumulated_range_data" default="1"/>
 	<arg name="is_read_from_rosbag" default="false"/>
 	<arg name="rosbag_filepath" default=""/>
-	<arg name="use_sim_time" default="false"/>
-
+	<arg name="use_sim_time" default="true"/>
 
 	<!-- END OF ARGS -->	
 
@@ -36,7 +39,6 @@
     <rosparam command="load" file="/home/ttuna/open3d_slam_ws/src/localization_manager.yaml" />
   </node>
   -->
-
 	<include
 		file="$(find open3d_slam_ros)/launch/vis.launch"
 		if="$(arg launch_rviz)">

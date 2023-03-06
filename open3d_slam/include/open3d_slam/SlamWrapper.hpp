@@ -18,6 +18,9 @@
 #include "open3d_slam/CircularBuffer.hpp"
 #include "open3d_slam/ThreadSafeBuffer.hpp"
 #include "open3d_slam/Constraint.hpp"
+#include <ros/ros.h>
+#include <ros/package.h>
+#include <chrono>
 
 
 namespace o3d_slam {
@@ -34,12 +37,6 @@ class SlamWrapper {
 		PointCloud cloud_;
 	};
 
-	struct RegisteredPointCloud{
-		TimestampedPointCloud raw_;
-		Transform transform_;
-		std::string sourceFrame_, targetFrame_;
-		size_t submapId_;
-	};
 
 public:
 	SlamWrapper();
@@ -53,6 +50,13 @@ public:
 	virtual void stopWorkers();
 	virtual void finishProcessing();
 
+	struct RegisteredPointCloud{
+		TimestampedPointCloud raw_;
+		Transform transform_;
+		std::string sourceFrame_, targetFrame_;
+		size_t submapId_;
+	};
+
 	const MapperParameters &getMapperParameters() const;
 	MapperParameters *getMapperParametersPtr();
 	size_t getOdometryBufferSize() const;
@@ -62,6 +66,10 @@ public:
 	std::string getParameterFilePath() const;
 	std::pair<PointCloud,Time> getLatestRegisteredCloudTimestampPair() const;
 
+	void addOdometryPrior(const Time &queryTime, const Transform &transform);
+
+	Transform getMapToRangeSensorPrior(const Time &timestamp) const;
+
 	void setDirectoryPath(const std::string &path);
 	void setMapSavingDirectoryPath(const std::string &path);
 	void setParameterFilePath(const std::string &path);
@@ -69,11 +77,43 @@ public:
 	void setInitialTransform(const Eigen::Matrix4d initialTransform);
 
 	bool saveMap(const std::string &directory);
+	bool transformSaveMap(const std::string &directory, const Transform& transform);
 	bool saveDenseSubmaps(const std::string &directory);
 	bool saveSubmaps(const std::string &directory, const bool& isDenseMap=false);
 
+	void setMapToEnu(const Transform& transform);
+	Transform getMapToEnu();
+
 	std::shared_ptr<LidarOdometry> odometry_;
 	std::shared_ptr<Mapper> mapper_;
+
+	bool checkIfodomToRangeSensorBufferHasTime(const Time &queryTime);
+
+	Time latestScanToMapRefinementTimestamp_;
+	Transform latestScanToMapRefinedPose_;
+	bool isNewScan2MapRefinementAvailable_{false};
+
+	Transform getLatestOdometryPose();
+	SlamParameters params_;
+
+	Transform mapToEnu_;
+
+	RegisteredPointCloud getLatestRegisteredCloud();
+
+	ros::Time getCurrentTimeAfterRegistration();
+	ros::Time getCurrentTimeBeforeRegistration();
+
+	std::chrono::high_resolution_clock::time_point getBeforeRegistrationTime();
+	std::chrono::high_resolution_clock::time_point getAfterRegistrationTime();
+
+	ros::Time currrentTimeAfterRegistration_;
+	ros::Time currrentTimeBeforeRegistration_;
+
+	std::chrono::high_resolution_clock::time_point beforeRegistration_;
+	std::chrono::high_resolution_clock::time_point afterRegistration_;
+
+	// Mutex
+	mutable std::mutex posePublishingMutex_;
 
 private:
 	void checkIfOptimizedGraphAvailable();
@@ -93,7 +133,7 @@ protected:
 	ThreadSafeBuffer<TimestampedSubmapId> loopClosureCandidates_;
 
 	// parameters
-	SlamParameters params_;
+	
 //	MapperParameters mapperParams_;
 //	OdometryParameters odometryParams_;
 //	VisualizationParameters visualizationParameters_;
@@ -113,7 +153,7 @@ protected:
 	// timing
 	Timer mappingStatisticsTimer_,odometryStatisticsTimer_, visualizationUpdateTimer_, denseMapVisualizationUpdateTimer_, denseMapStatiscticsTimer_;
 	Timer mapperOnlyTimer_;
-	Time latestScanToMapRefinementTimestamp_;
+	
 	Time latestScanToScanRegistrationTimestamp_;
 
 	// bookkeeping
@@ -122,6 +162,7 @@ protected:
 	int numLatesLoopClosureConstraints_ = -1;
 	PointCloud rawCloudPrev_;
 	Constraints lastLoopClosureConstraints_;
+
 };
 
 } // namespace o3d_slam

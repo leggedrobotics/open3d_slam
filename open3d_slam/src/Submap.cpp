@@ -54,6 +54,7 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 	}
 
 	auto transformedCloud = o3d_slam::transform(mapToRangeSensor.matrix(), preProcessedScan);
+	/*
 	if (isPerformCarving) {
 		carvingStatisticsTimer_.startStopwatch();
 		{
@@ -69,6 +70,7 @@ bool Submap::insertScan(const PointCloud &rawScan, const PointCloud &preProcesse
 			carvingStatisticsTimer_.reset();
 		}
 	}
+	*/
 	std::lock_guard<std::mutex> lck(mapPointCloudMutex_);
 	mapCloud_ += *transformedCloud;
 	mapBuilderCropper_->setPose(mapToRangeSensor);

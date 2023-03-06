@@ -19,5 +19,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>open3d_catkin</depend>
   <depend>eigen</depend>
+  <depend>roscpp</depend>
+  <depend>roslib</depend>
 
 </package>

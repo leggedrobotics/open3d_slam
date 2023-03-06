@@ -296,7 +296,12 @@ void LuaLoader::loadParameters(const DictPtr dict, OdometryParameters *p){
 	loadIfDictionaryDefined(dict,"scan_matching", &p->scanMatcher_);
 	loadIfDictionaryDefined(dict,"scan_processing", &p->scanProcessing_);
 	loadBoolIfKeyDefined(dict, "is_publish_odometry_msgs", &p->isPublishOdometryMsgs_);
-	loadBoolIfKeyDefined(dict, "overwrite_with_tf", &p->overwriteWithTf);
+	loadBoolIfKeyDefined(dict, "overwrite_with_tf", &p->overwriteWithTf_);
+	loadBoolIfKeyDefined(dict, "listen_prior_from_topic", &p->listenPriorFromTopic_);
+	loadBoolIfKeyDefined(dict, "compensate_with_scan_to_scan_if_necessary", &p->compensateWithScanToScanIfNecessary_);
+	loadBoolIfKeyDefined(dict, "disable_scan_to_scan_odometry", &p->disableScanToScanOdometry_);
+	loadStringIfKeyDefined(dict, "prior_topic_name", &p->priorTopicName_);
+	loadBoolIfKeyDefined(dict, "publish_map_to_odom_tf", &p->publishMapToOdomTfTransform_);
 }
 
 void LuaLoader::loadParameters(const DictPtr dict, CloudRegistrationParameters *p){

@@ -37,11 +37,13 @@ const double timingStatsEveryNsec = 15.0;
 
 SlamWrapper::SlamWrapper() {
 	//todo magic
-	odometryBuffer_.set_size_limit(30);
-	mappingBuffer_.set_size_limit(30);
-	registeredCloudBuffer_.set_size_limit(30);
+	odometryBuffer_.set_size_limit(1);
+	mappingBuffer_.set_size_limit(1);
+	registeredCloudBuffer_.set_size_limit(1);
 	motionCompensationOdom_ = std::make_shared<MotionCompensation>();
 	motionCompensationMap_ = std::make_shared<MotionCompensation>();
+	Eigen::Quaterniond q(1,0,0,0); 
+	mapToEnu_ = makeTransform(Eigen::Vector3d::Zero(3,1), q);
 }
 
 SlamWrapper::~SlamWrapper() {
@@ -105,6 +107,26 @@ size_t SlamWrapper::getMappingBufferSizeLimit() const {
 	return mappingBuffer_.size_limit();
 }
 
+Transform SlamWrapper::getLatestOdometryPose(){
+
+	if(params_.odometry_.overwriteWithTf_ || params_.odometry_.listenPriorFromTopic_){
+
+		if (odometry_->odomToRangeSensorBuffer_.empty()) {
+			std::cerr << "Odometry buffer is empty returning identity! \n";
+			return Transform::Identity();
+		}
+
+		return odometry_->odomToRangeSensorBuffer_.latest_measurement().transform_;
+	}else{
+		if (odometry_->scan2scanOdomToRangeSensorBuffer_.empty()) {
+			std::cerr << "Scan to Scan Odometry buffer is empty returning identity! \n";
+			return Transform::Identity();
+		}
+
+		return odometry_->scan2scanOdomToRangeSensorBuffer_.latest_measurement().transform_;
+	}
+}
+
 void SlamWrapper::addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp) {
 	updateFirstMeasurementTime(timestamp);
 	odometry_->mostUpToDateCloudStamp_ = timestamp;
@@ -121,6 +143,13 @@ void SlamWrapper::addRangeScan(const open3d::geometry::PointCloud cloud, const T
 	odometryBuffer_.push(timestampedCloud);
 }
 
+o3d_slam::SlamWrapper::RegisteredPointCloud SlamWrapper::getLatestRegisteredCloud() {
+	if (registeredCloudBuffer_.empty()) {
+		return RegisteredPointCloud();
+	}
+	return registeredCloudBuffer_.peek_back();
+}
+
 std::pair<PointCloud, Time> SlamWrapper::getLatestRegisteredCloudTimestampPair() const {
 	if (registeredCloudBuffer_.empty()) {
 		return {PointCloud(),Time()};
@@ -134,7 +163,7 @@ void SlamWrapper::finishProcessing() {
 	while (isRunWorkers_) {
 		if (!mappingBuffer_.empty()) {
 			std::cout << "  Waiting for the mapping buffer to be emptied \n";
-			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+			std::this_thread::sleep_for(std::chrono::milliseconds(2));
 			continue;
 		} else {
 			std::cout << "  Mapping buffer emptied \n";
@@ -166,7 +195,7 @@ void SlamWrapper::finishProcessing() {
 			}
 			break;
 		} else {
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
 	}
 	std::cout << "All submaps fnished! \n";
@@ -190,7 +219,8 @@ void SlamWrapper::loadParametersAndInitialize() {
 	submaps_ = std::make_shared<o3d_slam::SubmapCollection>();
 	submaps_->setFolderPath(folderPath_);
 
-	mapper_ = std::make_shared<o3d_slam::Mapper>(odometry_->getBuffer(), submaps_);
+	mapper_ = std::make_shared<o3d_slam::Mapper>(odometry_->getBuffer(), odometry_->getScan2ScanBuffer(), submaps_);
+	params_.mapper_.compensateWithScanToScanIfNecessary_ = params_.odometry_.compensateWithScanToScanIfNecessary_;
 	mapper_->setParameters(params_.mapper_);
 
 	optimizationProblem_ = std::make_shared<o3d_slam::OptimizationProblem>();
@@ -245,7 +275,6 @@ void SlamWrapper::startWorkers() {
 			denseMapWorker();
 		});
 	}
-
 }
 
 void SlamWrapper::stopWorkers(){
@@ -258,6 +287,31 @@ bool SlamWrapper::saveMap(const std::string &directory) {
 	const std::string filename = directory + "map.pcd";
 	return saveToFile(filename, map);
 }
+
+Transform SlamWrapper::getMapToEnu(){
+
+	return mapToEnu_;
+}
+
+void SlamWrapper::setMapToEnu(const Transform& transform){
+
+	mapToEnu_ = transform;
+}
+
+Transform SlamWrapper::getMapToRangeSensorPrior(const Time &timestamp) const {
+	return getTransform(timestamp, mapper_->mapToRangeSensorPriorBuffer_);
+}
+
+bool SlamWrapper::transformSaveMap(const std::string &directory, const Transform& transform) {
+	std::cout << "Started to transform and save. Started transforming." << std::endl;
+	PointCloud map = mapper_->getAssembledMapPointCloud();
+	map = map.Transform(transform.matrix());
+	std::cout << "Transformed. Now saving." << std::endl;
+	createDirectoryOrNoActionIfExists(directory);
+	const std::string filename = directory + "map.pcd";
+	return saveToFile(filename, map);
+}
+
 bool SlamWrapper::saveDenseSubmaps(const std::string &directory) {
 	return saveSubmaps(directory, true);
 }
@@ -271,7 +325,7 @@ bool SlamWrapper::saveSubmaps(const std::string &directory, const bool& isDenseM
 void SlamWrapper::odometryWorker() {
 	while (isRunWorkers_) {
 		if (odometryBuffer_.empty()) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 			continue;
 		}
 		odometryStatisticsTimer_.startStopwatch();
@@ -302,13 +356,24 @@ void SlamWrapper::odometryWorker() {
 	} // end while
 
 }
+
+bool SlamWrapper::checkIfodomToRangeSensorBufferHasTime(const Time &queryTime){
+	return odometry_->odomToRangeSensorBuffer_.has(queryTime);
+}
+
+void SlamWrapper::addOdometryPrior(const Time &queryTime, const Transform &transform){
+	odometry_->odomToRangeSensorBuffer_.push(queryTime, transform);
+}
+
 void SlamWrapper::mappingWorker() {
 	while (isRunWorkers_) {
 		if (mappingBuffer_.empty()) {
 			checkIfOptimizedGraphAvailable();
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 			continue;
 		}
+		beforeRegistration_ = std::chrono:: high_resolution_clock::now();
+
 		mappingStatisticsTimer_.startStopwatch();
 		TimestampedPointCloud measurement;
 		{
@@ -319,23 +384,43 @@ void SlamWrapper::mappingWorker() {
 			measurement.time_ = raw.time_;
 			measurement.cloud_ = *undistortedCloud;
 		}
-		if (!odometry_->getBuffer().has(measurement.time_)) {
-			std::cout << "Weird, the odom buffer does not seem to have the transform!!! \n";
-			std::cout << "odom buffer size: " << odometry_->getBuffer().size() << "/"
-					<< odometry_->getBuffer().size_limit() << std::endl;
-			const auto &b = odometry_->getBuffer();
-			std::cout << "earliest: " << toSecondsSinceFirstMeasurement(b.earliest_time()) << std::endl;
-			std::cout << "latest: " << toSecondsSinceFirstMeasurement(b.latest_time()) << std::endl;
-			std::cout << "requested: " << toSecondsSinceFirstMeasurement(measurement.time_) << std::endl;
-			std::cout << "Latest PC time: " << toSecondsSinceFirstMeasurement(odometry_->lastMeasurementTimestamp_) << std::endl;
+
+		if (params_.odometry_.overwriteWithTf_ || params_.odometry_.listenPriorFromTopic_){
+			if (!odometry_->getBuffer().has(measurement.time_)) {
+				std::cout << "Weird, the odom buffer does not seem to have the transform!!! \n";
+				std::cout << "odom buffer size: " << odometry_->getBuffer().size() << "/"
+						<< odometry_->getBuffer().size_limit() << std::endl;
+				const auto &b = odometry_->getBuffer();
+				std::cout << "earliest: " << toSecondsSinceFirstMeasurement(b.earliest_time()) << std::endl;
+				std::cout << "latest: " << toSecondsSinceFirstMeasurement(b.latest_time()) << std::endl;
+				std::cout << "requested: " << toSecondsSinceFirstMeasurement(measurement.time_) << std::endl;
+				std::cout << "Latest PC time: " << toSecondsSinceFirstMeasurement(odometry_->lastMeasurementTimestamp_) << std::endl;
+			}
+		}else{
+			if (!odometry_->getScan2ScanBuffer().has(measurement.time_)) {
+				std::cout << "Weird, the Scan to Scan odom buffer does not seem to have the transform!!! \n";
+				std::cout << "Scan to Scan odom buffer size: " << odometry_->getScan2ScanBuffer().size() << "/"
+						<< odometry_->getScan2ScanBuffer().size_limit() << std::endl;
+				const auto &b = odometry_->getScan2ScanBuffer();
+				std::cout << "earliest: " << toSecondsSinceFirstMeasurement(b.earliest_time()) << std::endl;
+				std::cout << "latest: " << toSecondsSinceFirstMeasurement(b.latest_time()) << std::endl;
+				std::cout << "requested: " << toSecondsSinceFirstMeasurement(measurement.time_) << std::endl;
+				std::cout << "Latest PC time: " << toSecondsSinceFirstMeasurement(odometry_->lastMeasurementTimestamp_) << std::endl;
+			}
 		}
+
+		currrentTimeBeforeRegistration_ = ros::Time::now();
 		const size_t activeSubmapIdx = mapper_->getActiveSubmap().getId();
 		mapperOnlyTimer_.startStopwatch();
 		const bool mappingResult = mapper_->addRangeMeasurement(measurement.cloud_, measurement.time_);
 		const double timeElapsed = 	mapperOnlyTimer_.elapsedMsecSinceStopwatchStart();
 		mapperOnlyTimer_.addMeasurementMsec(timeElapsed);
+		currrentTimeAfterRegistration_ = ros::Time::now();
+		
+		std::cout << "Registration Elapsed Time: " << timeElapsed << " msec \n";
 
 		if (mappingResult) {
+			
 			RegisteredPointCloud registeredCloud;
 			registeredCloud.submapId_ = activeSubmapIdx;
 			registeredCloud.raw_ = measurement;
@@ -344,6 +429,13 @@ void SlamWrapper::mappingWorker() {
 			registeredCloud.targetFrame_ = frames::mapFrame;
 			registeredCloudBuffer_.push(registeredCloud);
 			latestScanToMapRefinementTimestamp_ = measurement.time_;
+			latestScanToMapRefinedPose_ = mapper_->getMapToRangeSensor(measurement.time_);
+
+				{
+					// Thread safety, memory access
+					std::lock_guard<std::mutex> methodLock(posePublishingMutex_);
+					isNewScan2MapRefinementAvailable_=true;
+				}
 		}
 
 		if (params_.mapper_.isAttemptLoopClosures_) {
@@ -354,16 +446,42 @@ void SlamWrapper::mappingWorker() {
 		checkIfOptimizedGraphAvailable();
 
 		//just get the stats
-		const double timeMeasurement = mappingStatisticsTimer_.elapsedMsecSinceStopwatchStart();
-		mappingStatisticsTimer_.addMeasurementMsec(timeMeasurement);
-		if (params_.mapper_.isPrintTimingStatistics_ && mappingStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {
-			std::cout << "Mapper timing stats: Avg execution time: "
-					<< mappingStatisticsTimer_.getAvgMeasurementMsec() << " msec , frequency: "
-					<< 1e3 / mappingStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
-			mappingStatisticsTimer_.reset();
-		}
+		//const double timeMeasurement = mappingStatisticsTimer_.elapsedMsecSinceStopwatchStart();
+		//std::cout << "Total Registration Elapsed Time: " << timeMeasurement << " msec \n";
+
+
+		afterRegistration_ = std::chrono:: high_resolution_clock::now();
+
+		std::chrono::duration<double> time_span =  std::chrono::duration_cast< std::chrono::duration<double>>(afterRegistration_ - beforeRegistration_);
+
+		std::cout << "Total Registration Elapsed Time(HighResClock) " << time_span.count() * 1e+3 << " ms" << std::endl;
+
+		//mappingStatisticsTimer_.addMeasurementMsec(timeMeasurement);
+		//if (params_.mapper_.isPrintTimingStatistics_ && mappingStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {
+		//	std::cout << "Mapper timing stats: Avg execution time: "
+		//			<< mappingStatisticsTimer_.getAvgMeasurementMsec() << " msec , frequency: "
+		//			<< 1e3 / mappingStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
+		//	mappingStatisticsTimer_.reset();
+		//}
 
 	} // while (isRunWorkers_)
+}
+
+std::chrono::high_resolution_clock::time_point SlamWrapper::getBeforeRegistrationTime(){
+	return beforeRegistration_;
+}
+
+std::chrono::high_resolution_clock::time_point SlamWrapper::getAfterRegistrationTime(){
+	return afterRegistration_;
+}
+
+
+ros::Time SlamWrapper::getCurrentTimeAfterRegistration() {
+	return currrentTimeAfterRegistration_;
+}
+
+ros::Time SlamWrapper::getCurrentTimeBeforeRegistration() {
+	return currrentTimeBeforeRegistration_;
 }
 
 void SlamWrapper::checkIfOptimizedGraphAvailable(){
@@ -383,7 +501,7 @@ void SlamWrapper::checkIfOptimizedGraphAvailable(){
 void SlamWrapper::denseMapWorker() {
 	while (isRunWorkers_) {
 		if (registeredCloudBuffer_.empty()) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 			continue;
 		}
 		denseMapStatiscticsTimer_.startStopwatch();
@@ -428,7 +546,7 @@ void SlamWrapper::attemptLoopClosuresIfReady() {
 void SlamWrapper::loopClosureWorker() {
 	while (isRunWorkers_) {
 		if (loopClosureCandidates_.empty() || isOptimizedGraphAvailable_) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 			continue;
 		}
 
@@ -441,7 +559,7 @@ void SlamWrapper::loopClosureWorker() {
 		}
 
 		if (loopClosureConstraints.empty()) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 			continue;
 		}
 		{

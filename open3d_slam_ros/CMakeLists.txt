@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.5)
 project(open3d_slam_ros)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-add_compile_options(-O2)
-
+add_compile_options(-O3)
+set(CMAKE_POLICY_DEFAULT_CMP0135 NEW)
 
 set(SRC_FILES
   src/helpers_ros.cpp
@@ -15,6 +15,8 @@ set(SRC_FILES
   src/DataProcessorRos.cpp
   src/RosbagRangeDataProcessorRos.cpp
   src/Color.cpp
+  src/TrajectoryAlignment.cpp
+  src/TrajectoryAlignmentHandler.cpp
 )
 
 set(CATKIN_PACKAGE_DEPENDENCIES
@@ -29,6 +31,8 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   rosbag
   interactive_markers
   open3d_slam_lua_io
+  std_srvs
+  nav_msgs
 )
 
 find_package(Eigen3 REQUIRED)
