@@ -264,6 +264,7 @@ void LuaLoader::loadParameters(const DictPtr dict, PlaceRecognitionParameters *p
 
 void LuaLoader::loadParameters(const DictPtr dict, MapInitializingParameters* p) {
 	loadStringIfKeyDefined(dict, "frame_id", &p->frameId_);
+	loadStringIfKeyDefined(dict, "pcd_file_package", &p->pcdFilePackage_);
 	loadStringIfKeyDefined(dict, "pcd_file_path", &p->pcdFilePath_);
 	loadBoolIfKeyDefined(dict, "is_initialize_interactively", &p->isInitializeInteractively_);
 	loadIfDictionaryDefined(dict,"init_pose", &p->initialPose_);

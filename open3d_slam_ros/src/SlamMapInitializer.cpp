@@ -55,10 +55,11 @@ bool SlamMapInitializer::initSlamCallback(std_srvs::Trigger::Request &req, std_s
 void SlamMapInitializer::initialize(const MapInitializingParameters &params) {
   mapInitializerParams_ = params;
   PointCloud raw_map;
+  std::string pcdFile = ros::package::getPath(mapInitializerParams_.pcdFilePackage_) + mapInitializerParams_.pcdFilePath_;
   initialized_.store(false);
 
-  std::cout << "Loading pointloud from: " << mapInitializerParams_.pcdFilePath_ << "\n";
-  if (!open3d::io::ReadPointCloud(mapInitializerParams_.pcdFilePath_, raw_map))
+  std::cout << "Loading pointloud from: " << pcdFile << "\n";
+  if (!open3d::io::ReadPointCloud(pcdFile, raw_map))
 	{
 		std::cerr << "[Error] Initialization pointcloud not loaded" << std::endl;
   }

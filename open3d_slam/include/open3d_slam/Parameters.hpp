@@ -166,6 +166,7 @@ struct ScanToMapRegistrationParameters : public Parameters {
 struct MapInitializingParameters { //todo these are a bit implementation specific
   std::string frameId_ = "";
   Eigen::Isometry3d initialPose_ = Eigen::Isometry3d::Identity();
+  	std::string pcdFilePackage_ = "";
 	std::string pcdFilePath_ = "";
 	bool isInitializeInteractively_= false;
 };
