@@ -252,7 +252,7 @@ void OnlineRangeDataProcessorRos::posePublisherTimerCallback(const ros::TimerEve
 
 
 	std::chrono::duration<double> time_span =  std::chrono::duration_cast< std::chrono::duration<double>>(willPublish_ - pcArriveTime_);
-	std::cout << "Point cloud arrival to enabled publishing: " << time_span.count() * 1e+3 << " ms" << std::endl;
+	// std::cout << "Point cloud arrival to enabled publishing: " << time_span.count() * 1e+3 << " ms" << std::endl;
 
 	Time latestTransformTime; 
 	Transform mapToRangeSensorTransform;
@@ -326,25 +326,25 @@ void OnlineRangeDataProcessorRos::posePublisherTimerCallback(const ros::TimerEve
 
 		//std::cout << "Consolidated mapToOdom: " << o3d_slam::asString(mapToOdomConsolidated) << "\n";
 		ros::Duration timeDifference = currentTime - o3d_slam::toRos(latestTransformTime);
-		ROS_INFO_STREAM("Time difference Current Time - latestTransformTime: " << timeDifference.toNSec() * 1e-6 << " ms");
+		// ROS_INFO_STREAM("Time difference Current Time - latestTransformTime: " << timeDifference.toNSec() * 1e-6 << " ms");
 
 		ros::Duration timeDifference3 = currentTime - o3d_slam::toRos(callbackLatestTimestamp_);
-		ROS_INFO_STREAM("Time difference Current Time - timeStampOfTheLastArrivedCloud: " << timeDifference3.toNSec() * 1e-6 << " ms");
+		// ROS_INFO_STREAM("Time difference Current Time - timeStampOfTheLastArrivedCloud: " << timeDifference3.toNSec() * 1e-6 << " ms");
 
 		ros::Duration timeDifferenceBeforeRegister = slam_->getCurrentTimeBeforeRegistration() - rosTimeAtTheTimeOfTheLastCallback_;
-		ROS_INFO_STREAM("Time difference Ros time before registration - rosTimeAtTheTimeOfTheLastPointCloud_: " << timeDifferenceBeforeRegister.toNSec() * 1e-6 << " ms");
+		// ROS_INFO_STREAM("Time difference Ros time before registration - rosTimeAtTheTimeOfTheLastPointCloud_: " << timeDifferenceBeforeRegister.toNSec() * 1e-6 << " ms");
 
 		ros::Duration timeDifferenceAfterRegister = slam_->getCurrentTimeAfterRegistration() - rosTimeAtTheTimeOfTheLastCallback_;
-		ROS_INFO_STREAM("Time difference Ros time after registration - rosTimeAtTheTimeOfTheLastPointCloud_: " << timeDifferenceAfterRegister.toNSec() * 1e-6 << " ms");
+		// ROS_INFO_STREAM("Time difference Ros time after registration - rosTimeAtTheTimeOfTheLastPointCloud_: " << timeDifferenceAfterRegister.toNSec() * 1e-6 << " ms");
 
 		std::chrono::duration<double> time_spanBefore =  std::chrono::duration_cast< std::chrono::duration<double>>(slam_->getBeforeRegistrationTime() - pcArriveTime_);
-		std::cout << "Before Registration (HighRes) - time when last cloud arrived (highRes): " << time_spanBefore.count() * 1e+3 << " ms" << std::endl;
+		// std::cout << "Before Registration (HighRes) - time when last cloud arrived (highRes): " << time_spanBefore.count() * 1e+3 << " ms" << std::endl;
 
 		std::chrono::duration<double> time_spanAfter =  std::chrono::duration_cast< std::chrono::duration<double>>(slam_->getAfterRegistrationTime() - pcArriveTime_);
-		std::cout << "After Registration (HighRes) - time when last cloud arrived (highRes): " << time_spanAfter.count() * 1e+3 << " ms" << std::endl;
+		// std::cout << "After Registration (HighRes) - time when last cloud arrived (highRes): " << time_spanAfter.count() * 1e+3 << " ms" << std::endl;
 
 		ros::Duration timeDifferenceAfterRegisterDiff =currentTime - rosTimeAtTheTimeOfTheLastCallback_;
-		ROS_INFO_STREAM("Time difference currentTime - rosTimeAtTheTimeOfTheLastCallback_: " << timeDifferenceAfterRegisterDiff.toNSec() * 1e-6 << " ms");
+		// ROS_INFO_STREAM("Time difference currentTime - rosTimeAtTheTimeOfTheLastCallback_: " << timeDifferenceAfterRegisterDiff.toNSec() * 1e-6 << " ms");
 
 		// Difference of above 2
 		//ros::Duration timeDifference2 = o3d_slam::toRos(callbackLatestTimestamp_) - o3d_slam::toRos(latestTransformTime);
@@ -433,7 +433,7 @@ void OnlineRangeDataProcessorRos::cloudCallback(const sensor_msgs::PointCloud2Co
 	}
 
 	ros::Duration timeDifferenceAfterRegister = ros::Time::now() - msg->header.stamp;
-	ROS_INFO_STREAM("Time difference Current time - pcArrivalStamp: " << timeDifferenceAfterRegister.toNSec() * 1e-6 << " ms");
+	// ROS_INFO_STREAM("Time difference Current time - pcArrivalStamp: " << timeDifferenceAfterRegister.toNSec() * 1e-6 << " ms");
 
 	processMeasurement(cloud, timestamp);
 

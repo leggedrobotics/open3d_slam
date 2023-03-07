@@ -34,7 +34,7 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud &cloud, cons
 
 	if (params_.disableScanToScanOdometry_)
 	{	
-		std::cout << "Scan to scan odometry is disabled. \n";
+		// std::cout << "Scan to scan odometry is disabled. \n";
 		return true;
 	}
 
