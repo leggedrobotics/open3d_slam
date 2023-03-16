@@ -25,6 +25,7 @@
 #include "open3d_slam/Odometry.hpp"
 #include "nav_msgs/Odometry.h"
 #include "open3d_slam_lua_io/parameter_loaders.hpp"
+#include "tf2_eigen/tf2_eigen.h"
 
 #ifdef open3d_slam_ros_OPENMP_FOUND
 #include <omp.h>
