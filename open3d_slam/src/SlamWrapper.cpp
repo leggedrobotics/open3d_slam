@@ -257,6 +257,15 @@ bool SlamWrapper::saveMap(const std::string &directory) {
 	const std::string filename = directory + "map.pcd";
 	return saveToFile(filename, map);
 }
+
+bool SlamWrapper::saveMapTransformed(const std::string &directory, const Transform &transform){
+  PointCloud map = mapper_->getAssembledMapPointCloud();
+  std::shared_ptr<PointCloud> transformedPointCloudPtr = o3d_slam::transform(transform.matrix(), map);
+  createDirectoryOrNoActionIfExists(directory);
+  const std::string filename = directory + "transformed_map.pcd";
+  return saveToFile(filename, *transformedPointCloudPtr);
+}
+
 bool SlamWrapper::saveDenseSubmaps(const std::string &directory) {
 	return saveSubmaps(directory, true);
 }

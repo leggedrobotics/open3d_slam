@@ -15,6 +15,7 @@
 
 #include "open3d_slam/SlamWrapper.hpp"
 #include "open3d_slam_msgs/SaveMap.h"
+#include "open3d_slam_msgs/SaveMapTransformed.h"
 #include "open3d_slam_msgs/SaveSubmaps.h"
 
 namespace o3d_slam {
@@ -28,6 +29,7 @@ public:
 	~SlamWrapperRos() override;
 
 	bool saveMapCallback(open3d_slam_msgs::SaveMap::Request &req, open3d_slam_msgs::SaveMap::Response &res);
+	bool saveMapTransformedCallback(open3d_slam_msgs::SaveMapTransformed::Request &req,open3d_slam_msgs::SaveMapTransformed::Response &res);
 	bool saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request &req,
 			open3d_slam_msgs::SaveSubmaps::Response &res);
 	void loadParametersAndInitialize() override;
@@ -48,7 +50,7 @@ private:
 	ros::Publisher odometryInputPub_, mappingInputPub_, submapOriginsPub_, assembledMapPub_, denseMapPub_,
 			submapsPub_;
 	ros::Publisher scan2scanTransformPublisher_, scan2scanOdomPublisher_, scan2mapTransformPublisher_, scan2mapOdomPublisher_;
-	ros::ServiceServer saveMapSrv_, saveSubmapsSrv_;
+	ros::ServiceServer saveMapSrv_, saveSubmapsSrv_, saveMapTransformeSrv_;
 	bool isVisualizationFirstTime_ = true;
 	std::thread tfWorker_, visualizationWorker_, odomPublisherWorker_;
 	Time prevPublishedTimeScanToScan_, prevPublishedTimeScanToMap_;

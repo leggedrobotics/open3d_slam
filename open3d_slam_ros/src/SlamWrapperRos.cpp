@@ -183,6 +183,7 @@ void SlamWrapperRos::loadParametersAndInitialize() {
 
 	saveMapSrv_ = nh_->advertiseService("save_map", &SlamWrapperRos::saveMapCallback, this);
 	saveSubmapsSrv_ = nh_->advertiseService("save_submaps", &SlamWrapperRos::saveSubmapsCallback, this);
+	saveMapTransformedSrv_ = nh_->advertiseService("save_map_transformed", &SlamWrapperRos::saveMapTransformedCallback, this);
 
 	scan2scanTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("scan2scan_transform", 1, true);
 	scan2scanOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2scan_odometry", 1, true);
@@ -212,6 +213,15 @@ void SlamWrapperRos::loadParametersAndInitialize() {
 bool SlamWrapperRos::saveMapCallback(open3d_slam_msgs::SaveMap::Request &req,
 		open3d_slam_msgs::SaveMap::Response &res) {
 	const bool savingResult = saveMap(mapSavingFolderPath_);
+	res.statusMessage = savingResult ? "Map saved to: " + mapSavingFolderPath_ : "Error while saving map";
+	return true;
+}
+bool SlamWrapperRos::saveMapTransformedCallback(open3d_slam_msgs::SaveMapTransformed::Request &req, open3d_slam_msgs::SaveMapTransformed::Response &res) {
+	geometry_msgs::TransformStamped transformMsg = req.transform;
+	std::string frameId = transformMsg.header.frame_id;
+
+	Eigen::Isometry3d transform = tf2::transformToEigen(transformMsg);
+	const bool savingResult = saveMapTransformed(mapSavingFolderPath_, transform);
 	res.statusMessage = savingResult ? "Map saved to: " + mapSavingFolderPath_ : "Error while saving map";
 	return true;
 }

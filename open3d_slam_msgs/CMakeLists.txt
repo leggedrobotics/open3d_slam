@@ -24,6 +24,7 @@ add_service_files(
   FILES
   SaveMap.srv
   SaveSubmaps.srv 
+  SaveMapTransformed.srv 
 )
 
 ## Generate added messages and services with any dependencies listed here
