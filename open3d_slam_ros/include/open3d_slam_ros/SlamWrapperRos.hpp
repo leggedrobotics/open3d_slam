@@ -50,7 +50,7 @@ private:
 	ros::Publisher odometryInputPub_, mappingInputPub_, submapOriginsPub_, assembledMapPub_, denseMapPub_,
 			submapsPub_;
 	ros::Publisher scan2scanTransformPublisher_, scan2scanOdomPublisher_, scan2mapTransformPublisher_, scan2mapOdomPublisher_;
-	ros::ServiceServer saveMapSrv_, saveSubmapsSrv_, saveMapTransformeSrv_;
+	ros::ServiceServer saveMapSrv_, saveSubmapsSrv_, saveMapTransformedSrv_;
 	bool isVisualizationFirstTime_ = true;
 	std::thread tfWorker_, visualizationWorker_, odomPublisherWorker_;
 	Time prevPublishedTimeScanToScan_, prevPublishedTimeScanToMap_;
