@@ -115,6 +115,11 @@ public:
 	// Mutex
 	mutable std::mutex posePublishingMutex_;
 
+
+	bool hasMapPrior();
+
+	bool hasOdometryPrior();
+
 private:
 	void checkIfOptimizedGraphAvailable();
 	void odometryWorker();

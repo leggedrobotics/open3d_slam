@@ -51,6 +51,7 @@ bool Mapper::hasProcessedMeasurements() const {
 	return !mapToRangeSensorBuffer_.empty();
 }
 bool Mapper::hasPriorProcessedMeasurements() const {
+	std::cout<<"hasPriorProcessedMeasurements hasPriorProcessedMeasurements hasPriorProcessedMeasurements"<<std::endl;
 	return !mapToRangeSensorPriorBuffer_.empty();
 }
 
@@ -70,7 +71,13 @@ Transform Mapper::getMapToRangeSensor(const Time &timestamp) const {
 }
 
 Transform Mapper::getMapToRangeSensorPrior(const Time &timestamp) const {
-	return getTransform(timestamp, mapToRangeSensorPriorBuffer_);
+
+	if(!hasPriorProcessedMeasurements()){
+		return Transform();
+	}else{
+		std::cout<<"getTransform getTransform getTransform getTransform"<<std::endl;
+		return getTransform(timestamp, mapToRangeSensorPriorBuffer_);
+	}
 }
 
 const SubmapCollection& Mapper::getSubmaps() const {

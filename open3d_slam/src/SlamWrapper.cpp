@@ -299,7 +299,22 @@ void SlamWrapper::setMapToEnu(const Transform& transform){
 }
 
 Transform SlamWrapper::getMapToRangeSensorPrior(const Time &timestamp) const {
-	return getTransform(timestamp, mapper_->mapToRangeSensorPriorBuffer_);
+	if(!mapper_->hasPriorProcessedMeasurements()){
+		return Transform();
+	}else{
+
+		return getTransform(timestamp, mapper_->mapToRangeSensorPriorBuffer_);
+	}
+}
+
+bool SlamWrapper::hasMapPrior(){
+	return mapper_->hasPriorProcessedMeasurements();
+}
+
+bool SlamWrapper::hasOdometryPrior(){
+	bool success =false;
+	success = success && (odometry_->scan2scanHasProcessedMeasurements() || odometry_->hasProcessedMeasurements());
+	return success;
 }
 
 bool SlamWrapper::transformSaveMap(const std::string &directory, const Transform& transform) {

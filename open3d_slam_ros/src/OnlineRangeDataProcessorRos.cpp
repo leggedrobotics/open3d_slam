@@ -47,7 +47,7 @@ void OnlineRangeDataProcessorRos::startProcessing() {
 	priorPoseSubscriber_ = nh_->subscribe<nav_msgs::Odometry>("/state_estimator/odometry", 1000, &OnlineRangeDataProcessorRos::poseStampedPriorCallback, this, ros::TransportHints().tcpNoDelay());
 	
 	// Timers to publish data
-	posePublishingTimer_ = nh_->createTimer(ros::Duration(0.01), &OnlineRangeDataProcessorRos::posePublisherTimerCallback, this);
+	posePublishingTimer_ = nh_->createTimer(ros::Duration(0.02), &OnlineRangeDataProcessorRos::posePublisherTimerCallback, this);
 	registeredEnuCloudPublisherTimer_ = nh_->createTimer(ros::Duration(0.025), &OnlineRangeDataProcessorRos::registeredCloudPublisherCallback, this);
 
 	// Service to call to get the transformation.
@@ -63,11 +63,11 @@ void OnlineRangeDataProcessorRos::startProcessing() {
 	// Publishers for the poses
 	consolidatedScan2mapTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("const_tt_scan2map_transform", 1, true);
 	scan2mapTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("tt_scan2map_transform", 1, true);
-	scan2mapOdometryPublisher_ = nh_->advertise<nav_msgs::Odometry>("tt_scan2map_odometry", 1, true);
+	scan2mapOdometryPublisher_ = nh_->advertise<nav_msgs::Odometry>("tt_scan2map_odometry", 1, false);
 	scan2mapOdometryPriorPublisher_ = nh_->advertise<nav_msgs::Odometry>("tt_scan2map_odometry_prior", 1, true);
 
 	// Experimental
-	consolidatedScan2mapOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("cons_tt_scan2map_odometry", 1, true);
+	consolidatedScan2mapOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("cons_tt_scan2map_odometry", 1, false);
 
 	// Registered cloud
 	registeredCloudPub_ = nh_->advertise<sensor_msgs::PointCloud2>("registered_cloud", 1, true);
@@ -247,6 +247,11 @@ void OnlineRangeDataProcessorRos::posePublisherTimerCallback(const ros::TimerEve
 		//std::cout << "Scan to map registration has not yet started." << std::endl;
 		return;
 	}
+
+	//if(!(slam_->hasMapPrior())){
+	//	std::cerr<< "No prior available RETURNING FROM POSE PUBLISHING." << std::endl;
+	//	return;
+	//}
 
 	willPublish_ = std::chrono:: high_resolution_clock::now();
 
