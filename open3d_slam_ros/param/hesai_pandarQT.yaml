@@ -48,7 +48,7 @@ mapping:
   map_intializer:
     is_initialize_interactively: true
     frame_id: "map_o3d"
-    pcd_file_path: "/home/grzegorz/catkin_ws/src/open3d_slam/open3d_slam_ros/data/maps/mapHongg.pcd"
+    pcd_file_path: "/home/malczykg/catkin_ws/src/impact_printing/impact_printing_common/data/mapHongg.pcd"
     init_pose:
       position:
         x: -3.0
