@@ -3,7 +3,7 @@
 <launch>
 
 	<arg name="launch_prefix" default="" doc="gdb -ex run --args"/>
-	<arg name="launch_rviz" default="true" />
+	<arg name="launch_rviz" default="false" />
 	<arg name="cloud_topic" default="/hesai/pandar" />
 	<arg name="parameter_filename" default="hesai_pandarQT.yaml"/>
 	<arg name="parameter_folder_path" default="$(find open3d_slam_ros)/param/"/>
