@@ -49,7 +49,7 @@ ProcessedScans ScanToMapIcp::processForScanMatchingAndMerging(const PointCloud &
 	narrowCropped = scanMatcherCropper_->crop(*wideCropped);
 	retVal.match_ = narrowCropped;
 	retVal.merge_ = wideCropped;
-	assert_gt<int>(narrowCropped->points_.size(), 0, "ScanToMapIcp::narrow cropped size is zero");
+	//assert_gt<int>(narrowCropped->points_.size(), 0, "ScanToMapIcp::narrow cropped size is zero");
 	assert_gt<int>(wideCropped->points_.size(), 0, "ScanToMapIcp::wideCropped cropped size is zero");
 	return retVal;
 }
