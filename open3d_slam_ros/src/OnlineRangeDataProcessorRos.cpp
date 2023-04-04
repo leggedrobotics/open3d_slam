@@ -32,6 +32,8 @@ void OnlineRangeDataProcessorRos::initialize() {
 	slam_->loadParametersAndInitialize();
 	trajectoryAlignmentHandlerPtr_ = std::make_shared<o3d_slam::TrajectoryAlignmentHandler>();
 	trajectoryAlignmentHandlerPtr_->initHandler();
+
+	slam_->params_.odometry_.priorTopicName_
 	
 }
 
@@ -44,7 +46,10 @@ void OnlineRangeDataProcessorRos::startProcessing() {
 	cloudSubscriber_ = nh_->subscribe(cloudTopic_, 1, &OnlineRangeDataProcessorRos::cloudCallback,this);
 
 	// Relavent pose subscriber
-	priorPoseSubscriber_ = nh_->subscribe<nav_msgs::Odometry>("/state_estimator/odometry", 1000, &OnlineRangeDataProcessorRos::poseStampedPriorCallback, this, ros::TransportHints().tcpNoDelay());
+	priorPoseSubscriber_ = nh_->subscribe<nav_msgs::Odometry>(slam_->params_.odometry_.priorTopicName_, 1, &OnlineRangeDataProcessorRos::poseStampedPriorCallback, this, ros::TransportHints().tcpNoDelay());
+	
+	// Un comment if state_estimator/odometry is not available
+	//priorPoseSubscriberPoseCovariance_ = nh_->subscribe<geometry_msgs::PoseWithCovarianceStamped>(slam_->params_.odometry_.priorTopicName_, 1000, &OnlineRangeDataProcessorRos::poseStampedPriorCallback, this, ros::TransportHints().tcpNoDelay());
 	
 	// Timers to publish data
 	posePublishingTimer_ = nh_->createTimer(ros::Duration(0.02), &OnlineRangeDataProcessorRos::posePublisherTimerCallback, this);
@@ -143,6 +148,36 @@ bool OnlineRangeDataProcessorRos::alignWithWorld(std_srvs::EmptyRequest& /*req*/
 }
 
 void OnlineRangeDataProcessorRos::poseStampedPriorCallback(const nav_msgs::Odometry::ConstPtr& odometryPose) {
+
+	if((slam_->params_.odometry_.overwriteWithTf_) || !(slam_->params_.odometry_.listenPriorFromTopic_)){
+		ROS_DEBUG("Prior from topic is NOT used.");
+		return;
+	}
+
+	geometry_msgs::TransformStamped transformStamped;
+
+	// Meta data.
+	transformStamped.child_frame_id = o3d_slam::frames::rangeSensorFrame;
+	transformStamped.header.frame_id = o3d_slam::frames::odomFrame;
+	transformStamped.header.stamp = odometryPose->header.stamp;
+
+	// Position.
+	transformStamped.transform.translation.x = odometryPose->pose.pose.position.x;
+	transformStamped.transform.translation.y = odometryPose->pose.pose.position.y;
+	transformStamped.transform.translation.z = odometryPose->pose.pose.position.z;
+
+	// Orientation.
+	transformStamped.transform.rotation.x = odometryPose->pose.pose.orientation.x;
+	transformStamped.transform.rotation.y = odometryPose->pose.pose.orientation.y;
+	transformStamped.transform.rotation.z = odometryPose->pose.pose.orientation.z;
+	transformStamped.transform.rotation.w = odometryPose->pose.pose. orientation.w;
+
+	
+	const Time timestamp = fromRos(odometryPose->header.stamp);
+	slam_->addOdometryPrior(timestamp, tf2::transformToEigen(transformStamped));
+}
+
+void OnlineRangeDataProcessorRos::poseStampedPriorCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& odometryPose) {
 
 	if((slam_->params_.odometry_.overwriteWithTf_) || !(slam_->params_.odometry_.listenPriorFromTopic_)){
 		ROS_DEBUG("Prior from topic is NOT used.");

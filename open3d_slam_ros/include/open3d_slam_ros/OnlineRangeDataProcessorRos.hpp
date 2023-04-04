@@ -11,6 +11,8 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
 #include "open3d_slam/SlamWrapper.hpp"
@@ -50,6 +52,8 @@ public:
 	ros::Publisher scan2mapTransformPublisher_, scan2mapOdometryPublisher_, scan2mapOdometryPriorPublisher_ , consolidatedScan2mapOdomPublisher_, registeredCloudPub_;
 
 	void poseStampedPriorCallback(const nav_msgs::Odometry::ConstPtr& odometryPose);
+
+	void poseStampedPriorCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& odometryPose);
 
 	// Publishers vol_2.
 	ros::Publisher lidarPathPublisher_;
@@ -92,6 +96,7 @@ private:
 	// Subscribers
 	ros::Subscriber cloudSubscriber_;
 	ros::Subscriber priorPoseSubscriber_;
+	ros::Subscriber priorPoseSubscriberPoseCovariance_;
 
 
 
