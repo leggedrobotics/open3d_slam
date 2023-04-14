@@ -253,6 +253,10 @@ void SlamWrapperRos::visualizationWorker() {
 		if (isTimeValid(scanToMapTimestamp)) {
 			publishDenseMap(scanToMapTimestamp);
 			publishMaps(scanToMapTimestamp);
+			if (params_.mapper_.isUseInitialMap_){
+				// publish initial map only once
+				break;
+			}
 		}
 
 		ros::spinOnce();
