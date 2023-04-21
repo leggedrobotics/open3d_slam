@@ -253,10 +253,6 @@ void SlamWrapperRos::visualizationWorker() {
 		if (isTimeValid(scanToMapTimestamp)) {
 			publishDenseMap(scanToMapTimestamp);
 			publishMaps(scanToMapTimestamp);
-			if (params_.mapper_.isUseInitialMap_){
-				// publish initial map only once
-				break;
-			}
 		}
 
 		ros::spinOnce();
@@ -375,17 +371,26 @@ void SlamWrapperRos::publishMaps(const Time &time) {
 	}
 
 	const ros::Time timestamp = toRos(time);
-	{
+	if (assembledMapPub_.getNumSubscribers() > 0 && isVisualizeAssembledMap_) {
 		PointCloud map = mapper_->getAssembledMapPointCloud();
 		voxelize(params_.visualization_.assembledMapVoxelSize_, &map);
 		
 		map = map.Transform(getMapToEnu().matrix());
 		o3d_slam::publishCloud(map, o3d_slam::frames::mapFrame, timestamp, assembledMapPub_);
+
+		if (params_.mapper_.isUseInitialMap_){
+			// publish initial map only once
+			isVisualizeAssembledMap_ = false;
+		}
 	}
-	o3d_slam::publishCloud(mapper_->getPreprocessedScan(), o3d_slam::frames::rangeSensorFrame, timestamp,
-			mappingInputPub_);
-	o3d_slam::publishSubmapCoordinateAxes(mapper_->getSubmaps(), o3d_slam::frames::mapFrame, timestamp,
-			submapOriginsPub_);
+	if (mappingInputPub_.getNumSubscribers() > 0) {
+		o3d_slam::publishCloud(mapper_->getPreprocessedScan(), o3d_slam::frames::rangeSensorFrame, timestamp,
+				mappingInputPub_);
+	}
+	if (submapOriginsPub_.getNumSubscribers() > 0) {
+		o3d_slam::publishSubmapCoordinateAxes(mapper_->getSubmaps(), o3d_slam::frames::mapFrame, timestamp,
+				submapOriginsPub_);
+	}
 	if (submapsPub_.getNumSubscribers() > 0) {
 		open3d::geometry::PointCloud cloud;
 		o3d_slam::assembleColoredPointCloud(mapper_->getSubmaps(), &cloud);

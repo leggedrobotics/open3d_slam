@@ -63,6 +63,7 @@ private:
 	ros::Publisher scan2scanTransformPublisher_, scan2scanOdomPublisher_, scan2mapTransformPublisher_, scan2mapOdomPublisher_, scan2mapOdomPriorPublisher_, lidarPoseInMapPublisher_;
 	ros::ServiceServer saveMapSrv_, saveSubmapsSrv_;
 	bool isVisualizationFirstTime_ = true;
+	bool isVisualizeAssembledMap_ = true;
 	std::thread tfWorker_, visualizationWorker_, odomPublisherWorker_;
 	Time prevPublishedTimeScanToScan_, prevPublishedTimeScanToMap_;
   Time prevPublishedTimeScanToScanOdom_, prevPublishedTimeScanToMapOdom_;
