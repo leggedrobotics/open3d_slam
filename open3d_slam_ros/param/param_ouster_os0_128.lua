@@ -4,7 +4,7 @@ include "default/default_parameters.lua"
 params = deepcopy(DEFAULT_PARAMETERS)
 
 --ODOMETRY
-params.odometry.scan_processing.voxel_size = 0.02
+params.odometry.scan_processing.voxel_size = 0.01
 params.odometry.scan_processing.downsampling_ratio = 0.5
 
 --MAPPER_LOCALIZER
@@ -31,7 +31,7 @@ params.submap.submap_size = 20.0 --meters
 
 
 --MAP_BUILDER
-params.map_builder.map_voxel_size = 0.02
+params.map_builder.map_voxel_size = 0.01
 params.map_builder.scan_cropping.cropping_radius_max = 15.0
 params.map_builder.space_carving.carve_space_every_n_scans = 10
 params.map_builder.space_carving.truncation_distance = 0.2

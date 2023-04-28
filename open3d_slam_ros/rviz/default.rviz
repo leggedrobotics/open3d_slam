@@ -11,6 +11,7 @@ Panels:
         - /PointCloud22
         - /Axes1
         - /InteractiveMarkers1
+        - /RobotModel1
       Splitter Ratio: 0.5
     Tree Height: 772
   - Class: rviz/Selection
@@ -92,7 +93,7 @@ Visualization Manager:
       Size (Pixels): 2
       Size (m): 0.009999999776482582
       Style: Points
-      Topic: /mapping_node/raw_cloud
+      Topic: /o3d_wrapper/assembled_map
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -102,15 +103,139 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
+        BASE:
+          Value: true
+        BASE_inertia:
+          Value: true
+        BOOM:
+          Value: true
+        CABIN:
+          Value: true
+        DIPPER:
+          Value: true
+        ENDEFFECTOR:
+          Value: true
+        ENDEFFECTOR_CONTACT:
+          Value: true
+        GNSS_L:
+          Value: true
+        GNSS_R:
+          Value: true
+        IMU_CABIN_base_link:
+          Value: true
+        IMU_CABIN_link:
+          Value: true
+        IMU_base_link:
+          Value: true
+        IMU_link:
+          Value: true
+        LF_BEAM:
+          Value: true
+        LF_BEARING:
+          Value: true
+        LF_KNUCKLE:
+          Value: true
+        LF_PARALLEL:
+          Value: true
+        LF_SWIVEL:
+          Value: true
+        LF_WHEEL:
+          Value: true
+        LF_WHEEL_CONTACT:
+          Value: true
+        LH_BEAM:
+          Value: true
+        LH_KNUCKLE:
+          Value: true
+        LH_OUTRIGGER:
+          Value: true
+        LH_ROTATOR:
+          Value: true
+        LH_WHEEL:
+          Value: true
+        LH_WHEEL_CONTACT:
+          Value: true
+        RF_BEAM:
+          Value: true
+        RF_BEARING:
+          Value: true
+        RF_KNUCKLE:
+          Value: true
+        RF_PARALLEL:
+          Value: true
+        RF_SWIVEL:
+          Value: true
+        RF_WHEEL:
+          Value: true
+        RF_WHEEL_CONTACT:
+          Value: true
+        RH_BEAM:
+          Value: true
+        RH_KNUCKLE:
+          Value: true
+        RH_OUTRIGGER:
+          Value: true
+        RH_ROTATOR:
+          Value: true
+        RH_WHEEL:
+          Value: true
+        RH_WHEEL_CONTACT:
+          Value: true
+        ROTO:
+          Value: true
+        ROTO_BASE:
+          Value: true
+        SHOVEL:
+          Value: true
+        TELE:
+          Value: true
+        camMainView:
+          Value: true
+        compslam_lio/aft_mapped:
+          Value: true
+        compslam_lio/aft_mapped_to_init_CORRECTED:
+          Value: true
+        compslam_lio/camera:
+          Value: true
+        compslam_lio/camera_CORRECTED:
+          Value: true
+        compslam_lio/camera_init:
+          Value: true
+        compslam_lio/camera_init_CORRECTED:
+          Value: true
+        compslam_lio/camera_init_GRAVITY_ALIGNED:
+          Value: true
+        compslam_lio/laser_odom:
+          Value: true
+        compslam_lio/laser_odom_CORRECTED:
+          Value: true
+        imu_box_base_link:
+          Value: true
+        imu_box_link:
+          Value: true
+        livox_frame:
+          Value: true
+        map:
+          Value: true
         map_o3d:
           Value: true
+        odom:
+          Value: true
         odom_o3d:
+          Value: true
+        os_imu:
+          Value: true
+        os_lidar:
+          Value: true
+        os_sensor:
           Value: true
         range_sensor_o3d:
           Value: true
         raw_odom_o3d:
           Value: true
         raw_rs_o3d:
+          Value: true
+        roof_top_box:
           Value: true
       Marker Alpha: 1
       Marker Scale: 1
@@ -119,21 +244,100 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        map_o3d:
-          odom_o3d:
-            range_sensor_o3d:
+        map:
+          compslam_lio/camera_init_CORRECTED:
+            compslam_lio/aft_mapped_to_init_CORRECTED:
               {}
-          raw_odom_o3d:
-            {}
-          raw_rs_o3d:
-            {}
+            compslam_lio/camera_CORRECTED:
+              {}
+            compslam_lio/camera_init:
+              compslam_lio/aft_mapped:
+                {}
+              compslam_lio/camera:
+                {}
+              compslam_lio/laser_odom:
+                {}
+            compslam_lio/camera_init_GRAVITY_ALIGNED:
+              {}
+            compslam_lio/laser_odom_CORRECTED:
+              {}
+          odom:
+            BASE:
+              BASE_inertia:
+                {}
+              CABIN:
+                BOOM:
+                  DIPPER:
+                    TELE:
+                      ROTO_BASE:
+                        ROTO:
+                          ENDEFFECTOR:
+                            SHOVEL:
+                              ENDEFFECTOR_CONTACT:
+                                {}
+                GNSS_L:
+                  {}
+                GNSS_R:
+                  {}
+                IMU_CABIN_base_link:
+                  IMU_CABIN_link:
+                    {}
+                camMainView:
+                  livox_frame:
+                    {}
+                  os_sensor:
+                    os_imu:
+                      {}
+                    os_lidar:
+                      {}
+                  roof_top_box:
+                    imu_box_base_link:
+                      imu_box_link:
+                        {}
+              IMU_base_link:
+                IMU_link:
+                  {}
+              LF_SWIVEL:
+                LF_BEAM:
+                  LF_BEARING:
+                    LF_KNUCKLE:
+                      LF_WHEEL:
+                        LF_WHEEL_CONTACT:
+                          {}
+                LF_PARALLEL:
+                  {}
+              LH_ROTATOR:
+                LH_BEAM:
+                  LH_KNUCKLE:
+                    LH_OUTRIGGER:
+                      {}
+                    LH_WHEEL:
+                      LH_WHEEL_CONTACT:
+                        {}
+              RF_SWIVEL:
+                RF_BEAM:
+                  RF_BEARING:
+                    RF_KNUCKLE:
+                      RF_WHEEL:
+                        RF_WHEEL_CONTACT:
+                          {}
+                RF_PARALLEL:
+                  {}
+              RH_ROTATOR:
+                RH_BEAM:
+                  RH_KNUCKLE:
+                    RH_OUTRIGGER:
+                      {}
+                    RH_WHEEL:
+                      RH_WHEEL_CONTACT:
+                        {}
       Update Interval: 0
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 7.695680141448975
-        Min Value: -1.3617147207260132
+        Max Value: 7.278046131134033
+        Min Value: -4.940916061401367
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -218,8 +422,7 @@ Visualization Manager:
       Marker Topic: /mapping_node/submap_origins
       Name: MarkerArray
       Namespaces:
-        submap_0: true
-        submap_id_0: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -256,11 +459,269 @@ Visualization Manager:
       Show Visual Aids: false
       Update Topic: /initialization_pose/update
       Value: false
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        BASE:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        BASE_inertia:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        BOOM:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        CABIN:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        DIPPER:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ENDEFFECTOR:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ENDEFFECTOR_CONTACT:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        GNSS_L:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        GNSS_R:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        IMU_CABIN_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        IMU_CABIN_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        IMU_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        IMU_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        LF_BEAM:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LF_BEARING:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LF_KNUCKLE:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LF_PARALLEL:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LF_SWIVEL:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LF_WHEEL:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LF_WHEEL_CONTACT:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        LH_BEAM:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LH_KNUCKLE:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LH_OUTRIGGER:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LH_ROTATOR:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LH_WHEEL:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LH_WHEEL_CONTACT:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        Link Tree Style: Links in Alphabetic Order
+        RF_BEAM:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RF_BEARING:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RF_KNUCKLE:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RF_PARALLEL:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RF_SWIVEL:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RF_WHEEL:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RF_WHEEL_CONTACT:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        RH_BEAM:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RH_KNUCKLE:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RH_OUTRIGGER:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RH_ROTATOR:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RH_WHEEL:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RH_WHEEL_CONTACT:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ROTO:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ROTO_BASE:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        SHOVEL:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        TELE:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        camMainView:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        imu_box_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        imu_box_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        livox_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        os_imu:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        os_lidar:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        os_sensor:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roof_top_box:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Name: RobotModel
+      Robot Description: romo_mm_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: map_o3d
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -284,7 +745,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 27.31747817993164
+      Distance: 42.984580993652344
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -300,9 +761,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.4047958850860596
+      Pitch: 0.8947963714599609
       Target Frame: <Fixed Frame>
-      Yaw: 2.3832569122314453
+      Yaw: 5.006426811218262
     Saved: ~
 Window Geometry:
   Displays:
@@ -320,5 +781,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1920
-  X: 0
-  Y: 0
+  X: 72
+  Y: 27
