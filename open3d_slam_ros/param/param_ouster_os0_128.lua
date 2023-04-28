@@ -37,7 +37,7 @@ params.map_builder.space_carving.carve_space_every_n_scans = 10
 params.map_builder.space_carving.truncation_distance = 0.2
 
 --DENSE_MAP_BUILDER
-params.dense_map_builder.map_voxel_size = 0.02
+params.dense_map_builder.map_voxel_size = 0.01
 params.dense_map_builder.scan_cropping.cropping_radius_max = 15.0
 params.dense_map_builder.space_carving.carve_space_every_n_scans = 10
 params.dense_map_builder.space_carving.truncation_distance = 0.2
