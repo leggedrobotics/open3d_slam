@@ -6,10 +6,12 @@
  */
 
 #include "open3d_slam_ros/DataProcessorRos.hpp"
+#include "open3d_conversions/open3d_conversions.h"
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include "open3d_slam/magic.hpp"
 #include "open3d_slam/typedefs.hpp"
+#include "open3d_slam_ros/helpers_ros.hpp"
 
 namespace o3d_slam {
 
@@ -21,10 +23,6 @@ void DataProcessorRos::initCommonRosStuff() {
   rawCloudPub_ = nh_->advertise<sensor_msgs::PointCloud2>("raw_cloud", 1, true);
   numAccumulatedRangeDataDesired_ = nh_->param<int>("num_accumulated_range_data", 1);
   std::cout << "Num accumulated range data: " << numAccumulatedRangeDataDesired_ << std::endl;
-}
-
-void DataProcessorRos::processMeasurement(const PointCloud& cloud, const Time& timestamp) {
-  std::cout << "Warning you have not implemented processMeasurement!!! \n";
 }
 
 std::shared_ptr<SlamWrapper> DataProcessorRos::getSlamPtr() {
@@ -56,6 +54,13 @@ void DataProcessorRos::accumulateAndProcessRangeData(const PointCloud& cloud, co
 
   numAccumulatedRangeDataCount_ = 0;
   accumulatedCloud_.Clear();
+}
+
+void DataProcessorRos::cloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg) {
+  open3d::geometry::PointCloud cloud;
+  open3d_conversions::rosToOpen3d(msg, cloud, false);
+  const Time timestamp = fromRos(msg->header.stamp);
+  accumulateAndProcessRangeData(cloud, timestamp);
 }
 
 }  // namespace o3d_slam

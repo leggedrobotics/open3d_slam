@@ -27,10 +27,10 @@ class OnlineRangeDataProcessorRos : public DataProcessorRos {
   void startProcessing() override;
   void processMeasurement(const PointCloud& cloud, const Time& timestamp) override;
 
- private:
-  void cloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg);
-
   ros::Subscriber cloudSubscriber_;
+
+ private:
+  void cloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg) override;
 };
 
 }  // namespace o3d_slam

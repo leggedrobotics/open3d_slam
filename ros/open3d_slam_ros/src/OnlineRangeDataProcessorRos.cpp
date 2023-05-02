@@ -7,8 +7,6 @@
 
 #include "open3d_slam_ros/OnlineRangeDataProcessorRos.hpp"
 #include <ros/ros.h>
-#include <sensor_msgs/PointCloud2.h>
-#include "open3d_conversions/open3d_conversions.h"
 #include "open3d_slam/frames.hpp"
 #include "open3d_slam/time.hpp"
 #include "open3d_slam_ros/SlamWrapperRos.hpp"
@@ -36,10 +34,7 @@ void OnlineRangeDataProcessorRos::processMeasurement(const PointCloud& cloud, co
 }
 
 void OnlineRangeDataProcessorRos::cloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg) {
-  open3d::geometry::PointCloud cloud;
-  open3d_conversions::rosToOpen3d(msg, cloud, false);
-  const Time timestamp = fromRos(msg->header.stamp);
-  accumulateAndProcessRangeData(cloud, timestamp);
+  DataProcessorRos::cloudCallback(msg);
 }
 
 }  // namespace o3d_slam

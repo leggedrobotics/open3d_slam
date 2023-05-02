@@ -29,7 +29,6 @@ class RosbagRangeDataProcessorRos : public DataProcessorRos {
   void processMeasurement(const PointCloud& cloud, const Time& timestamp) override;
 
  private:
-  void cloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg);
   void readRosbag(const rosbag::Bag& bag);
 
   std::string rosbagFilename_;

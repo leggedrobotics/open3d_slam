@@ -6,11 +6,9 @@
  */
 
 #include "open3d_slam_ros/RosbagRangeDataProcessorRos.hpp"
-#include "open3d_conversions/open3d_conversions.h"
 #include "open3d_slam_ros/SlamWrapperRos.hpp"
 
 #include <ros/ros.h>
-#include <sensor_msgs/PointCloud2.h>
 
 #include <rosbag/view.h>
 #include "open3d_slam/frames.hpp"
@@ -122,13 +120,6 @@ void RosbagRangeDataProcessorRos::readRosbag(const rosbag::Bag& bag) {
   slam_->finishProcessing();
   isProcessingFinished = true;
   rosSpinner.join();
-}
-
-void RosbagRangeDataProcessorRos::cloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg) {
-  open3d::geometry::PointCloud cloud;
-  open3d_conversions::rosToOpen3d(msg, cloud, false);
-  const Time timestamp = fromRos(msg->header.stamp);
-  accumulateAndProcessRangeData(cloud, timestamp);
 }
 
 }  // namespace o3d_slam
