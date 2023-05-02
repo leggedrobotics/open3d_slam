@@ -1,0 +1,27 @@
+use_helper_frame:                               false
+generate_depth_images:                          false
+generate_overlaid_images:                       false
+image_frame_cache_size:                         100
+fixed_frame:                                    "odom"
+num_of_supported_cameras:                       1
+input_point_cloud_topic:                        "/lidar/point_cloud"
+output_point_cloud_topic:                       "/colorized_point_cloud"
+subscribers:
+  color_image_1:
+    topic:                                      /wide_angle_camera_front/image_raw/compressed  #/alphasense_driver_ros/cam4/image_raw #/alphasense_driver_ros/cam4/dropped/debayered/slow
+    camera_info_topic:                          /wide_angle_camera_front/camera_info #/alphasense_driver_ros/cam4/camera_info #/cam4_sensor_frame/cameraInfo
+  color_image_2:
+    topic:                                      /alphasense_driver_ros/cam4/dropped/debayered/slow  #/alphasense_driver_ros/cam4/image_raw #/alphasense_driver_ros/cam4/dropped/debayered/slow
+    camera_info_topic:                          /camera_utils/alphasense_cam4/cameraInfo #/alphasense_driver_ros/cam4/camera_info #/cam4_sensor_frame/cameraInfo
+  color_image_3:
+    topic:                                      /alphasense_driver_ros/cam5/dropped/debayered/slow  #/alphasense_driver_ros/cam4/image_raw #/alphasense_driver_ros/cam4/dropped/debayered/slow
+    camera_info_topic:                          /camera_utils/alphasense_cam5/cameraInfo #/cam4_sensor_frame/cameraInfo
+
+visualization:
+  max_colorization_depth:                       40.0
+  bloat_factor:                                 1
+
+time:
+  allowed_camera_point_cloud_time_diff:         0.5                                  # Allowed time difference between point cloud and camera to sync.
+  allowed_camera_info_find_time:                3                                    # Wait time for camera information matrix. Per camera.
+  allowed_tf_find_time:                         0.1                                  # TF timeout.

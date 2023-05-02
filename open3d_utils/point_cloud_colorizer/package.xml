@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+
+<package format="2">
+  <name>point_cloud_colorizer</name>
+  <version>0.0.1</version>
+  <description>The backend implemantation for point cloud colorization.</description>
+
+  <author email="tutuna@leggedrobotics.com">Turcan Tuna</author>
+  <maintainer email="tutuna@leggedrobotics.com">Turcan Tuna</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>cmake_clang_tools</build_depend>
+  
+  <depend>libopencv-dev</depend>
+  <depend>eigen</depend>
+  <depend>geometry_msgs</depend>
+  <depend>pcl_conversions</depend>
+  <depend>pcl_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>message_logger</depend>
+
+  <test_depend>cmake_code_coverage</test_depend>
+  <test_depend>gtest</test_depend>
+
+</package>

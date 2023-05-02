@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>point_cloud_colorizer_ros</name>
+  <version>0.0.1</version>
+  <description>The point cloud colorization ros utility package</description>
+
+  <author email="tutuna@leggedrobotics.com">Turcan Tuna</author>
+  <maintainer email="tutuna@leggedrobotics.com">Turcan Tuna</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>cmake_clang_tools</build_depend>
+
+  <depend>cv_bridge</depend>
+  <depend>image_transport</depend>
+  <depend>message_filters</depend>
+  <depend>message_logger</depend>
+  <depend>point_cloud_colorizer</depend>
+  <depend>roscpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>pcl_conversions</depend>
+  <depend>pcl_ros</depend>
+
+  <test_depend>cmake_code_coverage</test_depend>
+  <test_depend>gtest</test_depend>
+
+</package>
+
+
+

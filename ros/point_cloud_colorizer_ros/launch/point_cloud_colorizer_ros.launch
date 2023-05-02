@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+
+  <!-- Parameters -->
+  <arg name="default_param_file" value="$(find point_cloud_colorizer_ros)/config/parameters_dodo.yaml"/>
+  <param name="use_sim_time" value="true" />
+
+  <node name = "point_cloud_colorizer_ros" pkg = "point_cloud_colorizer_ros"  type = "point_cloud_colorizer_ros_node" output  = "screen">
+    <rosparam command="load" file="$(arg default_param_file)"/>
+  </node>
+
+  <!-- Launch Camera Utilization Publisher (Remove on the robot) 
+  <node pkg="camera_utils" type="camera_utils_node" name="camera_utils" output="screen">
+    <rosparam command="load" file="$(find camera_utils)/config/parameters.yaml"/>
+    <param name="camera_calibration_url_3" value="file://$(find camera_utils)/config/cam3.yaml" />
+    <param name="camera_calibration_url_4" value="file://$(find camera_utils)/config/cam4.yaml" />
+    <param name="camera_calibration_url_5" value="file://$(find camera_utils)/config/cam5.yaml" />
+  </node>
+  -->
+</launch>
