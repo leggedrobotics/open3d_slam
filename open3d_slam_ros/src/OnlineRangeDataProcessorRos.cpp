@@ -33,8 +33,6 @@ void OnlineRangeDataProcessorRos::initialize() {
 	trajectoryAlignmentHandlerPtr_ = std::make_shared<o3d_slam::TrajectoryAlignmentHandler>();
 	trajectoryAlignmentHandlerPtr_->initHandler();
 
-	slam_->params_.odometry_.priorTopicName_
-	
 }
 
 void OnlineRangeDataProcessorRos::startProcessing() {
