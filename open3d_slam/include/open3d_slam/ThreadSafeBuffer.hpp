@@ -7,59 +7,46 @@
 
 #pragma once
 #include <iostream>
-#include <vector>
 #include <mutex>
+#include <vector>
 
 namespace o3d_slam {
 
-
-
-template<typename T>
+template <typename T>
 class ThreadSafeBuffer {
+ public:
+  void push(const T& val) {
+    std::lock_guard<std::mutex> lck(modifierMutex_);
+    data_.push_back(val);
+  }
 
-public:
-	void push(const T &val) {
-		std::lock_guard<std::mutex> lck(modifierMutex_);
-		data_.push_back(val);
-	}
+  template <typename InputIt>
+  void insert(InputIt first, InputIt last) {
+    std::lock_guard<std::mutex> lck(modifierMutex_);
+    data_.insert(data_.end(), first, last);
+  }
 
-	template <typename InputIt>
-	void insert(InputIt first, InputIt last) {
-		std::lock_guard<std::mutex> lck(modifierMutex_);
-		data_.insert(data_.end(),first, last);
-	}
+  const std::vector<T>& peek() const { return data_; }
 
-	const std::vector<T> &peek () const {
-		return data_;
-	}
+  void clear() {
+    std::lock_guard<std::mutex> lck(modifierMutex_);
+    data_.clear();
+  }
 
-	void clear() {
-		std::lock_guard<std::mutex> lck(modifierMutex_);
-		data_.clear();
-	}
+  const std::vector<T> popAllElements() {
+    std::lock_guard<std::mutex> lck(modifierMutex_);
+    auto copy = data_;
+    data_.clear();
+    return copy;
+  }
 
-	const std::vector<T> popAllElements() {
-		std::lock_guard<std::mutex> lck(modifierMutex_);
-		auto copy = data_;
-		data_.clear();
-		return copy;
-	}
+  bool empty() const { return data_.empty(); }
 
-	bool empty() const {
-		return data_.empty();
-	}
+  size_t size() const { return data_.size(); }
 
-	size_t size() const {
-		return data_.size();
-	}
-
-
-private:
-	std::vector<T> data_;
-	std::mutex modifierMutex_;
+ private:
+  std::vector<T> data_;
+  std::mutex modifierMutex_;
 };
 
-
-} //namespace o3d_slam
-
-
+}  // namespace o3d_slam

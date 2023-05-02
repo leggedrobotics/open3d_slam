@@ -6,12 +6,11 @@
  */
 #pragma once
 
-#include <cstdint>
-#include <Eigen/Core>
 #include <open3d/geometry/PointCloud.h>
+#include <Eigen/Core>
+#include <cstdint>
 
 namespace o3d_slam {
-
 
 using int8 = int8_t;
 using int16 = int16_t;
@@ -25,4 +24,4 @@ using Matrix6d = Eigen::Matrix<double, 6, 6>;
 using PointCloud = open3d::geometry::PointCloud;
 using PointCloudPtr = std::shared_ptr<PointCloud>;
 
-} //namespace o3d_slam
+}  // namespace o3d_slam

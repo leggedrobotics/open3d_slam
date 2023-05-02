@@ -15,7 +15,7 @@ set(SRC_FILES
   src/DataProcessorRos.cpp
   src/RosbagRangeDataProcessorRos.cpp
   src/Color.cpp
-)
+  )
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   roscpp
@@ -29,27 +29,27 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   rosbag
   interactive_markers
   open3d_slam_lua_io
-)
+  )
 
 find_package(Eigen3 REQUIRED)
 find_package(OpenMP QUIET)
 if (OpenMP_FOUND)
   add_compile_options("${OpenMP_CXX_FLAGS}")
   add_definitions(-Dopen3d_slam_ros_OPENMP_FOUND=${OpenMP_FOUND})
-endif()
+endif ()
 find_package(catkin REQUIRED COMPONENTS
   ${CATKIN_PACKAGE_DEPENDENCIES}
-)
+  )
 
 catkin_package(
   INCLUDE_DIRS
-    include  
+  include
   LIBRARIES
-    yaml-cpp
-    ${PROJECT_NAME} 
+  yaml-cpp
+  ${PROJECT_NAME}
   CATKIN_DEPENDS
-    ${CATKIN_PACKAGE_DEPENDENCIES}
-  DEPENDS 
+  ${CATKIN_PACKAGE_DEPENDENCIES}
+  DEPENDS
 )
 
 include_directories(
@@ -62,33 +62,33 @@ include_directories(
 
 add_library(${PROJECT_NAME}
   ${SRC_FILES}
-)
+  )
 
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
-)
+  )
 
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   yaml-cpp
   ${OpenMP_CXX_LIBRARIES}
-)
+  )
 
 
 add_executable(mapping_node
   src/mapping_node.cpp)
 target_link_libraries(mapping_node
-    ${catkin_LIBRARIES}
-    ${PROJECT_NAME}
-)
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+  )
 
 add_executable(adjacency_graph_example_node
   src/adjacency_graph_example_node.cpp
-)
+  )
 
 target_link_libraries(adjacency_graph_example_node
   ${catkin_LIBRARIES}
   ${PROJECT_NAME}
-)
+  )
 
 
