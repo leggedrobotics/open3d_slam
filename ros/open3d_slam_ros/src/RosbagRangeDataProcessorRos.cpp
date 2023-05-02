@@ -41,8 +41,7 @@ void RosbagRangeDataProcessorRos::startProcessing() {
 void RosbagRangeDataProcessorRos::processMeasurement(const PointCloud& cloud, const Time& timestamp) {
   slam_->addRangeScan(cloud, timestamp);
   std::pair<PointCloud, Time> cloudTimePair = slam_->getLatestRegisteredCloudTimestampPair();
-  const bool isCloudEmpty = cloudTimePair.first.IsEmpty();
-  if (isTimeValid(cloudTimePair.second) && !isCloudEmpty) {
+  if (isTimeValid(cloudTimePair.second) && !cloudTimePair.first.IsEmpty()) {
     o3d_slam::publishCloud(cloudTimePair.first, o3d_slam::frames::rangeSensorFrame, toRos(cloudTimePair.second), rawCloudPub_);
   }
 }

@@ -44,12 +44,11 @@ void DataProcessorRos::accumulateAndProcessRangeData(const PointCloud& cloud, co
   if (numAccumulatedRangeDataCount_ < numAccumulatedRangeDataDesired_) {
     return;
   }
-
   if (accumulatedCloud_.IsEmpty()) {
-    std::cout << "Trying to insert and empyt cloud!!! Skipping the measurement \n";
+    std::cout << "Trying to insert an empty cloud!!! Skipping the measurement \n";
     return;
   }
-
+  // Call implementation specific processing
   processMeasurement(accumulatedCloud_, timestamp);
 
   numAccumulatedRangeDataCount_ = 0;

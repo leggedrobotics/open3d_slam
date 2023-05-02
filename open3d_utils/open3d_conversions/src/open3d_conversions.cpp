@@ -62,13 +62,14 @@ void rosToOpen3d(const sensor_msgs::PointCloud2& cloud, open3d::geometry::PointC
   sensor_msgs::PointCloud2ConstIterator<float> ros_pc2_y(*ros_pc2, "y");
   sensor_msgs::PointCloud2ConstIterator<float> ros_pc2_z(*ros_pc2, "z");
   o3d_pc.points_.reserve(ros_pc2->height * ros_pc2->width);
+  // Different cases of point clouds
   if (ros_pc2->fields.size() == 3 || skip_colors == true) {
     for (size_t i = 0; i < ros_pc2->height * ros_pc2->width; ++i, ++ros_pc2_x, ++ros_pc2_y, ++ros_pc2_z) {
       o3d_pc.points_.push_back(Eigen::Vector3d(*ros_pc2_x, *ros_pc2_y, *ros_pc2_z));
     }
   } else {
     o3d_pc.colors_.reserve(ros_pc2->height * ros_pc2->width);
-    if (ros_pc2->fields[3].name == "rgb") {
+    if (ros_pc2->fields[3].name == "rgb" || ros_pc2->fields[3].name == "rgba") {
       sensor_msgs::PointCloud2ConstIterator<uint8_t> ros_pc2_r(*ros_pc2, "r");
       sensor_msgs::PointCloud2ConstIterator<uint8_t> ros_pc2_g(*ros_pc2, "g");
       sensor_msgs::PointCloud2ConstIterator<uint8_t> ros_pc2_b(*ros_pc2, "b");
