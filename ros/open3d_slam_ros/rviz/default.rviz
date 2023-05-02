@@ -3,8 +3,7 @@ Panels:
     Help Height: 138
     Name: Displays
     Property Tree Widget:
-      Expanded:
-        - /TF1/Status1
+      Expanded: ~
       Splitter Ratio: 0.6278260946273804
     Tree Height: 2320
   - Class: rviz/Selection
@@ -620,8 +619,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 4.207404136657715
-        Min Value: -1.1719515323638916
+        Max Value: 3.6069819927215576
+        Min Value: -0.8553570508956909
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -641,6 +640,34 @@ Visualization Manager:
       Size (m): 0.20000000298023224
       Style: Points
       Topic: /mapping_node/assembled_map
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: -9999
+        Min Value: 9999
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 239; 41; 41
+      Color Transformer: AxisColor
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: DenseMap
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.20000000298023224
+      Style: Points
+      Topic: /mapping_node/dense_map
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true

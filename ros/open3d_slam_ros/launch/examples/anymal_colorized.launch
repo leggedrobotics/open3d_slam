@@ -5,7 +5,7 @@
   <!-- Arguments -->
   <arg name="launch_rviz" default="true"/>
   <arg name="cloud_topic" default="/colorized_point_cloud"/>
-  <arg name="parameter_filename" default="param_velodyne_puck16.lua"/>
+  <arg name="parameter_filename" default="param_velodyne_puck16_denseMap.lua"/>
   <arg name="parameter_folder_path" default="$(find open3d_slam_ros)/param/"/>
   <arg name="is_read_from_rosbag" default="false"/>
   <arg name="rosbag_filepath" default=""/>
