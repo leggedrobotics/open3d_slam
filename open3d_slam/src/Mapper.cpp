@@ -51,7 +51,6 @@ bool Mapper::hasProcessedMeasurements() const {
 	return !mapToRangeSensorBuffer_.empty();
 }
 bool Mapper::hasPriorProcessedMeasurements() const {
-	std::cout<<"hasPriorProcessedMeasurements hasPriorProcessedMeasurements hasPriorProcessedMeasurements"<<std::endl;
 	return !mapToRangeSensorPriorBuffer_.empty();
 }
 

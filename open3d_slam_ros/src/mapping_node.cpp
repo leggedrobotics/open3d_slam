@@ -7,6 +7,7 @@
 #include <open3d/Open3D.h>
 #include "open3d_slam_ros/creators.hpp"
 #include "open3d_slam/Parameters.hpp"
+#include "open3d_slam_ros/helpers_ros.hpp"
 #include "open3d_slam_ros/SlamMapInitializer.hpp"
 #include "open3d_slam_lua_io/parameter_loaders.hpp"
 
@@ -14,16 +15,16 @@
 int main(int argc, char **argv) {
 	using namespace o3d_slam;
 
-	ros::init(argc, argv, "lidar_odometry_mapping_node");
+	ros::init(argc, argv, "open3d_slam");
 	ros::NodeHandlePtr nh(new ros::NodeHandle("~"));
 
-	const std::string paramFolderPath = nh->param<std::string>("parameter_folder_path", "");
-	const std::string paramFilename = nh->param<std::string>("parameter_filename", "");
+	const std::string paramFolderPath = o3d_slam::tryGetParam<std::string>("parameter_folder_path", *nh);
+	const std::string paramFilename = o3d_slam::tryGetParam<std::string>("parameter_filename", *nh);
 
 	SlamParameters params;
 	io_lua::loadParameters(paramFolderPath, paramFilename, &params);
 
-	const bool isProcessAsFastAsPossible = nh->param<bool>("is_read_from_rosbag", false);
+	const bool isProcessAsFastAsPossible = o3d_slam::tryGetParam<bool>("is_read_from_rosbag", *nh);
 	std::cout << "Is process as fast as possible: " << std::boolalpha << isProcessAsFastAsPossible << "\n";
 	std::cout << "Is use a map for initialization: " << std::boolalpha << params.mapper_.isUseInitialMap_ << "\n";
 

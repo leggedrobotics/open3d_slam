@@ -28,6 +28,7 @@ OnlineRangeDataProcessorRos::OnlineRangeDataProcessorRos(ros::NodeHandlePtr nh) 
 
 void OnlineRangeDataProcessorRos::initialize() {
 	initCommonRosStuff();
+	std::cout << "\033[33m" << "Ros init done" << "\033[92m" << " Setting up." << "\033[0m" << std::endl;
 	slam_ = std::make_shared<SlamWrapperRos>(nh_);
 	slam_->loadParametersAndInitialize();
 	trajectoryAlignmentHandlerPtr_ = std::make_shared<o3d_slam::TrajectoryAlignmentHandler>();
@@ -249,6 +250,7 @@ void OnlineRangeDataProcessorRos::registeredCloudPublisherCallback(const ros::Ti
 	// Check if the cloud actually arrived and valid.
 	if(!isTimeValid(registeredCloud.raw_.time_)){
 		ROS_WARN_THROTTLE(1, "Invalid time to publish registered cloud. (Throttled to 1 Hz)");
+		//ROS_WARN_THROTTLE(1, "Time: " + toRos(registeredCloud.raw_.time_).toNSec() + " is invalid.");
 		return;
 	}
 
@@ -289,8 +291,8 @@ void OnlineRangeDataProcessorRos::posePublisherTimerCallback(const ros::TimerEve
 	willPublish_ = std::chrono:: high_resolution_clock::now();
 
 
-	std::chrono::duration<double> time_span =  std::chrono::duration_cast< std::chrono::duration<double>>(willPublish_ - pcArriveTime_);
-	std::cout << "Point cloud arrival to enabled publishing: " << time_span.count() * 1e+3 << " ms" << std::endl;
+	//std::chrono::duration<double> time_span =  std::chrono::duration_cast< std::chrono::duration<double>>(willPublish_ - pcArriveTime_);
+	//std::cout << "Point cloud arrival to enabled publishing: " << time_span.count() * 1e+3 << " ms" << std::endl;
 
 	Time latestTransformTime; 
 	Transform mapToRangeSensorTransform;
@@ -357,11 +359,12 @@ void OnlineRangeDataProcessorRos::posePublisherTimerCallback(const ros::TimerEve
 		const Transform odometryMotion = latestOdomToRangeSensorInBuffer_.inverse()*tfQueriedLatestOdometry;
 		
 		// We propagate the map2lidar refined pose. This is no longer the registered pose. Shouldnt be used for point cloud accumulation.
-		Transform consolidatedMapToRangeSensor = mapToRangeSensorTransform * odometryMotion ;
+		//Transform consolidatedMapToRangeSensor = mapToRangeSensorTransform * odometryMotion ;
 
 		// The consolidated mapToOdom calculation. Expected to be more accurate if scan2map registration takes long.
-		Transform mapToOdomConsolidated = consolidatedMapToRangeSensor * tfQueriedLatestOdometry.inverse();
-
+		//Transform mapToOdomConsolidated = consolidatedMapToRangeSensor * tfQueriedLatestOdometry.inverse();
+		
+		/*
 		//std::cout << "Consolidated mapToOdom: " << o3d_slam::asString(mapToOdomConsolidated) << "\n";
 		ros::Duration timeDifference = currentTime - o3d_slam::toRos(latestTransformTime);
 		ROS_INFO_STREAM("Time difference Current Time - latestTransformTime: " << timeDifference.toNSec() * 1e-6 << " ms");
@@ -384,11 +387,13 @@ void OnlineRangeDataProcessorRos::posePublisherTimerCallback(const ros::TimerEve
 		ros::Duration timeDifferenceAfterRegisterDiff =currentTime - rosTimeAtTheTimeOfTheLastCallback_;
 		ROS_INFO_STREAM("Time difference currentTime - rosTimeAtTheTimeOfTheLastCallback_: " << timeDifferenceAfterRegisterDiff.toNSec() * 1e-6 << " ms");
 
+		*/
 		// Difference of above 2
 		//ros::Duration timeDifference2 = o3d_slam::toRos(callbackLatestTimestamp_) - o3d_slam::toRos(latestTransformTime);
 		//ROS_INFO_STREAM("Time difference timeStampOfTheLastArrivedCloud - latestTransformTime " << timeDifference2.toNSec() * 1e-6 << " ms");
 
-		
+		// Comment out consolidated pose publishing for now.
+		/*
 		// Publish the fast but propagated map2odom.  Odom is the parent, map_consolidated is the child.
 		o3d_slam::publishTfTransform(mapToOdomConsolidated.matrix().inverse(), currentTime, o3d_slam::frames::odomFrame, "map_consolidated",
 				tfBroadcaster_.get());
@@ -414,6 +419,7 @@ void OnlineRangeDataProcessorRos::posePublisherTimerCallback(const ros::TimerEve
 
 		consolidatedLiDARpathInMap.poses.push_back(poseStamped);
 		consolidatedLidarPoseInMapPathPublisher_.publish(consolidatedLiDARpathInMap);
+		*/
 
 	}else{
 		ROS_WARN("TF did not provide prior. Tf based transforms not published.");
@@ -470,8 +476,8 @@ void OnlineRangeDataProcessorRos::cloudCallback(const sensor_msgs::PointCloud2Co
 		return;
 	}
 
-	ros::Duration timeDifferenceAfterRegister = ros::Time::now() - msg->header.stamp;
-	ROS_INFO_STREAM("Time difference Current time - pcArrivalStamp: " << timeDifferenceAfterRegister.toNSec() * 1e-6 << " ms");
+	//ros::Duration timeDifferenceAfterRegister = ros::Time::now() - msg->header.stamp;
+	//ROS_INFO_STREAM("Time difference Current time - pcArrivalStamp: " << timeDifferenceAfterRegister.toNSec() * 1e-6 << " ms");
 
 	processMeasurement(cloud, timestamp);
 

@@ -432,7 +432,7 @@ void SlamWrapper::mappingWorker() {
 		mapperOnlyTimer_.addMeasurementMsec(timeElapsed);
 		currrentTimeAfterRegistration_ = ros::Time::now();
 		
-		std::cout << "Registration Elapsed Time: " << timeElapsed << " msec \n";
+		//std::cout << "Registration Elapsed Time: " << timeElapsed << " msec \n";
 
 		if (mappingResult) {
 			
@@ -467,9 +467,8 @@ void SlamWrapper::mappingWorker() {
 
 		afterRegistration_ = std::chrono:: high_resolution_clock::now();
 
-		std::chrono::duration<double> time_span =  std::chrono::duration_cast< std::chrono::duration<double>>(afterRegistration_ - beforeRegistration_);
-
-		std::cout << "Total Registration Elapsed Time(HighResClock) " << time_span.count() * 1e+3 << " ms" << std::endl;
+		//std::chrono::duration<double> time_span =  std::chrono::duration_cast< std::chrono::duration<double>>(afterRegistration_ - beforeRegistration_);
+		//std::cout << "Total Registration Elapsed Time(HighResClock) " << time_span.count() * 1e+3 << " ms" << std::endl;
 
 		//mappingStatisticsTimer_.addMeasurementMsec(timeMeasurement);
 		//if (params_.mapper_.isPrintTimingStatistics_ && mappingStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {

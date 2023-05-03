@@ -29,8 +29,7 @@ void RosbagRangeDataProcessorRos::initialize() {
 	initCommonRosStuff();
 	slam_ = std::make_shared<SlamWrapperRos>(nh_);
 	slam_->loadParametersAndInitialize();
-	rosbagFilename_ = nh_->param<std::string>("rosbag_filepath", "");
-				std::cout << "Reading from rosbag: " << rosbagFilename_ << "\n";
+	rosbagFilename_ = o3d_slam::tryGetParam<std::string>("rosbag_filepath", *nh_);
 
 }
 

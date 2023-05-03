@@ -220,11 +220,6 @@ void SlamWrapperRos::tfWorker() {
 		if (!isAlreadyPublished && odometry_->hasProcessedMeasurements()) {
 			const Transform T = odometry_->getOdomToRangeSensor(latestScanToScan);
 			ros::Time timestamp = toRos(latestScanToScan);
-			//if(!params_.odometry_.overwriteWithTf_){
-			//	o3d_slam::publishTfTransform(T.matrix(), timestamp, odomFrame, rangeSensorFrame, tfBroadcaster_.get());
-			//	o3d_slam::publishTfTransform(T.matrix(), timestamp, mapFrame, "raw_odom_o3d", tfBroadcaster_.get());
-			//	prevPublishedTimeScanToScan_ = latestScanToScan;
-			//}
 		}
 
 		const Time latestScanToMap = latestScanToMapRefinementTimestamp_;
@@ -306,18 +301,14 @@ void SlamWrapperRos::loadParametersAndInitialize() {
 
 	lidarPoseInMapPublisher_ = nh_->advertise<geometry_msgs::PoseStamped>("o3d_slam_lidar_pose_in_map", 1, false);
 
-	//	auto &logger = open3d::utility::Logger::GetInstance();
-	//	logger.SetVerbosityLevel(open3d::utility::VerbosityLevel::Debug);
+	//auto &logger = open3d::utility::Logger::GetInstance();
+	//logger.SetVerbosityLevel(open3d::utility::VerbosityLevel::Debug);
+	mapSavingFolderPath_ = o3d_slam::tryGetParam<std::string>("map_saving_folder", *nh_);
 
 	folderPath_ = ros::package::getPath("open3d_slam_ros") + "/data/";
-	mapSavingFolderPath_ = nh_->param<std::string>("map_saving_folder", folderPath_);
+	const std::string paramFolderPath = o3d_slam::tryGetParam<std::string>("parameter_folder_path", *nh_);
+	const std::string paramFilename = o3d_slam::tryGetParam<std::string>("parameter_filename", *nh_);
 
-//	const std::string paramFile = nh_->param<std::string>("parameter_file_path", "");
-//	setParameterFilePath(paramFile);
-//	io_yaml::loadParameters(paramFile, &params_);
-//
-	const std::string paramFolderPath = nh_->param<std::string>("parameter_folder_path", "");
-	const std::string paramFilename = nh_->param<std::string>("parameter_filename", "");
 	SlamParameters params;
 	io_lua::loadParameters(paramFolderPath, paramFilename, &params_);
 
