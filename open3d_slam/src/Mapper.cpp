@@ -155,7 +155,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		// Compare the rotation angle. If the rotation is too much, dont use the tf based odometry.
 		isOdomOkay = isOdomOkay && (std::abs(angleAxis.angle()) < params_.maxMotionRotationGuessFitness_);
 	}else{
-		std::cerr << "\n\n !!!!! TF based odometry is not avaiable or bad. !!!! \n\n";
+		//std::cerr << "\n\n !!!!! TF based odometry is not avaiable or bad. !!!! \n\n";
 	}
 
 	if (params_.compensateWithScanToScanIfNecessary_)
@@ -167,7 +167,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 			const Transform odomToRangeSensorPrev = getTransform(lastMeasurementTimestamp_, scan2scanOdomToRangeSensorBuffer_);
 			odometryMotion = odomToRangeSensorPrev.inverse()*odomToRangeSensor;
 
-			std::cerr << "\n\n !!!!! Using scan2scan based odometry as a complementary measure. !!!! \n\n";
+			//std::cerr << "\n\n !!!!! Using scan2scan based odometry as a complementary measure. !!!! \n\n";
 		}
 	}
 
