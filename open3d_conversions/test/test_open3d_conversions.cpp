@@ -28,11 +28,9 @@
 // Boost
 #include <boost/make_shared.hpp>
 
-TEST(ConversionFunctions, open3dToRos_uncolored)
-{
+TEST(ConversionFunctions, open3dToRos_uncolored) {
   open3d::geometry::PointCloud o3d_pc;
-  for (int i = 0; i < 5; ++i)
-  {
+  for (int i = 0; i < 5; ++i) {
     o3d_pc.points_.push_back(Eigen::Vector3d(0.5 * i, i * i, 10.5 * i));
   }
   sensor_msgs::PointCloud2 ros_pc2;
@@ -41,8 +39,7 @@ TEST(ConversionFunctions, open3dToRos_uncolored)
   sensor_msgs::PointCloud2Iterator<float> ros_pc2_x(ros_pc2, "x");
   sensor_msgs::PointCloud2Iterator<float> ros_pc2_y(ros_pc2, "y");
   sensor_msgs::PointCloud2Iterator<float> ros_pc2_z(ros_pc2, "z");
-  for (int i = 0; i < 5; i++, ++ros_pc2_x, ++ros_pc2_y, ++ros_pc2_z)
-  {
+  for (int i = 0; i < 5; i++, ++ros_pc2_x, ++ros_pc2_y, ++ros_pc2_z) {
     const Eigen::Vector3d& point = o3d_pc.points_[i];
     EXPECT_EQ(*ros_pc2_x, 0.5 * i);
     EXPECT_EQ(*ros_pc2_y, i * i);
@@ -50,11 +47,9 @@ TEST(ConversionFunctions, open3dToRos_uncolored)
   }
 }
 
-TEST(ConversionFunctions, open3dToRos_colored)
-{
+TEST(ConversionFunctions, open3dToRos_colored) {
   open3d::geometry::PointCloud o3d_pc;
-  for (int i = 0; i < 5; ++i)
-  {
+  for (int i = 0; i < 5; ++i) {
     o3d_pc.points_.push_back(Eigen::Vector3d(0.5 * i, i * i, 10.5 * i));
     o3d_pc.colors_.push_back(Eigen::Vector3d(2 * i / 255.0, 5 * i / 255.0, 10 * i / 255.0));
   }
@@ -67,8 +62,7 @@ TEST(ConversionFunctions, open3dToRos_colored)
   sensor_msgs::PointCloud2Iterator<uint8_t> ros_pc2_r(ros_pc2, "r");
   sensor_msgs::PointCloud2Iterator<uint8_t> ros_pc2_g(ros_pc2, "g");
   sensor_msgs::PointCloud2Iterator<uint8_t> ros_pc2_b(ros_pc2, "b");
-  for (int i = 0; i < 5; i++, ++ros_pc2_x, ++ros_pc2_y, ++ros_pc2_z, ++ros_pc2_r, ++ros_pc2_g, ++ros_pc2_b)
-  {
+  for (int i = 0; i < 5; i++, ++ros_pc2_x, ++ros_pc2_y, ++ros_pc2_z, ++ros_pc2_r, ++ros_pc2_g, ++ros_pc2_b) {
     const Eigen::Vector3d& point = o3d_pc.points_[i];
     EXPECT_EQ(*ros_pc2_x, 0.5 * i);
     EXPECT_EQ(*ros_pc2_y, i * i);
@@ -80,8 +74,7 @@ TEST(ConversionFunctions, open3dToRos_colored)
   }
 }
 
-TEST(ConversionFunctions, rosToOpen3d_uncolored)
-{
+TEST(ConversionFunctions, rosToOpen3d_uncolored) {
   sensor_msgs::PointCloud2 ros_pc2;
   ros_pc2.header.frame_id = "ros";
   ros_pc2.height = 1;
@@ -95,8 +88,7 @@ TEST(ConversionFunctions, rosToOpen3d_uncolored)
   sensor_msgs::PointCloud2Iterator<float> mod_y(ros_pc2, "y");
   sensor_msgs::PointCloud2Iterator<float> mod_z(ros_pc2, "z");
 
-  for (int i = 0; i < 5; ++i, ++mod_x, ++mod_y, ++mod_z)
-  {
+  for (int i = 0; i < 5; ++i, ++mod_x, ++mod_y, ++mod_z) {
     *mod_x = 0.5 * i;
     *mod_y = i * i;
     *mod_z = 10.5 * i;
@@ -107,8 +99,7 @@ TEST(ConversionFunctions, rosToOpen3d_uncolored)
   open3d_conversions::rosToOpen3d(ros_pc2_ptr, o3d_pc);
   EXPECT_EQ(ros_pc2_ptr->height * ros_pc2_ptr->width, o3d_pc.points_.size());
   EXPECT_EQ(o3d_pc.HasColors(), false);
-  for (unsigned int i = 0; i < 5; i++)
-  {
+  for (unsigned int i = 0; i < 5; i++) {
     const Eigen::Vector3d& point = o3d_pc.points_[i];
     EXPECT_EQ(point(0), 0.5 * i);
     EXPECT_EQ(point(1), i * i);
@@ -116,8 +107,7 @@ TEST(ConversionFunctions, rosToOpen3d_uncolored)
   }
 }
 
-TEST(ConversionFunctions, rosToOpen3d_colored)
-{
+TEST(ConversionFunctions, rosToOpen3d_colored) {
   sensor_msgs::PointCloud2 ros_pc2;
   ros_pc2.header.frame_id = "ros";
   ros_pc2.height = 1;
@@ -135,8 +125,7 @@ TEST(ConversionFunctions, rosToOpen3d_colored)
   sensor_msgs::PointCloud2Iterator<uint8_t> mod_g(ros_pc2, "g");
   sensor_msgs::PointCloud2Iterator<uint8_t> mod_b(ros_pc2, "b");
 
-  for (int i = 0; i < 5; ++i, ++mod_x, ++mod_y, ++mod_z, ++mod_r, ++mod_g, ++mod_b)
-  {
+  for (int i = 0; i < 5; ++i, ++mod_x, ++mod_y, ++mod_z, ++mod_r, ++mod_g, ++mod_b) {
     *mod_x = 0.5 * i;
     *mod_y = i * i;
     *mod_z = 10.5 * i;
@@ -150,8 +139,7 @@ TEST(ConversionFunctions, rosToOpen3d_colored)
   open3d_conversions::rosToOpen3d(ros_pc2_ptr, o3d_pc);
   EXPECT_EQ(ros_pc2_ptr->height * ros_pc2_ptr->width, o3d_pc.points_.size());
   EXPECT_EQ(o3d_pc.HasColors(), true);
-  for (unsigned int i = 0; i < 5; i++)
-  {
+  for (unsigned int i = 0; i < 5; i++) {
     const Eigen::Vector3d& point = o3d_pc.points_[i];
     EXPECT_EQ(point(0), 0.5 * i);
     EXPECT_EQ(point(1), i * i);
@@ -163,18 +151,15 @@ TEST(ConversionFunctions, rosToOpen3d_colored)
   }
 }
 
-TEST(ConversionFunctionsTgeometry, open3dToRos_uncolored_tgeometry)
-{
+TEST(ConversionFunctionsTgeometry, open3dToRos_uncolored_tgeometry) {
   open3d::t::geometry::PointCloud o3d_tpc;
   open3d::core::Dtype dtype_f = open3d::core::Dtype::Float32;
   open3d::core::Device device_type(open3d::core::Device::DeviceType::CPU, 0);
   std::vector<Eigen::Vector3d> o3d_vector_points;
-  for (int i = 0; i < 5; ++i)
-  {
+  for (int i = 0; i < 5; ++i) {
     o3d_vector_points.push_back(Eigen::Vector3d(0.5 * i, i * i, 10.5 * i));
   }
-  open3d::core::Tensor o3d_tpc_points =
-    open3d::core::eigen_converter::EigenVector3dVectorToTensor(o3d_vector_points, dtype_f, device_type);
+  open3d::core::Tensor o3d_tpc_points = open3d::core::eigen_converter::EigenVector3dVectorToTensor(o3d_vector_points, dtype_f, device_type);
   o3d_tpc.SetPoints(o3d_tpc_points);
   sensor_msgs::PointCloud2 ros_pc2;
   open3d_conversions::open3dToRos(o3d_tpc, ros_pc2, "o3d_frame", 2, "xyz", "float");
@@ -182,32 +167,27 @@ TEST(ConversionFunctionsTgeometry, open3dToRos_uncolored_tgeometry)
   sensor_msgs::PointCloud2Iterator<float> ros_pc2_x(ros_pc2, "x");
   sensor_msgs::PointCloud2Iterator<float> ros_pc2_y(ros_pc2, "y");
   sensor_msgs::PointCloud2Iterator<float> ros_pc2_z(ros_pc2, "z");
-  for (int i = 0; i < 5; i++, ++ros_pc2_x, ++ros_pc2_y, ++ros_pc2_z)
-  {
+  for (int i = 0; i < 5; i++, ++ros_pc2_x, ++ros_pc2_y, ++ros_pc2_z) {
     EXPECT_EQ(*ros_pc2_x, 0.5 * i);
     EXPECT_EQ(*ros_pc2_y, i * i);
     EXPECT_EQ(*ros_pc2_z, 10.5 * i);
   }
 }
 
-TEST(ConversionFunctionsTgeometry, open3dToRos_colored_tgeometry)
-{
+TEST(ConversionFunctionsTgeometry, open3dToRos_colored_tgeometry) {
   open3d::t::geometry::PointCloud o3d_tpc;
   open3d::core::Dtype dtype_f = open3d::core::Dtype::Float32;
   open3d::core::Device device_type(open3d::core::Device::DeviceType::CPU, 0);
   std::vector<Eigen::Vector3d> o3d_vector_points;
   std::vector<Eigen::Vector3d> o3d_vector_colors;
 
-  for (int i = 0; i < 5; ++i)
-  {
+  for (int i = 0; i < 5; ++i) {
     o3d_vector_points.push_back(Eigen::Vector3d(0.5 * i, i * i, 10.5 * i));
     o3d_vector_colors.push_back(Eigen::Vector3d(2 * i / 255.0, 5 * i / 255.0, 10 * i / 255.0));
   }
-  open3d::core::Tensor o3d_tpc_points =
-    open3d::core::eigen_converter::EigenVector3dVectorToTensor(o3d_vector_points, dtype_f, device_type);
+  open3d::core::Tensor o3d_tpc_points = open3d::core::eigen_converter::EigenVector3dVectorToTensor(o3d_vector_points, dtype_f, device_type);
   o3d_tpc.SetPoints(o3d_tpc_points);
-  open3d::core::Tensor o3d_tpc_colors =
-    open3d::core::eigen_converter::EigenVector3dVectorToTensor(o3d_vector_colors, dtype_f, device_type);
+  open3d::core::Tensor o3d_tpc_colors = open3d::core::eigen_converter::EigenVector3dVectorToTensor(o3d_vector_colors, dtype_f, device_type);
   o3d_tpc.SetPointColors(o3d_tpc_colors);
   sensor_msgs::PointCloud2 ros_pc2;
   open3d_conversions::open3dToRos(o3d_tpc, ros_pc2, "o3d_frame", 4, "xyz", "float", "rgb", "float");
@@ -218,8 +198,7 @@ TEST(ConversionFunctionsTgeometry, open3dToRos_colored_tgeometry)
   sensor_msgs::PointCloud2Iterator<uint8_t> ros_pc2_r(ros_pc2, "r");
   sensor_msgs::PointCloud2Iterator<uint8_t> ros_pc2_g(ros_pc2, "g");
   sensor_msgs::PointCloud2Iterator<uint8_t> ros_pc2_b(ros_pc2, "b");
-  for (int i = 0; i < 5; i++, ++ros_pc2_x, ++ros_pc2_y, ++ros_pc2_z, ++ros_pc2_r, ++ros_pc2_g, ++ros_pc2_b)
-  {
+  for (int i = 0; i < 5; i++, ++ros_pc2_x, ++ros_pc2_y, ++ros_pc2_z, ++ros_pc2_r, ++ros_pc2_g, ++ros_pc2_b) {
     EXPECT_EQ(*ros_pc2_x, 0.5 * i);
     EXPECT_EQ(*ros_pc2_y, i * i);
     EXPECT_EQ(*ros_pc2_z, 10.5 * i);
@@ -230,8 +209,7 @@ TEST(ConversionFunctionsTgeometry, open3dToRos_colored_tgeometry)
   }
 }
 
-TEST(ConversionFunctionsTgeometry, rosToOpen3d_uncolored_tgeometry)
-{
+TEST(ConversionFunctionsTgeometry, rosToOpen3d_uncolored_tgeometry) {
   sensor_msgs::PointCloud2 ros_pc2;
   ros_pc2.header.frame_id = "ros";
   ros_pc2.height = 1;
@@ -245,8 +223,7 @@ TEST(ConversionFunctionsTgeometry, rosToOpen3d_uncolored_tgeometry)
   sensor_msgs::PointCloud2Iterator<float> mod_y(ros_pc2, "y");
   sensor_msgs::PointCloud2Iterator<float> mod_z(ros_pc2, "z");
 
-  for (int i = 0; i < 5; ++i, ++mod_x, ++mod_y, ++mod_z)
-  {
+  for (int i = 0; i < 5; ++i, ++mod_x, ++mod_y, ++mod_z) {
     *mod_x = 0.5 * i;
     *mod_y = i * i;
     *mod_z = 10.5 * i;
@@ -259,16 +236,14 @@ TEST(ConversionFunctionsTgeometry, rosToOpen3d_uncolored_tgeometry)
   EXPECT_EQ(ros_pc2_ptr->height * ros_pc2_ptr->width, o3d_tpc.GetPoints().GetShape()[0]);
   EXPECT_EQ(o3d_tpc.HasPointColors(), false);
   std::vector<Eigen::Vector3d> point = open3d::core::eigen_converter::TensorToEigenVector3dVector(o3d_Tensor);
-  for (unsigned int i = 0; i < 5; i++)
-  {
+  for (unsigned int i = 0; i < 5; i++) {
     EXPECT_EQ(point[i](0), 0.5 * i);
     EXPECT_EQ(point[i](1), i * i);
     EXPECT_EQ(point[i](2), 10.5 * i);
   }
 }
 
-TEST(ConversionFunctionsTgeometry, rosToOpen3d_colored_tgeometry)
-{
+TEST(ConversionFunctionsTgeometry, rosToOpen3d_colored_tgeometry) {
   sensor_msgs::PointCloud2 ros_pc2;
   ros_pc2.header.frame_id = "ros";
   ros_pc2.height = 1;
@@ -286,8 +261,7 @@ TEST(ConversionFunctionsTgeometry, rosToOpen3d_colored_tgeometry)
   sensor_msgs::PointCloud2Iterator<uint8_t> mod_g(ros_pc2, "g");
   sensor_msgs::PointCloud2Iterator<uint8_t> mod_b(ros_pc2, "b");
 
-  for (int i = 0; i < 5; ++i, ++mod_x, ++mod_y, ++mod_z, ++mod_r, ++mod_g, ++mod_b)
-  {
+  for (int i = 0; i < 5; ++i, ++mod_x, ++mod_y, ++mod_z, ++mod_r, ++mod_g, ++mod_b) {
     *mod_x = 0.5 * i;
     *mod_y = i * i;
     *mod_z = 10.5 * i;
@@ -305,8 +279,7 @@ TEST(ConversionFunctionsTgeometry, rosToOpen3d_colored_tgeometry)
   EXPECT_EQ(o3d_tpc.HasPointColors(), true);
   std::vector<Eigen::Vector3d> point = open3d::core::eigen_converter::TensorToEigenVector3dVector(o3d_points);
   std::vector<Eigen::Vector3d> color = open3d::core::eigen_converter::TensorToEigenVector3dVector(o3d_colors);
-  for (unsigned int i = 0; i < 5; i++)
-  {
+  for (unsigned int i = 0; i < 5; i++) {
     EXPECT_EQ(point[i](0), 0.5 * i);
     EXPECT_EQ(point[i](1), i * i);
     EXPECT_EQ(point[i](2), 10.5 * i);
@@ -316,8 +289,7 @@ TEST(ConversionFunctionsTgeometry, rosToOpen3d_colored_tgeometry)
   }
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

@@ -2,7 +2,8 @@
 <package format="2">
   <name>open3d_conversions</name>
   <version>0.0.2</version>
-  <description>Provides conversion functions to and from Open3D datatypes</description>
+  <description>Provides conversion functions to and from Open3D datatypes
+  </description>
 
   <maintainer email="matnay17@gmail.com">Pranay Mathur</maintainer>
   <maintainer email="nkhedekar@nevada.unr.edu">Nikhil Khedekar</maintainer>
@@ -19,5 +20,5 @@
   <depend>eigen</depend>
   <depend>open3d_catkin</depend>
   <depend>open3d_slam_msgs</depend>
-  
+
 </package>

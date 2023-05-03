@@ -5,13 +5,10 @@
  *      Author: jelavice
  */
 
-
 #pragma once
 #include <std_msgs/ColorRGBA.h>
 
-
 namespace o3d_slam {
-
 
 class Color : public std_msgs::ColorRGBA {
  public:
@@ -34,7 +31,7 @@ class Color : public std_msgs::ColorRGBA {
   static const Color Pink() { return Color(1.0, 0.0, 0.5); }
   static const Color Magenta() { return Color(0.78, 0.0, 0.9); }
   static const int numColors_ = 13;
-  static const Color getColor (int colorCode);
+  static const Color getColor(int colorCode);
 };
 
 } /* namespace o3d_slam */
