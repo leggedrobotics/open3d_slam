@@ -19,6 +19,7 @@ int main(int argc, char **argv) {
 
 	const std::string paramFolderPath = nh->param<std::string>("parameter_folder_path", "");
 	const std::string paramFilename = nh->param<std::string>("parameter_filename", "");
+	const std::string mapLoadPath = nh->param<std::string>("pcd_file_path", "");
 
 	SlamParameters params;
 	io_lua::loadParameters(paramFolderPath, paramFilename, &params);
@@ -26,7 +27,13 @@ int main(int argc, char **argv) {
 	const bool isProcessAsFastAsPossible = nh->param<bool>("is_read_from_rosbag", false);
 	std::cout << "Is process as fast as possible: " << std::boolalpha << isProcessAsFastAsPossible << "\n";
 	std::cout << "Is use a map for initialization: " << std::boolalpha << params.mapper_.isUseInitialMap_ << "\n";
-
+	if (!mapLoadPath.empty()) {
+		params.mapper_.mapInit_.pcdFilePath_ = mapLoadPath;
+	}
+	if (params.mapper_.isUseInitialMap_) {
+		std::cout << "Loading Map from: " <<  params.mapper_.mapInit_.pcdFilePath_ << "\n";
+	}
+	
 	std::shared_ptr<DataProcessorRos> dataProcessor = dataProcessorFactory(nh, isProcessAsFastAsPossible);
 	dataProcessor->initialize();
 
