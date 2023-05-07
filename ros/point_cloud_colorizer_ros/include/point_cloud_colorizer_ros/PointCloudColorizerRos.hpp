@@ -20,67 +20,32 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
-// Colorizer backend.
-#include <point_cloud_colorizer/PointCloudColorizer.hpp>
-
 // PCL Types.
 #include <pcl/conversions.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
+
+// Colorizer backend.
+#include "point_cloud_colorizer/PointCloudColorizer.hpp"
+#include "point_cloud_colorizer_ros/Parameters.hpp"
 
 namespace point_cloud_colorizer_ros {
 
 // Backend colorizer.
 using PointCloudColorizer = point_cloud_colorizer::PointCloudColorizer;
 
-struct Parameters {
-  //! Time allowed to find and read camera_info topics. Unit: second.
-  float findCameraInfoTimeOut_{5.0f};
-
-  //! The cache size to hold the front and rear RGB images.
-  unsigned int imgCacheSize_{100u};
-
-  //! Time allowed to find the transformation between input point cloud frame and camera frame.
-  float findTfTimeOut_{1.0f};
-
-  //! The name of the fixed frame.
-  std::string fixedFrame_{"odom"};
-
-  //! Time difference allowed between the timestamps of input point cloud and the latest image.
-  float allowedCameraPointcloudTimeDiff_{0.5f};
-
-  //! Number of supported cameras.
-  unsigned int numOfSupportedCameras_{2u};
-
-  //! Subscribed Point Cloud Topic
-  std::string inputPointCloudTopic_{"/point_cloud_filter/lidar/point_cloud_filtered"};
-
-  //! Output colorized point cloud topic
-  std::string outputPointCloudTopic_{"colorized_point_cloud"};
-};
-
 struct ImageBuffer {
-  ros::Subscriber imageSub_;
+  image_transport::Subscriber imageSub_;
   message_filters::Cache<sensor_msgs::Image> imageCache_;
 };
 
 class PointCloudColorizerRos {
  public:
-  // For ROS transport.
-  using ImageTransport = image_transport::ImageTransport;
-  using ImagePublisher = image_transport::Publisher;
-
-  // Set common PCL types
-  using Point = pcl::PointXYZRGBL;
-  using PointCloud = pcl::PointCloud<Point>;
-  using PointCloudPtr = PointCloud::Ptr;
-  using PointCloudConstPtr = PointCloud::ConstPtr;
-
   //! Explicit constructor
   explicit PointCloudColorizerRos(ros::NodeHandle& nodeHandle);
 
  private:
-  //! Set up the ros publushers
+  //! Set up the ros publishers
   void setUpPublishers();
 
   //! Set up the ros sub
@@ -99,16 +64,16 @@ class PointCloudColorizerRos {
   void readCameraInfoTopics();
 
   //! Multiple image callback.
-  void inputImageCb(const sensor_msgs::ImageConstPtr& image, unsigned int id);
+  void inputImageCallback(const sensor_msgs::ImageConstPtr& image, unsigned int id);
 
   //! Main callback for point cloud
-  void inputPointCloudCb(const sensor_msgs::PointCloud2ConstPtr& lidarCloud);
+  void inputPointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& lidarCloud);
 
-  //! Check the received images and based on their availability find the tranform from lidar to cameras.
+  //! Check the received images and based on their availability find the transform from lidar to cameras.
   void readImageAndTransformation(const std::vector<unsigned int>& availableCameraInfosVec);
 
   //! A logical checker to identify the closest image to the recently arrived.
-  bool syncronizeImage(int id);
+  bool synchronizeImage(int id);
 
   //! Rosnode handle
   ros::NodeHandle nodeHandle_;
@@ -119,9 +84,9 @@ class PointCloudColorizerRos {
 
   //! Publishers.
   ros::Publisher colorCloudPublisher_;
-  ImageTransport imTransport_;
-  std::map<unsigned int, ImagePublisher> imagePublishers_;
-  std::map<unsigned int, ImagePublisher> depthImagePublishers_;
+  image_transport::ImageTransport imTransport_;
+  std::map<unsigned int, image_transport::Publisher> imagePublishers_;
+  std::map<unsigned int, image_transport::Publisher> depthImagePublishers_;
 
   //! Subscribers.
   ros::Subscriber pointCloudSub_;
@@ -135,9 +100,6 @@ class PointCloudColorizerRos {
 
   //! The read camera info counter. To prevent reading again.
   unsigned int readCameraMatrixCounter_{0u};
-
-  //! Use helper frame
-  bool useHelperFrame_{false};
 
   //! Temporary storage of latest point cloud and images.
   sensor_msgs::PointCloud2ConstPtr currentLidarCloud_;

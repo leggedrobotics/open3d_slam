@@ -56,7 +56,7 @@ pcl::PointCloud<pcl::PointXYZRGBL> PointCloudColorizer::colorizePoints(PointClou
   const size_t numOfCameras{cameraIdVec.size()};
   std::vector<Eigen::MatrixXi> pointCloudToImageCoordinate(numOfCameras);
   std::vector<PointCloud> pmCloudInCameraFrame(numOfCameras);
-  unsigned int j = 0;
+  unsigned int numColoredPoints = 0;
 
   // Projection of point cloud as image.
   for (size_t cameraIndex = 0; cameraIndex < numOfCameras; cameraIndex++) {
@@ -79,18 +79,18 @@ pcl::PointCloud<pcl::PointXYZRGBL> PointCloudColorizer::colorizePoints(PointClou
   }
 
   // Iterate over every point in the point cloud and find out if they have a matching pixel in the camera image.
-  for (size_t col = 0; col < pointCloudSize; col++) {
-    for (size_t k = 0; k < numOfCameras; k++) {
+  for (size_t k = 0; k < numOfCameras; k++) {
+    for (size_t pointIndex = 0; pointIndex < pointCloudSize; pointIndex++) {
       // Fetch z of point from point cloud.
-      const float Z = pmCloudInCameraFrame[k].at(col).z;
+      const float Z = pmCloudInCameraFrame[k].at(pointIndex).z;
 
       // Fetch image coordinates of point cloud.
-      const int u = pointCloudToImageCoordinate[k].col(col)[0];
-      const int v = pointCloudToImageCoordinate[k].col(col)[1];
+      const int u = pointCloudToImageCoordinate[k].col(pointIndex)[0];
+      const int v = pointCloudToImageCoordinate[k].col(pointIndex)[1];
 
       // If a map point can be projected into the camera, then assign the corresponding color to this point.
       if (checkDepthValidity(Z, u, v, cameraIdVec[k])) {
-        colorizePoints(pointCloud, col, u, v, j, cameraIdVec[k]);
+        colorizePoints(pointCloud, pointIndex, u, v, cameraIdVec[k]);
 
         if (generateOverlaidImages_) {
           int red = std::min(255, (int)(255 * abs((Z - maxColorizationDepth_) / maxColorizationDepth_)));
@@ -98,22 +98,20 @@ pcl::PointCloud<pcl::PointXYZRGBL> PointCloudColorizer::colorizePoints(PointClou
           cv::circle(cameraParameters_[cameraIdVec[k]].cameraImgWithPointCloudOverlaid_, cv::Point(u, v), bloatFactor_,
                      cv::Scalar(0, green, red), -1);
         }
-
-        ++j;
-        break;
+        ++numColoredPoints;
       }
     }
   }
 
   // Put the colorized points into a container, get rid of the rest.
-  PointCloud pointCloudColored;
+  //  PointCloud pointCloudColored;
+  //
+  //  for (size_t i = 0; i < numColoredPoints; i++) {
+  //    const Point point = pointCloud.at(i);
+  //    pointCloudColored.insert(pointCloudColored.end(), point);
+  //  }
 
-  for (size_t i = 0; i < j; i++) {
-    const Point point = pointCloud.at(i);
-    pointCloudColored.insert(pointCloudColored.end(), point);
-  }
-
-  return pointCloudColored;
+  return pointCloud;
 }
 
 void PointCloudColorizer::transformPointCloudtoCameraFrame(const PointCloud& inputPointCloud, PointCloud& outputPointCloud,
@@ -148,15 +146,15 @@ void PointCloudColorizer::projectPointsToImage(const PointCloud& pointCloud, Eig
   }
 }
 
-void PointCloudColorizer::colorizePoints(PointCloud& pointCloud, int col, int u, int v, unsigned int& j, unsigned int id) {
+void PointCloudColorizer::colorizePoints(PointCloud& pointCloud, const int pointIndex, const int u, const int v,
+                                         const unsigned int cameraId) {
   // Set the color value. Current order is for BGR.
+  cv::Vec3b& pixel = cameraParameters_[cameraId].cvImg_.at<cv::Vec3b>(v, u);
 
-  cv::Vec4b& pixel = cameraParameters_[id].cvImg_.at<cv::Vec4b>(v, u);
-
-  pointCloud.at(col).b = static_cast<int>(pixel[0]);  // PCL does not expect a normalized range. 0-255 is fine;
-  pointCloud.at(col).g = static_cast<int>(pixel[1]);
-  pointCloud.at(col).r = static_cast<int>(pixel[2]);
-  pointCloud.at(col).label = static_cast<int>(pixel[3]);
+  pointCloud.at(pointIndex).b = static_cast<int>(pixel[0]);  // PCL does not expect a normalized range. 0-255 is fine;
+  pointCloud.at(pointIndex).g = static_cast<int>(pixel[1]);
+  pointCloud.at(pointIndex).r = static_cast<int>(pixel[2]);
+  // pointCloud.at(pointIndex).label = static_cast<int>(pixel[3]);
 
   /*
   if (static_cast<int>(pixel[3]) == 1 || (static_cast<int>(pixel[3]) == 2)) {
@@ -189,7 +187,7 @@ void PointCloudColorizer::colorizePoints(PointCloud& pointCloud, int col, int u,
   */
 
   // Re-assign point cloud features and descriptors based on indices.
-  pointCloud.at(j) = pointCloud.at(col);
+  // pointCloud.at(j) = pointCloud.at(col);
 }
 
 bool PointCloudColorizer::checkDepthValidity(const float& Z, const int& u, const int& v, unsigned int id) {

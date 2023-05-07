@@ -50,6 +50,7 @@ link_libraries(${PCL_LIBRARY_DIRS})
 
 add_library(${PROJECT_NAME}
   src/point_cloud_colorizer_ros/PointCloudColorizerRos.cpp
+  src/point_cloud_colorizer_ros/read_params.cpp
 )
 
 add_dependencies(${PROJECT_NAME}

@@ -89,7 +89,7 @@ class PointCloudColorizer {
                             unsigned int id);
 
   //! Get and assign the color information from the image to the point cloud data.
-  void colorizePoints(PointCloud& pointCloud, int col, int u, int v, unsigned int& j, unsigned int id);
+  void colorizePoints(PointCloud& pointCloud, const int pointIndex, const int u, const int v, const unsigned int cameraId);
 
   //! Check whether the transformed point points are on the camera image plane. Expects point image pixel coordinates, the depth and the
   //! camera ID.
