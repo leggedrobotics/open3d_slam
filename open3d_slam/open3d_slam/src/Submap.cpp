@@ -34,6 +34,7 @@ size_t Submap::getParentId() const {
   return parentId_;
 }
 
+// TODO: Unify
 bool Submap::insertScan(const PointCloud& rawScan, const PointCloud& preProcessedScan, const Transform& mapToRangeSensor,
                         bool isPerformCarving) {
   if (preProcessedScan.IsEmpty()) {
@@ -51,11 +52,12 @@ bool Submap::insertScan(const PointCloud& rawScan, const PointCloud& preProcesse
   }
   // Otherwise
   auto transformedCloud = o3d_slam::transform(mapToRangeSensor.matrix(), preProcessedScan);
+  auto transformedScan = o3d_slam::transform(mapToRangeSensor.matrix(), rawScan);
   if (isPerformCarving) {
     carvingStatisticsTimer_.startStopwatch();
     {
       std::lock_guard<std::mutex> lck(mapPointCloudMutex_);
-      carve(rawScan, mapToRangeSensor, *mapBuilderCropper_, params_.mapBuilder_.carving_, &mapCloud_);
+      carve(*transformedScan, mapToRangeSensor.translation(), *mapBuilderCropper_, params_.mapBuilder_.carving_, &mapCloud_);
     }
     const double timeMeasurement = carvingStatisticsTimer_.elapsedMsecSinceStopwatchStart();
     carvingStatisticsTimer_.addMeasurementMsec(timeMeasurement);
@@ -84,7 +86,7 @@ bool Submap::insertScanDenseMap(const PointCloud& rawScan, const Transform& mapT
   }
   if (isPerformCarving) {
     std::lock_guard<std::mutex> lck(denseMapMutex_);
-    carve(rawScan, mapToRangeSensor.translation(), params_.denseMapBuilder_.carving_, &denseMap_);
+    carve(*transformedCloud, mapToRangeSensor.translation(), params_.denseMapBuilder_.carving_, &denseMap_);
   }
   ++nScansInsertedDenseMap_;
   return true;
@@ -105,29 +107,27 @@ void Submap::transform(const Transform& T) {
   submapCenter_ = T * submapCenter_;
 }
 
-void Submap::carve(const PointCloud& rawScan, const Transform& mapToRangeSensor, const CroppingVolume& cropper,
+void Submap::carve(const PointCloud& transformedScan, const Eigen::Vector3d& sensorPosition, const CroppingVolume& cropper,
                    const SpaceCarvingParameters& params, PointCloud* map) {
   if (map->points_.empty() || !(nScansInsertedMap_ % params.carveSpaceEveryNscans_ == 1)) {
     return;
   }
-  //	Timer timer("carving");
-  auto scan = o3d_slam::transform(mapToRangeSensor.matrix(), rawScan);
   //	auto croppedScan = removeDuplicatePointsWithinSameVoxels(*scan, Eigen::Vector3d::Constant(params_.mapBuilder_.mapVoxelSize_));
   const auto wideCroppedIdxs = cropper.getIndicesWithinVolume(*map);
-  auto idxsToRemove = std::move(getIdxsOfCarvedPoints(*scan, *map, mapToRangeSensor.translation(), wideCroppedIdxs, params));
+  auto idxsToRemove = std::move(getIdxsOfCarvedPoints(transformedScan, *map, sensorPosition, wideCroppedIdxs, params));
   toRemove_ = std::move(*(map->SelectByIndex(idxsToRemove)));
-  scanRef_ = std::move(*scan);
+  scanRef_ = std::move(transformedScan);
   //	std::cout << "Would remove: " << idxsToRemove.size() << std::endl;
   removeByIds(idxsToRemove, map);
 }
 
-void Submap::carve(const PointCloud& scan, const Eigen::Vector3d& sensorPosition, const SpaceCarvingParameters& param,
+void Submap::carve(const PointCloud& transformedScan, const Eigen::Vector3d& sensorPosition, const SpaceCarvingParameters& param,
                    VoxelizedPointCloud* cloud) {
   if (cloud->empty() || !(nScansInsertedDenseMap_ % param.carveSpaceEveryNscans_ == 1)) {
     return;
   }
   const PointCloudPtr croppedScanPtr =
-      removeDuplicatePointsWithinSameVoxels(scan, Eigen::Vector3d::Constant(params_.denseMapBuilder_.mapVoxelSize_));
+      removeDuplicatePointsWithinSameVoxels(transformedScan, Eigen::Vector3d::Constant(params_.denseMapBuilder_.mapVoxelSize_));
   std::vector<Eigen::Vector3i> keysToRemove = getKeysOfCarvedPoints(*croppedScanPtr, *cloud, sensorPosition, param);
   for (const auto& k : keysToRemove) {
     cloud->removeKey(k);

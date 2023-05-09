@@ -1,6 +1,6 @@
 use_helper_frame:                               false
 generate_depth_images:                          false
-generate_overlaid_images:                       true
+generate_overlaid_images:                       false
 image_frame_cache_size:                         100
 fixed_frame:                                    "odom"
 num_of_supported_cameras:                       1

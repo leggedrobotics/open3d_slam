@@ -22,7 +22,7 @@ Eigen::Vector3d AggregatedVoxel::getAggregatedNormal() const {
   return numAggregatedPoints_ == 0 ? zero3d : aggregatedNormal_ / numAggregatedPoints_;
 }
 Eigen::Vector3d AggregatedVoxel::getAggregatedColor() const {
-  return numAggregatedPoints_ == 0 ? zero3d : aggregatedColor_ / numAggregatedPoints_;
+  return numAggregatedPoints_ == 0 ? zero3d : aggregatedColor_;
 }
 void AggregatedVoxel::aggregatePoint(const Eigen::Vector3d& p) {
   aggregatedPosition_ += p;
