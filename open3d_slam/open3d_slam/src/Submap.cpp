@@ -11,9 +11,7 @@
 #include "open3d_slam/magic.hpp"
 #include "open3d_slam/typedefs.hpp"
 
-#include <algorithm>
 #include <iostream>
-#include <numeric>
 #include <thread>
 #include <utility>
 
@@ -36,7 +34,7 @@ size_t Submap::getParentId() const {
   return parentId_;
 }
 
-bool Submap::insertScan(const PointCloud& rawScan, const PointCloud& preProcessedScan, const Transform& mapToRangeSensor, const Time& time,
+bool Submap::insertScan(const PointCloud& rawScan, const PointCloud& preProcessedScan, const Transform& mapToRangeSensor,
                         bool isPerformCarving) {
   if (preProcessedScan.IsEmpty()) {
     return true;
@@ -44,13 +42,14 @@ bool Submap::insertScan(const PointCloud& rawScan, const PointCloud& preProcesse
 
   mapToRangeSensor_ = mapToRangeSensor;
 
+  // Initialization only
   if (params_.isUseInitialMap_ && mapCloud_.IsEmpty()) {
     std::lock_guard<std::mutex> lck(mapPointCloudMutex_);
     mapCloud_ = preProcessedScan;
     voxelize(params_.mapBuilder_.mapVoxelSize_, &mapCloud_);
     return true;
   }
-
+  // Otherwise
   auto transformedCloud = o3d_slam::transform(mapToRangeSensor.matrix(), preProcessedScan);
   if (isPerformCarving) {
     carvingStatisticsTimer_.startStopwatch();

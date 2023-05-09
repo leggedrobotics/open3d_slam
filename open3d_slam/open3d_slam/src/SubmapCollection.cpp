@@ -87,7 +87,7 @@ void SubmapCollection::addScanToBuffer(const PointCloud& scan, const Transform& 
 void SubmapCollection::insertBufferedScans(Submap* submap) {
   while (!overlapScansBuffer_.empty()) {
     auto scan = overlapScansBuffer_.pop();
-    submap->insertScan(scan.cloud_, scan.cloud_, scan.mapToRangeSensor_, scan.timestamp_, false);
+    submap->insertScan(scan.cloud_, scan.cloud_, scan.mapToRangeSensor_, false);
   }
 }
 
@@ -175,7 +175,7 @@ bool SubmapCollection::insertScan(const PointCloud& rawScan, const PointCloud& p
   timestamp_ = timestamp;
   if (submaps_.empty()) {
     createNewSubmap(mapToRangeSensor_);
-    submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, true);
+    submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, true);
     ++numScansMergedInActiveSubmap_;
     return true;
   }
@@ -186,7 +186,7 @@ bool SubmapCollection::insertScan(const PointCloud& rawScan, const PointCloud& p
   const bool isActiveSubmapChanged = prevActiveSubmapIdx != activeSubmapIdx_;
   if (isActiveSubmapChanged) {
     std::lock_guard<std::mutex> lck(featureComputationMutex_);
-    submaps_.at(prevActiveSubmapIdx).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, true);
+    submaps_.at(prevActiveSubmapIdx).insertScan(rawScan, preProcessedScan, mapToRangeSensor, true);
     submaps_.at(prevActiveSubmapIdx).computeSubmapCenter();
     std::cout << "Active submap changed from " << prevActiveSubmapIdx << " to " << activeSubmapIdx_ << "\n";
     lastFinishedSubmapIdx_ = prevActiveSubmapIdx;
@@ -200,7 +200,7 @@ bool SubmapCollection::insertScan(const PointCloud& rawScan, const PointCloud& p
     insertBufferedScans(&submaps_.at(activeSubmapIdx_));
     assert_true(!submaps_.at(activeSubmapIdx_).isEmpty(), "submap should not be empty after switching");
   } else {
-    submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, timestamp, true);
+    submaps_.at(activeSubmapIdx_).insertScan(rawScan, preProcessedScan, mapToRangeSensor, true);
   }
   ++numScansMergedInActiveSubmap_;
   return true;

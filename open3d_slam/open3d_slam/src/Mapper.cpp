@@ -7,11 +7,9 @@
 
 #include "open3d_slam/Mapper.hpp"
 #include "open3d_slam/ScanToMapRegistration.hpp"
-#include "open3d_slam/Voxel.hpp"
 #include "open3d_slam/assert.hpp"
 #include "open3d_slam/frames.hpp"
 #include "open3d_slam/helpers.hpp"
-#include "open3d_slam/math.hpp"
 #include "open3d_slam/output.hpp"
 #include "open3d_slam/time.hpp"
 
@@ -150,7 +148,7 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud& rawScan, const Time& 
 
   if (!params_.isIgnoreMinRefinementFitness_ && result.fitness_ < params_.scanMatcher_.minRefinementFitness_) {
     std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;
-    std::cout << "preeIcp: " << asString(mapToRangeSensorEstimate) << "\n";
+    std::cout << "preIcp: " << asString(mapToRangeSensorEstimate) << "\n";
     std::cout << "postIcp: " << asString(Transform(result.transformation_)) << "\n\n";
     return false;
   }

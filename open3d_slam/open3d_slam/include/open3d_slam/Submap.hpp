@@ -34,31 +34,34 @@ class Submap {
   Submap(size_t id, size_t parentId);
   ~Submap() = default;
 
+  Submap(const Submap& other);
+
+  // Interface
   void setParameters(const MapperParameters& mapperParams);
-  bool insertScan(const PointCloud& rawScan, const PointCloud& preProcessedScan, const Transform& transform, const Time& time,
+  bool insertScan(const PointCloud& rawScan, const PointCloud& preProcessedScan, const Transform& transform,
                   bool isPerformCarving);
   bool insertScanDenseMap(const PointCloud& rawScan, const Transform& transform, const Time& time, bool isPerformCarving);
+  void transform(const Transform& T);
+  // Information
+  bool isEmpty() const;
+  void computeSubmapCenter();
+  void computeFeatures();
 
+  // Accessors
   const Transform& getMapToSubmapOrigin() const;
   Eigen::Vector3d getMapToSubmapCenter() const;
-  void setMapToSubmapOrigin(const Transform& T);
   const PointCloud& getMapPointCloud() const;
   PointCloud getMapPointCloudCopy() const;
   const VoxelizedPointCloud& getDenseMap() const;
   VoxelizedPointCloud getDenseMapCopy() const;
-  bool isEmpty() const;
   const Feature& getFeatures() const;
   const PointCloud& getSparseMapPointCloud() const;
-  void computeSubmapCenter();
-  void computeFeatures();
   size_t getId() const;
   size_t getParentId() const;
-  void transform(const Transform& T);
   const VoxelMap& getVoxelMap() const;
-  mutable PointCloud toRemove_;
-  mutable PointCloud scanRef_;
 
-  Submap(const Submap& other);
+  // Setters
+  void setMapToSubmapOrigin(const Transform& T);
 
  private:
   void carve(const PointCloud& scan, const Eigen::Vector3d& sensorPosition, const SpaceCarvingParameters& param,
@@ -88,6 +91,10 @@ class Submap {
   ColorRangeCropper colorCropper_;
   mutable std::mutex denseMapMutex_;
   mutable std::mutex mapPointCloudMutex_;
+
+  // Comfort functions
+  mutable PointCloud toRemove_;
+  mutable PointCloud scanRef_;
 };
 
 }  // namespace o3d_slam

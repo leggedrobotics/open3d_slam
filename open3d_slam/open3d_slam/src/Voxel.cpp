@@ -32,36 +32,12 @@ void AggregatedVoxel::aggregateNormal(const Eigen::Vector3d& normal) {
   aggregatedNormal_ += normal;
 }
 void AggregatedVoxel::aggregateColor(const Eigen::Vector3d& c) {
-  aggregatedColor_ += c;
+  aggregatedColor_ = c; // hack for now to overwrite with latest color
 }
 
 VoxelizedPointCloud::VoxelizedPointCloud() : VoxelizedPointCloud(Eigen::Vector3d::Constant(0.25)) {}
 
 VoxelizedPointCloud::VoxelizedPointCloud(const Eigen::Vector3d& voxelSize) : BASE(voxelSize) {}
-
-bool VoxelizedPointCloud::hasColors() const {
-  return isHasColors_;
-}
-bool VoxelizedPointCloud::hasNormals() const {
-  return isHasNormals_;
-}
-
-void VoxelizedPointCloud::transform(const Transform& T) {
-  std::unordered_map<Eigen::Vector3i, AggregatedVoxel, EigenVec3iHash> voxels;
-  if (empty()) {
-    return;
-  }
-  voxels.reserve(voxels_.size());
-  for (const auto& v : voxels_) {
-    if (v.second.numAggregatedPoints_ > 0) {
-      AggregatedVoxel vTransformed(v.second);
-      vTransformed.aggregatedNormal_ = T * vTransformed.aggregatedNormal_;
-      vTransformed.aggregatedPosition_ = T * vTransformed.aggregatedPosition_;
-      voxels[v.first] = vTransformed;
-    }
-  }
-  voxels_ = std::move(voxels);
-}
 
 void VoxelizedPointCloud::insert(const open3d::geometry::PointCloud& cloud) {
   for (size_t i = 0; i < cloud.points_.size(); ++i) {
@@ -80,7 +56,7 @@ void VoxelizedPointCloud::insert(const open3d::geometry::PointCloud& cloud) {
       search->second.aggregateNormal(cloud.normals_[i]);
       isHasNormals_ = true;
     }
-    if (cloud.HasColors()) {
+    if (cloud.HasColors() && isValidColor(cloud.colors_[i]) ) {
       search->second.aggregateColor(cloud.colors_[i]);
       isHasColors_ = true;
     }
@@ -111,6 +87,36 @@ PointCloud VoxelizedPointCloud::toPointCloud() const {
     }
   }
   return ret;
+}
+
+void VoxelizedPointCloud::transform(const Transform& T) {
+  std::unordered_map<Eigen::Vector3i, AggregatedVoxel, EigenVec3iHash> voxels;
+  if (empty()) {
+    return;
+  }
+  voxels.reserve(voxels_.size());
+  for (const auto& v : voxels_) {
+    if (v.second.numAggregatedPoints_ > 0) {
+      AggregatedVoxel vTransformed(v.second);
+      vTransformed.aggregatedNormal_ = T * vTransformed.aggregatedNormal_;
+      vTransformed.aggregatedPosition_ = T * vTransformed.aggregatedPosition_;
+      voxels[v.first] = vTransformed;
+    }
+  }
+  voxels_ = std::move(voxels);
+}
+
+bool VoxelizedPointCloud::hasColors() const {
+  return isHasColors_;
+}
+
+bool VoxelizedPointCloud::hasNormals() const {
+  return isHasNormals_;
+}
+
+// Treat black as no color
+bool VoxelizedPointCloud::isValidColor(const Eigen::Vector3d& c) {
+  return (c.array().all() > 0.0) && (c.array().all() <= 1.0);
 }
 
 //////////////////////////////////////////////////////////

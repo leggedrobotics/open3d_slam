@@ -10,11 +10,9 @@
 #include "open3d_slam/assert.hpp"
 #include "open3d_slam/croppers.hpp"
 #include "open3d_slam/math.hpp"
-#include "open3d_slam/output.hpp"
 #include "open3d_slam/time.hpp"
 
 #include <open3d/Open3D.h>
-#include <open3d/pipelines/registration/Registration.h>
 #include <open3d/utility/Eigen.h>
 #include "open3d/geometry/KDTreeFlann.h"
 
@@ -36,8 +34,9 @@ class AccumulatedPoint {
         normal_ += cloud.normals_[index];
       }
     }
-
+    // Black will not be added
     if (cloud.HasColors() && isValidColor(cloud.colors_[index])) {
+      std::cout << "hello2" << std::endl;
       color_ = cloud.colors_[index];  //+= cloud.colors_[index];
     }
 
@@ -79,9 +78,9 @@ class point_cubic_id {
 };
 
 }  // namespace
-
+// Treat black as no color
 bool isValidColor(const Eigen::Vector3d& c) {
-  return (c.array().all() >= 0.0) && (c.array().all() <= 1.0);
+  return (c.array().all() > 0.0) && (c.array().all() <= 1.0);
 }
 
 double informationMatrixMaxCorrespondenceDistance(double mappingVoxelSize) {
