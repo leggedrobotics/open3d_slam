@@ -64,9 +64,9 @@ class Submap {
   void setMapToSubmapOrigin(const Transform& T);
 
  private:
-  void carve(const PointCloud& transformedScan, const Eigen::Vector3d& sensorPosition, const CroppingVolume& cropper,
+  void carveVectorCloud(const PointCloud& transformedScan, const Eigen::Vector3d& sensorPosition, const CroppingVolume& cropper,
              const SpaceCarvingParameters& params, PointCloud* map);
-  void carve(const PointCloud& transformedScan, const Eigen::Vector3d& sensorPosition, const SpaceCarvingParameters& param,
+  void carveVoxelizedCloud(const PointCloud& transformedScan, const Eigen::Vector3d& sensorPosition, const SpaceCarvingParameters& params,
              VoxelizedPointCloud* cloud);
   void update(const MapperParameters& mapperParams);
   void voxelizeInsideCroppingVolume(const CroppingVolume& cropper, const MapBuilderParameters& param, PointCloud* map) const;
