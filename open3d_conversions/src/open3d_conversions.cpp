@@ -331,51 +331,6 @@ void rosToOpen3d(const open3d_slam_msgs::PolygonMesh &msg, open3d::geometry::Tri
 			}
 }
 
-void open3dToRos(const open3d::geometry::MeshBase &mesh, const std::string &frameId,
-                 mesh_msgs::MeshGeometry &msg) {
-
-                        enum XYZ {
-                          x, y, z
-                        };
-                        using namespace open3d::geometry;
-                        msg.vertices.reserve(mesh.vertices_.size());
-                        msg.vertex_normals.reserve(mesh.vertex_normals_.size());
-
-
-                        for(const auto& v : mesh.vertices_){
-                                geometry_msgs::Point pt;
-                                pt.x = v.x();
-                                pt.y = v.y();
-                                pt.z = v.z();
-                                msg.vertices.push_back(pt);
-                        }
-                        for(const auto& vn : mesh.vertex_normals_){
-                                geometry_msgs::Point pt;
-                                pt.x = vn.x();
-                                pt.y = vn.y();
-                                pt.z = vn.z();
-                                msg.vertex_normals.push_back(pt);
-                        }
-
-                        if (mesh.GetGeometryType() != Geometry::GeometryType::TriangleMesh) {
-                                throw std::runtime_error("Only triangle mesh supported for now!");
-                        }
-
-                        const auto &triangleMesh = dynamic_cast<const TriangleMesh &>(mesh);
-
-                        // add triangles
-                        const int nTriangles = triangleMesh.triangles_.size();
-                        msg.faces.reserve(nTriangles);
-                        for (int i = 0; i < nTriangles; ++i) {
-                                mesh_msgs::MeshTriangleIndices triangle;
-                                triangle.vertex_indices[0] = triangleMesh.triangles_.at(i).x();
-                                triangle.vertex_indices[1] = triangleMesh.triangles_.at(i).y();
-                                triangle.vertex_indices[2] = triangleMesh.triangles_.at(i).z();
-                                msg.faces.push_back(triangle);
-                        }
-
-}
-
 }    // namespace open3d_conversions
 
 inline int addPointField(sensor_msgs::PointCloud2 &cloud_msg, const std::string &name, int count, int datatype,

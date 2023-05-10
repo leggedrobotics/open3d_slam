@@ -22,7 +22,6 @@
 // ROS
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
-#include <mesh_msgs/MeshGeometry.h>
 #include <geometry_msgs/Point.h>
 
 // Eigen
@@ -82,7 +81,6 @@ void rosToOpen3d(const sensor_msgs::PointCloud2ConstPtr& ros_pc2, open3d::t::geo
 
 
 void open3dToRos(const open3d::geometry::MeshBase &mesh, const std::string &frameId,  open3d_slam_msgs::PolygonMesh &msg);
-void open3dToRos(const open3d::geometry::MeshBase &mesh, const std::string &frameId,  mesh_msgs::MeshGeometry &msg);
 
 
 
