@@ -65,10 +65,17 @@ class VoxelizedPointCloud : public VoxelHashMap<AggregatedVoxel> {
   VoxelizedPointCloud(const Eigen::Vector3d& voxelSize);
   void insert(const PointCloud& cloud);
   PointCloud toPointCloud() const;
-  bool hasColors() const;
-  bool hasNormals() const;
   void transform(const Transform& T);
 
+  // Accessors
+  bool hasColors() const;
+  bool hasNormals() const;
+
+  // Static Methods
+  static bool isValidColor(const Eigen::Vector3d& c);
+
+ protected:
+  // Member variables
   bool isHasNormals_ = false;
   bool isHasColors_ = false;
   // std::mutex mutex_;
