@@ -17,7 +17,7 @@ void PointCloudColorizer::generateDepthImage(PointCloud& pointCloud, Eigen::Matr
     cv::Mat* local_result;
     local_result = &(cameraParameters_[id].depthImgFromPoints_);
 
-    const float Z = pointCloud.at(ii).z;
+    const double Z = pointCloud.points_.at(ii).z();
 
     // Fetch image coordinates of point cloud.
     const int u = int(pointCloudToImageCoordinate.col(ii)[0]);
@@ -47,10 +47,9 @@ void PointCloudColorizer::generateDepthImage(PointCloud& pointCloud, Eigen::Matr
   }  // per point
 }
 
-pcl::PointCloud<pcl::PointXYZRGBL> PointCloudColorizer::colorizePoints(PointCloud& pointCloud,
-                                                                       const std::vector<unsigned int>& cameraIdVec) {
+PointCloudColorizer::PointCloud PointCloudColorizer::colorizePoints(PointCloud& pointCloud, const std::vector<unsigned int>& cameraIdVec) {
   // Read point cloud size.
-  const size_t pointCloudSize = pointCloud.size();
+  const size_t pointCloudSize = pointCloud.points_.size();
 
   // Get camera vector size. Initialize the containers.
   const size_t numOfCameras{cameraIdVec.size()};
@@ -82,7 +81,7 @@ pcl::PointCloud<pcl::PointXYZRGBL> PointCloudColorizer::colorizePoints(PointClou
   for (size_t k = 0; k < numOfCameras; k++) {
     for (size_t pointIndex = 0; pointIndex < pointCloudSize; pointIndex++) {
       // Fetch z of point from point cloud.
-      const float Z = pmCloudInCameraFrame[k].at(pointIndex).z;
+      const double Z = pmCloudInCameraFrame[k].points_.at(pointIndex).z();
 
       // Fetch image coordinates of point cloud.
       const int u = pointCloudToImageCoordinate[k].col(pointIndex)[0];
@@ -118,8 +117,9 @@ void PointCloudColorizer::transformPointCloudtoCameraFrame(const PointCloud& inp
                                                            unsigned int id) {
   outputPointCloud = inputPointCloud;
 
+  outputPointCloud = outputPointCloud.Transform(tf2::transformToEigen(cameraParameters_[id].pclTransform_).matrix());
   // PCL transformation functionality.
-  pcl::transformPointCloud(inputPointCloud, outputPointCloud, tf2::transformToEigen(cameraParameters_[id].pclTransform_).matrix());
+  // pcl::transformPointCloud(inputPointCloud, outputPointCloud, tf2::transformToEigen(cameraParameters_[id].pclTransform_).matrix());
 }
 
 void PointCloudColorizer::projectPointsToImage(const PointCloud& pointCloud, Eigen::MatrixXi& pointCloudToImageCoordinate,
@@ -133,16 +133,16 @@ void PointCloudColorizer::projectPointsToImage(const PointCloud& pointCloud, Eig
   const auto cx = static_cast<float>(cameraParameters_[id].intrinsicCameraMatrix_.row(0).col(2).value());
   const auto cy = static_cast<float>(cameraParameters_[id].intrinsicCameraMatrix_.row(1).col(2).value());
 
-  const std::size_t total_pts = pointCloudInCameraFrame.size();
+  const std::size_t total_pts = pointCloudInCameraFrame.points_.size();
 
   // Iterate through all the points
   pointCloudToImageCoordinate = Eigen::MatrixXi::Zero(2, total_pts);
   for (std::size_t ii = 0; ii < total_pts; ii++) {
-    const auto& point = pointCloudInCameraFrame.at(ii);
+    const auto& point = pointCloudInCameraFrame.points_.at(ii);
 
     // compute projected image coordinates
-    pointCloudToImageCoordinate.row(0).col(ii) << static_cast<int>((fx * point.x) / point.z + cx + 0.5f);
-    pointCloudToImageCoordinate.row(1).col(ii) << static_cast<int>((fy * point.y) / point.z + cy + 0.5f);
+    pointCloudToImageCoordinate.row(0).col(ii) << static_cast<int>((fx * point.x()) / point.z() + cx + 0.5f);
+    pointCloudToImageCoordinate.row(1).col(ii) << static_cast<int>((fy * point.y()) / point.z() + cy + 0.5f);
   }
 }
 
@@ -151,9 +151,9 @@ void PointCloudColorizer::colorizePoints(PointCloud& pointCloud, const int point
   // Set the color value. Current order is for BGR.
   cv::Vec3b& pixel = cameraParameters_[cameraId].cvImg_.at<cv::Vec3b>(v, u);
 
-  pointCloud.at(pointIndex).b = static_cast<int>(pixel[0]);  // PCL does not expect a normalized range. 0-255 is fine;
-  pointCloud.at(pointIndex).g = static_cast<int>(pixel[1]);
-  pointCloud.at(pointIndex).r = static_cast<int>(pixel[2]);
+  pointCloud.colors_.at(pointIndex).z() = static_cast<int>(pixel[0]);  // PCL does not expect a normalized range. 0-255 is fine;
+  pointCloud.colors_.at(pointIndex).y() = static_cast<int>(pixel[1]);
+  pointCloud.colors_.at(pointIndex).x() = static_cast<int>(pixel[2]);
   // pointCloud.at(pointIndex).label = static_cast<int>(pixel[3]);
 
   /*
@@ -190,7 +190,7 @@ void PointCloudColorizer::colorizePoints(PointCloud& pointCloud, const int point
   // pointCloud.at(j) = pointCloud.at(col);
 }
 
-bool PointCloudColorizer::checkDepthValidity(const float& Z, const int& u, const int& v, unsigned int id) {
+bool PointCloudColorizer::checkDepthValidity(const double& Z, const int& u, const int& v, unsigned int id) {
   bool isValid{true};
 
   isValid &= Z > 0;                      // if behind camera

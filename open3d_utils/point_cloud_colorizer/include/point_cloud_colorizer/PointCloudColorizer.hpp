@@ -1,9 +1,6 @@
 #pragma once
 
-// PCL Types
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl_ros/transforms.h>
+#include <open3d/geometry/PointCloud.h>
 
 // Transformation
 #include <geometry_msgs/PoseStamped.h>
@@ -49,17 +46,20 @@ struct CameraParameters {
 
 class PointCloudColorizer {
   // PCL Types
-  using Point = pcl::PointXYZRGBL;
-  using PointCloud = pcl::PointCloud<Point>;
-  using PointCloudPtr = PointCloud::Ptr;
-  using PointCloudConstPtr = PointCloud::ConstPtr;
+  // using Point = pcl::PointXYZRGBL;
+  // using PointCloud = pcl::PointCloud<Point>;
+  // O3D
+  using Point = Eigen::Vector3d;
+  using PointCloud = open3d::geometry::PointCloud;
+  using PointCloudPtr = std::shared_ptr<PointCloud>;
+  using PointCloudConstPtr = const std::shared_ptr<PointCloud>;
 
  public:
   //! constructor
   PointCloudColorizer() = default;
 
   //! Main colorization function
-  pcl::PointCloud<pcl::PointXYZRGBL> colorizePoints(PointCloud& pointCloud, const std::vector<unsigned int>& cameraIdVec);
+  PointCloud colorizePoints(PointCloud& pointCloud, const std::vector<unsigned int>& cameraIdVec);
 
   // Generate depth image.
   void generateDepthImage(PointCloud& pointCloud, Eigen::MatrixXi& pointCloudToImageCoordinate, unsigned int id,
@@ -93,6 +93,6 @@ class PointCloudColorizer {
 
   //! Check whether the transformed point points are on the camera image plane. Expects point image pixel coordinates, the depth and the
   //! camera ID.
-  bool checkDepthValidity(const float& Z, const int& u, const int& v, unsigned int id);
+  bool checkDepthValidity(const double& Z, const int& u, const int& v, unsigned int id);
 };
 }  // namespace point_cloud_colorizer

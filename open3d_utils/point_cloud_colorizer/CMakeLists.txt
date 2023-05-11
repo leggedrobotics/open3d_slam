@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.6)
+cmake_minimum_required(VERSION 3.8.2)
 project(point_cloud_colorizer)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -8,11 +8,9 @@ add_compile_options(-std=c++17 -Wall -Wextra -Wpedantic)
 
 ## Set catkin package dependencies
 set(CATKIN_PACKAGE_DEPENDENCIES
-  pcl_conversions
-  pcl_ros
-  geometry_msgs
-  tf2_geometry_msgs
-  message_logger
+        geometry_msgs
+        tf2_geometry_msgs
+        message_logger
 )
 
 find_package(Eigen3 REQUIRED)
@@ -42,7 +40,6 @@ include_directories(
   SYSTEM
     ${catkin_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
-    ${PCL_INCLUDE_DIRS}
     ${Eigen3_INCLUDE_DIR}
 )
 
@@ -56,12 +53,8 @@ add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
 )
 
-add_definitions(${PCL_DEFINITIONS})
-link_libraries(${PCL_LIBRARY_DIRS})
-
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES}
   ${OpenCV_LIBRARIES}
 )
 

@@ -15,8 +15,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   roscpp
   sensor_msgs
   tf2_ros
-  pcl_conversions
-  pcl_ros
+  open3d_conversions
 )
 
 # Find deps.
@@ -32,8 +31,6 @@ catkin_package(
     ${PROJECT_NAME}
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
-    pcl_conversions
-    pcl_ros
 )
 
 # Include directories
@@ -60,7 +57,6 @@ add_dependencies(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES}
 )
 
 add_executable(${PROJECT_NAME}_node
@@ -75,7 +71,6 @@ add_dependencies(${PROJECT_NAME}_node
 target_link_libraries(${PROJECT_NAME}_node
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES}
 )
 
 # install

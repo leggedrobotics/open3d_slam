@@ -20,11 +20,6 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
-// PCL Types.
-#include <pcl/conversions.h>
-#include <pcl/point_types.h>
-#include <pcl_conversions/pcl_conversions.h>
-
 // Colorizer backend.
 #include "point_cloud_colorizer/PointCloudColorizer.hpp"
 #include "point_cloud_colorizer_ros/Parameters.hpp"

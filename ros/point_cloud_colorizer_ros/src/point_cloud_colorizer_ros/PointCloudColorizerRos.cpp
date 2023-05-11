@@ -7,6 +7,8 @@
 // cv bridge
 #include <cv_bridge/cv_bridge.h>
 
+#include <open3d_conversions/open3d_conversions.h>
+
 namespace point_cloud_colorizer_ros {
 
 PointCloudColorizerRos::PointCloudColorizerRos(ros::NodeHandle& nodeHandle)
@@ -137,7 +139,7 @@ void PointCloudColorizerRos::inputPointCloudCallback(const sensor_msgs::PointClo
     MELO_WARN_STREAM("No available cameras for colorization. Colorization won't be executed.");
     return;
   }
-
+  /*
   // Construct a pointer
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
   pcl_cloud_ptr->reserve(lidarCloud->width * lidarCloud->height);
@@ -148,10 +150,18 @@ void PointCloudColorizerRos::inputPointCloudCallback(const sensor_msgs::PointClo
 
   // Main colorization and depth generation function
   pcl::PointCloud<pcl::PointXYZRGBL> colorizedPoints = colorizer_.colorizePoints(pointCloudData, availableCamerasVec_);
+  */
+
+  open3d::geometry::PointCloud pointCloudData;
+  pointCloudData.points_.reserve(lidarCloud->width * lidarCloud->height);
+  pointCloudData.colors_.reserve(lidarCloud->width * lidarCloud->height);
+  open3d_conversions::rosToOpen3d(lidarCloud, pointCloudData);
+  auto colorizedPoints = colorizer_.colorizePoints(pointCloudData, availableCamerasVec_);
 
   // Publish the colorized point cloud
   sensor_msgs::PointCloud2 pointsInPlaneMsg;
-  pcl::toROSMsg(colorizedPoints, pointsInPlaneMsg);
+  open3d_conversions::open3dToRos(colorizedPoints, pointsInPlaneMsg);
+  // pcl::toROSMsg(colorizedPoints, pointsInPlaneMsg);
   pointsInPlaneMsg.header = lidarCloud->header;
   colorCloudPublisher_.publish(pointsInPlaneMsg);
 
@@ -212,7 +222,7 @@ void PointCloudColorizerRos::readImageAndTransformation(const std::vector<unsign
       }
       MELO_DEBUG_STREAM("Received image with size: " << cvImgPtr->image.size());
       colorizer_.cameraParameters_[*vecIterator].cvImg_ = cvImgPtr->image;
-      cv::imwrite("/home/nubertj/Downloads/test_color.jpg", colorizer_.cameraParameters_[*vecIterator].cvImg_);
+      cv::imwrite("/home/peyschen/Downloads/test_color.jpg", colorizer_.cameraParameters_[*vecIterator].cvImg_);
     } catch (cv_bridge::Exception& e) {
       MELO_ERROR_STREAM("cv_bridge exception: " << e.what());
       vecIterator = availableCamerasVec_.erase(vecIterator);
