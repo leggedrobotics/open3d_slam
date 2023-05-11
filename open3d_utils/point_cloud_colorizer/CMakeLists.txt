@@ -11,6 +11,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
         geometry_msgs
         tf2_geometry_msgs
         message_logger
+        open3d_catkin
 )
 
 find_package(Eigen3 REQUIRED)

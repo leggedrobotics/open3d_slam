@@ -210,7 +210,6 @@ void PointCloudColorizerRos::readImageAndTransformation(const std::vector<unsign
       }
       MELO_DEBUG_STREAM("Received image with size: " << cvImgPtr->image.size());
       colorizer_.cameraParameters_[*vecIterator].cvImg_ = cvImgPtr->image;
-      cv::imwrite("/home/peyschen/Downloads/test_color.jpg", colorizer_.cameraParameters_[*vecIterator].cvImg_);
     } catch (cv_bridge::Exception& e) {
       MELO_ERROR_STREAM("cv_bridge exception: " << e.what());
       vecIterator = availableCamerasVec_.erase(vecIterator);
