@@ -14,14 +14,13 @@ std::vector<Eigen::Vector3i> getVoxelsWithinPointNeighborhood(const Eigen::Vecto
                                                               const Eigen::Vector3d& voxelSize) {
   const Eigen::Vector3i centerKey = getVoxelIdx(p, voxelSize);
   const Eigen::Vector3d step = voxelSize;
+  std::vector<Eigen::Vector3i> retVal = {centerKey};
   if (neighborhoodRadius <= 0.0) {
-    return {centerKey};
+    return retVal;
   }
 
   const int ratio = std::round(neighborhoodRadius / step.minCoeff());
-  std::vector<Eigen::Vector3i> retVal;
   retVal.reserve((ratio + 1) * (ratio + 1) * (ratio + 1));
-  bool isCenterKeyAdded = false;
   for (double dx = -neighborhoodRadius; dx <= neighborhoodRadius; dx += step.x()) {
     for (double dy = -neighborhoodRadius; dy <= neighborhoodRadius; dy += step.y()) {
       for (double dz = -neighborhoodRadius; dz <= neighborhoodRadius; dz += step.z()) {
@@ -30,15 +29,9 @@ std::vector<Eigen::Vector3i> getVoxelsWithinPointNeighborhood(const Eigen::Vecto
         if ((testPoint - center).norm() <= neighborhoodRadius) {
           const Eigen::Vector3i key = getVoxelIdx(testPoint, voxelSize);
           retVal.push_back(key);
-          if ((key.array() == centerKey.array()).all()) {
-            isCenterKeyAdded = true;
-          }
         }
       }
     }
-  }
-  if (!isCenterKeyAdded) {
-    retVal.push_back(centerKey);
   }
 
   return retVal;

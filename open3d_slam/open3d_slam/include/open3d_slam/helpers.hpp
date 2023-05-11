@@ -11,6 +11,7 @@
 #include <chrono>
 #include "open3d_slam/Parameters.hpp"
 #include "open3d_slam/Transform.hpp"
+#include "open3d_slam/Voxel.hpp"
 
 namespace o3d_slam {
 
@@ -31,11 +32,10 @@ std::pair<std::vector<double>, std::vector<size_t>> computePointCloudDistance(co
                                                                               const std::vector<size_t>& idsInReference);
 
 void removeByIds(const std::vector<size_t>& ids, open3d::geometry::PointCloud* cloud);
-std::vector<size_t> getIdxsOfCarvedPoints(const open3d::geometry::PointCloud& scan, const open3d::geometry::PointCloud& cloud,
-                                          const Eigen::Vector3d& sensorPosition, const SpaceCarvingParameters& param);
-std::vector<size_t> getIdxsOfCarvedPoints(const open3d::geometry::PointCloud& scan, const open3d::geometry::PointCloud& cloud,
-                                          const Eigen::Vector3d& sensorPosition, const std::vector<size_t>& cloudIdxsSubset,
-                                          const SpaceCarvingParameters& param);
+std::vector<size_t> getIdxsOfCarvedPoints(const open3d::geometry::PointCloud& scan, const Eigen::Vector3d& sensorPosition,
+                                          const SpaceCarvingParameters& param, const VoxelMap& voxelMap,
+                                          const open3d::geometry::PointCloud& cloud = open3d::geometry::PointCloud(),
+                                          const std::string& layer = "layer");
 
 void computeIndicesOfOverlappingPoints(const open3d::geometry::PointCloud& source, const open3d::geometry::PointCloud& target,
                                        const Transform& sourceToTarget, double voxelSize, size_t minNumPointsPerVoxel,
@@ -45,7 +45,7 @@ Eigen::Vector3d computeCenter(const open3d::geometry::PointCloud& cloud, const s
 double informationMatrixMaxCorrespondenceDistance(double mappingVoxelSize);
 double icpMaxCorrespondenceDistance(double mappingVoxelSize);
 double getMapVoxelSize(const MapBuilderParameters& p, double valueIfZero);
-bool isValidColor(const Eigen::Vector3d& c);
+static bool isValidColor(const Eigen::Vector3d& c);
 
 Eigen::Vector3d computeCenter(const VoxelizedPointCloud& voxels);
 std::vector<Eigen::Vector3i> getKeysOfCarvedPoints(const PointCloud& scan, const VoxelizedPointCloud& cloud,

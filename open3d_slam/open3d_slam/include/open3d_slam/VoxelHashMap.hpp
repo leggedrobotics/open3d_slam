@@ -28,7 +28,7 @@ struct EigenVec3iHash {
   static constexpr size_t sl2 = sl * sl;
 
   std::size_t operator()(const Eigen::Vector3i& index) const {
-    // same a OpenVDB
+    // same as OpenVDB
     //    return ((1 << 20) - 1) & (index.x() * 73856093 ^ index.y() * 19349663 ^ index.z() * 83492791);
     return static_cast<unsigned int>(index.x() + index.y() * sl + index.z() * sl2);
   }
