@@ -118,8 +118,6 @@ void PointCloudColorizer::transformPointCloudtoCameraFrame(const PointCloud& inp
   outputPointCloud = inputPointCloud;
 
   outputPointCloud = outputPointCloud.Transform(tf2::transformToEigen(cameraParameters_[id].pclTransform_).matrix());
-  // PCL transformation functionality.
-  // pcl::transformPointCloud(inputPointCloud, outputPointCloud, tf2::transformToEigen(cameraParameters_[id].pclTransform_).matrix());
 }
 
 void PointCloudColorizer::projectPointsToImage(const PointCloud& pointCloud, Eigen::MatrixXi& pointCloudToImageCoordinate,
@@ -154,7 +152,6 @@ void PointCloudColorizer::colorizePoints(PointCloud& pointCloud, const int point
   pointCloud.colors_.at(pointIndex).z() = static_cast<float>(pixel[0]) / 255.f;
   pointCloud.colors_.at(pointIndex).y() = static_cast<float>(pixel[1]) / 255.f;
   pointCloud.colors_.at(pointIndex).x() = static_cast<float>(pixel[2]) / 255.f;
-  // pointCloud.at(pointIndex).label = static_cast<int>(pixel[3]);
 
   /*
   if (static_cast<int>(pixel[3]) == 1 || (static_cast<int>(pixel[3]) == 2)) {

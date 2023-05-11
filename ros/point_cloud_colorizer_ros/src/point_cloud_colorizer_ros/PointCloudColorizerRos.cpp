@@ -139,18 +139,6 @@ void PointCloudColorizerRos::inputPointCloudCallback(const sensor_msgs::PointClo
     MELO_WARN_STREAM("No available cameras for colorization. Colorization won't be executed.");
     return;
   }
-  /*
-  // Construct a pointer
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl_cloud_ptr->reserve(lidarCloud->width * lidarCloud->height);
-
-  pcl::fromROSMsg(*lidarCloud, *pcl_cloud_ptr);
-  pcl::PointCloud<pcl::PointXYZRGBL> pointCloudData;
-  pcl::copyPointCloud(*pcl_cloud_ptr, pointCloudData);
-
-  // Main colorization and depth generation function
-  pcl::PointCloud<pcl::PointXYZRGBL> colorizedPoints = colorizer_.colorizePoints(pointCloudData, availableCamerasVec_);
-  */
 
   open3d::geometry::PointCloud pointCloudData;
   pointCloudData.points_.reserve(lidarCloud->width * lidarCloud->height);

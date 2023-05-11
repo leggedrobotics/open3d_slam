@@ -45,14 +45,10 @@ struct CameraParameters {
 };
 
 class PointCloudColorizer {
-  // PCL Types
-  // using Point = pcl::PointXYZRGBL;
-  // using PointCloud = pcl::PointCloud<Point>;
-  // O3D
   using Point = Eigen::Vector3d;
   using PointCloud = open3d::geometry::PointCloud;
   using PointCloudPtr = std::shared_ptr<PointCloud>;
-  using PointCloudConstPtr = const std::shared_ptr<PointCloud>;
+  using PointCloudConstPtr = std::shared_ptr<PointCloud const>;
 
  public:
   //! constructor

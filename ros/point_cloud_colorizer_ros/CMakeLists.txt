@@ -36,15 +36,9 @@ catkin_package(
 # Include directories
 include_directories(
   include
-  ${PCL_INCLUDE_DIRS}
   SYSTEM
     ${catkin_INCLUDE_DIRS}
 )
-
-add_definitions(${PCL_DEFINITIONS})
-link_libraries(${PCL_LIBRARY_DIRS})
-
-
 add_library(${PROJECT_NAME}
   src/point_cloud_colorizer_ros/PointCloudColorizerRos.cpp
   src/point_cloud_colorizer_ros/read_params.cpp
