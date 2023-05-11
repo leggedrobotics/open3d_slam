@@ -34,9 +34,8 @@ class AccumulatedPoint {
         normal_ += cloud.normals_[index];
       }
     }
-    // Black will not be added
+    // Black will not explicitly be added (as it is the default value)
     if (cloud.HasColors() && isValidColor(cloud.colors_[index])) {
-      std::cout << "hello2" << std::endl;
       color_ = cloud.colors_[index];  //+= cloud.colors_[index];
     }
 
