@@ -151,9 +151,9 @@ void PointCloudColorizer::colorizePoints(PointCloud& pointCloud, const int point
   // Set the color value. Current order is for BGR.
   cv::Vec3b& pixel = cameraParameters_[cameraId].cvImg_.at<cv::Vec3b>(v, u);
 
-  pointCloud.colors_.at(pointIndex).z() = static_cast<int>(pixel[0]);  // PCL does not expect a normalized range. 0-255 is fine;
-  pointCloud.colors_.at(pointIndex).y() = static_cast<int>(pixel[1]);
-  pointCloud.colors_.at(pointIndex).x() = static_cast<int>(pixel[2]);
+  pointCloud.colors_.at(pointIndex).z() = static_cast<float>(pixel[0]) / 255.f;
+  pointCloud.colors_.at(pointIndex).y() = static_cast<float>(pixel[1]) / 255.f;
+  pointCloud.colors_.at(pointIndex).x() = static_cast<float>(pixel[2]) / 255.f;
   // pointCloud.at(pointIndex).label = static_cast<int>(pixel[3]);
 
   /*
