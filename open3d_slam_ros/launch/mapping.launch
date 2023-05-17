@@ -12,7 +12,7 @@
 	<arg name="is_read_from_rosbag" default="false"/>
 	<arg name="rosbag_filepath" default=""/>
 	<arg name="use_sim_time" default="false"/>
-
+	<arg name="pcd_file_path" default=""/>
 
 	<!-- END OF ARGS -->	
 
@@ -28,6 +28,7 @@
 		<param name="is_read_from_rosbag" value="$(arg is_read_from_rosbag)"/>
 		<param name="rosbag_filepath" value="$(arg rosbag_filepath)"/>
 		<param name="map_saving_folder" value="$(arg map_saving_folder)"/>
+		<param name="pcd_file_path"       value="$(arg pcd_file_path)"/>
 	</node>
 
 
