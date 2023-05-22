@@ -67,7 +67,7 @@ void SlamMapInitializer::initialize(const MapInitializingParameters& params) {
     initPoseSub_ = nh_->subscribe("/initialpose", 1, &SlamMapInitializer::initialPoseCallback, this);
     initializeSlamSrv_ = nh_->advertiseService("initialize_slam", &SlamMapInitializer::initSlamCallback, this);
     cloudPub_ = nh_->advertise<sensor_msgs::PointCloud2>("aligned_cloud_preview", 1);
-    std::string cloudTopic = nh_->param<std::string>("cloud_topic", "");
+    std::string cloudTopic = o3d_slam::tryGetParam<std::string>("cloud_topic", *nh_);
     std::cout << "Initializer subscribing to " << cloudTopic << std::endl;
     cloudSub_ = nh_->subscribe(cloudTopic, 1, &SlamMapInitializer::pointcloudCallback, this);
     initWorker_ = std::thread([this]() { initializeWorker(); });

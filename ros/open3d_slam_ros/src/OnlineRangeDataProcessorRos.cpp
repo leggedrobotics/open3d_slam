@@ -19,6 +19,7 @@ OnlineRangeDataProcessorRos::OnlineRangeDataProcessorRos(ros::NodeHandlePtr nh) 
 
 void OnlineRangeDataProcessorRos::initialize() {
   initCommonRosStuff();
+  std::cout << "\033[33m" << "Ros init done" << "\033[92m" << " Setting up." << "\033[0m" << std::endl;
   slam_ = std::make_shared<SlamWrapperRos>(nh_);
   slam_->loadParametersAndInitialize();
 }
@@ -36,6 +37,7 @@ void OnlineRangeDataProcessorRos::processMeasurement(const PointCloud& cloud, co
 }
 
 void OnlineRangeDataProcessorRos::cloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg) {
+  std::cout << "\033[33m" << "RECIEVING CLOUD" << "\033[92m" << " NOW" << "\033[0m" << std::endl;
   open3d::geometry::PointCloud cloud;
   open3d_conversions::rosToOpen3d(msg, cloud, false);
   const Time timestamp = fromRos(msg->header.stamp);

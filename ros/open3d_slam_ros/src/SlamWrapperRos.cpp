@@ -178,15 +178,17 @@ void SlamWrapperRos::loadParametersAndInitialize() {
   //	auto &logger = open3d::utility::Logger::GetInstance();
   //	logger.SetVerbosityLevel(open3d::utility::VerbosityLevel::Debug);
 
-  folderPath_ = ros::package::getPath("open3d_slam_ros") + "/data/";
-  mapSavingFolderPath_ = nh_->param<std::string>("map_saving_folder", folderPath_);
+  mapSavingFolderPath_ = o3d_slam::tryGetParam<std::string>("map_saving_folder", *nh_);
+  if (mapSavingFolderPath_.empty()) {
+    mapSavingFolderPath_ = ros::package::getPath("open3d_slam_ros") + "/data/";
+  }
 
   //	const std::string paramFile = nh_->param<std::string>("parameter_file_path", "");
   //	setParameterFilePath(paramFile);
   //	io_yaml::loadParameters(paramFile, &params_);
   //
-  const std::string paramFolderPath = nh_->param<std::string>("parameter_folder_path", "");
-  const std::string paramFilename = nh_->param<std::string>("parameter_filename", "");
+  const std::string paramFolderPath = o3d_slam::tryGetParam<std::string>("parameter_folder_path", *nh_);
+	const std::string paramFilename = o3d_slam::tryGetParam<std::string>("parameter_filename", *nh_);
   SlamParameters params;
   io_lua::loadParameters(paramFolderPath, paramFilename, &params_);
 

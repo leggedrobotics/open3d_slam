@@ -6,6 +6,7 @@
  */
 
 #include "open3d_slam_ros/DataProcessorRos.hpp"
+#include "open3d_slam_ros/helpers_ros.hpp"
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include "open3d_slam/magic.hpp"
@@ -16,10 +17,12 @@ namespace o3d_slam {
 DataProcessorRos::DataProcessorRos(ros::NodeHandlePtr nh) : nh_(nh) {}
 
 void DataProcessorRos::initCommonRosStuff() {
-  cloudTopic_ = nh_->param<std::string>("cloud_topic", "");
+
+  // Read crucial parameters and setup publishers.  
+	cloudTopic_ = o3d_slam::tryGetParam<std::string>("cloud_topic", *nh_);
   std::cout << "Cloud topic is given as " << cloudTopic_ << std::endl;
-  rawCloudPub_ = nh_->advertise<sensor_msgs::PointCloud2>("raw_cloud", 1, true);
-  numAccumulatedRangeDataDesired_ = nh_->param<int>("num_accumulated_range_data", 1);
+	rawCloudPub_ = nh_->advertise<sensor_msgs::PointCloud2>("/raw_cloud", 1, true);
+	numAccumulatedRangeDataDesired_ = o3d_slam::tryGetParam<int>("num_accumulated_range_data", *nh_);
   std::cout << "Num accumulated range data: " << numAccumulatedRangeDataDesired_ << std::endl;
 }
 

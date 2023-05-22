@@ -4,6 +4,7 @@ include "default/default_parameters.lua"
 params = deepcopy(DEFAULT_PARAMETERS)
 
 --ODOMETRY
+params.odometry.is_publish_odometry_msgs = false,
 params.odometry.scan_processing.voxel_size = 0.05
 params.odometry.scan_processing.downsampling_ratio = 1.0
 
