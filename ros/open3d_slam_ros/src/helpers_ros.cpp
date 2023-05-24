@@ -230,6 +230,7 @@ void publishMesh(const open3d::geometry::MeshBase& mesh, const std::string& fram
         open3d_slam_msgs::PolygonMesh msg;
         open3d_conversions::open3dToRos(mesh,frame_id,msg);
         msg.header.stamp = timestamp;
+        msg.header.frame_id = frame_id;
         pub.publish(msg);
 }
 
