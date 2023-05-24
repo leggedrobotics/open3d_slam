@@ -63,6 +63,7 @@ params.saving.save_map = false
 params.meshing.is_meshing = true;
 params.meshing.voxel_dilation_ratio = 0.35
 params.meshing.downsampling_voxel_size = 0.2
+params.meshing.should_transform_mesh = true;
 
 
 
