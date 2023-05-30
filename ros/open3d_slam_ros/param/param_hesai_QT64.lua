@@ -6,7 +6,7 @@ params = deepcopy(DEFAULT_PARAMETERS)
 --ODOMETRY
 params.odometry.scan_processing.voxel_size = 0.05
 params.odometry.scan_processing.downsampling_ratio = 0.9
-
+params.odometry.is_publish_odometry_msgs=true
 --MAPPER_LOCALIZER
 params.mapper_localizer.is_merge_scans_into_map = false
 params.mapper_localizer.is_build_dense_map = false
