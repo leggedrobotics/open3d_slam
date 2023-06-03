@@ -277,6 +277,18 @@ void SlamWrapperRos::publishMaps(const Time &time) {
 
         if (meshPub_.getNumSubscribers() > 0) {
                 auto mesh = mesher_->getActiveMeshMap()->toO3dMesh();
+
+                auto rangeSensorTrafo = mapper_->getMapToRangeSensor(latestScanToMapRefinementTimestamp_);
+                Eigen::Matrix3d rotation = rangeSensorTrafo.rotation();
+                Eigen::Vector3d translation = rangeSensorTrafo.translation();
+                auto top = translation.z() + params_.mesher_.meshCropHeight_;
+                auto bottom = top - 100;
+                auto center = (top + bottom)/2;
+                Eigen::Vector3d bBoxCenter{translation.x(), translation.y(), center};
+                Eigen::Vector3d extent{100,100,100};
+                open3d::geometry::OrientedBoundingBox box(bBoxCenter, rotation, extent);
+
+                mesh = *mesh.Crop(box);
                 if (!mesh.IsEmpty()) {
                         std::string frame = o3d_slam::frames::mapFrame;
                         if (params_.mesher_.shouldTransformMesh_) {

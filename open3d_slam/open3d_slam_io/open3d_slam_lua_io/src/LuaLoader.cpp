@@ -386,6 +386,7 @@ void LuaLoader::loadParameters(const DictPtr dict, MeshingParameters *p){
         loadIntIfKeyDefined(dict,"voxel_max_updates", &p->voxelMaxUpdates_);
         loadBoolIfKeyDefined(dict, "should_transform_mesh",&p->shouldTransformMesh_);
         loadStringIfKeyDefined(dict, "mesh_frame", &p->meshFrame_);
+        loadDoubleIfKeyDefined(dict, "mesh_crop_height", &p->meshCropHeight_);
 }
 
 void LuaLoader::loadParameters(const DictPtr dict, Eigen::Isometry3d *T) {
