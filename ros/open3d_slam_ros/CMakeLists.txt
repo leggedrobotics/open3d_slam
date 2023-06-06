@@ -61,6 +61,7 @@ include_directories(
 
 add_library(${PROJECT_NAME}
   ${SRC_FILES}
+  ${HEADER_FILES}
   )
 
 add_dependencies(${PROJECT_NAME}

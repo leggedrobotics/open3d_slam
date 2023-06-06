@@ -36,10 +36,11 @@ const double timingStatsEveryNsec = 15.0;
 }  // namespace
 
 SlamWrapper::SlamWrapper() {
-  // todo magic
-  odometryBuffer_.set_size_limit(30);
-  mappingBuffer_.set_size_limit(30);
-  registeredCloudBuffer_.set_size_limit(30);
+  // The buffer sizes are set to 1 for realtime application.
+  // TODO: make this configurable
+  odometryBuffer_.set_size_limit(params_.odometry_.odometryBufferSize_);
+  mappingBuffer_.set_size_limit(params_.mapper_.mappingBufferSize_);
+  registeredCloudBuffer_.set_size_limit(params_.odometry_.scanProcessing_.pointCloudBufferSize_);
   motionCompensationOdom_ = std::make_shared<MotionCompensation>();
   motionCompensationMap_ = std::make_shared<MotionCompensation>();
 }
