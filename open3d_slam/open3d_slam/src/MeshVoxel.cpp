@@ -286,8 +286,11 @@ std::vector<size_t> MeshMap::dilateVertexSet(const std::unordered_set<size_t>& v
       std::vector<Eigen::Vector3d> ptSearch;
       ikdTree_->searchRadius(pt, dilationRadius, ptSearch);
       for (const auto& p : ptSearch) {
-        auto ptIdx = points_.right.find(p)->second;
+        auto ptIt = points_.right.find(p);
+        if(ptIt != points_.right.end()){
+        auto ptIdx = ptIt->second;
         vertexSet.insert(ptIdx);
+        }
       }
     }
   }
