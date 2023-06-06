@@ -164,7 +164,7 @@ void SlamWrapper::finishProcessing() {
       }
       break;
     } else {
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   }
   std::cout << "All submaps fnished! \n";
@@ -258,7 +258,7 @@ bool SlamWrapper::saveSubmaps(const std::string& directory, const bool& isDenseM
 void SlamWrapper::odometryWorker() {
   while (isRunWorkers_) {
     if (odometryBuffer_.empty()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
       continue;
     }
     odometryStatisticsTimer_.startStopwatch();
@@ -291,7 +291,7 @@ void SlamWrapper::mappingWorker() {
   while (isRunWorkers_) {
     if (mappingBuffer_.empty()) {
       checkIfOptimizedGraphAvailable();
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
       continue;
     }
     mappingStatisticsTimer_.startStopwatch();
@@ -363,7 +363,7 @@ void SlamWrapper::checkIfOptimizedGraphAvailable() {
 void SlamWrapper::denseMapWorker() {
   while (isRunWorkers_) {
     if (registeredCloudBuffer_.empty()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
       continue;
     }
     denseMapStatiscticsTimer_.startStopwatch();
