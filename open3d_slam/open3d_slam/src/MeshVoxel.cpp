@@ -268,10 +268,10 @@ std::vector<size_t> MeshMap::dilateVertexSet(const std::unordered_set<size_t>& v
   std::unordered_set<size_t> vertexSet = vertices;
   auto pts = getPoints(std::vector<size_t>(vertices.begin(), vertices.end()));
   Eigen::Vector3d vertexSetCentroid = std::accumulate(pts.begin(), pts.end(), Eigen::Vector3d::Zero().eval());
-  vertexSetCentroid /= pts.size();
+  vertexSetCentroid /= static_cast<double>(pts.size());
   auto distToLidar = (mapToRange_.translation() - vertexSetCentroid).norm();
   auto it = std::lower_bound(dilationDistances_.begin(), dilationDistances_.end(), distToLidar);
-  int idx;
+  size_t idx;
   if (it == dilationDistances_.end()) {
     idx = dilationDistances_.size() - 1;
   } else {
