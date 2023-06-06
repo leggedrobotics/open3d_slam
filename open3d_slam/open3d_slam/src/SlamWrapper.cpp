@@ -132,7 +132,7 @@ void SlamWrapper::finishProcessing() {
   while (isRunWorkers_) {
     if (!mappingBuffer_.empty()) {
       std::cout << "  Waiting for the mapping buffer to be emptied \n";
-      std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
       continue;
     } else {
       std::cout << "  Mapping buffer emptied \n";
@@ -406,7 +406,7 @@ void SlamWrapper::attemptLoopClosuresIfReady() {
 void SlamWrapper::loopClosureWorker() {
   while (isRunWorkers_) {
     if (loopClosureCandidates_.empty() || isOptimizedGraphAvailable_) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
       continue;
     }
 
@@ -419,7 +419,7 @@ void SlamWrapper::loopClosureWorker() {
     }
 
     if (loopClosureConstraints.empty()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
       continue;
     }
     {
