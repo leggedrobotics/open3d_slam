@@ -77,7 +77,7 @@ SCAN_MATCHING_PARAMETERS = {
 }
 
 ODOMETRY_PARAMETERS = {
-  is_publish_odometry_msgs = false,
+  is_publish_odometry_msgs = true,
   odometry_buffer_size = 1,
   scan_matching = deepcopy(SCAN_MATCHING_PARAMETERS),
   scan_processing = deepcopy(SCAN_PROCESSING_PARAMETERS),
