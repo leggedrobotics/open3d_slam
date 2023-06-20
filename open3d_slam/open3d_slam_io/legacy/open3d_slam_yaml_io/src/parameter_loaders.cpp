@@ -153,7 +153,6 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	loadParameters(node["scan_to_map_refinement"]["scan_processing"], &(p->scanProcessing_));
 	loadIfKeyDefined<int>(node,"mapping_buffer_size", &p->mappingBufferSize_);
 	p->mappingBufferSize_ = node["mapping_buffer_size"].as<int>();
-	std::cout << "Size limits parameter_loader after: " << p->mappingBufferSize_ << std::endl;
 
 	if (p->isBuildDenseMap_) {
 		loadParameters(node["dense_map_builder"], &(p->denseMapBuilder_));
