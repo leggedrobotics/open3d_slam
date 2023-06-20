@@ -435,7 +435,6 @@ void SlamWrapper::mappingWorker() {
 		//std::cout << "Registration Elapsed Time: " << timeElapsed << " msec \n";
 
 		if (mappingResult) {
-			
 			RegisteredPointCloud registeredCloud;
 			registeredCloud.submapId_ = activeSubmapIdx;
 			registeredCloud.raw_ = measurement;
@@ -465,18 +464,18 @@ void SlamWrapper::mappingWorker() {
 		//std::cout << "Total Registration Elapsed Time: " << timeMeasurement << " msec \n";
 
 
-		afterRegistration_ = std::chrono:: high_resolution_clock::now();
+		afterRegistration_ = std::chrono::high_resolution_clock::now();
 
-		//std::chrono::duration<double> time_span =  std::chrono::duration_cast< std::chrono::duration<double>>(afterRegistration_ - beforeRegistration_);
+		std::chrono::duration<double> time_span =  std::chrono::duration_cast< std::chrono::duration<double>>(afterRegistration_ - beforeRegistration_);
 		//std::cout << "Total Registration Elapsed Time(HighResClock) " << time_span.count() * 1e+3 << " ms" << std::endl;
-
 		//mappingStatisticsTimer_.addMeasurementMsec(timeMeasurement);
-		//if (params_.mapper_.isPrintTimingStatistics_ && mappingStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {
-		//	std::cout << "Mapper timing stats: Avg execution time: "
-		//			<< mappingStatisticsTimer_.getAvgMeasurementMsec() << " msec , frequency: "
-		//			<< 1e3 / mappingStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
-		//	mappingStatisticsTimer_.reset();
-		//}
+
+		if (params_.mapper_.isPrintTimingStatistics_ && mappingStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {
+			std::cout << "Mapper timing stats: Avg execution time: "
+					<< mappingStatisticsTimer_.getAvgMeasurementMsec() << " msec , frequency: "
+					<< 1e3 / mappingStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
+			mappingStatisticsTimer_.reset();
+		}
 
 	} // while (isRunWorkers_)
 }

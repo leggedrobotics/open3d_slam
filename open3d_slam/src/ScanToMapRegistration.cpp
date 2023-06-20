@@ -55,10 +55,21 @@ ProcessedScans ScanToMapIcp::processForScanMatchingAndMerging(const PointCloud &
 }
 RegistrationResult ScanToMapIcp::scanToMapRegistration(const PointCloud &scan, const Submap &activeSubmap,
 		const Transform &mapToRangeSensor, const Transform &initialGuess) const {
+
+
+	std::chrono::high_resolution_clock::time_point start_preprocess_registration_;
+	std::chrono::high_resolution_clock::time_point end_preprocess_registration_;	
+
+	start_preprocess_registration_ = std::chrono:: high_resolution_clock::now();
 	const PointCloud &activeSubmapPointCloud = activeSubmap.getMapPointCloud();
 	scanMatcherCropper_->setPose(mapToRangeSensor);
 	const PointCloudPtr mapPatch = scanMatcherCropper_->crop(activeSubmapPointCloud);
 	assert_gt<int>(mapPatch->points_.size(), 0, "map patch size is zero");
+
+	end_preprocess_registration_ = std::chrono:: high_resolution_clock::now();
+	std::chrono::duration<double> preprocess_registration_time_span =  std::chrono::duration_cast< std::chrono::duration<double>>(end_preprocess_registration_ - start_preprocess_registration_);
+	std::cout << " --- Pre-process registration Time: " << preprocess_registration_time_span.count() * 1e+3 << " ms" << std::endl;
+
 	return cloudRegistration->registerClouds(scan, *mapPatch, initialGuess);
 }
 

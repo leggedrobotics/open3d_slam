@@ -74,6 +74,14 @@ private:
 	bool isIgnoreOdometryPrediction_ = false;
 	std::shared_ptr<ScanToMapRegistration> scan2MapReg_;
 
+	std::chrono::high_resolution_clock::time_point start_preparation_;
+	std::chrono::high_resolution_clock::time_point end_preparation_;
+
+	std::chrono::high_resolution_clock::time_point start_process_;
+	std::chrono::high_resolution_clock::time_point end_process_;
+
+	std::chrono::high_resolution_clock::time_point start_registration_;
+	std::chrono::high_resolution_clock::time_point end_registration_;
 };
 
 } /* namespace o3d_slam */

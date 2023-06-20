@@ -114,6 +114,8 @@ const ScanToMapRegistration &Mapper::getScanToMapRegistration() const{
 
 bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &timestamp) {
 
+	start_preparation_ = std::chrono:: high_resolution_clock::now();
+
 	latestCloudTimestamp_ = timestamp;
 	submaps_->setMapToRangeSensor(mapToRangeSensor_);
 
@@ -166,7 +168,6 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 			const Transform odomToRangeSensor = getTransform(timestamp, scan2scanOdomToRangeSensorBuffer_);
 			const Transform odomToRangeSensorPrev = getTransform(lastMeasurementTimestamp_, scan2scanOdomToRangeSensorBuffer_);
 			odometryMotion = odomToRangeSensorPrev.inverse()*odomToRangeSensor;
-
 			//std::cerr << "\n\n !!!!! Using scan2scan based odometry as a complementary measure. !!!! \n\n";
 		}
 	}
@@ -177,11 +178,25 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 	// Debug Purposes, keep a prior buffer.
 	mapToRangeSensorPriorBuffer_.push(timestamp, mapToRangeSensorEstimate);
 
+	end_preparation_ = std::chrono:: high_resolution_clock::now();
+	std::chrono::duration<double> preparation_time_span =  std::chrono::duration_cast< std::chrono::duration<double>>(end_preparation_ - start_preparation_);
+	std::cout << "Total Preparation Time(HighResClock) " << preparation_time_span.count() * 1e+3 << " ms" << std::endl;
+	
+	start_process_ = std::chrono:: high_resolution_clock::now();
 	isIgnoreOdometryPrediction_ = false;
 	const ProcessedScans processed = scan2MapReg_->processForScanMatchingAndMerging(rawScan, mapToRangeSensor_);
 
+	end_process_ = std::chrono:: high_resolution_clock::now();
+	std::chrono::duration<double> process_time_span =  std::chrono::duration_cast< std::chrono::duration<double>>(end_process_ - start_process_);
+	std::cout << "Total process Time(HighResClock) " << process_time_span.count() * 1e+3 << " ms" << std::endl;
+
+	auto actSubmap = submaps_->getActiveSubmap();
+	auto actSubmapPc = actSubmap.getMapPointCloud();
+	std::cout << " Active submap size " << actSubmapPc.points_.size() << std::endl;
+
+	start_registration_ = std::chrono:: high_resolution_clock::now();
 	// Where the scan to map registration API
-	const RegistrationResult result = scan2MapReg_->scanToMapRegistration(*processed.match_, submaps_->getActiveSubmap(),
+	const RegistrationResult result = scan2MapReg_->scanToMapRegistration(*processed.match_, actSubmap,
 			mapToRangeSensor_, mapToRangeSensorEstimate);
 	preProcessedScan_ = *processed.match_;
 	if (isNewInitialValueSet_){
@@ -191,6 +206,10 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud &rawScan, const Time &
 		isIgnoreOdometryPrediction_ = true;
 		return true;
 	}
+
+	end_registration_ = std::chrono:: high_resolution_clock::now();
+	std::chrono::duration<double> registration_time_span =  std::chrono::duration_cast< std::chrono::duration<double>>(end_registration_ - start_registration_);
+	std::cout << "Total registration Time(HighResClock) " << registration_time_span.count() * 1e+3 << " ms" << std::endl;
 
 	if (!params_.isIgnoreMinRefinementFitness_ && result.fitness_ < params_.scanMatcher_.minRefinementFitness_) {
 			std::cout << "Skipping the refinement step, fitness: " << result.fitness_ << std::endl;

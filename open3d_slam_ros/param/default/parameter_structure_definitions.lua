@@ -39,7 +39,7 @@ MOTION_COMPENSATION_PARAMETERS = {
 VISUALIZATION_PARAMETERS = {
   assembled_map_voxel_size = 0.05,
   submaps_voxel_size = 0.05,
-  visualize_every_n_msec = 300.0,
+  visualize_every_n_msec = 30000000.0,
 }
 
 GLOBAL_OPTIMIZATION_PARAMETERS = {
@@ -58,7 +58,7 @@ SCAN_CROPPING_PARAMETERS = {
 }
 
 SCAN_PROCESSING_PARAMETERS = {
-  voxel_size = 0.1,
+  voxel_size = 0.08,
   downsampling_ratio = 0.3,
   scan_cropping = deepcopy(SCAN_CROPPING_PARAMETERS),
 }
@@ -82,7 +82,7 @@ ODOMETRY_PARAMETERS = {
   compensate_with_scan_to_scan_if_necessary = true, -- if true, the odometry will be compensated with scan to scan if the prior is not available.
   disable_scan_to_scan_odometry = false,
   publish_map_to_odom_tf = false,
-  is_publish_odometry_msgs = false,
+  is_publish_odometry_msgs = true,
   scan_matching = deepcopy(SCAN_MATCHING_PARAMETERS),
   scan_processing = deepcopy(SCAN_PROCESSING_PARAMETERS),
 }
@@ -103,7 +103,7 @@ SPACE_CARVING_PARAMETERS = {
 
 
 MAP_BUILDER_PARAMETERS = {
-  map_voxel_size = 0.1, --meters
+  map_voxel_size = 0.08, --meters
   scan_cropping = deepcopy(SCAN_CROPPING_PARAMETERS),
   space_carving = deepcopy(SPACE_CARVING_PARAMETERS),
 }
@@ -120,7 +120,7 @@ MAPPER_LOCALIZER_PARAMETERS = {
   is_print_timing_information = true,
   is_build_dense_map = false,
   is_attempt_loop_closures = false,
-  is_use_map_initialization = false,
+  is_use_map_initialization = true,
   is_merge_scans_into_map = false,
   dump_submaps_to_file_before_after_lc = false,
   is_refine_odometry_constraints_between_submaps = false,
@@ -140,7 +140,7 @@ POSE = {
 MAP_INITIALIZER_PARAMETERS = {
   is_initialize_interactively = true,
   frame_id = "map_o3d",
-  pcd_file_path = "",
+  pcd_file_path = "/home/tutuna/Downloads/o3d_summer_school.pcd",
   init_pose = POSE,
 }
 
