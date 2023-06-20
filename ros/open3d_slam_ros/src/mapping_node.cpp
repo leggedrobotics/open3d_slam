@@ -20,6 +20,7 @@ int main(int argc, char** argv) {
 	const std::string paramFolderPath = tryGetParam<std::string>("parameter_folder_path", *nh);
 	const std::string paramFilename = o3d_slam::tryGetParam<std::string>("parameter_filename", *nh);
 
+  // The LUA parameters are loaded twice. This is the first time. Soley because we need to know if we are using a map for initialization.
   SlamParameters params;
   io_lua::loadParameters(paramFolderPath, paramFilename, &params);
 

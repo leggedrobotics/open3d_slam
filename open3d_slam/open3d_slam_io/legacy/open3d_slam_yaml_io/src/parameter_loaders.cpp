@@ -152,6 +152,8 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	loadParameters(node["scan_to_map_refinement"],&(p->scanMatcher_));
 	loadParameters(node["scan_to_map_refinement"]["scan_processing"], &(p->scanProcessing_));
 	loadIfKeyDefined<int>(node,"mapping_buffer_size", &p->mappingBufferSize_);
+	p->mappingBufferSize_ = node["mapping_buffer_size"].as<int>();
+	std::cout << "Size limits parameter_loader after: " << p->mappingBufferSize_ << std::endl;
 
 	if (p->isBuildDenseMap_) {
 		loadParameters(node["dense_map_builder"], &(p->denseMapBuilder_));
@@ -175,12 +177,12 @@ void loadParameters(const YAML::Node &node, ScanToMapRegistrationParameters *p){
 }
 
 void loadParameters(const YAML::Node &node, SpaceCarvingParameters *p){
-  if (node["voxel_size"].IsDefined()){
-    p->voxelSize_ = node["voxel_size"].as<double>();
-  }
-  if (node["neigborhood_radius_for_removal"].IsDefined()){
-      p->neighborhoodRadiusDenseMap_ = node["neigborhood_radius_for_removal"].as<double>();
-    }
+	if (node["voxel_size"].IsDefined()){
+		p->voxelSize_ = node["voxel_size"].as<double>();
+	}
+	if (node["neigborhood_radius_for_removal"].IsDefined()){
+		p->neighborhoodRadiusDenseMap_ = node["neigborhood_radius_for_removal"].as<double>();
+	}
 	p->maxRaytracingLength_ = node["max_raytracing_length"].as<double>();
 	p->truncationDistance_ = node["truncation_distance"].as<double>();
 	p->carveSpaceEveryNscans_ = node["carve_space_every_n_scans"].as<int>();

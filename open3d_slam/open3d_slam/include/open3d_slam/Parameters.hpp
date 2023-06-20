@@ -59,8 +59,8 @@ struct ScanCroppingParameters {
 struct ScanProcessingParameters {
   double downSamplingRatio_ = 1.0;
   double voxelSize_ = 0.03;
-  ScanCroppingParameters cropper_;
   int pointCloudBufferSize_ = 1;
+  ScanCroppingParameters cropper_;
 };
 
 struct IcpParameters {

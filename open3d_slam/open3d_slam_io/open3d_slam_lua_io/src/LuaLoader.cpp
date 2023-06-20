@@ -234,7 +234,7 @@ void LuaLoader::loadParameters(const DictPtr dict, MapperParameters *p) {
 
 	loadDoubleIfKeyDefined(dict, "min_movement_between_mapping_steps", &p->minMovementBetweenMappingSteps_);
 
-	loadIntIfKeyDefined  (dict, "mapping_buffer_size", &p->mappingBufferSize_);
+	loadIntIfKeyDefined(dict, "mapping_buffer_size", &p->mappingBufferSize_);
 
 	loadIfDictionaryDefined(dict,"scan_to_map_registration", &p->scanMatcher_);
 	loadIfDictionaryDefinedMultiLevel(dict,{"scan_to_map_registration","scan_processing"}, &p->scanProcessing_);
