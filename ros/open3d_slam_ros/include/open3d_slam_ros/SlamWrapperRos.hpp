@@ -39,6 +39,7 @@ class SlamWrapperRos : public SlamWrapper {
   void publishMaps(const Time& time);
   void publishDenseMap(const Time& time);
   void publishMapToOdomTf(const Time& time);
+  void publishOdomToMapTf(const Time &time);
 
   ros::NodeHandlePtr nh_;
   std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster_;
