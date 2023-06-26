@@ -72,7 +72,7 @@ void SlamWrapperRos::odomPublisherWorker() {
   while (ros::ok()) {
     auto getTransformMsg = [](const Transform& T, const Time& t) {
       ros::Time timestamp = toRos(t);
-      geometry_msgs::TransformStamped transformMsg = o3d_slam::toRos(T.matrix(), timestamp, rangeSensorFrame, mapFrame);
+      geometry_msgs::TransformStamped transformMsg = o3d_slam::toRos(T.matrix(), timestamp, mapFrame, rangeSensorFrame);
       return transformMsg;
     };
 
@@ -90,8 +90,8 @@ void SlamWrapperRos::odomPublisherWorker() {
     const Time latestScanToScan = latestScanToScanRegistrationTimestamp_;
     const bool isAlreadyPublished = latestScanToScan == prevPublishedTimeScanToScanOdom_;
     if (!isAlreadyPublished && odometry_->hasProcessedMeasurements()) {
-      const Transform T = odometry_->getOdomToRangeSensor(latestScanToScan).inverse();
-      geometry_msgs::TransformStamped transformMsg = getTransformMsg(T, latestScanToScan);
+      const Transform T_odom_rangeSensor = odometry_->getOdomToRangeSensor(latestScanToScan);
+      geometry_msgs::TransformStamped transformMsg = getTransformMsg(T_odom_rangeSensor, latestScanToScan);
       nav_msgs::Odometry odomMsg = getOdomMsg(transformMsg);
       publishIfSubscriberExists(transformMsg, scan2scanTransformPublisher_);
       publishIfSubscriberExists(odomMsg, scan2scanOdomPublisher_);
@@ -101,8 +101,8 @@ void SlamWrapperRos::odomPublisherWorker() {
     const Time latestScanToMap = latestScanToMapRefinementTimestamp_;
     const bool isScanToMapAlreadyPublished = latestScanToMap == prevPublishedTimeScanToMapOdom_;
     if (!isScanToMapAlreadyPublished && mapper_->hasProcessedMeasurements()) {
-      const Transform T = mapper_->getMapToRangeSensor(latestScanToMap).inverse();
-      geometry_msgs::TransformStamped transformMsg = getTransformMsg(T, latestScanToMap);
+      const Transform T_map_rangeSensor = mapper_->getMapToRangeSensor(latestScanToMap);
+      geometry_msgs::TransformStamped transformMsg = getTransformMsg(T_map_rangeSensor, latestScanToMap);
       nav_msgs::Odometry odomMsg = getOdomMsg(transformMsg);
       publishIfSubscriberExists(transformMsg, scan2mapTransformPublisher_);
       publishIfSubscriberExists(odomMsg, scan2mapOdomPublisher_);
@@ -120,10 +120,10 @@ void SlamWrapperRos::tfWorker() {
     const Time latestScanToScan = latestScanToScanRegistrationTimestamp_;
     const bool isAlreadyPublished = latestScanToScan == prevPublishedTimeScanToScan_;
     if (!isAlreadyPublished && odometry_->hasProcessedMeasurements()) {
-      const Transform T = odometry_->getOdomToRangeSensor(latestScanToScan);
+      const Transform T_odom_rangeSensor = odometry_->getOdomToRangeSensor(latestScanToScan);
       ros::Time timestamp = toRos(latestScanToScan);
-      o3d_slam::publishTfTransform(T.inverse().matrix(), timestamp, rangeSensorFrame, odomFrame, tfBroadcaster_.get());
-      o3d_slam::publishTfTransform(T.matrix(), timestamp, mapFrame, "raw_odom_o3d", tfBroadcaster_.get());
+      o3d_slam::publishTfTransform(T_odom_rangeSensor.inverse().matrix(), timestamp, rangeSensorFrame, odomFrame, tfBroadcaster_.get());
+      //o3d_slam::publishTfTransform(T.matrix(), timestamp, mapFrame, "raw_odom_o3d", tfBroadcaster_.get());
       prevPublishedTimeScanToScan_ = latestScanToScan;
     }
 
@@ -213,7 +213,7 @@ void SlamWrapperRos::publishMapToOdomTf(const Time& time) {
 void SlamWrapperRos::publishOdomToMapTf(const Time &time) {
   const ros::Time timestamp = toRos(time);
   o3d_slam::publishTfTransform(mapper_->getMapToOdom(time).inverse().matrix(), timestamp, odomFrame, mapFrame, tfBroadcaster_.get());
-  o3d_slam::publishTfTransform(mapper_->getMapToRangeSensor(time).matrix(), timestamp, mapFrame, "raw_rs_o3d", tfBroadcaster_.get());
+  //o3d_slam::publishTfTransform(mapper_->getMapToRangeSensor(time).matrix(), timestamp, mapFrame, "raw_rs_o3d", tfBroadcaster_.get());
 }
 
 void SlamWrapperRos::publishDenseMap(const Time& time) {
