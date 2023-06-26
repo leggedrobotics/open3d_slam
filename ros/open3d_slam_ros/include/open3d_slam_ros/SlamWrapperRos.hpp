@@ -46,7 +46,7 @@ class SlamWrapperRos : public SlamWrapper {
   std::unique_ptr<tf2_ros::TransformListener> tfListener_;
   tf2_ros::Buffer tfBuffer_;	
  ros::Publisher odometryInputPub_, mappingInputPub_, submapOriginsPub_, assembledMapPub_, denseMapPub_, submapsPub_, meshPub_,
-            aggregatedMeshPub_, mesherInputPub_, vertexPub_;
+            aggregatedMeshPub_, mesherInputPub_, vertexPub_, registeredCloudPub_;
   ros::Publisher scan2scanTransformPublisher_, scan2scanOdomPublisher_, scan2mapTransformPublisher_, scan2mapOdomPublisher_;
   ros::ServiceServer saveMapSrv_, saveSubmapsSrv_;
   bool isVisualizationFirstTime_ = true;
@@ -54,6 +54,7 @@ class SlamWrapperRos : public SlamWrapper {
   Time prevPublishedTimeScanToScan_, prevPublishedTimeScanToMap_;
   Time prevPublishedTimeScanToScanOdom_, prevPublishedTimeScanToMapOdom_;
   Eigen::Isometry3d lidarToMap_;
+  Time prevPublisedRegisteredCloud_;
 };
 
 }  // namespace o3d_slam

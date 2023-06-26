@@ -172,6 +172,16 @@ void SlamWrapperRos::visualizationWorker() {
 		if (isTimeValid(scanToMapTimestamp)) {
 			publishDenseMap(scanToMapTimestamp);
 			publishMaps(scanToMapTimestamp);
+                        bool didPublishRegisteredCloud = prevPublisedRegisteredCloud_ == scanToMapTimestamp;
+                        if(!didPublishRegisteredCloud) {
+                          auto it = std::find_if(
+                              registeredCloudBuffer_.getImplementation().begin(), registeredCloudBuffer_.getImplementation().end(),
+                              [&scanToMapTimestamp](const RegisteredPointCloud& a) { return a.raw_.time_ == scanToMapTimestamp; });
+                          if (it != registeredCloudBuffer_.getImplementation().end()) {
+                            o3d_slam::publishCloud(it->raw_.cloud_, it->sourceFrame_, toRos(scanToMapTimestamp), registeredCloudPub_);
+                            prevPublisedRegisteredCloud_ = scanToMapTimestamp;
+                          }
+                        }
 		}
 
 		ros::spinOnce();
@@ -200,6 +210,8 @@ void SlamWrapperRos::loadParametersAndInitialize() {
         mesherInputPub_ = nh_->advertise<sensor_msgs::PointCloud2>("mesherInput", 1, true);
         vertexPub_ = nh_->advertise<sensor_msgs::PointCloud2>("vertexMap", 1, true);
         aggregatedMeshPub_ = nh_->advertise<open3d_slam_msgs::PolygonMesh>("assembled_mesh", 1, true);
+
+        registeredCloudPub_ = nh_->advertise<sensor_msgs::PointCloud2>("registered_cloud", 1, false);
 
         //	auto &logger = open3d::utility::Logger::GetInstance();
 	//	logger.SetVerbosityLevel(open3d::utility::VerbosityLevel::Debug);
