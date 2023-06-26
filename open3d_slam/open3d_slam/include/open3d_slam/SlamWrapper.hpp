@@ -18,7 +18,6 @@
 #include "open3d_slam/TransformInterpolationBuffer.hpp"
 #include "open3d_slam/croppers.hpp"
 #include "open3d_slam/typedefs.hpp"
-#include "open3d_slam/Mesher.hpp"
 
 namespace o3d_slam {
 
@@ -81,11 +80,10 @@ class SlamWrapper {
   void attemptLoopClosuresIfReady();
   void updateSubmapsAndTrajectory();
   void denseMapWorker();
-  void meshingWorker();
 
  protected:
   // buffers
-  CircularBuffer<RegisteredPointCloud> registeredCloudBuffer_, meshingBuffer_, removalBuffer_;
+  CircularBuffer<RegisteredPointCloud> registeredCloudBuffer_;
   CircularBuffer<TimestampedPointCloud> odometryBuffer_, mappingBuffer_;
   ThreadSafeBuffer<TimestampedSubmapId> loopClosureCandidates_;
 
@@ -104,15 +102,14 @@ class SlamWrapper {
   std::shared_ptr<Mapper> mapper_;
   std::shared_ptr<SubmapCollection> submaps_;
   std::shared_ptr<OptimizationProblem> optimizationProblem_;
-  std::shared_ptr<Mesher> mesher_;
 
   // multithreading
-  std::thread odometryWorker_, mappingWorker_, loopClosureWorker_, denseMapWorker_, meshingWorker_;
+  std::thread odometryWorker_, mappingWorker_, loopClosureWorker_, denseMapWorker_;
   std::future<void> computeFeaturesResult_;
 
   // timing
   Timer mappingStatisticsTimer_, odometryStatisticsTimer_, visualizationUpdateTimer_, denseMapVisualizationUpdateTimer_,
-      denseMapStatiscticsTimer_, meshingStatisticsTimer_;
+      denseMapStatiscticsTimer_;
   Timer mapperOnlyTimer_;
   Time latestScanToMapRefinementTimestamp_;
   Time latestScanToScanRegistrationTimestamp_;

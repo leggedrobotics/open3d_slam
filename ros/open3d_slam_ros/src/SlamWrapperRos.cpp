@@ -42,7 +42,6 @@ SlamWrapperRos::SlamWrapperRos(ros::NodeHandlePtr nh) :
 	tfBroadcaster_.reset(new tf2_ros::TransformBroadcaster());
 	prevPublishedTimeScanToScan_ = fromUniversal(0);
 	prevPublishedTimeScanToMap_ = fromUniversal(0);
-        tfListener_ = std::make_unique<tf2_ros::TransformListener>(tfBuffer_);
 }
 
 SlamWrapperRos::~SlamWrapperRos() {
@@ -146,12 +145,6 @@ void SlamWrapperRos::tfWorker() {
 			publishMapToOdomTf(latestScanToMap);
 			prevPublishedTimeScanToMap_ = latestScanToMap;
 		}
-                if (params_.mesher_.shouldTransformMesh_) {
-                        if (!lookupTransform(params_.mesher_.meshFrame_, o3d_slam::frames::mapFrame, ros::Time(0), tfBuffer_,
-                                             &lidarToMap_)) {
-                          lidarToMap_ = Eigen::Isometry3d::Identity();
-                        }
-                }
 
                 ros::spinOnce();
                 r.sleep();
@@ -176,7 +169,7 @@ void SlamWrapperRos::visualizationWorker() {
                         if(!didPublishRegisteredCloud) {
                           auto it = std::find_if(
                               registeredCloudBuffer_.getImplementation().begin(), registeredCloudBuffer_.getImplementation().end(),
-                              [&scanToMapTimestamp](const RegisteredPointCloud& a) { return a.raw_.time_ == scanToMapTimestamp; });
+                              [&scanToMapTimestamp](const auto& a) { return a.raw_.time_ == scanToMapTimestamp; });
                           if (it != registeredCloudBuffer_.getImplementation().end()) {
                             o3d_slam::publishCloud(it->raw_.cloud_, it->sourceFrame_, toRos(scanToMapTimestamp), registeredCloudPub_);
                             prevPublisedRegisteredCloud_ = scanToMapTimestamp;
@@ -206,10 +199,6 @@ void SlamWrapperRos::loadParametersAndInitialize() {
 	scan2scanOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2scan_odometry", 1, true);
         scan2mapTransformPublisher_ = nh_->advertise<geometry_msgs::TransformStamped>("scan2map_transform", 1, true);
         scan2mapOdomPublisher_ = nh_->advertise<nav_msgs::Odometry>("scan2map_odometry", 1, true);
-        meshPub_ = nh_->advertise<open3d_slam_msgs::PolygonMesh>("mesh", 1, true);
-        mesherInputPub_ = nh_->advertise<sensor_msgs::PointCloud2>("mesherInput", 1, true);
-        vertexPub_ = nh_->advertise<sensor_msgs::PointCloud2>("vertexMap", 1, true);
-        aggregatedMeshPub_ = nh_->advertise<open3d_slam_msgs::PolygonMesh>("assembled_mesh", 1, true);
 
         registeredCloudPub_ = nh_->advertise<sensor_msgs::PointCloud2>("registered_cloud", 1, false);
 
@@ -286,41 +275,6 @@ void SlamWrapperRos::publishMaps(const Time &time) {
 		voxelize(params_.visualization_.submapVoxelSize_, &cloud);
 		o3d_slam::publishCloud(cloud, o3d_slam::frames::mapFrame, timestamp, submapsPub_);
 	}
-
-        if (meshPub_.getNumSubscribers() > 0) {
-                auto mesh = mesher_->getActiveMeshMap()->toO3dMesh();
-                if (!mesh.IsEmpty()) {
-                        std::string frame = o3d_slam::frames::mapFrame;
-                        if (params_.mesher_.shouldTransformMesh_) {
-                          mesh = mesh.Transform(lidarToMap_.matrix());
-                          frame = params_.mesher_.meshFrame_;
-                        }
-                        publishMesh(mesh, frame, timestamp, meshPub_);
-                }
-        }
-
-        if (vertexPub_.getNumSubscribers() > 0) {
-                PointCloud vertexMap = open3d::geometry::PointCloud(mesher_->getActiveMeshMap()->getVertices());
-
-                o3d_slam::publishCloud(vertexMap, o3d_slam::frames::mapFrame, timestamp, vertexPub_);
-        }
-
-        if (mesherInputPub_.getNumSubscribers() > 0) {
-                PointCloud mesherInput = mesher_->getActiveMeshMap()->getMeshingInput();
-                o3d_slam::publishCloud(mesherInput, o3d_slam::frames::mapFrame, timestamp, mesherInputPub_);
-        }
-
-        if (aggregatedMeshPub_.getNumSubscribers() > 0) {
-                auto mesh = mesher_->getAggregatedMesh();
-                if (!mesh.IsEmpty()) {
-                        std::string frame = o3d_slam::frames::mapFrame;
-                        if (params_.mesher_.shouldTransformMesh_) {
-                          mesh = mesh.Transform(lidarToMap_.matrix());
-                          frame = params_.mesher_.meshFrame_;
-                        }
-                        publishMesh(mesh, frame, timestamp, aggregatedMeshPub_);
-                }
-        }
 
         visualizationUpdateTimer_.reset();
 	isVisualizationFirstTime_ = false;

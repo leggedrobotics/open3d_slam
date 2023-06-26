@@ -28,9 +28,6 @@ set(SRC_FILES
   src/VoxelHashMap.cpp
   src/ScanToMapRegistration.cpp
   src/CloudRegistration.cpp
-  src/Plane.cpp
-  src/MeshVoxel.cpp
-  src/Mesher.cpp
   )
 
 set(CATKIN_PACKAGE_DEPENDENCIES

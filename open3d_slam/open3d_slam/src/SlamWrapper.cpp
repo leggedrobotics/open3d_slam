@@ -17,10 +17,8 @@
 #include "open3d_slam/ScanToMapRegistration.hpp"
 #include "open3d_slam/assert.hpp"
 #include "open3d_slam/constraint_builders.hpp"
-#include "open3d_slam/croppers.hpp"
 #include "open3d_slam/frames.hpp"
 #include "open3d_slam/helpers.hpp"
-#include "open3d_slam/math.hpp"
 #include "open3d_slam/output.hpp"
 #include "open3d_slam/time.hpp"
 
@@ -62,10 +60,6 @@ SlamWrapper::~SlamWrapper() {
 		denseMapWorker_.join();
 		std::cout << "Joined the dense map worker! \n";
 	}
-        if(params_.mesher_.isMeshing_ && meshingWorker_.joinable()){
-                meshingWorker_.join();
-                std::cout << "Joined the meshing worker! \n";
-        }
 
 	std::cout << "    Scan insertion: Avg execution time: "
 			<< mapperOnlyTimer_.getAvgMeasurementMsec() << " msec , frequency: "
@@ -196,9 +190,6 @@ void SlamWrapper::loadParametersAndInitialize() {
 	mapper_ = std::make_shared<o3d_slam::Mapper>(odometry_->getBuffer(), submaps_, odometry_->getCovarianceBuffer());
 	mapper_->setParameters(params_.mapper_);
 
-	mesher_ = std::make_shared<o3d_slam::Mesher>();
-	mesher_->setParameters(params_.mesher_);
-
 	optimizationProblem_ = std::make_shared<o3d_slam::OptimizationProblem>();
 	optimizationProblem_->setParameters(params_.mapper_);
 
@@ -241,12 +232,6 @@ void SlamWrapper::startWorkers() {
 	mappingWorker_ = std::thread([this]() {
 		mappingWorker();
 	});
-        if(params_.mesher_.isMeshing_) {
-                meshingWorker_ = std::thread([this]() {
-                  meshingWorker();
-                });
-        }
-
 	if (params_.mapper_.isAttemptLoopClosures_) {
 		loopClosureWorker_ = std::thread([this]() {
 			loopClosureWorker();
@@ -356,23 +341,6 @@ void SlamWrapper::mappingWorker() {
 			registeredCloudBuffer_.push(registeredCloud);
 			latestScanToMapRefinementTimestamp_ = measurement.time_;
 
-			RegisteredPointCloud registeredMap;
-			//registeredMap.raw_.cloud_ = mapper_->getActiveSubmap().getMapPointCloud();
-			//registeredMap.raw_.time_ = measurement.time_;
-                        registeredMap.raw_ = measurement;
-			registeredMap.submapId_ = activeSubmapIdx;
-			registeredMap.transform_ = mapper_->getMapToRangeSensor(measurement.time_);
-			registeredMap.sourceFrame_ = frames::rangeSensorFrame;
-			registeredMap.targetFrame_ = frames::mapFrame;
-			meshingBuffer_.push(registeredMap);
-
-			RegisteredPointCloud removalCloud;
-			removalCloud.submapId_ = activeSubmapIdx;
-			removalCloud.raw_.cloud_ = mapper_->getActiveSubmap().getCarvedPoints();
-			removalCloud.transform_ = mapper_->getMapToRangeSensor(measurement.time_);
-			removalCloud.sourceFrame_ = frames::rangeSensorFrame;
-			removalCloud.targetFrame_ = frames::mapFrame;
-			removalBuffer_.push(removalCloud);
 		}
 
 		if (params_.mapper_.isAttemptLoopClosures_) {
@@ -393,45 +361,6 @@ void SlamWrapper::mappingWorker() {
 		}
 
 	} // while (isRunWorkers_)
-}
-
-void SlamWrapper::meshingWorker() {
-        int nPointCloudsInserted = 0;
-        while (isRunWorkers_) {
-                if (meshingBuffer_.empty()) {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-                        continue;
-                }
-                meshingStatisticsTimer_.startStopwatch();
-
-                const RegisteredPointCloud meshingCloud = meshingBuffer_.pop();
-                if (meshingCloud.submapId_ != mesher_->getActiveMeshMapId()) {
-                        std::cout << "Switch mesh map to " << meshingCloud.submapId_ << std::endl;
-                        mesher_->switchActiveSubmap(meshingCloud.submapId_);
-                        nPointCloudsInserted = 0;
-                }
-                PointCloudPtr transformedCloud = transform(meshingCloud.transform_.matrix(),meshingCloud.raw_.cloud_);
-                mesher_->addNewPointCloud(*transformedCloud, meshingCloud.transform_);
-                if (!removalBuffer_.empty()) {
-                        const RegisteredPointCloud removed = removalBuffer_.pop();
-                        if (!removed.raw_.cloud_.IsEmpty()) {
-                                mesher_->removePoints(removed.raw_.cloud_);
-                        }
-                }
-                ++nPointCloudsInserted;
-                if (nPointCloudsInserted % 2 == 0) {
-                        mesher_->mesh();
-                }
-
-                const double elapsedTime = meshingStatisticsTimer_.elapsedMsecSinceStopwatchStart();
-                meshingStatisticsTimer_.addMeasurementMsec(elapsedTime);
-                if (meshingStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {
-                        std::cout << "Meshing timing stats: Avg execution time: " << meshingStatisticsTimer_.getAvgMeasurementMsec()
-                                  << " msec , frequency: " << 1e3 / meshingStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
-                        meshingStatisticsTimer_.reset();
-                        mesher_->getActiveMeshMap()->printMeshingStats();
-                }
-        }
 }
 
 void SlamWrapper::checkIfOptimizedGraphAvailable(){

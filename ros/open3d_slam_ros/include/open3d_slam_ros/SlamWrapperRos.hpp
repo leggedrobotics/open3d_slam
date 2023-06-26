@@ -45,8 +45,7 @@ class SlamWrapperRos : public SlamWrapper {
   std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster_;
   std::unique_ptr<tf2_ros::TransformListener> tfListener_;
   tf2_ros::Buffer tfBuffer_;	
- ros::Publisher odometryInputPub_, mappingInputPub_, submapOriginsPub_, assembledMapPub_, denseMapPub_, submapsPub_, meshPub_,
-            aggregatedMeshPub_, mesherInputPub_, vertexPub_, registeredCloudPub_;
+ ros::Publisher odometryInputPub_, mappingInputPub_, submapOriginsPub_, assembledMapPub_, denseMapPub_, submapsPub_, registeredCloudPub_;
   ros::Publisher scan2scanTransformPublisher_, scan2scanOdomPublisher_, scan2mapTransformPublisher_, scan2mapOdomPublisher_;
   ros::ServiceServer saveMapSrv_, saveSubmapsSrv_;
   bool isVisualizationFirstTime_ = true;
