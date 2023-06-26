@@ -1,0 +1,13 @@
+cloud_in_map_frame: true
+prerotate_roll: 1.571
+prerotate_pitch: 1.571
+prerotate_yaw: 0.0
+
+mesh_voxel_size: 0.6 # [m]
+downsample_voxel_size: 0.3 # [m]
+new_vertex_distance_threshold: 0.15 # [m] Minimum Distance between two vertices
+voxel_max_updates: 50 # amount of updates (vertex addition/deletion) before a voxel is considered "full" and frozen
+sliver_deletion_threshold: 0.01
+should_filter: true # run a guided filter before adding the point cloud to the mesh
+filter_epsilon: 0.01
+filter_radius: 0.3

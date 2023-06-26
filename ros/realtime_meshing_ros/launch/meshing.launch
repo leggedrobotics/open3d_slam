@@ -1,0 +1,11 @@
+<launch>
+    <arg name="odometry_topic" default="/compslam_lio/odom_aft_mapped_to_init_CORRECTED"/>
+    <arg name="pointcloud_topic" default="/compslam_lio/registered_cloud"/>
+    <arg name="parameter_file_path" default="$(find realtime_meshing_ros)/param/params.yaml"/>
+
+    <node pkg="realtime_meshing_ros" type="realtime_meshing_node" name="realtime_meshing" output="screen">
+        <param name="odometry_topic" value="$(arg odometry_topic)"/>
+        <param name="pointcloud_topic" value="$(arg pointcloud_topic)"/>
+        <param name="parameter_file" value="$(arg parameter_file_path)"/>
+    </node>
+</launch>

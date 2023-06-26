@@ -6,6 +6,7 @@ params = deepcopy(DEFAULT_PARAMETERS)
 --ODOMETRY
 params.odometry.scan_processing.voxel_size = 0.05
 params.odometry.scan_processing.downsampling_ratio = 0.9
+params.odometry.is_publish_odometry_msgs = true
 
 --MAPPER_LOCALIZER
 params.mapper_localizer.is_merge_scans_into_map = false
@@ -58,13 +59,5 @@ params.place_recognition.consistency_check.max_drift_z = 40.0 --m
 
 --SAVING
 params.saving.save_map = false
-
-
-params.meshing.is_meshing = true;
-params.meshing.voxel_dilation_ratio = 0.35
-params.meshing.downsampling_voxel_size = 0.2
-params.meshing.should_transform_mesh = true;
-
-
 
 return params

@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>realtime_meshing_ros</name>
+  <version>0.0.0</version>
+  <description>Realtime Meshing</description>
+
+  <maintainer email="peyschen@ethz.ch">Pol Eyschen</maintainer>
+
+
+  <!-- One license tag required, multiple allowed, one license per tag -->
+  <!-- Commonly used license strings: -->
+  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
+  <license>TODO</license>
+
+
+  <author email="peyschen@ethz.ch">Pol Eyschen</author>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>open3d_catkin</depend>
+  <depend>eigen</depend>
+  <depend>realtime_meshing</depend>
+  <depend>open3d_conversions</depend>
+
+</package>

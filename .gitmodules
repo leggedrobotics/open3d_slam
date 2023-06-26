@@ -1,6 +1,6 @@
 [submodule "open3d_slam/thirdparty/ikd-Tree"]
-	path = open3d_slam/thirdparty/ikd-Tree
+	path = open3d_utils/realtime_meshing/thirdparty/ikd-Tree
 	url = git@github.com:spof95/ikd-Tree.git
 [submodule "open3d_slam/thirdparty/CDT"]
-	path = open3d_slam/thirdparty/CDT
+	path = open3d_utils/realtime_meshing/thirdparty/CDT
 	url = git@github.com:artem-ogre/CDT.git
