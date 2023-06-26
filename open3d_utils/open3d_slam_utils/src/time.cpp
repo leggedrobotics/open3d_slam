@@ -97,6 +97,10 @@ Time fromUniversal(const int64 ticks) {
   return Time(Duration(ticks));
 }
 
+Time fromUnix(const int64 unixEpochNs){
+ return fromUniversal((unixEpochNs + 50)/100 + kUtsEpochOffsetFromUnixEpochInSeconds * 10000000ll);
+}
+
 int64 toUniversal(const Time time) {
   return time.time_since_epoch().count();
 }

@@ -65,6 +65,9 @@ double toSeconds(std::chrono::steady_clock::duration duration);
 // Creates a time from a Universal Time Scale.
 Time fromUniversal(int64 ticks);
 
+// Creates a time from a Unix epoch time in nanoseconds.
+Time fromUnix(int64 unixEpochNs);
+
 // Outputs the Universal Time Scale timestamp for a given Time.
 int64 toUniversal(Time time);
 
