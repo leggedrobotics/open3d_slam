@@ -7,9 +7,9 @@
 
 #include "open3d_slam/Submap.hpp"
 #include "open3d_slam/helpers.hpp"
-#include "open3d_slam/assert.hpp"
+#include "open3d_slam_utils/assert.hpp"
 #include "open3d_slam/magic.hpp"
-#include "open3d_slam/typedefs.hpp"
+#include "open3d_slam_utils/typedefs.hpp"
 
 #include <algorithm>
 #include <iostream>

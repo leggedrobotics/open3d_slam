@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "open3d_slam/Transform.hpp"
+#include "open3d_slam_utils/Transform.hpp"
 
 namespace o3d_slam {
 

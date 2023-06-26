@@ -8,7 +8,7 @@
 #include "open3d_slam/PlaceRecognition.hpp"
 #include "open3d_slam/Parameters.hpp"
 #include "open3d_slam/SubmapCollection.hpp"
-#include "open3d_slam/assert.hpp"
+#include "open3d_slam_utils/assert.hpp"
 #include "open3d_slam/magic.hpp"
 #include "open3d_slam/math.hpp"
 #include "open3d_slam/output.hpp"

@@ -8,7 +8,7 @@
 #pragma once
 #include <Eigen/Dense>
 #include <vector>
-#include "open3d_slam/Transform.hpp"
+#include "open3d_slam_utils/Transform.hpp"
 
 namespace o3d_slam {
 

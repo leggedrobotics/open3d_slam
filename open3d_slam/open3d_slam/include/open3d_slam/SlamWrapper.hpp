@@ -10,14 +10,14 @@
 #include <Eigen/Dense>
 #include <future>
 #include <thread>
-#include "open3d_slam/CircularBuffer.hpp"
+#include "open3d_slam_utils/CircularBuffer.hpp"
 #include "open3d_slam/Constraint.hpp"
 #include "open3d_slam/Parameters.hpp"
 #include "open3d_slam/Submap.hpp"
-#include "open3d_slam/ThreadSafeBuffer.hpp"
-#include "open3d_slam/TransformInterpolationBuffer.hpp"
+#include "open3d_slam_utils/ThreadSafeBuffer.hpp"
+#include "open3d_slam_utils/TransformInterpolationBuffer.hpp"
 #include "open3d_slam/croppers.hpp"
-#include "open3d_slam/typedefs.hpp"
+#include "open3d_slam_utils/typedefs.hpp"
 
 namespace o3d_slam {
 

@@ -13,11 +13,11 @@
 #include <iostream>
 #include <memory>
 #include "open3d_slam/Parameters.hpp"
-#include "open3d_slam/TransformInterpolationBuffer.hpp"
-#include "open3d_slam/assert.hpp"
+#include "open3d_slam_utils/TransformInterpolationBuffer.hpp"
+#include "open3d_slam_utils/assert.hpp"
 #include "open3d_slam/math.hpp"
 #include "open3d_slam/output.hpp"
-#include "open3d_slam/time.hpp"
+#include "open3d_slam_utils/time.hpp"
 
 namespace o3d_slam {
 

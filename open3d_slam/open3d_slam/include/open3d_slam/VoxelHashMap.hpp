@@ -16,7 +16,7 @@
 
 #include <Eigen/Core>
 #include <map>
-#include <open3d_slam/typedefs.hpp>
+#include <open3d_slam_utils/typedefs.hpp>
 #include <unordered_map>
 #include <vector>
 

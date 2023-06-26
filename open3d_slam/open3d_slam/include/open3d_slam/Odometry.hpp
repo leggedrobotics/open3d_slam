@@ -10,7 +10,7 @@
 #include <open3d/geometry/PointCloud.h>
 #include <Eigen/Dense>
 #include "open3d_slam/Parameters.hpp"
-#include "open3d_slam/TransformInterpolationBuffer.hpp"
+#include "open3d_slam_utils/TransformInterpolationBuffer.hpp"
 #include "open3d_slam/croppers.hpp"
 
 namespace o3d_slam {

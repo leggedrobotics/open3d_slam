@@ -10,7 +10,7 @@
 #include <ostream>
 #include <ratio>
 #include <string>
-#include "open3d_slam/typedefs.hpp"
+#include "open3d_slam_utils/typedefs.hpp"
 
 namespace o3d_slam {
 

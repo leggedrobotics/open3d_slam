@@ -6,7 +6,7 @@
  */
 
 #include "open3d_slam/Voxel.hpp"
-#include "open3d_slam/time.hpp"
+#include "open3d_slam_utils/time.hpp"
 #include "open3d_slam/math.hpp"
 #include <numeric>
 #include <iostream>

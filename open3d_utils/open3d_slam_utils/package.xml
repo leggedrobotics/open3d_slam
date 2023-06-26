@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>open3d_slam</name>
+  <name>open3d_slam_utils</name>
   <version>0.0.0</version>
-  <description>Range sensor based mapping</description>
+  <description>Utilities for slam</description>
 
-  <maintainer email="jelavice@ethz.ch">Edo Jelavic</maintainer>
+  <maintainer email="peyschen@ethz.ch">Pol Eyschen</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
@@ -13,12 +13,11 @@
   <license>TODO</license>
 
 
-  <author email="jelavice@ethz.ch">Edo Jelavic</author>
+  <author email="peyschen@ethz.ch">Pol Eyschen</author>
 
 
   <buildtool_depend>catkin</buildtool_depend>
   <depend>open3d_catkin</depend>
   <depend>eigen</depend>
-  <depend>open3d_slam_utils</depend>
 
 </package>

@@ -11,13 +11,13 @@
 #include <Eigen/Dense>
 #include <mutex>
 #include "open3d_slam/AdjacencyMatrix.hpp"
-#include "open3d_slam/CircularBuffer.hpp"
+#include "open3d_slam_utils/CircularBuffer.hpp"
 #include "open3d_slam/Constraint.hpp"
 #include "open3d_slam/OptimizationProblem.hpp"
 #include "open3d_slam/Parameters.hpp"
 #include "open3d_slam/PlaceRecognition.hpp"
 #include "open3d_slam/Submap.hpp"
-#include "open3d_slam/ThreadSafeBuffer.hpp"
+#include "open3d_slam_utils/ThreadSafeBuffer.hpp"
 #include "open3d_slam/croppers.hpp"
 
 namespace o3d_slam {

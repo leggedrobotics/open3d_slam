@@ -8,7 +8,7 @@
 #include "open3d_slam/croppers.hpp"
 #include <Eigen/Core>
 #include <vector>
-#include "open3d_slam/typedefs.hpp"
+#include "open3d_slam_utils/typedefs.hpp"
 
 #include <iostream>
 #include <numeric>

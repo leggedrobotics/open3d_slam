@@ -10,7 +10,7 @@
 #include <open3d/geometry/PointCloud.h>
 #include <chrono>
 #include "open3d_slam/Parameters.hpp"
-#include "open3d_slam/Transform.hpp"
+#include "open3d_slam_utils/Transform.hpp"
 
 namespace o3d_slam {
 

@@ -16,7 +16,7 @@
 #include "open3d_slam/frames.hpp"
 #include "open3d_slam/helpers.hpp"
 #include "open3d_slam/output.hpp"
-#include "open3d_slam/time.hpp"
+#include "open3d_slam_utils/time.hpp"
 
 #include "open3d_slam_ros/SlamMapInitializer.hpp"
 #include "open3d_slam_ros/SlamWrapperRos.hpp"

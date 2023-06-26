@@ -8,10 +8,10 @@
 #include "open3d_slam/Mapper.hpp"
 #include "open3d_slam/frames.hpp"
 #include "open3d_slam/helpers.hpp"
-#include "open3d_slam/time.hpp"
+#include "open3d_slam_utils/time.hpp"
 #include "open3d_slam/math.hpp"
 #include "open3d_slam/Voxel.hpp"
-#include "open3d_slam/assert.hpp"
+#include "open3d_slam_utils/assert.hpp"
 #include "open3d_slam/output.hpp"
 #include "open3d_slam/ScanToMapRegistration.hpp"
 

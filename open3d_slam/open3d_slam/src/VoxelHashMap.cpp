@@ -6,7 +6,7 @@
  */
 
 #include <open3d_slam/VoxelHashMap.hpp>
-#include <open3d_slam/assert.hpp>
+#include <open3d_slam_utils/assert.hpp>
 
 namespace o3d_slam {
 

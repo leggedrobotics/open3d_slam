@@ -12,9 +12,9 @@
 #include <Eigen/Geometry>
 #include "open3d_slam/Parameters.hpp"
 #include "open3d_slam/SubmapCollection.hpp"
-#include "open3d_slam/TransformInterpolationBuffer.hpp"
+#include "open3d_slam_utils/TransformInterpolationBuffer.hpp"
 #include "open3d_slam/croppers.hpp"
-#include "open3d_slam/time.hpp"
+#include "open3d_slam_utils/time.hpp"
 
 namespace o3d_slam {
 

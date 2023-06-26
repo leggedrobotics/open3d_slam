@@ -11,8 +11,8 @@
 #include "open3d/pipelines/registration/Registration.h"
 
 #include "open3d_slam/Parameters.hpp"
-#include "open3d_slam/Transform.hpp"
-#include "open3d_slam/typedefs.hpp"
+#include "open3d_slam_utils/Transform.hpp"
+#include "open3d_slam_utils/typedefs.hpp"
 
 namespace o3d_slam {
 

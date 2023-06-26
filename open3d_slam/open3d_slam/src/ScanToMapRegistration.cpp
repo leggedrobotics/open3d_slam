@@ -7,7 +7,7 @@
 #include "open3d_slam/ScanToMapRegistration.hpp"
 #include "open3d_slam/CloudRegistration.hpp"
 #include "open3d_slam/Submap.hpp"
-#include "open3d_slam/assert.hpp"
+#include "open3d_slam_utils/assert.hpp"
 #include "open3d_slam/helpers.hpp"
 
 namespace o3d_slam {

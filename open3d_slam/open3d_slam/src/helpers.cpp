@@ -7,11 +7,11 @@
 
 #include "open3d_slam/helpers.hpp"
 #include "open3d_slam/Voxel.hpp"
-#include "open3d_slam/assert.hpp"
+#include "open3d_slam_utils/assert.hpp"
 #include "open3d_slam/croppers.hpp"
 #include "open3d_slam/math.hpp"
 #include "open3d_slam/output.hpp"
-#include "open3d_slam/time.hpp"
+#include "open3d_slam_utils/time.hpp"
 
 #include <open3d/Open3D.h>
 #include <open3d/pipelines/registration/Registration.h>

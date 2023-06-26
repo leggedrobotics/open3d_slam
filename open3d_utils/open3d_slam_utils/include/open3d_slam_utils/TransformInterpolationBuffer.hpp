@@ -10,8 +10,8 @@
 #include <limits>
 #include <mutex>
 
-#include "open3d_slam/Transform.hpp"
-#include "open3d_slam/time.hpp"
+#include "open3d_slam_utils/Transform.hpp"
+#include "open3d_slam_utils/time.hpp"
 
 namespace o3d_slam {
 

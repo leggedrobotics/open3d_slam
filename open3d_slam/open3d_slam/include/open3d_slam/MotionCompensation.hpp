@@ -9,9 +9,9 @@
 
 #include <memory>
 #include "open3d_slam/Parameters.hpp"
-#include "open3d_slam/TransformInterpolationBuffer.hpp"
-#include "open3d_slam/time.hpp"
-#include "open3d_slam/typedefs.hpp"
+#include "open3d_slam_utils/TransformInterpolationBuffer.hpp"
+#include "open3d_slam_utils/time.hpp"
+#include "open3d_slam_utils/typedefs.hpp"
 
 namespace o3d_slam {
 

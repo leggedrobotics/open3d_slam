@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <vector>
 #include "open3d_slam/Voxel.hpp"
-#include "open3d_slam/typedefs.hpp"
+#include "open3d_slam_utils/typedefs.hpp"
 
 namespace o3d_slam {
 class AdjacencyMatrix {

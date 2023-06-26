@@ -10,7 +10,7 @@
 #include <Eigen/Core>
 #include <map>
 #include <mutex>
-#include <open3d_slam/Transform.hpp>
+#include <open3d_slam_utils/Transform.hpp>
 #include <open3d_slam/VoxelHashMap.hpp>
 #include <vector>
 

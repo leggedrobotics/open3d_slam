@@ -8,7 +8,7 @@
 #pragma once
 #include <Eigen/Dense>
 #include <cstdint>
-#include "open3d_slam/time.hpp"
+#include "open3d_slam_utils/time.hpp"
 
 namespace o3d_slam {
 

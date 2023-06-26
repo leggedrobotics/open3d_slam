@@ -9,15 +9,12 @@ add_compile_options(-O2)
 set(SRC_FILES
   src/Mapper.cpp
   src/helpers.cpp
-  src/time.cpp
   src/math.cpp
   src/Odometry.cpp
   src/Voxel.cpp
   src/croppers.cpp
   src/Submap.cpp
   src/SubmapCollection.cpp
-  src/Transform.cpp
-  src/TransformInterpolationBuffer.cpp
   src/AdjacencyMatrix.cpp
   src/PlaceRecognition.cpp
   src/OptimizationProblem.cpp
@@ -32,6 +29,7 @@ set(SRC_FILES
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   open3d_catkin
+  open3d_slam_utils
   )
 
 
