@@ -48,7 +48,7 @@ mapping:
   map_intializer:
     is_initialize_interactively: true
     frame_id: "map_o3d"
-    pcd_file_path: "/data/2023-06-22-09-14-21.pcd"
+    pcd_file_path: "/data/2023-06-22-09-10-12.pcd"
     init_pose:
       position:
         x: 0.0
