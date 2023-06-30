@@ -37,7 +37,7 @@ void loadParameters(const YAML::Node& node, MapperParametersWithInitialization* 
 
 void loadParameters(const YAML::Node& node, MapInitializingParameters* p) {
 	p->frameId_ = node["frame_id"].as<std::string>();
-	p->pcdFilePath_ = node["pcd_file_path"].as<std::string>();
+	p->pcdFilePath_ = ros::package::getPath("impact_printing_common") + node["pcd_file_path"].as<std::string>();
 	p->isInitializeInteractively_ = node["is_initialize_interactively"].as<bool>();
 	if (node["init_pose"].IsDefined()) {
 		loadParameters(node["init_pose"], &(p->initialMarkerPose_));

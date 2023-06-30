@@ -14,6 +14,7 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Quaternion.h>
 #include "open3d_slam/Parameters.hpp"
+#include <ros/package.h>
 
 namespace o3d_slam {
 

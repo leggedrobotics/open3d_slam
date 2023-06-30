@@ -48,16 +48,16 @@ mapping:
   map_intializer:
     is_initialize_interactively: true
     frame_id: "map_o3d"
-    pcd_file_path: "/home/malczykg/catkin_ws/src/impact_printing/impact_printing_common/data/mapHongg.pcd"
+    pcd_file_path: "/data/2023-06-22-09-14-21.pcd"
     init_pose:
       position:
-        x: -3.0
-        y: -10.0
-        z: 0.5
+        x: 0.0
+        y: 0.0
+        z: 0.0
       orientation: #in degrees  
         roll: 0.0
         pitch: 0.0
-        yaw: -90.0
+        yaw: 0.0
 
   submaps:
     size: 30
