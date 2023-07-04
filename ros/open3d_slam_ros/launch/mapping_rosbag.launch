@@ -15,6 +15,7 @@
   <arg name="play_rate" default="1.0"/>
   <arg name="bag_filename" default="wheeled_robot_large_outdoor_area.bag"/>
   <arg name="bag_folder_path" default="$(find open3d_slam_ros)/data/"/>
+  <arg name="loop_closure" default="true"/>
 
   <!-- END OF ARGS -->
 
@@ -31,6 +32,7 @@
     <arg name="is_read_from_rosbag" value="$(arg is_read_from_rosbag)"/>
     <arg name="rosbag_filepath" value="$(arg rosbag_full_path)"/>
     <arg name="launch_prefix" value="$(arg launch_prefix)"/>
+    <arg name="loop_closure" value="$(arg loop_closure)"/>
   </include>
 
   <node pkg="rosbag" type="play" name="rosbag"

@@ -14,6 +14,7 @@
   <arg name="rosbag_filepath" default=""/>
   <arg name="use_sim_time" default="false"/>
   <arg name="pcd_file_path" default=""/>
+  <arg name="loop_closure" default="true"/>
 
   <!-- ROS Param -->
   <param name="/use_sim_time" value="$(arg use_sim_time)"/>
@@ -33,6 +34,7 @@
     <param name="rosbag_filepath"         value="$(arg rosbag_filepath)"/>
     <param name="map_saving_folder"       value="$(arg map_saving_folder)"/>
     <param name="pcd_file_path"           value="$(arg pcd_file_path)"/>
+    <param name="loop_closure"            value="$(arg loop_closure)"/>
   </node>
 
   <!-- Visualization -->

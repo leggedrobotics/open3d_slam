@@ -190,6 +190,11 @@ void SlamWrapperRos::loadParametersAndInitialize() {
     SlamParameters params;
     io_lua::loadParameters(paramFolderPath, paramFilename, &params_);
 
+    // Loop Closure 
+    const bool isLoopClosureEnabled = nh_->param<bool>("loop_closure", false);
+    params_.mapper_.isAttemptLoopClosures_ = isLoopClosureEnabled;
+    std::cout << "Is enable loop closures: " << std::boolalpha << params_.mapper_.isAttemptLoopClosures_ << "\n";
+
     BASE::loadParametersAndInitialize();
 }
 
