@@ -36,10 +36,6 @@ const double timingStatsEveryNsec = 15.0;
 }  // namespace
 
 SlamWrapper::SlamWrapper() {
-  // todo magic
-  odometryBuffer_.set_size_limit(30);
-  mappingBuffer_.set_size_limit(30);
-  registeredCloudBuffer_.set_size_limit(30);
   motionCompensationOdom_ = std::make_shared<MotionCompensation>();
   motionCompensationMap_ = std::make_shared<MotionCompensation>();
 }
@@ -131,7 +127,7 @@ void SlamWrapper::finishProcessing() {
   while (isRunWorkers_) {
     if (!mappingBuffer_.empty()) {
       std::cout << "  Waiting for the mapping buffer to be emptied \n";
-      std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
       continue;
     } else {
       std::cout << "  Mapping buffer emptied \n";
@@ -163,7 +159,7 @@ void SlamWrapper::finishProcessing() {
       }
       break;
     } else {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   }
   std::cout << "All submaps fnished! \n";
@@ -203,6 +199,11 @@ void SlamWrapper::loadParametersAndInitialize() {
     motionCompMap->setParameters(params_.motionCompensation_);
     motionCompensationMap_ = motionCompMap;
   }
+
+  // Set the buffer sizes. This is not done in the constructer 
+  odometryBuffer_.set_size_limit(params_.odometry_.odometryBufferSize_);
+  mappingBuffer_.set_size_limit(params_.mapper_.mappingBufferSize_);
+  registeredCloudBuffer_.set_size_limit(params_.odometry_.scanProcessing_.pointCloudBufferSize_);
 }
 
 void SlamWrapper::setInitialMap(const PointCloud& initialMap) {
@@ -257,7 +258,7 @@ bool SlamWrapper::saveSubmaps(const std::string& directory, const bool& isDenseM
 void SlamWrapper::odometryWorker() {
   while (isRunWorkers_) {
     if (odometryBuffer_.empty()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
       continue;
     }
     odometryStatisticsTimer_.startStopwatch();
@@ -290,7 +291,7 @@ void SlamWrapper::mappingWorker() {
   while (isRunWorkers_) {
     if (mappingBuffer_.empty()) {
       checkIfOptimizedGraphAvailable();
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
       continue;
     }
     mappingStatisticsTimer_.startStopwatch();
@@ -362,7 +363,7 @@ void SlamWrapper::checkIfOptimizedGraphAvailable() {
 void SlamWrapper::denseMapWorker() {
   while (isRunWorkers_) {
     if (registeredCloudBuffer_.empty()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
       continue;
     }
     denseMapStatiscticsTimer_.startStopwatch();
@@ -405,7 +406,7 @@ void SlamWrapper::attemptLoopClosuresIfReady() {
 void SlamWrapper::loopClosureWorker() {
   while (isRunWorkers_) {
     if (loopClosureCandidates_.empty() || isOptimizedGraphAvailable_) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
       continue;
     }
 
@@ -418,7 +419,7 @@ void SlamWrapper::loopClosureWorker() {
     }
 
     if (loopClosureConstraints.empty()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
       continue;
     }
     {

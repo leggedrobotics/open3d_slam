@@ -60,6 +60,7 @@ SCAN_CROPPING_PARAMETERS = {
 SCAN_PROCESSING_PARAMETERS = {
   voxel_size = 0.1,
   downsampling_ratio = 0.3,
+  point_cloud_buffer_size = 1, -- the scan processing buffer size. 1 means no buffering.
   scan_cropping = deepcopy(SCAN_CROPPING_PARAMETERS),
 }
 
@@ -76,7 +77,8 @@ SCAN_MATCHING_PARAMETERS = {
 }
 
 ODOMETRY_PARAMETERS = {
-  is_publish_odometry_msgs = false,
+  is_publish_odometry_msgs = true,
+  odometry_buffer_size = 1, -- the scan2scan odometry buffer size. 1 means no buffering.
   scan_matching = deepcopy(SCAN_MATCHING_PARAMETERS),
   scan_processing = deepcopy(SCAN_PROCESSING_PARAMETERS),
 }
@@ -119,6 +121,8 @@ MAPPER_LOCALIZER_PARAMETERS = {
   dump_submaps_to_file_before_after_lc = false,
   is_refine_odometry_constraints_between_submaps = false,
   min_movement_between_mapping_steps = 0.0,
+  ignore_minimum_refinement_fitness = false,
+  mapping_buffer_size = 1, -- the scan2map odometry buffer size. 1 means no buffering.
   scan_to_map_registration = deepcopy(SCAN_TO_MAP_REGISTRATION_PARAMETERS),
 }
 

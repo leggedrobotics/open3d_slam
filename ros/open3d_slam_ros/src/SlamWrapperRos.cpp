@@ -185,12 +185,12 @@ void SlamWrapperRos::loadParametersAndInitialize() {
   //	setParameterFilePath(paramFile);
   //	io_yaml::loadParameters(paramFile, &params_);
   //
-  const std::string paramFolderPath = nh_->param<std::string>("parameter_folder_path", "");
-  const std::string paramFilename = nh_->param<std::string>("parameter_filename", "");
-  SlamParameters params;
-  io_lua::loadParameters(paramFolderPath, paramFilename, &params_);
+    const std::string paramFolderPath = nh_->param<std::string>("parameter_folder_path", "");
+    const std::string paramFilename = nh_->param<std::string>("parameter_filename", "");
+    SlamParameters params;
+    io_lua::loadParameters(paramFolderPath, paramFilename, &params_);
 
-  BASE::loadParametersAndInitialize();
+    BASE::loadParametersAndInitialize();
 }
 
 bool SlamWrapperRos::saveMapCallback(open3d_slam_msgs::SaveMap::Request& req, open3d_slam_msgs::SaveMap::Response& res) {

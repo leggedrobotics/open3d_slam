@@ -108,11 +108,13 @@ void loadParameters(const YAML::Node &node, OdometryParameters *p){
 	loadParameters(node["scan_matching"], &(p->scanMatcher_) );
 	loadParameters(node["scan_processing"], &(p->scanProcessing_) );
 	loadIfKeyDefined<bool>(node,"is_publish_odometry_msgs", &p->isPublishOdometryMsgs_);
+	loadIfKeyDefined<int>(node,"odometry_buffer_size", &p->odometryBufferSize_);
 }
 
 void loadParameters(const YAML::Node &node, ScanProcessingParameters *p){
 	p->voxelSize_ = node["voxel_size"].as<double>();
 	p->downSamplingRatio_ = node["downsampling_ratio"].as<double>();
+	p->pointCloudBufferSize_ = node["point_cloud_buffer_size"].as<int>();
 	loadParameters(node["scan_cropping"], &(p->cropper_));
 }
 
@@ -141,6 +143,7 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	p->isBuildDenseMap_ = node["is_build_dense_map"].as<bool>();
 	p->isAttemptLoopClosures_ = node["is_attempt_loop_closures"].as<bool>();
 	p->minMovementBetweenMappingSteps_ = node["min_movement_between_mapping_steps"].as<double>();
+	p->isIgnoreMinRefinementFitness_ = node["ignore_minimum_refinement_fitness"].as<bool>();
 	p->isDumpSubmapsToFileBeforeAndAfterLoopClosures_ = node["dump_submaps_to_file_before_after_lc"].as<bool>();
 	p->isPrintTimingStatistics_ = node["is_print_timing_information"].as<bool>();
 	p->isRefineOdometryConstraintsBetweenSubmaps_ = node["is_refine_odometry_constraints_between_submaps"].as<bool>();
@@ -148,6 +151,8 @@ void loadParameters(const YAML::Node &node, MapperParameters *p) {
 	p->isMergeScansIntoMap_ = node["is_merge_scans_into_map"].as<bool>();
 	loadParameters(node["scan_to_map_refinement"],&(p->scanMatcher_));
 	loadParameters(node["scan_to_map_refinement"]["scan_processing"], &(p->scanProcessing_));
+	loadIfKeyDefined<int>(node,"mapping_buffer_size", &p->mappingBufferSize_);
+	p->mappingBufferSize_ = node["mapping_buffer_size"].as<int>();
 
 	if (p->isBuildDenseMap_) {
 		loadParameters(node["dense_map_builder"], &(p->denseMapBuilder_));
@@ -171,12 +176,12 @@ void loadParameters(const YAML::Node &node, ScanToMapRegistrationParameters *p){
 }
 
 void loadParameters(const YAML::Node &node, SpaceCarvingParameters *p){
-  if (node["voxel_size"].IsDefined()){
-    p->voxelSize_ = node["voxel_size"].as<double>();
-  }
-  if (node["neigborhood_radius_for_removal"].IsDefined()){
-      p->neighborhoodRadiusDenseMap_ = node["neigborhood_radius_for_removal"].as<double>();
-    }
+	if (node["voxel_size"].IsDefined()){
+		p->voxelSize_ = node["voxel_size"].as<double>();
+	}
+	if (node["neigborhood_radius_for_removal"].IsDefined()){
+		p->neighborhoodRadiusDenseMap_ = node["neigborhood_radius_for_removal"].as<double>();
+	}
 	p->maxRaytracingLength_ = node["max_raytracing_length"].as<double>();
 	p->truncationDistance_ = node["truncation_distance"].as<double>();
 	p->carveSpaceEveryNscans_ = node["carve_space_every_n_scans"].as<int>();

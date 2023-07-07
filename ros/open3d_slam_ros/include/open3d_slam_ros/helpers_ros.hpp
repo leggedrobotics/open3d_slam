@@ -53,4 +53,36 @@ void publishIfSubscriberExists(const Msg& msg, const ros::Publisher& pub) {
   }
 }
 
+// Repeated functionality from GraphMsfRos by Julian Nubert. Subject to its license.
+template <typename T>
+inline void printKey(const std::string& key, T value) {
+  std::cout << "\033[92m" << "Open3d SLAM " << "\033[0m" << key << "  set to: " << value << std::endl;
+}
+
+template <>
+inline void printKey(const std::string& key, std::vector<double> vector) {
+  std::cout << "\033[92m" << "Open3d SLAM " << "\033[0m" << key << " set to: ";
+  for (const auto& element : vector) {
+    std::cout << element << ",";
+  }
+  std::cout << std::endl;
+}
+
+// Repeated functionality from GraphMsfRos by Julian Nubert. Subject to its license.
+template <typename T>
+T tryGetParam(const std::string& key, const ros::NodeHandle& privateNode) {
+  T value;
+  if (privateNode.getParam(key, value)) {
+    printKey(key, value);
+    return value;
+  } else {
+    if (privateNode.getParam("/" + key, value)) {
+      printKey("/" + key, value);
+      return value;
+    }
+
+    throw std::runtime_error("Open3d SLAM - " + key + " not specified.");
+  }
+}
+
 } /* namespace o3d_slam */

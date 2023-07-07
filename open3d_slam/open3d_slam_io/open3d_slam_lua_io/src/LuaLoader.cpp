@@ -230,9 +230,11 @@ void LuaLoader::loadParameters(const DictPtr dict, MapperParameters *p) {
 	loadBoolIfKeyDefined(dict, "is_refine_odometry_constraints_between_submaps", &p->isRefineOdometryConstraintsBetweenSubmaps_);
 	loadBoolIfKeyDefined(dict, "is_use_map_initialization", &p->isUseInitialMap_);
 	loadBoolIfKeyDefined(dict, "is_merge_scans_into_map", &p->isMergeScansIntoMap_);
+	loadBoolIfKeyDefined(dict, "ignore_minimum_refinement_fitness", &p->isIgnoreMinRefinementFitness_);
 
 	loadDoubleIfKeyDefined(dict, "min_movement_between_mapping_steps", &p->minMovementBetweenMappingSteps_);
 
+	loadIntIfKeyDefined(dict, "mapping_buffer_size", &p->mappingBufferSize_);
 
 	loadIfDictionaryDefined(dict,"scan_to_map_registration", &p->scanMatcher_);
 	loadIfDictionaryDefinedMultiLevel(dict,{"scan_to_map_registration","scan_processing"}, &p->scanProcessing_);
@@ -296,6 +298,7 @@ void LuaLoader::loadParameters(const DictPtr dict, OdometryParameters *p){
 	loadIfDictionaryDefined(dict,"scan_matching", &p->scanMatcher_);
 	loadIfDictionaryDefined(dict,"scan_processing", &p->scanProcessing_);
 	loadBoolIfKeyDefined(dict, "is_publish_odometry_msgs", &p->isPublishOdometryMsgs_);
+	loadIntIfKeyDefined  (dict, "odometry_buffer_size", &p->odometryBufferSize_);
 }
 
 void LuaLoader::loadParameters(const DictPtr dict, CloudRegistrationParameters *p){
@@ -308,6 +311,7 @@ void LuaLoader::loadParameters(const DictPtr dict, CloudRegistrationParameters *
 void LuaLoader::loadParameters(const DictPtr dict, ScanProcessingParameters *p){
 	loadDoubleIfKeyDefined(dict, "voxel_size", &p->voxelSize_);
 	loadDoubleIfKeyDefined(dict, "downsampling_ratio", &p->downSamplingRatio_);
+	loadIntIfKeyDefined(dict, "point_cloud_buffer_size", &p->pointCloudBufferSize_);
 	loadIfDictionaryDefined(dict,"scan_cropping", &p->cropper_);
 }
 

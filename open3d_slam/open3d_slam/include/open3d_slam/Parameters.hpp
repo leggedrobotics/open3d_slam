@@ -59,6 +59,7 @@ struct ScanCroppingParameters {
 struct ScanProcessingParameters {
   double downSamplingRatio_ = 1.0;
   double voxelSize_ = 0.03;
+  int pointCloudBufferSize_ = 1;
   ScanCroppingParameters cropper_;
 };
 
@@ -78,6 +79,7 @@ struct OdometryParameters {
   CloudRegistrationParameters scanMatcher_;
   ScanProcessingParameters scanProcessing_;
   bool isPublishOdometryMsgs_ = false;
+  int odometryBufferSize_ = 1;
 };
 
 struct SpaceCarvingParameters {
@@ -170,6 +172,7 @@ struct MapperParameters {
   bool isRefineOdometryConstraintsBetweenSubmaps_ = false;
   bool isUseInitialMap_ = false;
   bool isMergeScansIntoMap_ = true;
+  int mappingBufferSize_ = 1;
   MapInitializingParameters mapInit_;
 };
 
