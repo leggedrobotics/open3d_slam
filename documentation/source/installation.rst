@@ -37,6 +37,17 @@ Install with apt:
 
    sudo apt install ros-noetic-jsk-rviz-plugins
 
+In case this installation is not sufficient and you still get errors, follow the instructions:
+
+.. code-block:: bash
+
+   wget http://archive.ubuntu.com/ubuntu/pool/universe/p/pcl/libpcl-visualization1.10_1.10.0+dfsg-5ubuntu1_amd64.deb
+   wget http://de.archive.ubuntu.com/ubuntu/pool/universe/v/vtk7/libvtk7.1p_7.1.1+dfsg2-2ubuntu1_amd64.deb
+   sudo dpkg -i libvtk7.1p_7.1.1+dfsg2-2ubuntu1_amd64.deb
+   sudo dpkg -i libpcl-visualization1.10_1.10.0+dfsg-5ubuntu1_amd64.deb
+
+jsk-rviz plugins inherently depends on pcl_visualization package which depends on vtk7 package. However, these packages are not part of the PCL debian packages. Therefore, we need to install them manually.
+
 4. LUA
 ~~~~~~~~~~~~~~~~~~~
 If you use open3d_slam_ros, the configs are loaded using LUA, as they allow for an easy configuration management with minimal duplicated code.
