@@ -23,10 +23,6 @@ void DataProcessorRos::initCommonRosStuff() {
   std::cout << "Num accumulated range data: " << numAccumulatedRangeDataDesired_ << std::endl;
 }
 
-void DataProcessorRos::processMeasurement(const PointCloud& cloud, const Time& timestamp) {
-  std::cout << "Warning you have not implemented processMeasurement!!! \n";
-}
-
 std::shared_ptr<SlamWrapper> DataProcessorRos::getSlamPtr() {
   return slam_;
 }
@@ -48,7 +44,7 @@ void DataProcessorRos::accumulateAndProcessRangeData(const PointCloud& cloud, co
   }
 
   if (accumulatedCloud_.IsEmpty()) {
-    std::cout << "Trying to insert and empyt cloud!!! Skipping the measurement \n";
+    std::cout << "Trying to insert and empty cloud!!! Skipping the measurement \n";
     return;
   }
 

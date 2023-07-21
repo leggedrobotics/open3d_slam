@@ -104,12 +104,12 @@ void randomDownSample(double downSamplingRatio, open3d::geometry::PointCloud* pc
   auto downSampled = pcl->RandomDownSample(downSamplingRatio);
   *pcl = std::move(*downSampled);
 }
-void voxelize(double voxelSize, open3d::geometry::PointCloud* pcl) {
+void voxelize(const double voxelSize, std::shared_ptr<PointCloud> cloudPtr) {
   if (voxelSize <= 0) {
     return;
   }
-  auto voxelized = pcl->VoxelDownSample(voxelSize);
-  *pcl = std::move(*voxelized);
+  std::shared_ptr<PointCloud> voxelizedCloudPtr = cloudPtr->VoxelDownSample(voxelSize);
+  *cloudPtr = *voxelizedCloudPtr;
 }
 
 std::shared_ptr<open3d::geometry::PointCloud> voxelizeWithinCroppingVolume(double voxel_size, const CroppingVolume& croppingVolume,

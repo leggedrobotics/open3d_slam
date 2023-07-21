@@ -46,12 +46,8 @@ std::unique_ptr<CroppingVolume> croppingVolumeFactory(CroppingVolumeEnum type, c
   }
 }
 
-bool CroppingVolume::isWithinVolumeImpl(const Eigen::Vector3d& p) const {
-  return true;
-}
-
 bool CroppingVolume::isWithinVolume(const Eigen::Vector3d& p) const {
-  return isInvertVolume_ ? !isWithinVolumeImpl(p) : isWithinVolumeImpl(p);
+  return isInvertVolume_ ? !isWithinVolumeImpl(p) : isWithinVolumeImpl(p);;
 }
 
 void CroppingVolume::setIsInvertVolume(bool val) {
@@ -115,7 +111,6 @@ void CroppingVolume::setScaling(double scaling) {
   // nothing by default
 }
 
-//////////
 MinMaxRadiusCroppingVolume::MinMaxRadiusCroppingVolume(double radiusMin, double radiusMax) : radiusMin_(radiusMin), radiusMax_(radiusMax) {}
 
 bool MinMaxRadiusCroppingVolume::isWithinVolumeImpl(const Eigen::Vector3d& p) const {

@@ -32,9 +32,9 @@ void ScanToMapIcp::update(const MapperParameters& p) {
   cloudRegistration = cloudRegistrationFactory(toCloudRegistrationType(p.scanMatcher_));
 }
 
-PointCloudPtr ScanToMapIcp::preprocess(const PointCloud& in) const {
-  auto croppedCloud = mapBuilderCropper_->crop(in);
-  o3d_slam::voxelize(params_.scanProcessing_.voxelSize_, croppedCloud.get());
+PointCloudPtr ScanToMapIcp::preprocess(const PointCloud& inCloud) const {
+  auto croppedCloud = mapBuilderCropper_->crop(inCloud);
+  o3d_slam::voxelize(params_.scanProcessing_.voxelSize_, croppedCloud);
   cloudRegistration->estimateNormalsOrCovariancesIfNeeded(croppedCloud.get());
   return croppedCloud->RandomDownSample(params_.scanProcessing_.downSamplingRatio_);
 }

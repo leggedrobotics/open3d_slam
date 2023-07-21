@@ -21,7 +21,7 @@ class DataProcessorRos {
 
   virtual void initialize() = 0;
   virtual void startProcessing() = 0;
-  virtual void processMeasurement(const PointCloud& cloud, const Time& timestamp);
+  virtual void processMeasurement(const PointCloud& cloud, const Time& timestamp) = 0;
   void accumulateAndProcessRangeData(const PointCloud& cloud, const Time& timestamp);
   void initCommonRosStuff();
   std::shared_ptr<SlamWrapper> getSlamPtr();

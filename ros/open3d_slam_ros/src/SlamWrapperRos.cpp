@@ -226,17 +226,17 @@ void SlamWrapperRos::publishMaps(const Time& time) {
 
   const ros::Time timestamp = toRos(time);
   {
-    PointCloud map = mapper_->getAssembledMapPointCloud();
-    voxelize(params_.visualization_.assembledMapVoxelSize_, &map);
-    o3d_slam::publishCloud(map, o3d_slam::frames::mapFrame, timestamp, assembledMapPub_);
+    std::shared_ptr<PointCloud> mapPtr = std::make_shared<PointCloud>(mapper_->getAssembledMapPointCloud());
+    voxelize(params_.visualization_.assembledMapVoxelSize_, mapPtr);
+    o3d_slam::publishCloud(*mapPtr, o3d_slam::frames::mapFrame, timestamp, assembledMapPub_);
   }
   o3d_slam::publishCloud(mapper_->getPreprocessedScan(), o3d_slam::frames::rangeSensorFrame, timestamp, mappingInputPub_);
   o3d_slam::publishSubmapCoordinateAxes(mapper_->getSubmaps(), o3d_slam::frames::mapFrame, timestamp, submapOriginsPub_);
   if (submapsPub_.getNumSubscribers() > 0) {
-    open3d::geometry::PointCloud cloud;
-    o3d_slam::assembleColoredPointCloud(mapper_->getSubmaps(), &cloud);
-    voxelize(params_.visualization_.submapVoxelSize_, &cloud);
-    o3d_slam::publishCloud(cloud, o3d_slam::frames::mapFrame, timestamp, submapsPub_);
+    std::shared_ptr<PointCloud> cloudPtr;
+    o3d_slam::assembleColoredPointCloud(mapper_->getSubmaps(), cloudPtr.get());
+    voxelize(params_.visualization_.submapVoxelSize_, cloudPtr);
+    o3d_slam::publishCloud(*cloudPtr, o3d_slam::frames::mapFrame, timestamp, submapsPub_);
   }
 
   visualizationUpdateTimer_.reset();

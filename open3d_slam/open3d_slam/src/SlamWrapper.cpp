@@ -264,7 +264,6 @@ void SlamWrapper::odometryWorker() {
     odometryStatisticsTimer_.startStopwatch();
     const TimestampedPointCloud measurement = odometryBuffer_.pop();
     auto undistortedCloud = motionCompensationOdom_->undistortInputPointCloud(measurement.cloud_, measurement.time_);
-
     const auto isOdomOkay = odometry_->addRangeScan(*undistortedCloud, measurement.time_);
 
     // this ensures that the odom is always ahead of the mapping
