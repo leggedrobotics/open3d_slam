@@ -48,7 +48,6 @@ bool Submap::insertScan(const PointCloud& rawScan, const PointCloud& preProcesse
     std::lock_guard<std::mutex> lck(mapPointCloudMutex_);
     mapCloud_ = preProcessedScan;
     std::shared_ptr<PointCloud> mapCloudPtr(&mapCloud_);
-    std::cout << "is map cloud empty: " << mapCloudPtr->IsEmpty() << std::endl;
     voxelize(params_.mapBuilder_.mapVoxelSize_, mapCloudPtr);
     return true;
   }
