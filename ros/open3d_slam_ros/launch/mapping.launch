@@ -5,8 +5,8 @@
   <!-- Arguments -->
   <arg name="launch_prefix" default="" doc="gdb -ex run --args"/>
   <arg name="launch_rviz" default="true"/>
-  <arg name="cloud_topic" default="/rslidar_points"/>
-  <arg name="parameter_filename" default="param_robosense_rs16.lua"/>
+  <arg name="cloud_topic" default="/camera0/depth/color/points/"/>
+  <arg name="parameter_filename" default="param_realsense_close.lua"/>
   <arg name="parameter_folder_path" default="$(find open3d_slam_ros)/param/"/>
   <arg name="map_saving_folder" default="$(find open3d_slam_ros)/data/maps/"/>
   <arg name="num_accumulated_range_data" default="1"/>
