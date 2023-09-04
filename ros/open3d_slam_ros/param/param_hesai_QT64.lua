@@ -47,7 +47,7 @@ params.dense_map_builder.space_carving.truncation_distance = 0.1
 params.place_recognition.ransac_min_corresondence_set_size = 40
 params.place_recognition.max_icp_correspondence_distance = 0.3
 params.place_recognition.min_icp_refinement_fitness = 0.7
-params.place_recognition.dump_aligned_place_recognitions_to_file = false 
+params.place_recognition.dump_aligned_place_recognitions_to_file = false
 params.place_recognition.min_submaps_between_loop_closures = 2
 params.place_recognition.loop_closure_search_radius = 20.0
 params.place_recognition.consistency_check.max_drift_roll = 30.0 --deg
@@ -59,5 +59,13 @@ params.place_recognition.consistency_check.max_drift_z = 40.0 --m
 
 --SAVING
 params.saving.save_map = false
+
+
+
+params.meshing.is_meshing = true
+params.meshing.voxel_dilation_ratio = 0.35
+params.meshing.downsampling_voxel_size = 0.2
+params.meshing.should_transform_mesh = true
+params.meshing.mesh_crop_height = -1.5
 
 return params

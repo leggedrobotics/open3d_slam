@@ -262,7 +262,9 @@ std::vector<size_t> MeshMap::dilateVertexSet(const std::unordered_set<size_t>& v
   vertexSetCentroid /= static_cast<double>(pts.size());
   auto distToLidar = (mapToRange_.translation() - vertexSetCentroid).norm();
   auto it = std::lower_bound(dilationDistances_.begin(), dilationDistances_.end(), distToLidar);
+
   size_t idx; // NOLINT(cppcoreguidelines-init-variables)
+
   if (it == dilationDistances_.end()) {
     idx = dilationDistances_.size() - 1;
   } else {

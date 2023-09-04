@@ -20,7 +20,8 @@
   <!-- Main Node -->
   <node name="mapping_node" pkg="open3d_slam_ros"
         type="mapping_node" output="screen"
-        launch-prefix="$(arg launch_prefix)">
+        launch-prefix="$(arg launch_prefix)" respawn="true" respawn_delay="5">
+
     <param name="cloud_topic" type="string" value="$(arg cloud_topic)"/>
     <param name="parameter_folder_path" type="string"
            value="$(arg parameter_folder_path)"/>

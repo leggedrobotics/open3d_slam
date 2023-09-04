@@ -181,4 +181,5 @@ MESHING_PARAMETERS = {
   voxel_max_updates = 50,
   should_transform_mesh = false,
   mesh_frame = "map",
+  mesh_crop_height = -1,
 }

@@ -206,6 +206,7 @@ struct MeshingParameters {
         int voxelMaxUpdates_ = 50;
         bool shouldTransformMesh_ = false;
         std::string meshFrame_ = "map";
+        double meshCropHeight_ = -1.0;
 };
 
 

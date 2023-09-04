@@ -84,8 +84,10 @@ install(
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING
   PATTERN "*.hpp"
-  PATTERN " *.h"
+  PATTERN "*.h"
 )
+
+
 
 #############
 ## Testing ##
@@ -130,3 +132,4 @@ if(cmake_clang_tools_FOUND)
     DISABLE_CLANG_FORMAT
   )
 endif(cmake_clang_tools_FOUND)
+

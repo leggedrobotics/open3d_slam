@@ -276,6 +276,55 @@ void SlamWrapperRos::publishMaps(const Time &time) {
 		o3d_slam::publishCloud(cloud, o3d_slam::frames::mapFrame, timestamp, submapsPub_);
 	}
 
+
+        if (meshPub_.getNumSubscribers() > 0) {
+                auto mesh = mesher_->getActiveMeshMap()->toO3dMesh();
+
+                auto rangeSensorTrafo = mapper_->getMapToRangeSensor(latestScanToMapRefinementTimestamp_);
+                Eigen::Matrix3d rotation = rangeSensorTrafo.rotation();
+                Eigen::Vector3d translation = rangeSensorTrafo.translation();
+                auto top = translation.z() + params_.mesher_.meshCropHeight_;
+                auto bottom = top - 100;
+                auto center = (top + bottom)/2;
+                Eigen::Vector3d bBoxCenter{translation.x(), translation.y(), center};
+                Eigen::Vector3d extent{100,100,100};
+                open3d::geometry::OrientedBoundingBox box(bBoxCenter, rotation, extent);
+
+                mesh = *mesh.Crop(box);
+                if (!mesh.IsEmpty()) {
+                        std::string frame = o3d_slam::frames::mapFrame;
+                        if (params_.mesher_.shouldTransformMesh_) {
+                          mesh = mesh.Transform(lidarToMap_.matrix());
+                          frame = params_.mesher_.meshFrame_;
+                        }
+                        publishMesh(mesh, frame, timestamp, meshPub_);
+                }
+        }
+
+        if (vertexPub_.getNumSubscribers() > 0) {
+                PointCloud vertexMap = open3d::geometry::PointCloud(mesher_->getActiveMeshMap()->getVertices());
+
+                o3d_slam::publishCloud(vertexMap, o3d_slam::frames::mapFrame, timestamp, vertexPub_);
+        }
+
+        if (mesherInputPub_.getNumSubscribers() > 0) {
+                PointCloud mesherInput = mesher_->getActiveMeshMap()->getMeshingInput();
+                o3d_slam::publishCloud(mesherInput, o3d_slam::frames::mapFrame, timestamp, mesherInputPub_);
+        }
+
+        if (aggregatedMeshPub_.getNumSubscribers() > 0) {
+                auto mesh = mesher_->getAggregatedMesh();
+                if (!mesh.IsEmpty()) {
+                        std::string frame = o3d_slam::frames::mapFrame;
+                        if (params_.mesher_.shouldTransformMesh_) {
+                          mesh = mesh.Transform(lidarToMap_.matrix());
+                          frame = params_.mesher_.meshFrame_;
+                        }
+                        publishMesh(mesh, frame, timestamp, aggregatedMeshPub_);
+                }
+        }
+
+
         visualizationUpdateTimer_.reset();
 	isVisualizationFirstTime_ = false;
 }
