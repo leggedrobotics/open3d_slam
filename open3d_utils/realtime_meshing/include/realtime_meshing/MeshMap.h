@@ -35,6 +35,8 @@ class MeshMap {
 
   void updateParameters(MeshingParameters params);
 
+  Eigen::Isometry3d getMapToRange() { return mapToRange_;};
+
   o3d_slam::PointCloud getVertices();
   o3d_slam::PointCloud getMeshingInput();
   open3d::geometry::TriangleMesh toO3dMesh() const;

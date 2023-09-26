@@ -81,6 +81,19 @@ void RealtimeMeshingRos::publishWorker() {
     open3d_slam_msgs::PolygonMesh meshMsg;
     auto mesh = mesher_->getMesh();
     if (!mesh.IsEmpty()) {
+      Eigen::Isometry3d rangeSensor = mesher_->getActiveMeshMap()->getMapToRange();
+      Eigen::Vector3d rangeTranslation = rangeSensor.translation();
+      auto top = rangeTranslation.z() + params_.meshCropHeight_;
+      auto bottom = top - 100;
+      auto center = (top + bottom)/2.0;
+
+      Eigen::Vector3d bBoxCenter{rangeTranslation.x(), rangeTranslation.y(), center};
+      Eigen::Vector3d extent{100,100,100};
+      open3d::geometry::OrientedBoundingBox cropBox(bBoxCenter,rangeSensor.rotation(), extent);
+      mesh = *mesh.Crop(cropBox);
+      if(mesh.IsEmpty()){
+          return;
+      }
       open3d_conversions::open3dToRos(mesh, "map", meshMsg);
       meshMsg.header.frame_id = "map";
       mapPub_.publish(meshMsg);

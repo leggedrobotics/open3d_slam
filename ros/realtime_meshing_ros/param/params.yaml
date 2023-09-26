@@ -11,3 +11,5 @@ sliver_deletion_threshold: 0.01
 should_filter: true # run a guided filter before adding the point cloud to the mesh
 filter_epsilon: 0.01
 filter_radius: 0.3
+
+mesh_crop_height: -1.5 # height from lidar above which to cut the mesh

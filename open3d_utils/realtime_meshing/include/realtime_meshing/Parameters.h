@@ -17,5 +17,6 @@ struct MeshingParameters {
   double preRotateRoll_ = 0.0;
   double preRotatePitch_ = 0.0;
   double preRotateYaw_ = 0.0;
+  double meshCropHeight_ = -1.0;
 };
 #endif  // REALTIME_MESHING_PARAMETERS_H

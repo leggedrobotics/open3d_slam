@@ -69,4 +69,5 @@ void loadParameters(const std::string& path, MeshingParameters& parameters) {
   parameters.preRotateRoll_ = params["prerotate_roll"].as<double>();
   parameters.preRotatePitch_ = params["prerotate_pitch"].as<double>();
   parameters.preRotateYaw_ = params["prerotate_yaw"].as<double>();
+  parameters.meshCropHeight_ = params["mesh_crop_height"].as<double>();
 }
