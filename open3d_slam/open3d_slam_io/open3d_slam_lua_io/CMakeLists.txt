@@ -48,7 +48,7 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
-add_executable( minimal_example
+add_executable(minimal_example
 	src/minimal_example.cpp
 )
 
@@ -56,4 +56,3 @@ target_link_libraries(minimal_example
   ${catkin_LIBRARIES}
   ${PROJECT_NAME}
 )
-

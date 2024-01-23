@@ -56,7 +56,7 @@ elseif(Open3D_FOUND)
   message("Open3D libraries: ${Open3D_LIBRARIES}")
   message("Open3D include path: ${Open3D_INCLUDE_DIRS} , ${Open3D_INCLUDE_DIR_MAN}")
   
-  
+  # FMT
   find_package(fmt QUIET)
   if(fmt_FOUND)
   	message("Linking fmt into open3d_catkin")
@@ -87,6 +87,19 @@ elseif(Open3D_FOUND)
     )  	 
   endif()
 
+  # Linking other packages
+  catkin_package(
+    INCLUDE_DIRS 
+      ${Open3D_INCLUDE_DIRS}
+      ${Open3D_INCLUDE_DIR_MAN}
+    LIBRARIES 
+      ${Open3D_LIBRARIES}
+    CATKIN_DEPENDS
+      ${CATKIN_PACKAGE_DEPENDENCIES}
+    DEPENDS
+      Open3D 
+  )  	 
+
 
 # 3 - Compile in catkin workspace -------------------------------------------------------------
 else()
@@ -103,7 +116,6 @@ else()
   ExternalProject_Add(open3d
     GIT_REPOSITORY "https://github.com/isl-org/Open3D"
     GIT_TAG "v0.15.1"
-    GIT_SUBMODULES_RECURSE "true"
     GIT_PROGRESS "true"
     CMAKE_CACHE_ARGS "-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=true"
     PREFIX "${CMAKE_SOURCE_DIR}"
