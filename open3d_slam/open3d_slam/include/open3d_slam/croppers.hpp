@@ -41,7 +41,7 @@ class CroppingVolume {
   void crop(PointCloud* cloud) const;
 
  protected:
-  virtual bool isWithinVolumeImpl(const Eigen::Vector3d& p) const;
+  virtual bool isWithinVolumeImpl(const Eigen::Vector3d& p) const = 0;
   Eigen::Isometry3d pose_ = Eigen::Isometry3d::Identity();
   bool isInvertVolume_ = false;
 };

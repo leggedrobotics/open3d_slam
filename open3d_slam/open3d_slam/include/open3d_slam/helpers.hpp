@@ -22,7 +22,7 @@ std::shared_ptr<open3d::geometry::PointCloud> transform(const Eigen::Matrix4d& T
 std::shared_ptr<open3d::geometry::PointCloud> voxelizeWithinCroppingVolume(double voxel_size, const CroppingVolume& croppingVolume,
                                                                            const open3d::geometry::PointCloud& cloud);
 void randomDownSample(double downSamplingRatio, open3d::geometry::PointCloud* pcl);
-void voxelize(double voxelSize, open3d::geometry::PointCloud* pcl);
+void voxelize(double voxelSize, std::shared_ptr<PointCloud> cloudPtr);
 
 void estimateNormals(int numNearestNeighbours, open3d::geometry::PointCloud* pcl);
 

@@ -50,8 +50,8 @@ GLOBAL_OPTIMIZATION_PARAMETERS = {
 }
 
 SCAN_CROPPING_PARAMETERS = {
-  cropping_radius_max= 30.0,
   cropping_radius_min= 2.0,
+  cropping_radius_max= 30.0,
   min_z= -50.0,
   max_z= 50.0,
   cropper_type= "MinMaxRadius", -- options are Cylinder, MaxRadius, MinRadius, MinMaxRadius
