@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>open3d_slam_ros</name>
   <version>0.0.0</version>
   <description>Range sensor based mapping</description>
@@ -16,9 +16,13 @@
   <author email="jelavice@ethz.ch">Edo Jelavic</author>
 
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <depend>roscpp</depend>
-  <depend>roslib</depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>ament_index_cpp</depend>
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>sensor_msgs</depend>
   <depend>open3d_conversions</depend>
   <depend>open3d_slam</depend>
   <depend>eigen_conversions</depend>
@@ -28,6 +32,9 @@
   <depend>interactive_markers</depend>
   <depend>rosbag</depend>
   <depend>open3d_slam_lua_io</depend>
+  <depend>open3d_slam_msgs</depend>
 
-
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

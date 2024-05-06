@@ -6,37 +6,37 @@
  */
 
 #include "open3d_slam_ros/RosbagRangeDataProcessorRos.hpp"
-#include "open3d_conversions/open3d_conversions.h"
+#include "open3d_conversions/open3d_conversions.hpp"
 #include "open3d_slam_ros/SlamWrapperRos.hpp"
 
-#include <ros/ros.h>
-#include <sensor_msgs/PointCloud2.h>
+#include "rclcpp/rclcpp.hpp"
+#include <sensor_msgs/msg/point_cloud2.h>
 
-#include <rosbag/view.h>
 #include "open3d_slam/frames.hpp"
 #include "open3d_slam/time.hpp"
 #include "open3d_slam_ros/helpers_ros.hpp"
 
 namespace o3d_slam {
 
-RosbagRangeDataProcessorRos::RosbagRangeDataProcessorRos(ros::NodeHandlePtr nh) : BASE(nh) {}
+RosbagRangeDataProcessorRos::RosbagRangeDataProcessorRos(rclcpp::Node* nh, rclcpp::executors::SingleThreadedExecutor* executor) : BASE(nh, executor) {}
 
 void RosbagRangeDataProcessorRos::initialize() {
   initCommonRosStuff();
-  slam_ = std::make_shared<SlamWrapperRos>(nh_);
+  slam_ = std::make_shared<SlamWrapperRos>(nh_, executor_);
   slam_->loadParametersAndInitialize();
-  rosbagFilename_ = nh_->param<std::string>("rosbag_filepath", "");
+  nh_->declare_parameter("rosbag_filepath", "");
+  rosbagFilename_ = nh_->get_parameter("rosbag_filepath").as_string();
   std::cout << "Reading from rosbag: " << rosbagFilename_ << "\n";
 }
 
 void RosbagRangeDataProcessorRos::startProcessing() {
   slam_->startWorkers();
 
-  rosbag::Bag bag;
-  bag.open(rosbagFilename_, rosbag::bagmode::Read);
-  readRosbag(bag);
-  bag.close();
-  ros::spin();
+  rosbag2_cpp::Reader reader_;
+  reader_.open(rosbagFilename_);
+  //readRosbag(reader_);
+  reader_.close();
+  executor_->spin();
   slam_->stopWorkers();
 }
 
@@ -49,17 +49,19 @@ void RosbagRangeDataProcessorRos::processMeasurement(const PointCloud& cloud, co
   }
 }
 
-void RosbagRangeDataProcessorRos::readRosbag(const rosbag::Bag& bag) {
-  std::vector<std::string> topics;
-  topics.push_back(cloudTopic_);
-  rosbag::View view(bag, rosbag::TopicQuery(topics));
+void RosbagRangeDataProcessorRos::readRosbag(rosbag2_cpp::Reader& reader) {
   Timer rosbagTimer;
-  ros::Time lastTimestamp;
+  rclcpp::Time lastTimestamp;
   bool isFirstMessage = true;
   Timer rosbagProcessingTimer;
-  BOOST_FOREACH (rosbag::MessageInstance const m, view) {
-    if (m.getTopic() == cloudTopic_ || ("/" + m.getTopic() == cloudTopic_)) {
-      sensor_msgs::PointCloud2::ConstPtr cloud = m.instantiate<sensor_msgs::PointCloud2>();
+  while (reader.has_next()) {
+    std::shared_ptr<rosbag2_storage::SerializedBagMessage> msg = reader.read_next();
+
+    if (msg->topic_name == cloudTopic_ || "/" + msg->topic_name == cloudTopic_ ) {
+      rclcpp::SerializedMessage serialized_msg(*msg->serialized_data);
+      sensor_msgs::msg::PointCloud2::SharedPtr cloud = std::make_shared<sensor_msgs::msg::PointCloud2>();
+
+      serialization_.deserialize_message(&serialized_msg, cloud.get());
       if (cloud != nullptr) {
         if (isFirstMessage) {
           isFirstMessage = false;
@@ -76,40 +78,40 @@ void RosbagRangeDataProcessorRos::readRosbag(const rosbag::Bag& bag) {
           } else {
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
           }
-          ros::spinOnce();
-          if (!ros::ok()) {
+          executor_->spin_some();
+          if (!rclcpp::ok()) {
             slam_->stopWorkers();
             return;
           }
         }  // end while
         const double elapsedWallTime = rosbagProcessingTimer.elapsedSec();
         if (elapsedWallTime > 15.0) {
-          const double elapsedRosbagTime = (cloud->header.stamp - lastTimestamp).toSec();
+          const double elapsedRosbagTime = RCL_NS_TO_S((rclcpp::Time(cloud->header.stamp) - lastTimestamp).nanoseconds());
           std::cout << "ROSBAG PLAYER: Rosbag messages pulsed at: " << 100.0 * elapsedRosbagTime / elapsedWallTime
                     << " % realtime speed \n";
           rosbagProcessingTimer.reset();
           lastTimestamp = cloud->header.stamp;
         }
-        ros::spinOnce();
+        executor_->spin_some();
       }  // end if checking for the null ptr
     }    // end if checking for the right topic
-    if (!ros::ok()) {
+    if (!rclcpp::ok()) {
       slam_->stopWorkers();
       return;
     }
   }  // end foreach
 
-  const ros::Time bag_begin_time = view.getBeginTime();
-  const ros::Time bag_end_time = view.getEndTime();
-  std::cout << "Rosbag processing finished. Rosbag duration: " << (bag_end_time - bag_begin_time).toSec()
-            << " Time elapsed for processing: " << rosbagTimer.elapsedSec() << " sec. \n \n";
+  //const rclcpp::Time bag_begin_time = view.getBeginTime();
+  //const rclcpp::Time bag_end_time = view.getEndTime();
+  //std::cout << "Rosbag processing finished. Rosbag duration: " << (bag_end_time - bag_begin_time).toSec()
+  //          << " Time elapsed for processing: " << rosbagTimer.elapsedSec() << " sec. \n \n";
   // a bit of a hack, this extra thread listens to ros shutdown
   // otherwise we might get stuck in a loop
   bool isProcessingFinished = false;
   std::thread rosSpinner([&]() {
-    ros::Rate r(20.0);
+    rclcpp::Rate r(20.0);
     while (true) {
-      if (!ros::ok()) {
+      if (!rclcpp::ok()) {
         slam_->stopWorkers();
         break;
       }
@@ -124,7 +126,7 @@ void RosbagRangeDataProcessorRos::readRosbag(const rosbag::Bag& bag) {
   rosSpinner.join();
 }
 
-void RosbagRangeDataProcessorRos::cloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg) {
+void RosbagRangeDataProcessorRos::cloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
   open3d::geometry::PointCloud cloud;
   open3d_conversions::rosToOpen3d(msg, cloud, false);
   const Time timestamp = fromRos(msg->header.stamp);

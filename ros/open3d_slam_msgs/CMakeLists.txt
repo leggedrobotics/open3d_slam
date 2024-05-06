@@ -1,53 +1,31 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(open3d_slam_msgs)
 
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
 
-## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
-  sensor_msgs
-  message_generation
-  )
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-#######################################
-## Declare ROS messages and services ##
-#######################################
+find_package(ament_cmake REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
-## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  Vertices.msg
-  PolygonMesh.msg
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/Vertices.msg"
+  "msg/PolygonMesh.msg"
+  "srv/SaveMap.srv"
+  "srv/SaveSubmaps.srv"
+  DEPENDENCIES std_msgs sensor_msgs
+  ADD_LINTER_TESTS
 )
 
-## Generate services in the 'srv' folder
-add_service_files(
-  FILES
-  SaveMap.srv
-  SaveSubmaps.srv
-)
+ament_export_dependencies(rosidl_default_runtime)
 
-## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  sensor_msgs
-)
-
-###################################
-## catkin specific configuration ##
-###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if you package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
-
-catkin_package(
-  #INCLUDE_DIRS include
-  #LIBRARIES
-  CATKIN_DEPENDS
-  sensor_msgs
-  message_runtime
-  #DEPENDS
-)
+ament_package()
 

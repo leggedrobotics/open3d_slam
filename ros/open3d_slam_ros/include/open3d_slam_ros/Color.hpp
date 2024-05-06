@@ -6,11 +6,12 @@
  */
 
 #pragma once
-#include <std_msgs/ColorRGBA.h>
+#include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/color_rgba.hpp"
 
 namespace o3d_slam {
 
-class Color : public std_msgs::ColorRGBA {
+class Color : public std_msgs::msg::ColorRGBA {
  public:
   Color();
   Color(double red, double green, double blue);

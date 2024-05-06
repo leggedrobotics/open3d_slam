@@ -7,7 +7,8 @@
 
 
 
-#include <ros/package.h>
+#include <rclcpp/rclcpp.hpp>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <iostream>
 #include <memory>
 #include "open3d_slam_lua_io/parameter_loaders.hpp"
@@ -19,7 +20,7 @@ using namespace io_lua;
 
 int main(int argc, char** argv) {
 
-  const std::string folderPath = ros::package::getPath("open3d_slam_lua_io") + "/example_param";
+  const std::string folderPath = ament_index_cpp::get_package_share_directory("open3d_slam_lua_io") + "/example_param";
 
   SlamParameters param;
   io_lua::loadParameters(folderPath, "configuration.lua", &param);

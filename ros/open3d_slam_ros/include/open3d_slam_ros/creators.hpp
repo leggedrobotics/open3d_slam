@@ -9,9 +9,9 @@
 
 namespace o3d_slam {
 
-std::shared_ptr<OnlineRangeDataProcessorRos> createOnlineDataProcessor(ros::NodeHandlePtr nh);
-std::shared_ptr<RosbagRangeDataProcessorRos> createRosbagDataProcessor(ros::NodeHandlePtr nh);
+std::shared_ptr<OnlineRangeDataProcessorRos> createOnlineDataProcessor(rclcpp::Node* nh, rclcpp::executors::SingleThreadedExecutor* executor);
+std::shared_ptr<RosbagRangeDataProcessorRos> createRosbagDataProcessor(rclcpp::Node* nh, rclcpp::executors::SingleThreadedExecutor* executor);
 
-std::shared_ptr<DataProcessorRos> dataProcessorFactory(ros::NodeHandlePtr nh, bool isProcessAsFastAsPossible);
+std::shared_ptr<DataProcessorRos> dataProcessorFactory(rclcpp::Node* nh, rclcpp::executors::SingleThreadedExecutor* executor, bool isProcessAsFastAsPossible);
 
 } /* namespace o3d_slam */

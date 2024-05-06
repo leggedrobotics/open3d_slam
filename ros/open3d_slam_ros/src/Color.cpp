@@ -5,6 +5,7 @@
  *      Author: jelavice
  */
 
+#include "rclcpp/rclcpp.hpp"
 #include "open3d_slam_ros/Color.hpp"
 
 namespace o3d_slam {
@@ -23,7 +24,7 @@ void clamp(T* val, Limits lo, Limits hi) {
 }
 }  // namespace
 
-Color::Color() : std_msgs::ColorRGBA() {}
+Color::Color() : std_msgs::msg::ColorRGBA() {}
 Color::Color(double red, double green, double blue) : Color(red, green, blue, 1.0) {}
 Color::Color(double red, double green, double blue, double alpha) : Color() {
   r = red;

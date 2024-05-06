@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include <nav_msgs/Odometry.h>
-#include <ros/ros.h>
-#include <rosbag/bag.h>
-#include <sensor_msgs/PointCloud2.h>
+#include <nav_msgs/msg/odometry.hpp>
+#include "rclcpp/rclcpp.hpp"
+#include <rosbag2_cpp/reader.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 #include <memory>
 #include "open3d_slam/SlamWrapper.hpp"
@@ -21,7 +21,7 @@ class RosbagRangeDataProcessorRos : public DataProcessorRos {
   using BASE = DataProcessorRos;
 
  public:
-  RosbagRangeDataProcessorRos(ros::NodeHandlePtr nh);
+  RosbagRangeDataProcessorRos(rclcpp::Node* nh, rclcpp::executors::SingleThreadedExecutor* executor);
   ~RosbagRangeDataProcessorRos() override = default;
 
   void initialize() override;
@@ -29,10 +29,12 @@ class RosbagRangeDataProcessorRos : public DataProcessorRos {
   void processMeasurement(const PointCloud& cloud, const Time& timestamp) override;
 
  private:
-  void cloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg);
-  void readRosbag(const rosbag::Bag& bag);
-
+  void cloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
+  void readRosbag(rosbag2_cpp::Reader& bag);
+  
   std::string rosbagFilename_;
+
+  rclcpp::Serialization<sensor_msgs::msg::PointCloud2> serialization_;
 };
 
 }  // namespace o3d_slam

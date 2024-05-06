@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>open3d_slam</name>
   <version>0.0.0</version>
   <description>Range sensor based mapping</description>
@@ -16,8 +16,11 @@
   <author email="jelavice@ethz.ch">Edo Jelavic</author>
 
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <depend>open3d_catkin</depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>open3d</depend>
   <depend>eigen</depend>
 
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

@@ -61,7 +61,7 @@ params.place_recognition.consistency_check.max_drift_z = 40.0 --m
 params.motion_compensation.is_undistort_scan = true
 
 --SAVING
-params.saving.save_map = false
+params.saving.save_map = true
 
 
 return params
