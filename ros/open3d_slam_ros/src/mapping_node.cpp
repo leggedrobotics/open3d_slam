@@ -29,17 +29,21 @@ int main(int argc, char** argv) {
   std::cout << "Is use a map for initialization: " << std::boolalpha << params.mapper_.isUseInitialMap_ << "\n";
 
   // This is where the initial class is constructed and passed on.
-  std::shared_ptr<DataProcessorRos> dataProcessor = dataProcessorFactory(nh, isProcessAsFastAsPossible);
-  dataProcessor->initialize();
+  std::shared_ptr<DataProcessorRos> dataProcessorPtr = dataProcessorFactory(nh, isProcessAsFastAsPossible);
+  dataProcessorPtr->initialize();
 
+  // Main Slam
   std::shared_ptr<SlamMapInitializer> slamMapInitializer;
   if (params.mapper_.isUseInitialMap_) {
-    std::shared_ptr<SlamWrapper> slam = dataProcessor->getSlamPtr();
-    slamMapInitializer = std::make_shared<SlamMapInitializer>(slam, nh);
+    std::shared_ptr<SlamWrapper> slamWrapperPtr = dataProcessorPtr->getSlamPtr();
+    slamMapInitializer = std::make_shared<SlamMapInitializer>(slamWrapperPtr, nh);
     slamMapInitializer->initialize(params.mapper_.mapInit_);
   }
 
-  dataProcessor->startProcessing();
+  // Start processing
+  dataProcessorPtr->startProcessing();
 
+  // Wrap up
+  std::cout << "Finished processing. Exiting... \n";
   return 0;
 }

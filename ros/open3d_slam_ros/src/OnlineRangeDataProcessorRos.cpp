@@ -30,7 +30,8 @@ void OnlineRangeDataProcessorRos::startProcessing() {
   slam_->stopWorkers();
 }
 
-void OnlineRangeDataProcessorRos::processMeasurement(const PointCloud& cloud, const Time& timestamp) {
+void OnlineRangeDataProcessorRos::processMeasurement(const PointCloud& cloud, const Time& timestamp,
+                                                     const std::optional<Transform>& transform) {
   slam_->addRangeScan(cloud, timestamp);
   o3d_slam::publishCloud(cloud, o3d_slam::frames::rangeSensorFrame, toRos(timestamp), rawCloudPub_);
 }

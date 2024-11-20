@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+    <!-- Launch Config -->
+    <arg name="launch_prefix" default="" doc="gdb -ex run --args"/>
+    <arg name="launch_rviz" default="true"/>
+    <rviz config="$(find open3d_rosbag_mapper_mesher)/rviz/map.rviz"/>
+    <!-- Topics and Frames -->
+    <arg name="cloud_topic" default="/point_cloud_filter/lidar/point_cloud_filtered"/>
+    <arg name="world_frame" default="gt_world"/>
+    <arg name="lidar_frame" default="lidar"/>
+    <!-- Paths -->
+    <arg name="parameter_folder_path" default="$(find open3d_rosbag_mapper_mesher)/param/"/>
+    <arg name="parameter_filename" default="param_robosense_rs16.lua"/>
+    <!-- Rosbags -->
+    <arg name="rosbag_folder_path"
+         default="/home/nubertj/data_rosbags/holistic_fusion_data/1_anymal/1_real_world_applications/2024_01_03_camel_mission_gps_for_SE/test_3_out_in_out"/>
+    <!-- Tf Static Rosbag -->
+    <arg name="tf_static_rosbag_filename" default="2024-01-03-14-40-53_anymal-camel-lpc_mission_0.bag"/>
+    <!-- Tf Rosbag -->
+    <arg name="tf_rosbag_filename" default="bag_X_state_6D_pose.bag"/>
+    <!-- Point Cloud Rosbag -->
+    <arg name="pc_rosbag_prefix" default="2024-01-03-14-40-53_anymal-camel-npc_mission_"/>
+    <!-- Map Saving -->
+    <arg name="map_saving_folder_path" default="$(find open3d_rosbag_mapper_mesher)/data/"/>
+    <arg name="map_saving_filename" default="map.ply"/>
+    <!-- Play Config -->
+    <arg name="is_read_from_rosbag" default="true"/>
+    <arg name="use_sim_time" default="true"/>
+
+    <!-- Full path to rosbag -->
+    <arg name="tf_static_rosbag_full_path" default="$(arg rosbag_folder_path)/$(arg tf_static_rosbag_filename)"/>
+    <arg name="tf_rosbag_full_path" default="$(arg rosbag_folder_path)/$(arg tf_rosbag_filename)"/>
+
+    <!-- Main Node -->
+    <node pkg="open3d_rosbag_mapper_mesher" type="open3d_rosbag_mapper_mesher_node" name="create_map_from_rosbag_node"
+          output="screen" launch-prefix="$(arg launch_prefix)">
+        <!-- Topics and Frames -->
+        <param name="cloud_topic" value="$(arg cloud_topic)"/>
+        <param name="world_frame" value="$(arg world_frame)"/>
+        <param name="lidar_frame" value="$(arg lidar_frame)"/>
+        <!-- Paths -->
+        <param name="parameter_folder_path" value="$(arg parameter_folder_path)"/>
+        <param name="parameter_filename" value="$(arg parameter_filename)"/>
+        <param name="map_saving_folder_path" value="$(arg map_saving_folder_path)"/>
+        <param name="map_saving_filename" value="$(arg map_saving_filename)"/>
+        <!-- Play Config -->
+        <param name="is_read_from_rosbag" value="$(arg is_read_from_rosbag)"/>
+        <!-- PC directory and prefix -->
+        <param name="pc_rosbag_directory_name" value="$(arg rosbag_folder_path)"/>
+        <param name="pc_rosbag_prefix" value="$(arg pc_rosbag_prefix)"/>
+        <!-- Full path to rosbags -->
+        <param name="tf_static_rosbag_filepath" value="$(arg tf_static_rosbag_full_path)"/>
+        <param name="tf_rosbag_filepath" value="$(arg tf_rosbag_full_path)"/>
+    </node>
+
+    <!-- Play rosbag -->
+    <node pkg="rosbag" type="play" name="rosbag"
+          args="'$(arg rosbag_full_path)' --clock -s 0 --pause"
+          unless="$(arg is_read_from_rosbag)"/>
+
+    <!-- Visualization -->
+    <include file="$(find open3d_slam_ros)/launch/vis.launch" if="$(arg launch_rviz)">
+        <arg name="rviz_config" value="$(find open3d_rosbag_mapper_mesher)/rviz/map.rviz"/>
+    </include>
+
+</launch>
