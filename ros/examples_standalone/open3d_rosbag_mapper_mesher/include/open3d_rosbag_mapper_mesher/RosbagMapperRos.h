@@ -41,6 +41,9 @@ class RosbagMapperRos : public DataProcessorRos {
   void readRosbags(const std::vector<std::shared_ptr<rosbag::Bag>>& pcBagVector, const rosbag::Bag& tfBag, const rosbag::Bag& tfStaticBag);
 
   // Members
+  // Parameters
+  SlamParameters params_;
+
   // Full Names
   std::string tfStaticRosbagFilename_;
   std::string tfRosbagFilename_;
@@ -52,6 +55,12 @@ class RosbagMapperRos : public DataProcessorRos {
   std::string lidarFrame_;
   // Submap
   Submap submap_;
+  // Publish Rate
+  int publishMapEveryNScans_;
+
+  // Saving of the map
+  std::string mapSavingFolderPath_;
+  std::string mapSavingFilename_;
 
   // Publisher
   ros::Publisher denseCloudPub_;

@@ -19,7 +19,9 @@
 // Open3D SLAM
 #include "open3d_conversions/open3d_conversions.h"
 #include "open3d_slam/frames.hpp"
+#include "open3d_slam/output.hpp"
 #include "open3d_slam/time.hpp"
+#include "open3d_slam_lua_io/parameter_loaders.hpp"
 #include "open3d_slam_ros/SlamWrapperRos.hpp"
 #include "open3d_slam_ros/helpers_ros.hpp"
 
@@ -34,6 +36,7 @@ RosbagMapperRos::RosbagMapperRos(ros::NodeHandlePtr nh) : BASE(nh), submap_(0, 0
 
 void RosbagMapperRos::initialize() {
   initCommonRosStuff();
+
   // Load the rosbag filepaths
   tfStaticRosbagFilename_ = tryGetParam<std::string>("tf_static_rosbag_filepath", *nh_);
   tfRosbagFilename_ = tryGetParam<std::string>("tf_rosbag_filepath", *nh_);
@@ -48,6 +51,20 @@ void RosbagMapperRos::initialize() {
   lidarFrame_ = tryGetParam<std::string>("lidar_frame", *nh_);
   std::cout << "World frame: " << worldFrame_ << std::endl;
   std::cout << "Lidar frame: " << lidarFrame_ << std::endl;
+  // Publish rate
+  publishMapEveryNScans_ = tryGetParam<int>("publish_map_every_n_scans", *nh_);
+  // Saving of the map
+  mapSavingFolderPath_ = tryGetParam<std::string>("map_saving_folder_path", *nh_);
+  mapSavingFilename_ = tryGetParam<std::string>("map_saving_filename", *nh_);
+
+  // Load the parameters
+  const std::string paramFolderPath = nh_->param<std::string>("parameter_folder_path", "");
+  const std::string paramFilename = nh_->param<std::string>("parameter_filename", "");
+  io_lua::loadParameters(paramFolderPath, paramFilename, &params_);
+  // Set the parameters
+  std::cout << "Voxel size before setting parameters: " << submap_.getDenseMap().getVoxelSize() << std::endl;
+  submap_.setParameters(params_.mapper_);
+  std::cout << "Voxel size: " << submap_.getDenseMap().getVoxelSize() << std::endl;
 }
 
 void RosbagMapperRos::startProcessing() {
@@ -78,7 +95,8 @@ void RosbagMapperRos::startProcessing() {
   ros::spin();
 }
 
-void RosbagMapperRos::readRosbags(const std::vector<std::shared_ptr<rosbag::Bag>>& pcBagVector, const rosbag::Bag& tfBag, const rosbag::Bag& tfStaticBag) {
+void RosbagMapperRos::readRosbags(const std::vector<std::shared_ptr<rosbag::Bag>>& pcBagVector, const rosbag::Bag& tfBag,
+                                  const rosbag::Bag& tfStaticBag) {
   // Rosbag
   rosbag::View tfStaticBagView(tfStaticBag, rosbag::TopicQuery("/tf_static"));
   rosbag::View tfBagView(tfBag, rosbag::TopicQuery("/tf"));
@@ -89,7 +107,7 @@ void RosbagMapperRos::readRosbags(const std::vector<std::shared_ptr<rosbag::Bag>
   Timer rosbagProcessingTimer;
 
   // Create a tf2 buffer and listener
-  tf2_ros::Buffer tfBuffer(ros::Duration(1000.0));
+  tf2_ros::Buffer tfBuffer(ros::Duration(10000.0));
   tf2_ros::TransformListener tfListener(tfBuffer);
 
   // Earliest and last timestamp
@@ -183,6 +201,12 @@ void RosbagMapperRos::readRosbags(const std::vector<std::shared_ptr<rosbag::Bag>
     }  // end foreach
   }  // end through all rosbags
 
+  // Saving the map
+  std::cout << "Saving the map to: " << mapSavingFolderPath_ << std::endl;
+  createDirectoryOrNoActionIfExists(mapSavingFolderPath_);
+  saveToFile(mapSavingFolderPath_ + mapSavingFilename_, submap_.getDenseMap().toPointCloud());
+  std::cout << "Map saved. \n";
+
   // a bit of a hack, this extra thread listens to ros shutdown
   // otherwise we might get stuck in a loop
   bool isProcessingFinished = false;
@@ -219,11 +243,12 @@ void RosbagMapperRos::processMeasurement(const PointCloud& cloud, const Time& ti
   // Transform
   Transform T_W_L = transform.value_or(Transform::Identity());
   // Add to submap
-  submap_.insertScanDenseMap(cloud, T_W_L, timestamp, false);
+  bool isPerformCarving = false;
+  submap_.insertScanDenseMap(cloud, T_W_L, timestamp, isPerformCarving);
   // Publish the dense cloud
   const bool isCloudEmpty = submap_.getDenseMap().empty();
-  if (!isCloudEmpty && !(publishCounter % 100)) {
-    std::cout << "Publishing the dense cloud in frame: " << frames::rangeSensorFrame << std::endl;
+  if (!isCloudEmpty && !(publishCounter % publishMapEveryNScans_)) {
+    std::cout << "Publishing the dense cloud in frame: " << worldFrame_ << std::endl;
     o3d_slam::publishCloud(submap_.getDenseMap().toPointCloud(), worldFrame_, toRos(timestamp), denseCloudPub_);
   }
   publishCounter++;

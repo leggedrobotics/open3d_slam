@@ -9,21 +9,25 @@
     <arg name="cloud_topic" default="/point_cloud_filter/lidar/point_cloud_filtered"/>
     <arg name="world_frame" default="gt_world"/>
     <arg name="lidar_frame" default="lidar"/>
+    <!-- Map Publish Rate -->
+    <arg name="publish_map_every_n_scans" default="500"/>
     <!-- Paths -->
     <arg name="parameter_folder_path" default="$(find open3d_rosbag_mapper_mesher)/param/"/>
     <arg name="parameter_filename" default="param_robosense_rs16.lua"/>
     <!-- Rosbags -->
+    <!--    <arg name="rosbag_folder_path"-->
+    <!--         default="/home/nubertj/data_rosbags/holistic_fusion_data/1_anymal/1_real_world_applications/2024_01_03_camel_mission_gps_for_SE/test_3_out_in_out"/>-->
     <arg name="rosbag_folder_path"
-         default="/home/nubertj/data_rosbags/holistic_fusion_data/1_anymal/1_real_world_applications/2024_01_03_camel_mission_gps_for_SE/test_3_out_in_out"/>
+         default="/home/nubertj/data_rosbags/holistic_fusion_data/1_anymal/1_real_world_applications/1_hike/2024_09_20"/>
     <!-- Tf Static Rosbag -->
-    <arg name="tf_static_rosbag_filename" default="2024-01-03-14-40-53_anymal-camel-lpc_mission_0.bag"/>
+    <arg name="tf_static_rosbag_filename" default="2024-09-20-13-00-21-merged.bag"/>
     <!-- Tf Rosbag -->
     <arg name="tf_rosbag_filename" default="bag_X_state_6D_pose.bag"/>
     <!-- Point Cloud Rosbag -->
-    <arg name="pc_rosbag_prefix" default="2024-01-03-14-40-53_anymal-camel-npc_mission_"/>
+    <arg name="pc_rosbag_prefix" default="2024-09-20-13-00-21-merged"/>
     <!-- Map Saving -->
     <arg name="map_saving_folder_path" default="$(find open3d_rosbag_mapper_mesher)/data/"/>
-    <arg name="map_saving_filename" default="map.ply"/>
+    <arg name="map_saving_filename" default="map"/>
     <!-- Play Config -->
     <arg name="is_read_from_rosbag" default="true"/>
     <arg name="use_sim_time" default="true"/>
@@ -39,6 +43,8 @@
         <param name="cloud_topic" value="$(arg cloud_topic)"/>
         <param name="world_frame" value="$(arg world_frame)"/>
         <param name="lidar_frame" value="$(arg lidar_frame)"/>
+        <!-- Map Publish Rate -->
+        <param name="publish_map_every_n_scans" value="$(arg publish_map_every_n_scans)"/>
         <!-- Paths -->
         <param name="parameter_folder_path" value="$(arg parameter_folder_path)"/>
         <param name="parameter_filename" value="$(arg parameter_filename)"/>
