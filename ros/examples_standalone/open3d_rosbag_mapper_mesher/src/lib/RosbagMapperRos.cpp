@@ -202,7 +202,7 @@ void RosbagMapperRos::readRosbags(const std::vector<std::shared_ptr<rosbag::Bag>
   }  // end through all rosbags
 
   // Saving the map
-  std::cout << "Saving the map to: " << mapSavingFolderPath_ << std::endl;
+  std::cout << "Saving the map to: " << mapSavingFolderPath_ + mapSavingFilename_ << std::endl;
   createDirectoryOrNoActionIfExists(mapSavingFolderPath_);
   saveToFile(mapSavingFolderPath_ + mapSavingFilename_, submap_.getDenseMap().toPointCloud());
   std::cout << "Map saved. \n";
