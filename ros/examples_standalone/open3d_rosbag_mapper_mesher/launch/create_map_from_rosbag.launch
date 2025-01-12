@@ -18,7 +18,7 @@
     <!--    <arg name="rosbag_folder_path"-->
     <!--         default="/home/nubertj/data_rosbags/holistic_fusion_data/1_anymal/1_real_world_applications/2024_01_03_camel_mission_gps_for_SE/test_3_out_in_out"/>-->
     <arg name="rosbag_folder_path"
-         default="/home/nubertj/data_rosbags/holistic_fusion_data/1_anymal/1_real_world_applications/1_hike/2024_09_20"/>
+         default="/home/nubertj/data_rosbags/holistic_fusion_data/1_anymal/1_hike/2024_09_20_hoengg_forest/"/>
     <!-- Tf Static Rosbag -->
     <arg name="tf_static_rosbag_filename" default="2024-09-20-13-00-21-merged.bag"/>
     <!-- Tf Rosbag -->
