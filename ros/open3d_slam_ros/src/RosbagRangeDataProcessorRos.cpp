@@ -40,7 +40,8 @@ void RosbagRangeDataProcessorRos::startProcessing() {
   slam_->stopWorkers();
 }
 
-void RosbagRangeDataProcessorRos::processMeasurement(const PointCloud& cloud, const Time& timestamp) {
+void RosbagRangeDataProcessorRos::processMeasurement(const PointCloud& cloud, const Time& timestamp,
+                                                     const std::optional<Transform>& transform) {
   slam_->addRangeScan(cloud, timestamp);
   std::pair<PointCloud, Time> cloudTimePair = slam_->getLatestRegisteredCloudTimestampPair();
   const bool isCloudEmpty = cloudTimePair.first.IsEmpty();
@@ -92,7 +93,7 @@ void RosbagRangeDataProcessorRos::readRosbag(const rosbag::Bag& bag) {
         }
         ros::spinOnce();
       }  // end if checking for the null ptr
-    }    // end if checking for the right topic
+    }  // end if checking for the right topic
     if (!ros::ok()) {
       slam_->stopWorkers();
       return;

@@ -26,7 +26,8 @@ class RosbagRangeDataProcessorRos : public DataProcessorRos {
 
   void initialize() override;
   void startProcessing() override;
-  void processMeasurement(const PointCloud& cloud, const Time& timestamp) override;
+  void processMeasurement(const PointCloud& cloud, const Time& timestamp,
+                          const std::optional<Transform>& transform = std::nullopt) override;
 
  private:
   void cloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg);

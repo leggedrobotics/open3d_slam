@@ -59,4 +59,4 @@ open3d_catkin/tmp
 /open3d_slam_ros/data/*
 !/open3d_slam_ros/data/.gitkeep
 documentation/build
-
+ros/examples_standalone/open3d_rosbag_mapper_mesher/data/

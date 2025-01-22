@@ -187,9 +187,8 @@ void SlamWrapperRos::loadParametersAndInitialize() {
   //
     const std::string paramFolderPath = nh_->param<std::string>("parameter_folder_path", "");
     const std::string paramFilename = nh_->param<std::string>("parameter_filename", "");
-    SlamParameters params;
-    io_lua::loadParameters(paramFolderPath, paramFilename, &params_);
 
+    io_lua::loadParameters(paramFolderPath, paramFilename, &params_);
     BASE::loadParametersAndInitialize();
 }
 
