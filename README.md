@@ -2,6 +2,11 @@
 
 open3d_slam is a C++ (cpp) library for SLAM with ROS integration. 
 
+## Support Status
+
+- Officially supported: ROS 2 Jazzy on branch `ros2`
+- ROS 1 is no longer officially supported in this branch
+
 **Main Contact:** Edo Jelavic ([jelavice@ethz.ch](mailto:jelavice@ethz.ch?subject=[GitHub]))
 
 **Authors:** [Edo Jelavic](https://rsl.ethz.ch/utils/search.MjAyNjMy.html), [Julian Nubert](https://juliannubert.com/), [Marco Hutter](https://rsl.ethz.ch/the-lab/people/person-detail.MTIxOTEx.TGlzdC8yNDQxLC0xNDI1MTk1NzM1.html)
@@ -22,7 +27,7 @@ We base our implementation on [Open3D](http://www.open3d.org/), a well-maintaine
 
 The documentation and example datasets can be found here [open3d_slam Documentation](https://open3d-slam.readthedocs.io/en/latest/).
 
-We provide a catkin wrapper for Open3D such that you can easily use Open3D in your ROS projects. See documentation in
+We provide an Open3D wrapper such that you can easily use Open3D in your ROS projects. See documentation in
 [open3d_catkin/README.md](https://github.com/leggedrobotics/open3d_slam/tree/master/open3d_catkin).
 
 If you find this work useful, or use it for your research, please consider citing the corresponding work:
