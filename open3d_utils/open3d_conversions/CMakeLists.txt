@@ -1,54 +1,47 @@
-cmake_minimum_required(VERSION 3.5.0)
+cmake_minimum_required(VERSION 3.8)
 project(open3d_conversions)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_compile_options(-O2)
 
+find_package(ament_cmake REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(open3d_catkin REQUIRED)
+find_package(open3d_slam_msgs REQUIRED)
 
-set(CATKIN_PACKAGE_DEPENDENCIES
-  roscpp
+add_library(${PROJECT_NAME} src/open3d_conversions.cpp)
+target_include_directories(${PROJECT_NAME}
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    ${EIGEN3_INCLUDE_DIRS}
+)
+ament_target_dependencies(${PROJECT_NAME}
   sensor_msgs
   open3d_catkin
   open3d_slam_msgs
-  )
-
-find_package(catkin REQUIRED COMPONENTS
-  ${CATKIN_PACKAGE_DEPENDENCIES}
-
-  )
-
-find_package(Eigen3 REQUIRED)
-
-
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES open3d_conversions
-  CATKIN_DEPENDS ${CATKIN_PACKAGE_DEPENDENCIES}
-  DEPENDS EIGEN3
 )
 
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIR}
+install(TARGETS ${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
+install(DIRECTORY include/ DESTINATION include)
 
-# C++ library
-add_library(open3d_conversions src/open3d_conversions.cpp)
-target_link_libraries(open3d_conversions ${catkin_LIBRARIES})
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_open3d_conversions test/test_open3d_conversions.cpp)
+  if(TARGET test_open3d_conversions)
+    target_link_libraries(test_open3d_conversions ${PROJECT_NAME})
+    ament_target_dependencies(test_open3d_conversions sensor_msgs open3d_slam_msgs)
+  endif()
+endif()
 
-# Install
-install(TARGETS open3d_conversions
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION})
-
-install(DIRECTORY include/open3d_conversions/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
-
-# Tests
-if (CATKIN_ENABLE_TESTING)
-  catkin_add_gtest(test_open3d_conversions test/test_open3d_conversions.cpp)
-  target_link_libraries(test_open3d_conversions open3d_conversions ${catkin_LIBRARIES})
-endif ()
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_include_directories(include)
+ament_export_dependencies(sensor_msgs open3d_catkin open3d_slam_msgs)
+ament_package()

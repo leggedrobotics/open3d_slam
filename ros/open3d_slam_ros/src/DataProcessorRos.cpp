@@ -6,24 +6,27 @@
  */
 
 #include "open3d_slam_ros/DataProcessorRos.hpp"
-#include <ros/ros.h>
-#include <sensor_msgs/PointCloud2.h>
+
 #include "open3d_slam/magic.hpp"
 #include "open3d_slam/typedefs.hpp"
+#include "open3d_slam_ros/helpers_ros.hpp"
 
 namespace o3d_slam {
 
-DataProcessorRos::DataProcessorRos(ros::NodeHandlePtr nh) : nh_(nh) {}
+DataProcessorRos::DataProcessorRos(rclcpp::Node::SharedPtr nh) : nh_(std::move(nh)) {}
 
 void DataProcessorRos::initCommonRosStuff() {
-  cloudTopic_ = nh_->param<std::string>("cloud_topic", "");
+  cloudTopic_ = tryGetParam<std::string>("cloud_topic", *nh_);
   std::cout << "Cloud topic is given as " << cloudTopic_ << std::endl;
-  rawCloudPub_ = nh_->advertise<sensor_msgs::PointCloud2>("raw_cloud", 1, true);
-  numAccumulatedRangeDataDesired_ = nh_->param<int>("num_accumulated_range_data", 1);
+  const auto latchedQos = rclcpp::QoS(rclcpp::KeepLast(1)).reliable().transient_local();
+  rawCloudPub_ = nh_->create_publisher<sensor_msgs::msg::PointCloud2>("raw_cloud", latchedQos);
+  numAccumulatedRangeDataDesired_ = static_cast<size_t>(tryGetParam<int>("num_accumulated_range_data", *nh_));
   std::cout << "Num accumulated range data: " << numAccumulatedRangeDataDesired_ << std::endl;
 }
 
 void DataProcessorRos::processMeasurement(const PointCloud& cloud, const Time& timestamp) {
+  (void)cloud;
+  (void)timestamp;
   std::cout << "Warning you have not implemented processMeasurement!!! \n";
 }
 
@@ -36,9 +39,6 @@ void DataProcessorRos::accumulateAndProcessRangeData(const PointCloud& cloud, co
   if (numPointCloudsReceived_ < minNumCloudsReceived) {
     ++numPointCloudsReceived_;
     return;
-    // somehow the first cloud can be missing a lot of points when running with ouster os-128 on the robot
-    // if we skip that first measurement, it all works okay
-    // we skip first five, just to be extra safe
   }
 
   accumulatedCloud_ += cloud;

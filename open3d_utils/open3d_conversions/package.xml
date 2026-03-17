@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>open3d_conversions</name>
   <version>0.0.2</version>
   <description>Provides conversion functions to and from Open3D datatypes
@@ -14,11 +15,14 @@
   <author email="matnay17@gmail.com">Pranay Mathur</author>
   <author email="nkhedekar@nevada.unr.edu">Nikhil Khedekar</author>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <depend>roscpp</depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
   <depend>sensor_msgs</depend>
   <depend>eigen</depend>
   <depend>open3d_catkin</depend>
   <depend>open3d_slam_msgs</depend>
+  <test_depend>ament_cmake_gtest</test_depend>
 
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

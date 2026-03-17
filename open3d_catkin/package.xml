@@ -1,18 +1,20 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>open3d_catkin</name>
   <version>0.0.0</version>
-  <description>Open3D catkin</description>
+  <description>Open3D vendor shim for ROS 2 builds of open3d_slam</description>
 
   <maintainer email="jelavice@ethz.ch">Edo Jelavic</maintainer>
 
-  <license>TODO</license>
+  <license>BSD</license>
 
   <author email="jelavice@ethz.ch">Edo Jelavic</author>
   <author email="nubertj@ethz.ch">Julian Nubert</author>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <depend>roscpp</depend>
-  <depend>roslib</depend>
- 
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

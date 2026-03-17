@@ -55,9 +55,14 @@ void VoxelizedPointCloud::transform(const Transform& T) {
   for (const auto& v : voxels_) {
     if (v.second.numAggregatedPoints_ > 0) {
       AggregatedVoxel vTransformed(v.second);
-      vTransformed.aggregatedNormal_ = T * vTransformed.aggregatedNormal_;
-      vTransformed.aggregatedPosition_ = T * vTransformed.aggregatedPosition_;
-      voxels[v.first] = vTransformed;
+      vTransformed.aggregatedNormal_ = T.linear() * vTransformed.aggregatedNormal_;
+      vTransformed.aggregatedPosition_ =
+          T.linear() * vTransformed.aggregatedPosition_ + T.translation() * vTransformed.numAggregatedPoints_;
+      auto& transformedVoxel = voxels[getKey(vTransformed.getAggregatedPosition())];
+      transformedVoxel.aggregatedPosition_ += vTransformed.aggregatedPosition_;
+      transformedVoxel.aggregatedNormal_ += vTransformed.aggregatedNormal_;
+      transformedVoxel.aggregatedColor_ += vTransformed.aggregatedColor_;
+      transformedVoxel.numAggregatedPoints_ += vTransformed.numAggregatedPoints_;
     }
   }
   voxels_ = std::move(voxels);

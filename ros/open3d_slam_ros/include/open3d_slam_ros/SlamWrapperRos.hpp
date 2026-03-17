@@ -7,15 +7,16 @@
 
 #pragma once
 
-#include <nav_msgs/Odometry.h>
-#include <ros/package.h>
-#include <ros/ros.h>
-#include <sensor_msgs/PointCloud2.h>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tf2_ros/transform_broadcaster.h>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 #include "open3d_slam/SlamWrapper.hpp"
-#include "open3d_slam_msgs/SaveMap.h"
-#include "open3d_slam_msgs/SaveSubmaps.h"
+#include "open3d_slam_msgs/srv/save_map.hpp"
+#include "open3d_slam_msgs/srv/save_submaps.hpp"
 
 namespace o3d_slam {
 
@@ -23,11 +24,15 @@ class SlamWrapperRos : public SlamWrapper {
   using BASE = SlamWrapper;
 
  public:
-  SlamWrapperRos(ros::NodeHandlePtr nh);
+  explicit SlamWrapperRos(rclcpp::Node::SharedPtr nh);
   ~SlamWrapperRos() override;
 
-  bool saveMapCallback(open3d_slam_msgs::SaveMap::Request& req, open3d_slam_msgs::SaveMap::Response& res);
-  bool saveSubmapsCallback(open3d_slam_msgs::SaveSubmaps::Request& req, open3d_slam_msgs::SaveSubmaps::Response& res);
+  void saveMapCallback(
+    const std::shared_ptr<open3d_slam_msgs::srv::SaveMap::Request> req,
+    std::shared_ptr<open3d_slam_msgs::srv::SaveMap::Response> res);
+  void saveSubmapsCallback(
+    const std::shared_ptr<open3d_slam_msgs::srv::SaveSubmaps::Request> req,
+    std::shared_ptr<open3d_slam_msgs::srv::SaveSubmaps::Response> res);
   void loadParametersAndInitialize() override;
   void startWorkers() override;
 
@@ -40,11 +45,14 @@ class SlamWrapperRos : public SlamWrapper {
   void publishDenseMap(const Time& time);
   void publishMapToOdomTf(const Time& time);
 
-  ros::NodeHandlePtr nh_;
+  rclcpp::Node::SharedPtr nh_;
   std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster_;
-  ros::Publisher odometryInputPub_, mappingInputPub_, submapOriginsPub_, assembledMapPub_, denseMapPub_, submapsPub_;
-  ros::Publisher scan2scanTransformPublisher_, scan2scanOdomPublisher_, scan2mapTransformPublisher_, scan2mapOdomPublisher_;
-  ros::ServiceServer saveMapSrv_, saveSubmapsSrv_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr odometryInputPub_, mappingInputPub_, assembledMapPub_, denseMapPub_, submapsPub_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr submapOriginsPub_;
+  rclcpp::Publisher<geometry_msgs::msg::TransformStamped>::SharedPtr scan2scanTransformPublisher_, scan2mapTransformPublisher_;
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr scan2scanOdomPublisher_, scan2mapOdomPublisher_;
+  rclcpp::Service<open3d_slam_msgs::srv::SaveMap>::SharedPtr saveMapSrv_;
+  rclcpp::Service<open3d_slam_msgs::srv::SaveSubmaps>::SharedPtr saveSubmapsSrv_;
   bool isVisualizationFirstTime_ = true;
   std::thread tfWorker_, visualizationWorker_, odomPublisherWorker_;
   Time prevPublishedTimeScanToScan_, prevPublishedTimeScanToMap_;

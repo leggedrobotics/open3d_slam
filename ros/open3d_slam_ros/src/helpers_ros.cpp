@@ -6,28 +6,26 @@
  */
 
 #include "open3d_slam_ros/helpers_ros.hpp"
+
 #include <random>
-#include "open3d_slam/SubmapCollection.hpp"
-// ros stuff
-#include <eigen_conversions/eigen_msg.h>
-#include <nav_msgs/Odometry.h>
-#include <ros/ros.h>
-#include <tf2/convert.h>
-#include <tf2_eigen/tf2_eigen.h>
-#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_eigen/tf2_eigen.hpp>
 #include "open3d_conversions/open3d_conversions.h"
+#include "open3d_slam/SubmapCollection.hpp"
 #include "open3d_slam_ros/Color.hpp"
 
 namespace o3d_slam {
 
-void publishSubmapCoordinateAxes(const SubmapCollection& submaps, const std::string& frame_id, const ros::Time& timestamp,
-                                 const ros::Publisher& pub) {
-  visualization_msgs::MarkerArray msg;
+void publishSubmapCoordinateAxes(
+  const SubmapCollection& submaps,
+  const std::string& frame_id,
+  const rclcpp::Time& timestamp,
+  const rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr& pub) {
+  visualization_msgs::msg::MarkerArray msg;
   int id = 0;
   msg.markers.reserve(2 * submaps.getNumSubmaps());
   for (size_t j = 0; j < submaps.getNumSubmaps(); ++j) {
     const Submap& submap = submaps.getSubmap(j);
-    visualization_msgs::Marker axes, text;
+    visualization_msgs::msg::Marker axes, text;
     drawAxes(submap.getMapToSubmapCenter(), Eigen::Quaterniond(submap.getMapToSubmapOrigin().rotation()), 0.8, 0.08, &axes);
     axes.ns = "submap_" + std::to_string(j);
     axes.header.frame_id = frame_id;
@@ -39,13 +37,13 @@ void publishSubmapCoordinateAxes(const SubmapCollection& submaps, const std::str
     text.pose.position.y += 0.3;
     text.scale.x = text.scale.y = text.scale.z = 0.4;
     text.color.r = text.color.g = text.color.b = 1.0;
-    text.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    text.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
     text.text = "(" + std::to_string(j) + ")";
     text.ns = "submap_id_" + std::to_string(j);
     text.id = id++;
     msg.markers.push_back(text);
   }
-  pub.publish(msg);
+  pub->publish(msg);
 }
 
 void assembleColoredPointCloud(const SubmapCollection& submaps, open3d::geometry::PointCloud* cloud) {
@@ -57,7 +55,6 @@ void assembleColoredPointCloud(const SubmapCollection& submaps, open3d::geometry
   const int nPoints = submaps.getTotalNumPoints();
   cloud->points_.reserve(nPoints);
   cloud->colors_.reserve(nPoints);
-  std::uniform_int_distribution<int> rndInt(2, 12);
   for (size_t j = 0; j < submaps.getNumSubmaps(); ++j) {
     const Submap& submap = submaps.getSubmap(j);
     const auto color = Color::getColor(j % (Color::numColors_ - 2) + 2);
@@ -69,50 +66,64 @@ void assembleColoredPointCloud(const SubmapCollection& submaps, open3d::geometry
   }
 }
 
-void publishCloud(const open3d::geometry::PointCloud& cloud, const std::string& frame_id, const ros::Time& timestamp, ros::Publisher& pub) {
-  if (pub.getNumSubscribers() > 0) {
-    sensor_msgs::PointCloud2 msg;
-    const PointCloud copy = cloud;
-    open3d_conversions::open3dToRos(copy, msg, frame_id);
+void publishCloud(
+  const open3d::geometry::PointCloud& cloud,
+  const std::string& frame_id,
+  const rclcpp::Time& timestamp,
+  const rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr& pub) {
+  if (hasSubscribers<sensor_msgs::msg::PointCloud2>(pub)) {
+    sensor_msgs::msg::PointCloud2 msg;
+    open3d_conversions::open3dToRos(cloud, msg, frame_id);
     msg.header.stamp = timestamp;
-    pub.publish(msg);
+    pub->publish(msg);
   }
 }
 
-void publishTfTransform(const Eigen::Matrix4d& Mat, const ros::Time& time, const std::string& frame, const std::string& childFrame,
-                        tf2_ros::TransformBroadcaster* broadcaster) {
-  geometry_msgs::TransformStamped transformStamped = o3d_slam::toRos(Mat, time, frame, childFrame);
-  broadcaster->sendTransform(transformStamped);
+void publishTfTransform(
+  const Eigen::Matrix4d& Mat,
+  const rclcpp::Time& time,
+  const std::string& frame,
+  const std::string& childFrame,
+  tf2_ros::TransformBroadcaster* broadcaster) {
+  broadcaster->sendTransform(toRos(Mat, time, frame, childFrame));
 }
 
-bool lookupTransform(const std::string& target_frame, const std::string& source_frame, const ros::Time& time,
-                     const tf2_ros::Buffer& tfBuffer, Eigen::Isometry3d* transform) {
-  geometry_msgs::TransformStamped transformStamped;
+bool lookupTransform(
+  const std::string& target_frame,
+  const std::string& source_frame,
+  const rclcpp::Time& time,
+  const tf2_ros::Buffer& tfBuffer,
+  Eigen::Isometry3d* transform) {
   try {
-    transformStamped = tfBuffer.lookupTransform(target_frame, source_frame, time, ros::Duration(0.05));
-  } catch (tf2::TransformException& ex) {
-    ROS_WARN("caught exception while looking up the tf: %s", ex.what());
+    const auto transformStamped = tfBuffer.lookupTransform(target_frame, source_frame, time, tf2::durationFromSec(0.05));
+    *transform = tf2::transformToEigen(transformStamped);
+    return true;
+  } catch (const tf2::TransformException& ex) {
+    RCLCPP_WARN(rclcpp::get_logger("open3d_slam_ros"), "caught exception while looking up the tf: %s", ex.what());
     *transform = Eigen::Isometry3d::Identity();
     return false;
   }
-  *transform = tf2::transformToEigen(transformStamped);
-  return true;
 }
 
-geometry_msgs::Pose getPose(const Eigen::MatrixXd& T) {
-  geometry_msgs::Pose pose;
-
-  // Fill pose
-  Eigen::Affine3d eigenTr;
-  eigenTr.matrix() = T;
-  tf::poseEigenToMsg(eigenTr, pose);
-
+geometry_msgs::msg::Pose getPose(const Eigen::MatrixXd& T) {
+  geometry_msgs::msg::Pose pose;
+  const Eigen::Quaterniond q(T.block<3, 3>(0, 0));
+  pose.position.x = T(0, 3);
+  pose.position.y = T(1, 3);
+  pose.position.z = T(2, 3);
+  pose.orientation.x = q.x();
+  pose.orientation.y = q.y();
+  pose.orientation.z = q.z();
+  pose.orientation.w = q.w();
   return pose;
 }
 
-geometry_msgs::TransformStamped toRos(const Eigen::Matrix4d& Mat, const ros::Time& time, const std::string& frame,
-                                      const std::string& childFrame) {
-  geometry_msgs::TransformStamped transformStamped;
+geometry_msgs::msg::TransformStamped toRos(
+  const Eigen::Matrix4d& Mat,
+  const rclcpp::Time& time,
+  const std::string& frame,
+  const std::string& childFrame) {
+  geometry_msgs::msg::TransformStamped transformStamped;
   transformStamped.header.stamp = time;
   transformStamped.header.frame_id = frame;
   transformStamped.child_frame_id = childFrame;
@@ -124,15 +135,20 @@ geometry_msgs::TransformStamped toRos(const Eigen::Matrix4d& Mat, const ros::Tim
   return transformStamped;
 }
 
-geometry_msgs::Point createPoint(double x, double y, double z) {
-  geometry_msgs::Point p;
+geometry_msgs::msg::Point createPoint(double x, double y, double z) {
+  geometry_msgs::msg::Point p;
   p.x = x;
   p.y = y;
   p.z = z;
   return p;
 }
 
-void drawAxes(const Eigen::Vector3d& p, const Eigen::Quaterniond& q, double scale, double line_width, visualization_msgs::Marker* marker) {
+void drawAxes(
+  const Eigen::Vector3d& p,
+  const Eigen::Quaterniond& q,
+  double scale,
+  double line_width,
+  visualization_msgs::msg::Marker* marker) {
   marker->colors.resize(6);
   marker->points.resize(6);
   marker->points[0] = createPoint(0, 0, 0);
@@ -150,34 +166,32 @@ void drawAxes(const Eigen::Vector3d& p, const Eigen::Quaterniond& q, double scal
   marker->colors[4] = Color::Blue();
   marker->colors[5] = Color::Blue();
 
-  marker->scale.x = line_width;  // rest is unused
-  marker->type = visualization_msgs::Marker::LINE_LIST;
-  marker->action = visualization_msgs::Marker::ADD;
-
-  tf::pointEigenToMsg(p, marker->pose.position);
-  tf::quaternionEigenToMsg(q, marker->pose.orientation);
+  marker->scale.x = line_width;
+  marker->type = visualization_msgs::msg::Marker::LINE_LIST;
+  marker->action = visualization_msgs::msg::Marker::ADD;
+  marker->pose.position.x = p.x();
+  marker->pose.position.y = p.y();
+  marker->pose.position.z = p.z();
+  marker->pose.orientation.x = q.x();
+  marker->pose.orientation.y = q.y();
+  marker->pose.orientation.z = q.z();
+  marker->pose.orientation.w = q.w();
 }
 
-ros::Time toRos(Time time) {
-  int64_t uts_timestamp = toUniversal(time);
-  int64_t ns_since_unix_epoch = (uts_timestamp - kUtsEpochOffsetFromUnixEpochInSeconds * 10000000ll) * 100ll;
-  ::ros::Time ros_time;
+rclcpp::Time toRos(Time time) {
+  const int64_t uts_timestamp = toUniversal(time);
+  const int64_t ns_since_unix_epoch = (uts_timestamp - kUtsEpochOffsetFromUnixEpochInSeconds * 10000000ll) * 100ll;
   if (ns_since_unix_epoch < 0) {
     std::cerr << "ERROR: nanoseconds since unix epoch is: " << ns_since_unix_epoch << " which is impossible!!!! \n";
-    std::cerr << "       ROS time will throw you an exception fo sho!!!! \n";
-    std::cerr << "       Are you playing the rosbag with --clock??? \n";
-    std::cerr << "       If yes, did you set use_sim_time to true ??? \n";
     std::cout << "Universal time: " << uts_timestamp << std::endl;
   }
-  ros_time.fromNSec(ns_since_unix_epoch);
-  return ros_time;
+  return rclcpp::Time(ns_since_unix_epoch, RCL_ROS_TIME);
 }
 
-Time fromRos(const ::ros::Time& time) {
-  // The epoch of the ICU Universal Time Scale is "0001-01-01 00:00:00.0 +0000",
-  // exactly 719162 days before the Unix epoch.
-  return fromUniversal((time.sec + kUtsEpochOffsetFromUnixEpochInSeconds) * 10000000ll +
-                       (time.nsec + 50) / 100);  // + 50 to get the rounding correct.
+Time fromRos(const builtin_interfaces::msg::Time& time) {
+  return fromUniversal(
+    (static_cast<int64_t>(time.sec) + kUtsEpochOffsetFromUnixEpochInSeconds) * 10000000ll +
+    (static_cast<int64_t>(time.nanosec) + 50) / 100);
 }
 
 } /* namespace o3d_slam */

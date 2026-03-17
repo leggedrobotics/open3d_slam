@@ -1,50 +1,32 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(open3d_slam_yaml_io)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_compile_options(-O3)
 
+find_package(ament_cmake REQUIRED)
+find_package(open3d_slam REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
-set(SRC_FILES
-  src/parameter_loaders.cpp
+add_library(${PROJECT_NAME} src/parameter_loaders.cpp)
+target_include_directories(${PROJECT_NAME}
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
 )
+ament_target_dependencies(${PROJECT_NAME} open3d_slam)
+target_link_libraries(${PROJECT_NAME} yaml-cpp)
 
-set(CATKIN_PACKAGE_DEPENDENCIES
-  open3d_slam
+install(TARGETS ${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
-  
-find_package(catkin REQUIRED COMPONENTS
-  ${CATKIN_PACKAGE_DEPENDENCIES}
-)
+install(DIRECTORY include/ DESTINATION include)
 
-catkin_package(
-  INCLUDE_DIRS
-    include
-  LIBRARIES
-    yaml-cpp
-    ${PROJECT_NAME} 
-  CATKIN_DEPENDS
-    ${CATKIN_PACKAGE_DEPENDENCIES}
-  DEPENDS 
-)
-
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-  ${YAML_CPP_INCLUDE_DIR}
-)
-
-add_library(${PROJECT_NAME}
-  ${SRC_FILES}
-)
-
-add_dependencies(${PROJECT_NAME}
-  ${catkin_EXPORTED_TARGETS}
-)
-
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  yaml-cpp
-)
-
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_include_directories(include)
+ament_export_dependencies(open3d_slam)
+ament_package()

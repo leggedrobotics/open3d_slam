@@ -22,18 +22,15 @@
 #include <open3d/Open3D.h>
 
 // ROS
-#include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/point_cloud2_iterator.h>
-
-// Boost
-#include <boost/make_shared.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/point_cloud2_iterator.hpp>
 
 TEST(ConversionFunctions, open3dToRos_uncolored) {
   open3d::geometry::PointCloud o3d_pc;
   for (int i = 0; i < 5; ++i) {
     o3d_pc.points_.push_back(Eigen::Vector3d(0.5 * i, i * i, 10.5 * i));
   }
-  sensor_msgs::PointCloud2 ros_pc2;
+  sensor_msgs::msg::PointCloud2 ros_pc2;
   open3d_conversions::open3dToRos(o3d_pc, ros_pc2, "o3d_frame");
   EXPECT_EQ(ros_pc2.height * ros_pc2.width, o3d_pc.points_.size());
   sensor_msgs::PointCloud2Iterator<float> ros_pc2_x(ros_pc2, "x");
@@ -53,7 +50,7 @@ TEST(ConversionFunctions, open3dToRos_colored) {
     o3d_pc.points_.push_back(Eigen::Vector3d(0.5 * i, i * i, 10.5 * i));
     o3d_pc.colors_.push_back(Eigen::Vector3d(2 * i / 255.0, 5 * i / 255.0, 10 * i / 255.0));
   }
-  sensor_msgs::PointCloud2 ros_pc2;
+  sensor_msgs::msg::PointCloud2 ros_pc2;
   open3d_conversions::open3dToRos(o3d_pc, ros_pc2, "o3d_frame");
   EXPECT_EQ(ros_pc2.height * ros_pc2.width, o3d_pc.points_.size());
   sensor_msgs::PointCloud2Iterator<float> ros_pc2_x(ros_pc2, "x");
@@ -75,7 +72,7 @@ TEST(ConversionFunctions, open3dToRos_colored) {
 }
 
 TEST(ConversionFunctions, rosToOpen3d_uncolored) {
-  sensor_msgs::PointCloud2 ros_pc2;
+  sensor_msgs::msg::PointCloud2 ros_pc2;
   ros_pc2.header.frame_id = "ros";
   ros_pc2.height = 1;
   ros_pc2.width = 5;
@@ -94,7 +91,7 @@ TEST(ConversionFunctions, rosToOpen3d_uncolored) {
     *mod_z = 10.5 * i;
   }
 
-  const sensor_msgs::PointCloud2ConstPtr& ros_pc2_ptr = boost::make_shared<sensor_msgs::PointCloud2>(ros_pc2);
+  auto ros_pc2_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>(ros_pc2);
   open3d::geometry::PointCloud o3d_pc;
   open3d_conversions::rosToOpen3d(ros_pc2_ptr, o3d_pc);
   EXPECT_EQ(ros_pc2_ptr->height * ros_pc2_ptr->width, o3d_pc.points_.size());
@@ -108,7 +105,7 @@ TEST(ConversionFunctions, rosToOpen3d_uncolored) {
 }
 
 TEST(ConversionFunctions, rosToOpen3d_colored) {
-  sensor_msgs::PointCloud2 ros_pc2;
+  sensor_msgs::msg::PointCloud2 ros_pc2;
   ros_pc2.header.frame_id = "ros";
   ros_pc2.height = 1;
   ros_pc2.width = 5;
@@ -134,7 +131,7 @@ TEST(ConversionFunctions, rosToOpen3d_colored) {
     *mod_b = 10 * i;
   }
 
-  const sensor_msgs::PointCloud2ConstPtr& ros_pc2_ptr = boost::make_shared<sensor_msgs::PointCloud2>(ros_pc2);
+  auto ros_pc2_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>(ros_pc2);
   open3d::geometry::PointCloud o3d_pc;
   open3d_conversions::rosToOpen3d(ros_pc2_ptr, o3d_pc);
   EXPECT_EQ(ros_pc2_ptr->height * ros_pc2_ptr->width, o3d_pc.points_.size());
@@ -160,8 +157,8 @@ TEST(ConversionFunctionsTgeometry, open3dToRos_uncolored_tgeometry) {
     o3d_vector_points.push_back(Eigen::Vector3d(0.5 * i, i * i, 10.5 * i));
   }
   open3d::core::Tensor o3d_tpc_points = open3d::core::eigen_converter::EigenVector3dVectorToTensor(o3d_vector_points, dtype_f, device_type);
-  o3d_tpc.SetPoints(o3d_tpc_points);
-  sensor_msgs::PointCloud2 ros_pc2;
+  o3d_tpc.SetPointPositions(o3d_tpc_points);
+  sensor_msgs::msg::PointCloud2 ros_pc2;
   open3d_conversions::open3dToRos(o3d_tpc, ros_pc2, "o3d_frame", 2, "xyz", "float");
   EXPECT_EQ(ros_pc2.height * ros_pc2.width, o3d_vector_points.size());
   sensor_msgs::PointCloud2Iterator<float> ros_pc2_x(ros_pc2, "x");
@@ -186,12 +183,12 @@ TEST(ConversionFunctionsTgeometry, open3dToRos_colored_tgeometry) {
     o3d_vector_colors.push_back(Eigen::Vector3d(2 * i / 255.0, 5 * i / 255.0, 10 * i / 255.0));
   }
   open3d::core::Tensor o3d_tpc_points = open3d::core::eigen_converter::EigenVector3dVectorToTensor(o3d_vector_points, dtype_f, device_type);
-  o3d_tpc.SetPoints(o3d_tpc_points);
+  o3d_tpc.SetPointPositions(o3d_tpc_points);
   open3d::core::Tensor o3d_tpc_colors = open3d::core::eigen_converter::EigenVector3dVectorToTensor(o3d_vector_colors, dtype_f, device_type);
   o3d_tpc.SetPointColors(o3d_tpc_colors);
-  sensor_msgs::PointCloud2 ros_pc2;
+  sensor_msgs::msg::PointCloud2 ros_pc2;
   open3d_conversions::open3dToRos(o3d_tpc, ros_pc2, "o3d_frame", 4, "xyz", "float", "rgb", "float");
-  EXPECT_EQ(ros_pc2.height * ros_pc2.width, o3d_tpc.GetPoints().GetShape()[0]);
+  EXPECT_EQ(ros_pc2.height * ros_pc2.width, o3d_tpc.GetPointPositions().GetShape()[0]);
   sensor_msgs::PointCloud2Iterator<float> ros_pc2_x(ros_pc2, "x");
   sensor_msgs::PointCloud2Iterator<float> ros_pc2_y(ros_pc2, "y");
   sensor_msgs::PointCloud2Iterator<float> ros_pc2_z(ros_pc2, "z");
@@ -210,7 +207,7 @@ TEST(ConversionFunctionsTgeometry, open3dToRos_colored_tgeometry) {
 }
 
 TEST(ConversionFunctionsTgeometry, rosToOpen3d_uncolored_tgeometry) {
-  sensor_msgs::PointCloud2 ros_pc2;
+  sensor_msgs::msg::PointCloud2 ros_pc2;
   ros_pc2.header.frame_id = "ros";
   ros_pc2.height = 1;
   ros_pc2.width = 5;
@@ -229,11 +226,11 @@ TEST(ConversionFunctionsTgeometry, rosToOpen3d_uncolored_tgeometry) {
     *mod_z = 10.5 * i;
   }
 
-  const sensor_msgs::PointCloud2ConstPtr& ros_pc2_ptr = boost::make_shared<sensor_msgs::PointCloud2>(ros_pc2);
+  auto ros_pc2_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>(ros_pc2);
   open3d::t::geometry::PointCloud o3d_tpc;
   open3d_conversions::rosToOpen3d(ros_pc2_ptr, o3d_tpc);
-  open3d::core::Tensor o3d_Tensor = o3d_tpc.GetPoints();
-  EXPECT_EQ(ros_pc2_ptr->height * ros_pc2_ptr->width, o3d_tpc.GetPoints().GetShape()[0]);
+  open3d::core::Tensor o3d_Tensor = o3d_tpc.GetPointPositions();
+  EXPECT_EQ(ros_pc2_ptr->height * ros_pc2_ptr->width, o3d_tpc.GetPointPositions().GetShape()[0]);
   EXPECT_EQ(o3d_tpc.HasPointColors(), false);
   std::vector<Eigen::Vector3d> point = open3d::core::eigen_converter::TensorToEigenVector3dVector(o3d_Tensor);
   for (unsigned int i = 0; i < 5; i++) {
@@ -244,7 +241,7 @@ TEST(ConversionFunctionsTgeometry, rosToOpen3d_uncolored_tgeometry) {
 }
 
 TEST(ConversionFunctionsTgeometry, rosToOpen3d_colored_tgeometry) {
-  sensor_msgs::PointCloud2 ros_pc2;
+  sensor_msgs::msg::PointCloud2 ros_pc2;
   ros_pc2.header.frame_id = "ros";
   ros_pc2.height = 1;
   ros_pc2.width = 5;
@@ -270,10 +267,10 @@ TEST(ConversionFunctionsTgeometry, rosToOpen3d_colored_tgeometry) {
     *mod_b = 10 * i;
   }
 
-  const sensor_msgs::PointCloud2ConstPtr& ros_pc2_ptr = boost::make_shared<sensor_msgs::PointCloud2>(ros_pc2);
+  sensor_msgs::msg::PointCloud2::ConstSharedPtr ros_pc2_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>(ros_pc2);
   open3d::t::geometry::PointCloud o3d_tpc;
   open3d_conversions::rosToOpen3d(ros_pc2_ptr, o3d_tpc);
-  open3d::core::Tensor o3d_points = o3d_tpc.GetPoints();
+  open3d::core::Tensor o3d_points = o3d_tpc.GetPointPositions();
   open3d::core::Tensor o3d_colors = o3d_tpc.GetPointColors();
   EXPECT_EQ(ros_pc2_ptr->height * ros_pc2_ptr->width, o3d_points.GetShape()[0]);
   EXPECT_EQ(o3d_tpc.HasPointColors(), true);

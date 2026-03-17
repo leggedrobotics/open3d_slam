@@ -4,23 +4,26 @@
  *  Created on: Sep 1, 2021
  *      Author: jelavice
  */
+
 #include <open3d/Open3D.h>
+#include <rclcpp/rclcpp.hpp>
+
 #include "open3d_slam/Parameters.hpp"
 #include "open3d_slam_lua_io/parameter_loaders.hpp"
 #include "open3d_slam_ros/SlamMapInitializer.hpp"
-#include "open3d_slam_ros/helpers_ros.hpp"
 #include "open3d_slam_ros/creators.hpp"
+#include "open3d_slam_ros/helpers_ros.hpp"
 
 int main(int argc, char** argv) {
   using namespace o3d_slam;
 
-  ros::init(argc, argv, "open3d_slam");
-  ros::NodeHandlePtr nh(new ros::NodeHandle("~"));
+  rclcpp::init(argc, argv);
+  auto options = rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true);
+  auto nh = std::make_shared<rclcpp::Node>("open3d_slam", options);
 
-	const std::string paramFolderPath = tryGetParam<std::string>("parameter_folder_path", *nh);
-	const std::string paramFilename = o3d_slam::tryGetParam<std::string>("parameter_filename", *nh);
+  const std::string paramFolderPath = tryGetParam<std::string>("parameter_folder_path", *nh);
+  const std::string paramFilename = o3d_slam::tryGetParam<std::string>("parameter_filename", *nh);
 
-  // The LUA parameters are loaded twice. This is the first time. Soley because we need to know if we are using a map for initialization.
   SlamParameters params;
   io_lua::loadParameters(paramFolderPath, paramFilename, &params);
 
@@ -28,7 +31,6 @@ int main(int argc, char** argv) {
   std::cout << "Is process as fast as possible: " << std::boolalpha << isProcessAsFastAsPossible << "\n";
   std::cout << "Is use a map for initialization: " << std::boolalpha << params.mapper_.isUseInitialMap_ << "\n";
 
-  // This is where the initial class is constructed and passed on.
   std::shared_ptr<DataProcessorRos> dataProcessor = dataProcessorFactory(nh, isProcessAsFastAsPossible);
   dataProcessor->initialize();
 
@@ -40,6 +42,7 @@ int main(int argc, char** argv) {
   }
 
   dataProcessor->startProcessing();
+  rclcpp::shutdown();
 
   return 0;
 }

@@ -136,9 +136,9 @@ bool Mapper::addRangeMeasurement(const Mapper::PointCloud& rawScan, const Time& 
     mapToRangeSensorEstimate = mapToRangeSensorPrev_ * odometryMotion;
   }
   isIgnoreOdometryPrediction_ = false;
-  const ProcessedScans processed = scan2MapReg_->processForScanMatchingAndMerging(rawScan, mapToRangeSensor_);
-  const RegistrationResult result =
-      scan2MapReg_->scanToMapRegistration(*processed.match_, submaps_->getActiveSubmap(), mapToRangeSensor_, mapToRangeSensorEstimate);
+  const ProcessedScans processed = scan2MapReg_->processForScanMatchingAndMerging(rawScan, mapToRangeSensorEstimate);
+  const RegistrationResult result = scan2MapReg_->scanToMapRegistration(*processed.match_, submaps_->getActiveSubmap(),
+                                                                        mapToRangeSensorEstimate, mapToRangeSensorEstimate);
   preProcessedScan_ = *processed.match_;
   if (isNewInitialValueSet_) {
     mapToRangeSensorPrev_ = mapToRangeSensor_;

@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>open3d_slam</name>
   <version>0.0.0</version>
   <description>Range sensor based mapping</description>
@@ -10,14 +11,18 @@
   <!-- One license tag required, multiple allowed, one license per tag -->
   <!-- Commonly used license strings: -->
   <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>TODO</license>
+  <license>BSD</license>
 
 
   <author email="jelavice@ethz.ch">Edo Jelavic</author>
 
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
   <depend>open3d_catkin</depend>
   <depend>eigen</depend>
+  <depend>yaml-cpp</depend>
 
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
