@@ -77,8 +77,8 @@ void SlamWrapperRos::startWorkers() {
 }
 
 void SlamWrapperRos::odomPublisherWorker() {
-  rclcpp::Rate rate(500.0);
-  while (rclcpp::ok()) {
+  const auto sleepDuration = std::chrono::milliseconds(2);
+  while (isRunWorkers_ && rclcpp::ok()) {
     auto getTransformMsg = [](const Transform& transform, const Time& time) {
       return o3d_slam::toRos(transform.matrix(), toRos(time), mapFrame, rangeSensorFrame);
     };
@@ -112,13 +112,13 @@ void SlamWrapperRos::odomPublisherWorker() {
       prevPublishedTimeScanToMapOdom_ = latestScanToMap;
     }
 
-    rate.sleep();
+    std::this_thread::sleep_for(sleepDuration);
   }
 }
 
 void SlamWrapperRos::tfWorker() {
-  rclcpp::Rate rate(20.0);
-  while (rclcpp::ok()) {
+  const auto sleepDuration = std::chrono::milliseconds(50);
+  while (isRunWorkers_ && rclcpp::ok()) {
     const Time latestScanToScan = latestScanToScanRegistrationTimestamp_;
     if (latestScanToScan != prevPublishedTimeScanToScan_ && odometry_->hasProcessedMeasurements()) {
       const Transform transform = odometry_->getOdomToRangeSensor(latestScanToScan);
@@ -134,13 +134,13 @@ void SlamWrapperRos::tfWorker() {
       prevPublishedTimeScanToMap_ = latestScanToMap;
     }
 
-    rate.sleep();
+    std::this_thread::sleep_for(sleepDuration);
   }
 }
 
 void SlamWrapperRos::visualizationWorker() {
-  rclcpp::Rate rate(20.0);
-  while (rclcpp::ok()) {
+  const auto sleepDuration = std::chrono::milliseconds(50);
+  while (isRunWorkers_ && rclcpp::ok()) {
     const Time scanToScanTimestamp = latestScanToScanRegistrationTimestamp_;
     if (odometryInputPub_->get_subscription_count() > 0 && isTimeValid(scanToScanTimestamp)) {
       const PointCloud odomInput = odometry_->getPreProcessedCloud();
@@ -153,7 +153,7 @@ void SlamWrapperRos::visualizationWorker() {
       publishMaps(scanToMapTimestamp);
     }
 
-    rate.sleep();
+    std::this_thread::sleep_for(sleepDuration);
   }
 }
 

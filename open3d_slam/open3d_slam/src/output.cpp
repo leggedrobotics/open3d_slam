@@ -47,7 +47,7 @@ bool saveToFile(const std::string& filename, const PointCloud& cloud) {
 }
 
 bool createDirectoryOrNoActionIfExists(const std::string& directory) {
-  return std::filesystem::create_directory(directory);
+  return std::filesystem::create_directories(directory);
 }
 
 }  // namespace o3d_slam

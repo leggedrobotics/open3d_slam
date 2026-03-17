@@ -12,9 +12,10 @@
 #include <rclcpp/serialization.hpp>
 
 #include "open3d_conversions/open3d_conversions.h"
-#include "open3d_slam_ros/SlamWrapperRos.hpp"
+#include "open3d_slam/assert.hpp"
 #include "open3d_slam/frames.hpp"
 #include "open3d_slam/time.hpp"
+#include "open3d_slam_ros/SlamWrapperRos.hpp"
 #include "open3d_slam_ros/helpers_ros.hpp"
 
 namespace o3d_slam {
@@ -26,6 +27,11 @@ std::string normalizeTopic(std::string topic) {
     return topic;
   }
   return "/" + topic;
+}
+
+bool isBufferFull(size_t currentSize, size_t sizeLimit) {
+  assert_gt<size_t>(sizeLimit, 0, "Rosbag processing requires buffer size limits > 0");
+  return currentSize >= sizeLimit;
 }
 
 }  // namespace
@@ -87,8 +93,8 @@ void RosbagRangeDataProcessorRos::readRosbag(rosbag2_cpp::Reader& reader) {
     }
 
     while (true) {
-      const bool isOdomBufferFull = slam_->getOdometryBufferSize() + 1 >= slam_->getOdometryBufferSizeLimit();
-      const bool isMappingBufferFull = slam_->getMappingBufferSize() + 1 >= slam_->getMappingBufferSizeLimit();
+      const bool isOdomBufferFull = isBufferFull(slam_->getOdometryBufferSize(), slam_->getOdometryBufferSizeLimit());
+      const bool isMappingBufferFull = isBufferFull(slam_->getMappingBufferSize(), slam_->getMappingBufferSizeLimit());
       if (!isOdomBufferFull && !isMappingBufferFull) {
         cloudCallback(cloudPtr);
         break;

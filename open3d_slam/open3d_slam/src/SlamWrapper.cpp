@@ -9,6 +9,7 @@
 
 #include <open3d/Open3D.h>
 #include <chrono>
+#include <filesystem>
 #include "open3d_slam/Mapper.hpp"
 #include "open3d_slam/MotionCompensation.hpp"
 #include "open3d_slam/Odometry.hpp"
@@ -201,6 +202,10 @@ void SlamWrapper::loadParametersAndInitialize() {
   }
 
   // Set the buffer sizes. This is not done in the constructer 
+  assert_gt<size_t>(params_.odometry_.odometryBufferSize_, 0, "Odometry buffer size must be > 0");
+  assert_gt<size_t>(params_.mapper_.mappingBufferSize_, 0, "Mapping buffer size must be > 0");
+  assert_gt<size_t>(params_.odometry_.scanProcessing_.pointCloudBufferSize_, 0,
+                    "Registered cloud buffer size must be > 0");
   odometryBuffer_.set_size_limit(params_.odometry_.odometryBufferSize_);
   mappingBuffer_.set_size_limit(params_.mapper_.mappingBufferSize_);
   registeredCloudBuffer_.set_size_limit(params_.odometry_.scanProcessing_.pointCloudBufferSize_);
@@ -242,7 +247,7 @@ void SlamWrapper::stopWorkers() {
 bool SlamWrapper::saveMap(const std::string& directory) {
   PointCloud map = mapper_->getAssembledMapPointCloud();
   createDirectoryOrNoActionIfExists(directory);
-  const std::string filename = directory + "map.pcd";
+  const std::string filename = (std::filesystem::path(directory) / "map.pcd").string();
   return saveToFile(filename, map);
 }
 bool SlamWrapper::saveDenseSubmaps(const std::string& directory) {
