@@ -1,24 +1,17 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>open3d_slam</name>
+  <name>open3d_colcon</name>
   <version>0.0.0</version>
-  <description>Range sensor based mapping</description>
+  <description>Open3D wrapper for colcon workspaces</description>
 
   <maintainer email="jelavice@ethz.ch">Edo Jelavic</maintainer>
 
-
-  <!-- One license tag required, multiple allowed, one license per tag -->
-  <!-- Commonly used license strings: -->
-  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
   <license>BSD-3-Clause</license>
 
-
   <author email="jelavice@ethz.ch">Edo Jelavic</author>
-
+  <author email="nubertj@ethz.ch">Julian Nubert</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <depend>open3d_colcon</depend>
-  <depend>eigen</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

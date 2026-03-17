@@ -6,7 +6,9 @@
  */
 
 #pragma once
-#include <ros/ros.h>
+
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include "open3d_slam/SlamWrapper.hpp"
 #include "open3d_slam/time.hpp"
@@ -16,7 +18,7 @@ namespace o3d_slam {
 
 class DataProcessorRos {
  public:
-  DataProcessorRos(ros::NodeHandlePtr nh);
+  explicit DataProcessorRos(rclcpp::Node::SharedPtr node);
   virtual ~DataProcessorRos() = default;
 
   virtual void initialize() = 0;
@@ -31,10 +33,10 @@ class DataProcessorRos {
   size_t numPointCloudsReceived_ = 0;
   size_t numAccumulatedRangeDataDesired_ = 1;
   PointCloud accumulatedCloud_;
-  ros::Publisher rawCloudPub_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr rawCloudPub_;
   std::string cloudTopic_;
   std::shared_ptr<SlamWrapper> slam_;
-  ros::NodeHandlePtr nh_;
+  rclcpp::Node::SharedPtr node_;
 };
 
 }  // namespace o3d_slam

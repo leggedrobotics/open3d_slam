@@ -23,7 +23,7 @@ void clamp(T* val, Limits lo, Limits hi) {
 }
 }  // namespace
 
-Color::Color() : std_msgs::ColorRGBA() {}
+Color::Color() : std_msgs::msg::ColorRGBA() {}
 Color::Color(double red, double green, double blue) : Color(red, green, blue, 1.0) {}
 Color::Color(double red, double green, double blue, double alpha) : Color() {
   r = red;

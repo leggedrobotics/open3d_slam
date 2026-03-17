@@ -6,12 +6,13 @@
  */
 
 #pragma once
-#include <nav_msgs/Odometry.h>
-#include <ros/ros.h>
-#include <rosbag/bag.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <tf2_ros/transform_broadcaster.h>
+
 #include <memory>
+
+#include <rclcpp/rclcpp.hpp>
+#include <rosbag2_cpp/reader.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
 #include "open3d_slam/SlamWrapper.hpp"
 #include "open3d_slam_ros/DataProcessorRos.hpp"
 
@@ -21,7 +22,7 @@ class RosbagRangeDataProcessorRos : public DataProcessorRos {
   using BASE = DataProcessorRos;
 
  public:
-  RosbagRangeDataProcessorRos(ros::NodeHandlePtr nh);
+  explicit RosbagRangeDataProcessorRos(rclcpp::Node::SharedPtr node);
   ~RosbagRangeDataProcessorRos() override = default;
 
   void initialize() override;
@@ -29,8 +30,8 @@ class RosbagRangeDataProcessorRos : public DataProcessorRos {
   void processMeasurement(const PointCloud& cloud, const Time& timestamp) override;
 
  private:
-  void cloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg);
-  void readRosbag(const rosbag::Bag& bag);
+  void cloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& msg);
+  void readRosbag(rosbag2_cpp::Reader& reader);
 
   std::string rosbagFilename_;
 };

@@ -13,7 +13,7 @@ Open3D slam can be initialized with a map and run in localization mode. There ar
 Localization uses ICP which is a local method and one needs to provide a good initial guess for the pose. One way of doing so is directly in the parameter file, however it can also be done interactively at runtime (see links below).
 Parameters used for localization are given below:
 
-map_intializer:
+map_initializer:
     ``is_initialize_interactively`` - whether to enable initialization at runtime.
     
     ``frame_id`` - frame in which you are initializing open3d_slam, relevant for interactive initialization

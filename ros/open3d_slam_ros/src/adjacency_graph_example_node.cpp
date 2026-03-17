@@ -5,7 +5,7 @@
  *      Author: jelavice
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include "open3d_slam/AdjacencyMatrix.hpp"
 
 using namespace o3d_slam;
@@ -31,7 +31,7 @@ AdjacencyMatrix createToyExample() {
 }
 
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "adjacency_graph_example");
+  rclcpp::init(argc, argv);
 
   AdjacencyMatrix graph = createToyExample();
   graph.print();
@@ -46,5 +46,6 @@ int main(int argc, char** argv) {
   std::cout << graph.getDistanceToNearestLoopClosureSubmap(8) << std::endl;
   std::cout << graph.getDistanceToNearestLoopClosureSubmap(11) << std::endl;
 
+  rclcpp::shutdown();
   return 0;
 }

@@ -1,6 +1,6 @@
 # Open3D SLAM: A Flexible Pointcloud-based SLAM System for Education
 
-open3d_slam is a C++ (cpp) library for SLAM with ROS integration. 
+open3d_slam is a C++ library for point-cloud SLAM with ROS integration.
 
 **Main Contact:** Edo Jelavic ([jelavice@ethz.ch](mailto:jelavice@ethz.ch?subject=[GitHub]))
 
@@ -22,8 +22,52 @@ We base our implementation on [Open3D](http://www.open3d.org/), a well-maintaine
 
 The documentation and example datasets can be found here [open3d_slam Documentation](https://open3d-slam.readthedocs.io/en/latest/).
 
-We provide a catkin wrapper for Open3D such that you can easily use Open3D in your ROS projects. See documentation in
-[open3d_catkin/README.md](https://github.com/leggedrobotics/open3d_slam/tree/master/open3d_catkin).
+## Build
+
+This repository now targets ROS 2 Jazzy only. The active container and documentation assume Jazzy, and the shipped parameter files are plain YAML instead of Lua dictionaries.
+
+```bash
+mkdir -p ~/open3d_slam_ws/src
+cd ~/open3d_slam_ws/src
+git clone https://github.com/leggedrobotics/open3d_slam.git
+cd ..
+source /opt/ros/jazzy/setup.bash
+```
+
+The supported Jazzy build covers the full stack: `open3d_colcon`, `open3d_slam`, `open3d_slam_yaml_io`, `open3d_slam_msgs`, `open3d_conversions`, and `open3d_slam_ros`.
+
+The Open3D wrapper package is now called `open3d_colcon`. It resolves an installed Open3D and exports it to the rest of the workspace. The wrapper-specific instructions are documented in
+[open3d_colcon/README.md](open3d_colcon/README.md).
+
+## Docker
+
+The only supported development image is [open3d_slam.dockerfile](open3d_slam.dockerfile), based on ROS 2 Jazzy:
+
+```bash
+docker build -f open3d_slam.dockerfile -t open3d_slam:jazzy .
+docker run --rm -it open3d_slam:jazzy
+```
+
+The image builds Open3D 0.15.1 from source and compiles the full Jazzy workspace during `docker build`.
+
+## ROS 2 Launch
+
+Launch online mapping:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+ros2 launch open3d_slam_ros mapping.launch.py \
+  cloud_topic:=/rslidar_points \
+  parameter_filename:=param_robosense_rs16.yaml
+```
+
+Launch offline rosbag processing:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+ros2 launch open3d_slam_ros mapping_rosbag.launch.py \
+  rosbag_filepath:=/absolute/path/to/dataset
+```
 
 If you find this work useful, or use it for your research, please consider citing the corresponding work:
 ```

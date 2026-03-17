@@ -6,20 +6,20 @@
  */
 
 #include "open3d_slam_ros/DataProcessorRos.hpp"
-#include <ros/ros.h>
-#include <sensor_msgs/PointCloud2.h>
+
 #include "open3d_slam/magic.hpp"
 #include "open3d_slam/typedefs.hpp"
+#include "open3d_slam_ros/helpers_ros.hpp"
 
 namespace o3d_slam {
 
-DataProcessorRos::DataProcessorRos(ros::NodeHandlePtr nh) : nh_(nh) {}
+DataProcessorRos::DataProcessorRos(rclcpp::Node::SharedPtr node) : node_(std::move(node)) {}
 
 void DataProcessorRos::initCommonRosStuff() {
-  cloudTopic_ = nh_->param<std::string>("cloud_topic", "");
+  cloudTopic_ = tryGetParam<std::string>("cloud_topic", *node_);
   std::cout << "Cloud topic is given as " << cloudTopic_ << std::endl;
-  rawCloudPub_ = nh_->advertise<sensor_msgs::PointCloud2>("raw_cloud", 1, true);
-  numAccumulatedRangeDataDesired_ = nh_->param<int>("num_accumulated_range_data", 1);
+  rawCloudPub_ = node_->create_publisher<sensor_msgs::msg::PointCloud2>("raw_cloud", rclcpp::QoS(1).transient_local());
+  numAccumulatedRangeDataDesired_ = getParamOr<int>("num_accumulated_range_data", *node_, 1);
   std::cout << "Num accumulated range data: " << numAccumulatedRangeDataDesired_ << std::endl;
 }
 

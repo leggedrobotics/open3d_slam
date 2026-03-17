@@ -2,66 +2,36 @@
 Installation
 ============
 
-1. Install the dependencies
-2. Compile using catkin build system
+The repository targets ROS 2 Jazzy only.
 
-or 
+You can either build directly in a local workspace or use the provided Docker image described in :ref:`docker <docker_ref>`.
 
-run in a docker. In that case, check the instructions for :ref:`docker <docker_ref>`.
+Workspace setup
+---------------
 
-Dependencies
-------------
-
-1. Glog
-~~~~~~~
+1. Install the build tools:
 
 .. code-block:: bash
 
-   sudo apt install libgoogle-glog-dev
+   sudo apt install python3-colcon-common-extensions python3-rosdep
 
-2. GLFW
-~~~~~~~
-
-.. code-block:: bash
-
-   sudo apt-get install libglfw3 libglfw3-dev
-
-3. Ros dependencies
-~~~~~~~~~~~~~~~~~~~
-If you want to use open3d_slam_ros consider installing jsk-rviz plugins. We use them to visualize the trajectories. 
-If you don't have them installed, you should still be able to run the package, however with some red letters in the terminal.
-
-Install with apt:
+2. Create a workspace and clone the repository into `src`:
 
 .. code-block:: bash
 
-   sudo apt install ros-noetic-jsk-rviz-plugins
+   mkdir -p ~/open3d_slam_ws/src
+   cd ~/open3d_slam_ws/src
+   git clone https://github.com/leggedrobotics/open3d_slam.git
+   cd ..
 
-In case this installation is not sufficient and you still get errors, follow the instructions:
-
-.. code-block:: bash
-
-   wget http://archive.ubuntu.com/ubuntu/pool/universe/p/pcl/libpcl-visualization1.10_1.10.0+dfsg-5ubuntu1_amd64.deb
-   wget http://de.archive.ubuntu.com/ubuntu/pool/universe/v/vtk7/libvtk7.1p_7.1.1+dfsg2-2ubuntu1_amd64.deb
-   sudo dpkg -i libvtk7.1p_7.1.1+dfsg2-2ubuntu1_amd64.deb
-   sudo dpkg -i libpcl-visualization1.10_1.10.0+dfsg-5ubuntu1_amd64.deb
-
-jsk-rviz plugins inherently depends on pcl_visualization package which depends on vtk7 package. However, these packages are not part of the PCL debian packages. Therefore, we need to install them manually.
-
-4. LUA
-~~~~~~~~~~~~~~~~~~~
-If you use open3d_slam_ros, the configs are loaded using LUA, as they allow for an easy configuration management with minimal duplicated code.
-
-Install with apt:
+3. Source ROS 2 Jazzy:
 
 .. code-block:: bash
 
-   sudo apt install liblua5.2-dev
+   source /opt/ros/jazzy/setup.bash
+4. Build the Jazzy workspace:
 
-5. open3d_catkin
-~~~~~~~~~~~~~~~~
-
-Follow the instructions to build :ref:`open3d_catkin <open3d_catkin_ref>`.
+Follow the instructions to build :ref:`open3d_colcon <open3d_colcon_ref>`.
 
 
 .. _compilation_ref:
@@ -70,12 +40,11 @@ Compilation
 ------------
 
 
-Once you have built *open3D_catkin* you can build *open3d_slam* and *open3d_slam_ros* if you want ROS support.
+Once Open3D is configured, build the Jazzy packages with `colcon`:
 
 .. code-block:: bash
 
-	catkin build open3d_slam -DCMAKE_BUILD_TYPE=Release
-	catkin build open3d_slam_ros -DCMAKE_BUILD_TYPE=Release
-
+   source /opt/ros/jazzy/setup.bash
+   colcon build --symlink-install --packages-up-to open3d_slam_ros --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 **You're done with open3d_slam installation**, you can proceed to the usage site.

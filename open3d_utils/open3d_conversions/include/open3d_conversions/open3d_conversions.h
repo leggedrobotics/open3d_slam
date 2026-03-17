@@ -12,24 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OPEN3D_CONVERSIONS_HPP_
-#define OPEN3D_CONVERSIONS_HPP_
+#pragma once
 
-// Open3D
+#include <Eigen/Dense>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/point_cloud2_iterator.hpp>
+
+#include <string>
+
 #include "open3d/geometry/PointCloud.h"
 #include "open3d/geometry/TriangleMesh.h"
 #include "open3d/t/geometry/PointCloud.h"
-// ROS
-#include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/point_cloud2_iterator.h>
-
-// Eigen
-#include <Eigen/Dense>
-
-// C++
-#include <string>
-
-#include "open3d_slam_msgs/PolygonMesh.h"
+#include "open3d_slam_msgs/msg/polygon_mesh.hpp"
 
 namespace open3d_conversions {
 /**
@@ -39,7 +33,7 @@ namespace open3d_conversions {
  * @param ros_pc2 Reference to the sensor_msgs PointCloud2
  * @param frame_id The string to be placed in the frame_id of the PointCloud2
  */
-void open3dToRos(const open3d::geometry::PointCloud& pointcloud, sensor_msgs::PointCloud2& ros_pc2,
+void open3dToRos(const open3d::geometry::PointCloud& pointcloud, sensor_msgs::msg::PointCloud2& ros_pc2,
                  std::string frame_id = "open3d_pointcloud");
 
 /**
@@ -50,8 +44,9 @@ void open3dToRos(const open3d::geometry::PointCloud& pointcloud, sensor_msgs::Po
  * @param skip_colors If true, only xyz fields will be copied
  */
 
-void rosToOpen3d(const sensor_msgs::PointCloud2ConstPtr& ros_pc2, open3d::geometry::PointCloud& o3d_pc, bool skip_colors = false);
-void rosToOpen3d(const sensor_msgs::PointCloud2& cloud, open3d::geometry::PointCloud& o3d_pc, bool skip_colors = false);
+void rosToOpen3d(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& ros_pc2, open3d::geometry::PointCloud& o3d_pc,
+                 bool skip_colors = false);
+void rosToOpen3d(const sensor_msgs::msg::PointCloud2& cloud, open3d::geometry::PointCloud& o3d_pc, bool skip_colors = false);
 /**
  *@brief Copy data from a open3d::t::geometry::PointCloud to a sensor_msgs::PointCloud2
  *
@@ -61,7 +56,7 @@ void rosToOpen3d(const sensor_msgs::PointCloud2& cloud, open3d::geometry::PointC
  *@param t_num_fields Twice the number of fields that the pointcloud contains
  *@param var_args Strings of field names followed succeeded by their datatype ("int" / "float")
  */
-void open3dToRos(const open3d::t::geometry::PointCloud& pointcloud, sensor_msgs::PointCloud2& ros_pc2,
+void open3dToRos(const open3d::t::geometry::PointCloud& pointcloud, sensor_msgs::msg::PointCloud2& ros_pc2,
                  std::string frame_id = "open3d_pointcloud", int t_num_fields = 2, ...);
 
 /**
@@ -71,13 +66,12 @@ void open3dToRos(const open3d::t::geometry::PointCloud& pointcloud, sensor_msgs:
  * @param o3d_pc Reference to the open3d tgeometry PointCloud
  * @param skip_colors If true, only xyz fields will be copied
  */
-void rosToOpen3d(const sensor_msgs::PointCloud2ConstPtr& ros_pc2, open3d::t::geometry::PointCloud& o3d_pc, bool skip_colors = false);
+void rosToOpen3d(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& ros_pc2, open3d::t::geometry::PointCloud& o3d_pc,
+                 bool skip_colors = false);
 
-void open3dToRos(const open3d::geometry::MeshBase& mesh, const std::string& frameId, open3d_slam_msgs::PolygonMesh& msg);
+void open3dToRos(const open3d::geometry::MeshBase& mesh, const std::string& frameId, open3d_slam_msgs::msg::PolygonMesh& msg);
 
-void rosToOpen3d(const open3d_slam_msgs::PolygonMesh& msg, open3d::geometry::TriangleMesh& mesh);
-void rosToOpen3d(const open3d_slam_msgs::PolygonMesh::ConstPtr& msg, open3d::geometry::TriangleMesh& mesh);
+void rosToOpen3d(const open3d_slam_msgs::msg::PolygonMesh& msg, open3d::geometry::TriangleMesh& mesh);
+void rosToOpen3d(const open3d_slam_msgs::msg::PolygonMesh::ConstSharedPtr& msg, open3d::geometry::TriangleMesh& mesh);
 
 }  // namespace open3d_conversions
-
-#endif  // OPEN3D_CONVERSIONS_HPP_

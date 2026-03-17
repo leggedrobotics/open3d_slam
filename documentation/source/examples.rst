@@ -1,8 +1,7 @@
 ===============
 Examples
 ===============
-
-We provide ready-to-use launch files for some datasets.
+We provide parameter files and launch recipes for common datasets.
 
 
 KITTI
@@ -31,14 +30,16 @@ KITTI
    :scale: 20%
    
 
-There is a launch file that you can use to reproduce some of the images above. You can run it with:
+To reproduce sequence 00 with a ROS 2 bag, run:
 
 .. code-block:: console
 
-   $ roslaunch open3d_slam_ros kitti.launch
+   $ ros2 launch open3d_slam_ros mapping_rosbag.launch.py \
+       rosbag_filepath:=/absolute/path/to/kitti00 \
+       cloud_topic:=/velodyne_points \
+       parameter_filename:=param_velodyne_hdl64.yaml
 
-Make sure that you place the rosbag in the data folder and name it *kitti00.bag* or you can enter the path manually in the launch file directly (*open3d_slam_ros/launch/examples/kitti.launch*).
-The tuning for velodyne HDL64 sensor used in the dataset is in the *open3d_slam_ros/param/params_velodyne_hdl64.yaml*. For sequences 02 and 17 you might have to increase the loop closure search radius to 40 meters.
+The tuning for the Velodyne HDL64 sensor used in KITTI is in ``open3d_slam_ros/param/param_velodyne_hdl64.yaml``. For sequences 02 and 17 you might have to increase the loop-closure search radius to 40 meters.
 
 
 
