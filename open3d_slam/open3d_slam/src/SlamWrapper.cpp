@@ -202,10 +202,9 @@ void SlamWrapper::loadParametersAndInitialize() {
   }
 
   // Set the buffer sizes. This is not done in the constructer 
-  assert_gt<size_t>(params_.odometry_.odometryBufferSize_, 0, "Odometry buffer size must be > 0");
-  assert_gt<size_t>(params_.mapper_.mappingBufferSize_, 0, "Mapping buffer size must be > 0");
-  assert_gt<size_t>(params_.odometry_.scanProcessing_.pointCloudBufferSize_, 0,
-                    "Registered cloud buffer size must be > 0");
+  assert_gt<int>(params_.odometry_.odometryBufferSize_, 0, "Odometry buffer size must be > 0");
+  assert_gt<int>(params_.mapper_.mappingBufferSize_, 0, "Mapping buffer size must be > 0");
+  assert_gt<int>(params_.odometry_.scanProcessing_.pointCloudBufferSize_, 0, "Registered cloud buffer size must be > 0");
   odometryBuffer_.set_size_limit(params_.odometry_.odometryBufferSize_);
   mappingBuffer_.set_size_limit(params_.mapper_.mappingBufferSize_);
   registeredCloudBuffer_.set_size_limit(params_.odometry_.scanProcessing_.pointCloudBufferSize_);
