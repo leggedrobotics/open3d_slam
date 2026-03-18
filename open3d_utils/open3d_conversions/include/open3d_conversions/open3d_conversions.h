@@ -12,23 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OPEN3D_CONVERSIONS_HPP_
-#define OPEN3D_CONVERSIONS_HPP_
+#pragma once
 
-// Open3D
-#include "open3d/geometry/PointCloud.h"
-#include "open3d/geometry/TriangleMesh.h"
-#include "open3d/t/geometry/PointCloud.h"
-// ROS
+#include <Eigen/Dense>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
-// Eigen
-#include <Eigen/Dense>
-
-// C++
 #include <string>
 
+#include "open3d/geometry/PointCloud.h"
+#include "open3d/geometry/TriangleMesh.h"
+#include "open3d/t/geometry/PointCloud.h"
 #include "open3d_slam_msgs/msg/polygon_mesh.hpp"
 
 namespace open3d_conversions {
@@ -50,14 +44,9 @@ void open3dToRos(const open3d::geometry::PointCloud& pointcloud, sensor_msgs::ms
  * @param skip_colors If true, only xyz fields will be copied
  */
 
-void rosToOpen3d(
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr& ros_pc2,
-  open3d::geometry::PointCloud& o3d_pc,
-  bool skip_colors = false);
-void rosToOpen3d(
-  const sensor_msgs::msg::PointCloud2& cloud,
-  open3d::geometry::PointCloud& o3d_pc,
-  bool skip_colors = false);
+void rosToOpen3d(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& ros_pc2, open3d::geometry::PointCloud& o3d_pc,
+                 bool skip_colors = false);
+void rosToOpen3d(const sensor_msgs::msg::PointCloud2& cloud, open3d::geometry::PointCloud& o3d_pc, bool skip_colors = false);
 /**
  *@brief Copy data from a open3d::t::geometry::PointCloud to a sensor_msgs::PointCloud2
  *
@@ -77,21 +66,12 @@ void open3dToRos(const open3d::t::geometry::PointCloud& pointcloud, sensor_msgs:
  * @param o3d_pc Reference to the open3d tgeometry PointCloud
  * @param skip_colors If true, only xyz fields will be copied
  */
-void rosToOpen3d(
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr& ros_pc2,
-  open3d::t::geometry::PointCloud& o3d_pc,
-  bool skip_colors = false);
+void rosToOpen3d(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& ros_pc2, open3d::t::geometry::PointCloud& o3d_pc,
+                 bool skip_colors = false);
 
-void open3dToRos(
-  const open3d::geometry::MeshBase& mesh,
-  const std::string& frameId,
-  open3d_slam_msgs::msg::PolygonMesh& msg);
+void open3dToRos(const open3d::geometry::MeshBase& mesh, const std::string& frameId, open3d_slam_msgs::msg::PolygonMesh& msg);
 
 void rosToOpen3d(const open3d_slam_msgs::msg::PolygonMesh& msg, open3d::geometry::TriangleMesh& mesh);
-void rosToOpen3d(
-  const open3d_slam_msgs::msg::PolygonMesh::ConstSharedPtr& msg,
-  open3d::geometry::TriangleMesh& mesh);
+void rosToOpen3d(const open3d_slam_msgs::msg::PolygonMesh::ConstSharedPtr& msg, open3d::geometry::TriangleMesh& mesh);
 
 }  // namespace open3d_conversions
-
-#endif  // OPEN3D_CONVERSIONS_HPP_

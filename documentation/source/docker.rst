@@ -6,49 +6,21 @@
 Docker
 ======
 
+This repository now ships a single Jazzy development image in ``open3d_slam.dockerfile``.
+The image builds Open3D 0.15.1 from source and compiles the full Jazzy workspace during ``docker build``.
 
-.. note::
-
-   Docker docs are not up do date. Stay tuned for docker image.
-
-
-TODO still 
-
-We provide a docker image with pre-compiled Open3D binaries.
-
-Pulling the Image from Docker Hub
----------------------------------
-
-The image can be pulled from docker hub using
+Building the Image
+------------------
 
 .. code-block:: bash
 
-   docker pull rslethz/rsl-gpu:open3d_slam
-
-(on PC with GPU) or
-
-.. code-block:: bash
-
-   docker pull rslethz/rsl-cpu:open3d_slam
-
-(on PC with CPU only).
+   docker build -f open3d_slam.dockerfile -t open3d_slam:jazzy .
 
 Running the Docker Image
 ------------------------
 
-For running the docker image we recommend the usage of the run.sh script from this `repository <https://github.com/leggedrobotics/rsl_docker>`__.
-After building the image (or pulling it from docker hub), this can be done by typing
-
+The image drops you into a shell with the repository checked out under ``/opt/open3d_slam_ws/src/open3d_slam``.
 
 .. code-block:: bash
 
-   ./bin/run.sh --type=gpu --tag=open3d
-
-or 
-
-.. code-block:: bash
-
-   ./bin/run.sh --type=cpu --tag=open3d
-
-
-
+   docker run --rm -it open3d_slam:jazzy

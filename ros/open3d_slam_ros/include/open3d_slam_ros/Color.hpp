@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include <std_msgs/msg/color_rgba.hpp>
 
 namespace o3d_slam {

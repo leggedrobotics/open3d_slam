@@ -1,8 +1,7 @@
 <?xml version="1.0"?>
-<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>open3d_slam_ros</name>
-  <version>0.1.0</version>
+  <version>0.0.0</version>
   <description>Range sensor based mapping</description>
 
   <maintainer email="jelavice@ethz.ch">Edo Jelavic</maintainer>
@@ -11,33 +10,31 @@
   <!-- One license tag required, multiple allowed, one license per tag -->
   <!-- Commonly used license strings: -->
   <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>BSD</license>
+  <license>BSD-3-Clause</license>
 
 
   <author email="jelavice@ethz.ch">Edo Jelavic</author>
 
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <exec_depend>launch</exec_depend>
-  <exec_depend>launch_ros</exec_depend>
   <depend>ament_index_cpp</depend>
-  <depend>rclcpp</depend>
-  <depend>sensor_msgs</depend>
-  <depend>nav_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>visualization_msgs</depend>
-  <depend>std_srvs</depend>
+  <depend>interactive_markers</depend>
+  <depend>nav_msgs</depend>
   <depend>open3d_conversions</depend>
   <depend>open3d_slam</depend>
+  <depend>open3d_slam_msgs</depend>
+  <depend>open3d_slam_yaml_io</depend>
+  <depend>rclcpp</depend>
+  <depend>rosbag2_cpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
   <depend>tf2</depend>
+  <depend>tf2_eigen</depend>
   <depend>tf2_ros</depend>
   <depend>tf2_geometry_msgs</depend>
-  <depend>tf2_eigen</depend>
-  <depend>interactive_markers</depend>
-  <depend>rosbag2_cpp</depend>
-  <depend>open3d_slam_lua_io</depend>
-
-  <export>
-    <build_type>ament_cmake</build_type>
-  </export>
+  <depend>visualization_msgs</depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
 </package>

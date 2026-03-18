@@ -10,7 +10,7 @@
 
 #include <open3d/io/PointCloudIO.h>
 #include <Eigen/Dense>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <memory>
 
 namespace o3d_slam {
@@ -47,8 +47,7 @@ bool saveToFile(const std::string& filename, const PointCloud& cloud) {
 }
 
 bool createDirectoryOrNoActionIfExists(const std::string& directory) {
-  boost::filesystem::path dir(directory);
-  return boost::filesystem::create_directory(dir);
+  return std::filesystem::create_directories(directory);
 }
 
 }  // namespace o3d_slam

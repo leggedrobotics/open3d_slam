@@ -9,6 +9,7 @@
 
 #include <open3d/Open3D.h>
 #include <chrono>
+#include <filesystem>
 #include "open3d_slam/Mapper.hpp"
 #include "open3d_slam/MotionCompensation.hpp"
 #include "open3d_slam/Odometry.hpp"
@@ -125,12 +126,12 @@ std::pair<PointCloud, Time> SlamWrapper::getLatestRegisteredCloudTimestampPair()
 
 void SlamWrapper::finishProcessing() {
   while (isRunWorkers_) {
-    if (!mappingBuffer_.empty()) {
-      std::cout << "  Waiting for the mapping buffer to be emptied \n";
+    if (!odometryBuffer_.empty() || !mappingBuffer_.empty()) {
+      std::cout << "  Waiting for the odometry and mapping buffers to be emptied \n";
       std::this_thread::sleep_for(std::chrono::milliseconds(20));
       continue;
     } else {
-      std::cout << "  Mapping buffer emptied \n";
+      std::cout << "  Odometry and mapping buffers emptied \n";
       break;
     }
   }
@@ -201,6 +202,9 @@ void SlamWrapper::loadParametersAndInitialize() {
   }
 
   // Set the buffer sizes. This is not done in the constructer 
+  assert_gt<int>(params_.odometry_.odometryBufferSize_, 0, "Odometry buffer size must be > 0");
+  assert_gt<int>(params_.mapper_.mappingBufferSize_, 0, "Mapping buffer size must be > 0");
+  assert_gt<int>(params_.odometry_.scanProcessing_.pointCloudBufferSize_, 0, "Registered cloud buffer size must be > 0");
   odometryBuffer_.set_size_limit(params_.odometry_.odometryBufferSize_);
   mappingBuffer_.set_size_limit(params_.mapper_.mappingBufferSize_);
   registeredCloudBuffer_.set_size_limit(params_.odometry_.scanProcessing_.pointCloudBufferSize_);
@@ -242,7 +246,7 @@ void SlamWrapper::stopWorkers() {
 bool SlamWrapper::saveMap(const std::string& directory) {
   PointCloud map = mapper_->getAssembledMapPointCloud();
   createDirectoryOrNoActionIfExists(directory);
-  const std::string filename = directory + "map.pcd";
+  const std::string filename = (std::filesystem::path(directory) / "map.pcd").string();
   return saveToFile(filename, map);
 }
 bool SlamWrapper::saveDenseSubmaps(const std::string& directory) {

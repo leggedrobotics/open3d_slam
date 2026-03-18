@@ -18,6 +18,6 @@ Contents
    usage
    localization
    parameters
-   open3d_catkin
+   open3d_colcon
    docker
    examples 

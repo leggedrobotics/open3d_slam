@@ -26,7 +26,7 @@ namespace o3d_slam {
 
 class SlamMapInitializer {
  public:
-  SlamMapInitializer(std::shared_ptr<SlamWrapper> slamPtr, rclcpp::Node::SharedPtr nh);
+  SlamMapInitializer(std::shared_ptr<SlamWrapper> slamPtr, rclcpp::Node::SharedPtr node);
   ~SlamMapInitializer();
 
   void initialize(const MapInitializingParameters& params);
@@ -37,18 +37,17 @@ class SlamMapInitializer {
   void initMapCallback(const visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr& msg);
   void initializeWorker();
   void initialPoseCallback(const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr& msg);
-  void initSlamCallback(
-    const std::shared_ptr<std_srvs::srv::Trigger::Request> req,
-    std::shared_ptr<std_srvs::srv::Trigger::Response> res);
+  void initSlamCallback(const std::shared_ptr<std_srvs::srv::Trigger::Request> req,
+                        std::shared_ptr<std_srvs::srv::Trigger::Response> res);
   visualization_msgs::msg::InteractiveMarker createInteractiveMarker() const;
   void pointcloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& msg);
 
   interactive_markers::MenuHandler menuHandler_;
-  std::unique_ptr<interactive_markers::InteractiveMarkerServer> server_;
+  interactive_markers::InteractiveMarkerServer server_;
   std::shared_ptr<SlamWrapper> slamPtr_;
   std::atomic_bool initialized_;
   MapInitializingParameters mapInitializerParams_;
-  rclcpp::Node::SharedPtr nh_;
+  rclcpp::Node::SharedPtr node_;
   std::thread initWorker_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr initializeSlamSrv_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initPoseSub_;

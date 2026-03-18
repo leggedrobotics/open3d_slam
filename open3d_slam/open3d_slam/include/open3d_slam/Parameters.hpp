@@ -7,10 +7,10 @@
 
 #pragma once
 #include <Eigen/Dense>
-#include <boost/concept_check.hpp>
 #include <iostream>
 #include <map>
 #include <string>
+#include <type_traits>
 #include <typeindex>
 
 namespace o3d_slam {
@@ -24,12 +24,12 @@ struct Parameters {
   virtual ~Parameters() = default;
   template <class T>
   T* as() {
-    BOOST_CONCEPT_ASSERT((boost::Convertible<T*, Parameters*>));
+    static_assert(std::is_base_of_v<Parameters, T>, "T must derive from Parameters");
     return static_cast<T*>(this);
   }
   template <class T>
   const T* as() const {
-    BOOST_CONCEPT_ASSERT((boost::Convertible<T*, Parameters*>));
+    static_assert(std::is_base_of_v<Parameters, T>, "T must derive from Parameters");
     return static_cast<const T*>(this);
   }
 };

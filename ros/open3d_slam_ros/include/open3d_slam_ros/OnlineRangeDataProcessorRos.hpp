@@ -8,8 +8,10 @@
 #pragma once
 
 #include <memory>
+
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+
 #include "open3d_slam/SlamWrapper.hpp"
 #include "open3d_slam_ros/DataProcessorRos.hpp"
 
@@ -19,7 +21,7 @@ class OnlineRangeDataProcessorRos : public DataProcessorRos {
   using BASE = DataProcessorRos;
 
  public:
-  explicit OnlineRangeDataProcessorRos(rclcpp::Node::SharedPtr nh);
+  explicit OnlineRangeDataProcessorRos(rclcpp::Node::SharedPtr node);
   ~OnlineRangeDataProcessorRos() override = default;
 
   void initialize() override;

@@ -12,26 +12,21 @@
 #include "open3d_slam/time.hpp"
 #include "open3d_slam_ros/SlamWrapperRos.hpp"
 #include "open3d_slam_ros/helpers_ros.hpp"
-
 namespace o3d_slam {
 
-OnlineRangeDataProcessorRos::OnlineRangeDataProcessorRos(rclcpp::Node::SharedPtr nh) : BASE(std::move(nh)) {}
+OnlineRangeDataProcessorRos::OnlineRangeDataProcessorRos(rclcpp::Node::SharedPtr node) : BASE(std::move(node)) {}
 
 void OnlineRangeDataProcessorRos::initialize() {
   initCommonRosStuff();
-  slam_ = std::make_shared<SlamWrapperRos>(nh_);
+  slam_ = std::make_shared<SlamWrapperRos>(node_);
   slam_->loadParametersAndInitialize();
 }
 
 void OnlineRangeDataProcessorRos::startProcessing() {
   slam_->startWorkers();
-  cloudSubscriber_ = nh_->create_subscription<sensor_msgs::msg::PointCloud2>(
-    cloudTopic_,
-    rclcpp::SensorDataQoS(),
-    std::bind(&OnlineRangeDataProcessorRos::cloudCallback, this, std::placeholders::_1));
-  rclcpp::executors::SingleThreadedExecutor executor;
-  executor.add_node(nh_);
-  executor.spin();
+  cloudSubscriber_ = node_->create_subscription<sensor_msgs::msg::PointCloud2>(
+      cloudTopic_, rclcpp::QoS(100), std::bind(&OnlineRangeDataProcessorRos::cloudCallback, this, std::placeholders::_1));
+  rclcpp::spin(node_);
   slam_->stopWorkers();
 }
 

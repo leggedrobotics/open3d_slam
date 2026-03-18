@@ -7,84 +7,54 @@
 
 #pragma once
 
-#include <iostream>
-#include <vector>
+#include <rclcpp/rclcpp.hpp>
+#include <tf2/time.hpp>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_broadcaster.h>
 
-#include <builtin_interfaces/msg/time.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <open3d/geometry/MeshBase.h>
 #include <open3d/geometry/PointCloud.h>
-#include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_broadcaster.h>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
+
 #include "open3d_slam/time.hpp"
 
 namespace o3d_slam {
 
 class SubmapCollection;
 
-void publishSubmapCoordinateAxes(
-  const SubmapCollection& submaps,
-  const std::string& frame_id,
-  const rclcpp::Time& timestamp,
-  const rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr& pub);
+void publishSubmapCoordinateAxes(const SubmapCollection& submaps, const std::string& frame_id, const rclcpp::Time& timestamp,
+                                 const rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr& pub);
 geometry_msgs::msg::Point createPoint(double x, double y, double z);
-void drawAxes(
-  const Eigen::Vector3d& p,
-  const Eigen::Quaterniond& q,
-  double scale,
-  double line_width,
-  visualization_msgs::msg::Marker* marker);
+void drawAxes(const Eigen::Vector3d& p, const Eigen::Quaterniond& q, double scale, double line_width,
+              visualization_msgs::msg::Marker* marker);
 
 void assembleColoredPointCloud(const SubmapCollection& submaps, open3d::geometry::PointCloud* cloud);
 
-void publishCloud(
-  const open3d::geometry::PointCloud& cloud,
-  const std::string& frame_id,
-  const rclcpp::Time& timestamp,
-  const rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr& pub);
+void publishCloud(const open3d::geometry::PointCloud& cloud, const std::string& frame_id, const rclcpp::Time& timestamp,
+                  const rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr& pub);
 
 geometry_msgs::msg::Pose getPose(const Eigen::MatrixXd& T);
 
-geometry_msgs::msg::TransformStamped toRos(
-  const Eigen::Matrix4d& Mat,
-  const rclcpp::Time& time,
-  const std::string& frame,
-  const std::string& childFrame);
+geometry_msgs::msg::TransformStamped toRos(const Eigen::Matrix4d& Mat, const rclcpp::Time& time, const std::string& frame,
+                                           const std::string& childFrame);
 
-void publishTfTransform(
-  const Eigen::Matrix4d& Mat,
-  const rclcpp::Time& time,
-  const std::string& frame,
-  const std::string& childFrame,
-  tf2_ros::TransformBroadcaster* broadcaster);
-bool lookupTransform(
-  const std::string& target_frame,
-  const std::string& source_frame,
-  const rclcpp::Time& time,
-  const tf2_ros::Buffer& tfBuffer,
-  Eigen::Isometry3d* transform);
+void publishTfTransform(const Eigen::Matrix4d& Mat, const rclcpp::Time& time, const std::string& frame, const std::string& childFrame,
+                        tf2_ros::TransformBroadcaster* broadcaster);
+bool lookupTransform(const std::string& target_frame, const std::string& source_frame, const rclcpp::Time& time,
+                     const tf2_ros::Buffer& tfBuffer, Eigen::Isometry3d* transform);
 
 rclcpp::Time toRos(Time time);
 
 Time fromRos(const builtin_interfaces::msg::Time& time);
 
-template <typename MsgT>
-bool hasSubscribers(const typename rclcpp::Publisher<MsgT>::SharedPtr& pub) {
-  return pub && (pub->get_subscription_count() > 0 || pub->get_intra_process_subscription_count() > 0);
-}
-
-template <typename MsgT>
-void publishIfSubscriberExists(
-  const MsgT& msg,
-  const typename rclcpp::Publisher<MsgT>::SharedPtr& pub) {
-  if (hasSubscribers<MsgT>(pub)) {
+template <typename Msg>
+void publishIfSubscriberExists(const Msg& msg, const std::shared_ptr<rclcpp::Publisher<Msg>>& pub) {
+  if (pub->get_subscription_count() > 0) {
     pub->publish(msg);
   }
 }
@@ -106,13 +76,21 @@ inline void printKey(const std::string& key, std::vector<double> vector) {
 
 // Repeated functionality from GraphMsfRos by Julian Nubert. Subject to its license.
 template <typename T>
-T tryGetParam(const std::string& key, const rclcpp::Node& privateNode) {
+T tryGetParam(const std::string& key, const rclcpp::Node& node) {
   T value;
-  if (privateNode.get_parameter(key, value)) {
+  if (node.get_parameter(key, value)) {
     printKey(key, value);
     return value;
   }
   throw std::runtime_error("Open3d SLAM - " + key + " not specified.");
+}
+
+template <typename T>
+T getParamOr(const std::string& key, const rclcpp::Node& node, const T& default_value) {
+  T value = default_value;
+  node.get_parameter(key, value);
+  printKey(key, value);
+  return value;
 }
 
 } /* namespace o3d_slam */

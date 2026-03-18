@@ -6,7 +6,6 @@
  */
 
 #include "open3d_slam/Transform.hpp"
-#include <glog/logging.h>
 #include <iostream>
 #include <string>
 #include "Eigen/Geometry"

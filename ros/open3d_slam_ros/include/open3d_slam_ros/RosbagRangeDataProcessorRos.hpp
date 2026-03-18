@@ -8,9 +8,11 @@
 #pragma once
 
 #include <memory>
+
 #include <rclcpp/rclcpp.hpp>
 #include <rosbag2_cpp/reader.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+
 #include "open3d_slam/SlamWrapper.hpp"
 #include "open3d_slam_ros/DataProcessorRos.hpp"
 
@@ -20,7 +22,7 @@ class RosbagRangeDataProcessorRos : public DataProcessorRos {
   using BASE = DataProcessorRos;
 
  public:
-  explicit RosbagRangeDataProcessorRos(rclcpp::Node::SharedPtr nh);
+  explicit RosbagRangeDataProcessorRos(rclcpp::Node::SharedPtr node);
   ~RosbagRangeDataProcessorRos() override = default;
 
   void initialize() override;

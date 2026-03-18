@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.16)
 project(open3d_slam_msgs)
 
 find_package(ament_cmake REQUIRED)
