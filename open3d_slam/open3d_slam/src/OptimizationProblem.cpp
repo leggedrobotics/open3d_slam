@@ -64,7 +64,12 @@ void OptimizationProblem::buildOptimizationProblem(const SubmapCollection& subma
 void OptimizationProblem::setupOdometryEdgesAndPoseGraphNodes() {
   // ensure that odometry constraint sources are in increasing order
   std::sort(odometryConstraints_.begin(), odometryConstraints_.end(),
-            [](const Constraint& c1, const Constraint& c2) { return c1.sourceSubmapIdx_ < c2.targetSubmapIdx_; });
+            [](const Constraint& c1, const Constraint& c2) {
+              if (c1.sourceSubmapIdx_ != c2.sourceSubmapIdx_) {
+                return c1.sourceSubmapIdx_ < c2.sourceSubmapIdx_;
+              }
+              return c1.targetSubmapIdx_ < c2.targetSubmapIdx_;
+            });
 
   poseGraph_.edges_.reserve(odometryConstraints_.size() + loopClosureConstraints_.size());
   for (const auto& c : odometryConstraints_) {
@@ -194,7 +199,7 @@ OptimizedTransforms OptimizationProblem::getOptimizedTransformIncrements() const
   for (size_t i = 0; i < poseGraph_.nodes_.size(); ++i) {
     const Transform tOld(poseGraphNonOptimized_.nodes_.at(i).pose_);
     const Transform tNew(poseGraphOptimized_.nodes_.at(i).pose_);
-    const auto deltaT = tNew;
+    const Transform deltaT = tNew * tOld.inverse();
     retVal.emplace_back(OptimizedTransform{deltaT, i});
   }
 

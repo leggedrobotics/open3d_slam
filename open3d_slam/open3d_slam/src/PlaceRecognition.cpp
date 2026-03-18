@@ -104,6 +104,10 @@ Constraints PlaceRecognition::buildLoopClosureConstraints(const Transform& mapTo
                                       &sourceIdxs, &targetIdxs);
     const PointCloud sourceOverlap = *source.SelectByIndex(sourceIdxs);
     const PointCloud targetOverlap = *target.SelectByIndex(targetIdxs);
+    if (sourceOverlap.IsEmpty() || targetOverlap.IsEmpty()) {
+      std::cout << "REJECTED loop closure, no overlapping support after RANSAC, " << matchingSubmapsString << "\n";
+      continue;
+    }
 
     //		const auto &sourceOverlap = source;
     //		const auto &targetOverlap = target;
