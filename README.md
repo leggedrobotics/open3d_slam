@@ -1,5 +1,7 @@
 # Open3D SLAM: A Flexible Pointcloud-based SLAM System for Education
 
+> ROS 2 / Jazzy users: the maintained ROS 2 version lives on the [`ros2`](https://github.com/leggedrobotics/open3d_slam/tree/ros2) branch. This `master` branch documents the older ROS 1 / catkin setup.
+
 open3d_slam is a C++ (cpp) library for SLAM with ROS integration. 
 
 **Main Contact:** Edo Jelavic ([jelavice@ethz.ch](mailto:jelavice@ethz.ch?subject=[GitHub]))
