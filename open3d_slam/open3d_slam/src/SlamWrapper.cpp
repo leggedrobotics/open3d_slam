@@ -44,6 +44,11 @@ SlamWrapper::Frames SlamWrapper::getFrames() const {
   return frames_;
 }
 
+bool SlamWrapper::usesIncomingRangeSensorFrame() const {
+  std::lock_guard<std::mutex> lock(framesMutex_);
+  return useIncomingRangeSensorFrame_;
+}
+
 void SlamWrapper::setFrames(const Frames& frames) {
   std::lock_guard<std::mutex> lock(framesMutex_);
   frames_ = frames;
@@ -55,7 +60,20 @@ void SlamWrapper::setRangeSensorFrame(const std::string& frame) {
   }
 
   std::lock_guard<std::mutex> lock(framesMutex_);
+  if (!useIncomingRangeSensorFrame_) {
+    return;
+  }
   frames_.rangeSensorFrame = frame;
+}
+
+void SlamWrapper::setFixedRangeSensorFrame(const std::string& frame) {
+  if (frame.empty()) {
+    return;
+  }
+
+  std::lock_guard<std::mutex> lock(framesMutex_);
+  frames_.rangeSensorFrame = frame;
+  useIncomingRangeSensorFrame_ = false;
 }
 
 SlamWrapper::~SlamWrapper() {

@@ -197,6 +197,11 @@ void SlamWrapperRos::loadParametersAndInitialize() {
   }
   setFrames(frameNames);
 
+  const std::string rangeSensorFrame = getParamOr<std::string>("range_sensor_frame", *node_, std::string(""));
+  if (!rangeSensorFrame.empty()) {
+    setFixedRangeSensorFrame(rangeSensorFrame);
+  }
+
   BASE::loadParametersAndInitialize();
 }
 

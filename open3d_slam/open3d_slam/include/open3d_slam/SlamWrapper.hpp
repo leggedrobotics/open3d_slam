@@ -74,6 +74,8 @@ class SlamWrapper {
   Frames getFrames() const;
   void setFrames(const Frames& frames);
   void setRangeSensorFrame(const std::string& frame);
+  void setFixedRangeSensorFrame(const std::string& frame);
+  bool usesIncomingRangeSensorFrame() const;
 
   void setDirectoryPath(const std::string& path);
   void setMapSavingDirectoryPath(const std::string& path);
@@ -110,6 +112,7 @@ class SlamWrapper {
   //	ConstantVelocityMotionCompensationParameters motionCompensationParameters_;
   mutable std::mutex framesMutex_;
   Frames frames_;
+  bool useIncomingRangeSensorFrame_ = true;
   std::string folderPath_, mapSavingFolderPath_;
 
   // modules

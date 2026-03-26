@@ -21,4 +21,8 @@
   <depend>open3d_colcon</depend>
   <depend>open3d_slam_msgs</depend>
   <test_depend>ament_cmake_gtest</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
