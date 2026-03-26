@@ -45,7 +45,8 @@ rclcpp::QoS latchedQos() {
 
 }  // namespace
 
-SlamWrapperRos::SlamWrapperRos(rclcpp::Node::SharedPtr node) : BASE(), node_(std::move(node)) {
+SlamWrapperRos::SlamWrapperRos(rclcpp::Node::SharedPtr node)
+    : BASE(), node_(std::move(node)), publishedRangeSensorFrame_(o3d_slam::frames::rangeSensorFrame) {
   tfBroadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(node_);
   prevPublishedTimeScanToScan_ = fromUniversal(0);
   prevPublishedTimeScanToMap_ = fromUniversal(0);
@@ -76,11 +77,25 @@ void SlamWrapperRos::startWorkers() {
   BASE::startWorkers();
 }
 
+void SlamWrapperRos::setPublishedRangeSensorFrame(const std::string& frame) {
+  if (frame.empty()) {
+    return;
+  }
+
+  std::lock_guard<std::mutex> lock(publishedRangeSensorFrameMutex_);
+  publishedRangeSensorFrame_ = frame;
+}
+
+std::string SlamWrapperRos::publishedRangeSensorFrame() const {
+  std::lock_guard<std::mutex> lock(publishedRangeSensorFrameMutex_);
+  return publishedRangeSensorFrame_;
+}
+
 void SlamWrapperRos::odomPublisherWorker() {
   const auto sleepDuration = std::chrono::milliseconds(2);
   while (isRunWorkers_ && rclcpp::ok()) {
-    auto getTransformMsg = [](const Transform& transform, const Time& time) {
-      return o3d_slam::toRos(transform.matrix(), toRos(time), mapFrame, rangeSensorFrame);
+    auto getTransformMsg = [this](const Transform& transform, const Time& time) {
+      return o3d_slam::toRos(transform.matrix(), toRos(time), mapFrame, publishedRangeSensorFrame());
     };
 
     auto getOdomMsg = [](const geometry_msgs::msg::TransformStamped& transformMsg) {
@@ -123,7 +138,8 @@ void SlamWrapperRos::tfWorker() {
     if (latestScanToScan != prevPublishedTimeScanToScan_ && odometry_->hasProcessedMeasurements()) {
       const Transform transform = odometry_->getOdomToRangeSensor(latestScanToScan);
       const rclcpp::Time timestamp = toRos(latestScanToScan);
-      o3d_slam::publishTfTransform(transform.matrix(), timestamp, odomFrame, rangeSensorFrame, tfBroadcaster_.get());
+      o3d_slam::publishTfTransform(
+          transform.matrix(), timestamp, odomFrame, publishedRangeSensorFrame(), tfBroadcaster_.get());
       o3d_slam::publishTfTransform(transform.matrix(), timestamp, mapFrame, "raw_odom_o3d", tfBroadcaster_.get());
       prevPublishedTimeScanToScan_ = latestScanToScan;
     }
@@ -144,7 +160,7 @@ void SlamWrapperRos::visualizationWorker() {
     const Time scanToScanTimestamp = latestScanToScanRegistrationTimestamp_;
     if (odometryInputPub_->get_subscription_count() > 0 && isTimeValid(scanToScanTimestamp)) {
       const PointCloud odomInput = odometry_->getPreProcessedCloud();
-      o3d_slam::publishCloud(odomInput, o3d_slam::frames::rangeSensorFrame, toRos(scanToScanTimestamp), odometryInputPub_);
+      o3d_slam::publishCloud(odomInput, publishedRangeSensorFrame(), toRos(scanToScanTimestamp), odometryInputPub_);
     }
 
     const Time scanToMapTimestamp = latestScanToMapRefinementTimestamp_;
@@ -227,7 +243,7 @@ void SlamWrapperRos::publishMaps(const Time& time) {
     voxelize(params_.visualization_.assembledMapVoxelSize_, &map);
     o3d_slam::publishCloud(map, o3d_slam::frames::mapFrame, timestamp, assembledMapPub_);
   }
-  o3d_slam::publishCloud(mapper_->getPreprocessedScan(), o3d_slam::frames::rangeSensorFrame, timestamp, mappingInputPub_);
+  o3d_slam::publishCloud(mapper_->getPreprocessedScan(), publishedRangeSensorFrame(), timestamp, mappingInputPub_);
   o3d_slam::publishSubmapCoordinateAxes(mapper_->getSubmaps(), o3d_slam::frames::mapFrame, timestamp, submapOriginsPub_);
   if (submapsPub_->get_subscription_count() > 0) {
     open3d::geometry::PointCloud cloud;

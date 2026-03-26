@@ -32,12 +32,14 @@ void OnlineRangeDataProcessorRos::startProcessing() {
 
 void OnlineRangeDataProcessorRos::processMeasurement(const PointCloud& cloud, const Time& timestamp) {
   slam_->addRangeScan(cloud, timestamp);
-  o3d_slam::publishCloud(cloud, o3d_slam::frames::rangeSensorFrame, toRos(timestamp), rawCloudPub_);
+  const auto slamRos = std::static_pointer_cast<SlamWrapperRos>(slam_);
+  o3d_slam::publishCloud(cloud, slamRos->publishedRangeSensorFrame(), toRos(timestamp), rawCloudPub_);
 }
 
 void OnlineRangeDataProcessorRos::cloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& msg) {
   open3d::geometry::PointCloud cloud;
   open3d_conversions::rosToOpen3d(msg, cloud, false);
+  std::static_pointer_cast<SlamWrapperRos>(slam_)->setPublishedRangeSensorFrame(msg->header.frame_id);
   const Time timestamp = fromRos(msg->header.stamp);
   accumulateAndProcessRangeData(cloud, timestamp);
 }
