@@ -8,7 +8,6 @@
  */
 #include "open3d_slam/Odometry.hpp"
 #include "open3d_slam/CloudRegistration.hpp"
-#include "open3d_slam/frames.hpp"
 #include "open3d_slam/helpers.hpp"
 #include "open3d_slam/output.hpp"
 #include "open3d_slam/time.hpp"

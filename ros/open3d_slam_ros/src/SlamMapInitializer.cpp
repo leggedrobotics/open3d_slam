@@ -13,7 +13,6 @@
 #include <chrono>
 
 #include "open3d_conversions/open3d_conversions.h"
-#include "open3d_slam/frames.hpp"
 #include "open3d_slam/helpers.hpp"
 #include "open3d_slam/output.hpp"
 #include "open3d_slam/time.hpp"
@@ -134,7 +133,7 @@ void SlamMapInitializer::pointcloudCallback(const sensor_msgs::msg::PointCloud2:
   open3d::geometry::PointCloud cloud;
   open3d_conversions::rosToOpen3d(msg, cloud, false);
   cloud.Transform(markerPose.matrix());
-  o3d_slam::publishCloud(cloud, o3d_slam::frames::mapFrame, rclcpp::Time(marker.header.stamp), cloudPub_);
+  o3d_slam::publishCloud(cloud, slamPtr_->getFrames().mapFrame, rclcpp::Time(marker.header.stamp), cloudPub_);
 }
 
 visualization_msgs::msg::InteractiveMarker SlamMapInitializer::createInteractiveMarker() const {

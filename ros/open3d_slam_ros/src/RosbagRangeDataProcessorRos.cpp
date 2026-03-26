@@ -13,7 +13,6 @@
 
 #include "open3d_conversions/open3d_conversions.h"
 #include "open3d_slam/assert.hpp"
-#include "open3d_slam/frames.hpp"
 #include "open3d_slam/time.hpp"
 #include "open3d_slam_ros/SlamWrapperRos.hpp"
 #include "open3d_slam_ros/helpers_ros.hpp"
@@ -60,8 +59,7 @@ void RosbagRangeDataProcessorRos::processMeasurement(const PointCloud& cloud, co
   std::pair<PointCloud, Time> cloudTimePair = slam_->getLatestRegisteredCloudTimestampPair();
   const bool isCloudEmpty = cloudTimePair.first.IsEmpty();
   if (isTimeValid(cloudTimePair.second) && !isCloudEmpty) {
-    const auto slamRos = std::static_pointer_cast<SlamWrapperRos>(slam_);
-    o3d_slam::publishCloud(cloudTimePair.first, slamRos->publishedRangeSensorFrame(), toRos(cloudTimePair.second),
+    o3d_slam::publishCloud(cloudTimePair.first, slam_->getFrames().rangeSensorFrame, toRos(cloudTimePair.second),
                            rawCloudPub_);
   }
 }
@@ -140,7 +138,7 @@ void RosbagRangeDataProcessorRos::readRosbag(rosbag2_cpp::Reader& reader) {
 void RosbagRangeDataProcessorRos::cloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& msg) {
   open3d::geometry::PointCloud cloud;
   open3d_conversions::rosToOpen3d(msg, cloud, false);
-  std::static_pointer_cast<SlamWrapperRos>(slam_)->setPublishedRangeSensorFrame(msg->header.frame_id);
+  slam_->setRangeSensorFrame(msg->header.frame_id);
   const Time timestamp = fromRos(msg->header.stamp);
   accumulateAndProcessRangeData(cloud, timestamp);
 }

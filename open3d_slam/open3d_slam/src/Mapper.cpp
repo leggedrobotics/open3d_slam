@@ -9,7 +9,6 @@
 #include "open3d_slam/ScanToMapRegistration.hpp"
 #include "open3d_slam/Voxel.hpp"
 #include "open3d_slam/assert.hpp"
-#include "open3d_slam/frames.hpp"
 #include "open3d_slam/helpers.hpp"
 #include "open3d_slam/math.hpp"
 #include "open3d_slam/output.hpp"

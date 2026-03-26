@@ -9,6 +9,7 @@
 
 #include <Eigen/Dense>
 #include <future>
+#include <mutex>
 #include <thread>
 #include "open3d_slam/CircularBuffer.hpp"
 #include "open3d_slam/Constraint.hpp"
@@ -17,6 +18,7 @@
 #include "open3d_slam/ThreadSafeBuffer.hpp"
 #include "open3d_slam/TransformInterpolationBuffer.hpp"
 #include "open3d_slam/croppers.hpp"
+#include "open3d_slam/frames.hpp"
 #include "open3d_slam/typedefs.hpp"
 
 namespace o3d_slam {
@@ -28,6 +30,15 @@ class OptimizationProblem;
 class MotionCompensation;
 
 class SlamWrapper {
+ public:
+  struct Frames {
+    std::string odomFrame = frames::odomFrame;
+    std::string rangeSensorFrame = frames::rangeSensorFrame;
+    std::string mapFrame = frames::mapFrame;
+    std::string imageFrame = frames::imageFrame;
+  };
+
+ private:
   struct TimestampedPointCloud {
     Time time_;
     PointCloud cloud_;
@@ -60,6 +71,9 @@ class SlamWrapper {
   size_t getMappingBufferSizeLimit() const;
   std::string getParameterFilePath() const;
   std::pair<PointCloud, Time> getLatestRegisteredCloudTimestampPair() const;
+  Frames getFrames() const;
+  void setFrames(const Frames& frames);
+  void setRangeSensorFrame(const std::string& frame);
 
   void setDirectoryPath(const std::string& path);
   void setMapSavingDirectoryPath(const std::string& path);
@@ -94,6 +108,8 @@ class SlamWrapper {
   //	VisualizationParameters visualizationParameters_;
   //	SavingParameters savingParameters_;
   //	ConstantVelocityMotionCompensationParameters motionCompensationParameters_;
+  mutable std::mutex framesMutex_;
+  Frames frames_;
   std::string folderPath_, mapSavingFolderPath_;
 
   // modules

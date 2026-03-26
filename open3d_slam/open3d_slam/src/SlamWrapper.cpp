@@ -19,7 +19,6 @@
 #include "open3d_slam/assert.hpp"
 #include "open3d_slam/constraint_builders.hpp"
 #include "open3d_slam/croppers.hpp"
-#include "open3d_slam/frames.hpp"
 #include "open3d_slam/helpers.hpp"
 #include "open3d_slam/math.hpp"
 #include "open3d_slam/output.hpp"
@@ -32,13 +31,31 @@
 namespace o3d_slam {
 
 namespace {
-using namespace o3d_slam::frames;
 const double timingStatsEveryNsec = 15.0;
 }  // namespace
 
 SlamWrapper::SlamWrapper() {
   motionCompensationOdom_ = std::make_shared<MotionCompensation>();
   motionCompensationMap_ = std::make_shared<MotionCompensation>();
+}
+
+SlamWrapper::Frames SlamWrapper::getFrames() const {
+  std::lock_guard<std::mutex> lock(framesMutex_);
+  return frames_;
+}
+
+void SlamWrapper::setFrames(const Frames& frames) {
+  std::lock_guard<std::mutex> lock(framesMutex_);
+  frames_ = frames;
+}
+
+void SlamWrapper::setRangeSensorFrame(const std::string& frame) {
+  if (frame.empty()) {
+    return;
+  }
+
+  std::lock_guard<std::mutex> lock(framesMutex_);
+  frames_.rangeSensorFrame = frame;
 }
 
 SlamWrapper::~SlamWrapper() {
@@ -321,12 +338,13 @@ void SlamWrapper::mappingWorker() {
     mapperOnlyTimer_.addMeasurementMsec(timeElapsed);
 
     if (mappingResult) {
+      const auto frameNames = getFrames();
       RegisteredPointCloud registeredCloud;
       registeredCloud.submapId_ = activeSubmapIdx;
       registeredCloud.raw_ = measurement;
       registeredCloud.transform_ = mapper_->getMapToRangeSensor(measurement.time_);
-      registeredCloud.sourceFrame_ = frames::rangeSensorFrame;
-      registeredCloud.targetFrame_ = frames::mapFrame;
+      registeredCloud.sourceFrame_ = frameNames.rangeSensorFrame;
+      registeredCloud.targetFrame_ = frameNames.mapFrame;
       registeredCloudBuffer_.push(registeredCloud);
       latestScanToMapRefinementTimestamp_ = measurement.time_;
     }

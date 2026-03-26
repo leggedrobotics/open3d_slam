@@ -8,7 +8,6 @@
 #pragma once
 
 #include <memory>
-#include <mutex>
 #include <string>
 
 #include <rclcpp/rclcpp.hpp>
@@ -33,8 +32,6 @@ class SlamWrapperRos : public SlamWrapper {
 
   void loadParametersAndInitialize() override;
   void startWorkers() override;
-  void setPublishedRangeSensorFrame(const std::string& frame);
-  std::string publishedRangeSensorFrame() const;
 
  private:
   void saveMapCallback(const std::shared_ptr<open3d_slam_msgs::srv::SaveMap::Request> req,
@@ -62,8 +59,6 @@ class SlamWrapperRos : public SlamWrapper {
   std::thread tfWorker_, visualizationWorker_, odomPublisherWorker_;
   Time prevPublishedTimeScanToScan_, prevPublishedTimeScanToMap_;
   Time prevPublishedTimeScanToScanOdom_, prevPublishedTimeScanToMapOdom_;
-  mutable std::mutex publishedRangeSensorFrameMutex_;
-  std::string publishedRangeSensorFrame_;
 };
 
 }  // namespace o3d_slam

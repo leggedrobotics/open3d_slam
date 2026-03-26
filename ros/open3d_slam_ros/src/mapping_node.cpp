@@ -38,9 +38,10 @@ int main(int argc, char** argv) {
     std::shared_ptr<DataProcessorRos> dataProcessor = dataProcessorFactory(node, isProcessAsFastAsPossible);
     dataProcessor->initialize();
 
+    std::shared_ptr<SlamWrapper> slam = dataProcessor->getSlamPtr();
     std::shared_ptr<SlamMapInitializer> slamMapInitializer;
     if (params.mapper_.isUseInitialMap_) {
-      std::shared_ptr<SlamWrapper> slam = dataProcessor->getSlamPtr();
+      params.mapper_.mapInit_.frameId_ = slam->getFrames().mapFrame;
       slamMapInitializer = std::make_shared<SlamMapInitializer>(slam, node);
       slamMapInitializer->initialize(params.mapper_.mapInit_);
     }
