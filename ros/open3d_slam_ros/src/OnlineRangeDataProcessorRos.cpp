@@ -13,6 +13,14 @@
 #include "open3d_slam_ros/helpers_ros.hpp"
 namespace o3d_slam {
 
+namespace {
+
+rclcpp::QoS makeCloudSubscriptionQos(size_t depth) {
+  return rclcpp::QoS(rclcpp::KeepLast(depth), rmw_qos_profile_sensor_data);
+}
+
+}  // namespace
+
 OnlineRangeDataProcessorRos::OnlineRangeDataProcessorRos(rclcpp::Node::SharedPtr node) : BASE(std::move(node)) {}
 
 void OnlineRangeDataProcessorRos::initialize() {
@@ -30,7 +38,7 @@ void OnlineRangeDataProcessorRos::initialize() {
 void OnlineRangeDataProcessorRos::startProcessing() {
   slam_->startWorkers();
   cloudSubscriber_ = node_->create_subscription<sensor_msgs::msg::PointCloud2>(
-      cloudTopic_, rclcpp::QoS(100), std::bind(&OnlineRangeDataProcessorRos::cloudCallback, this, std::placeholders::_1));
+      cloudTopic_, makeCloudSubscriptionQos(100), std::bind(&OnlineRangeDataProcessorRos::cloudCallback, this, std::placeholders::_1));
   rclcpp::spin(node_);
   slam_->stopWorkers();
 }

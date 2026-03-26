@@ -25,6 +25,10 @@ namespace {
 
 const double sqrt2 = std::sqrt(2.0);
 
+rclcpp::QoS makeCloudSubscriptionQos(size_t depth) {
+  return rclcpp::QoS(rclcpp::KeepLast(depth), rmw_qos_profile_sensor_data);
+}
+
 }  // namespace
 
 SlamMapInitializer::SlamMapInitializer(std::shared_ptr<SlamWrapper> slamPtr, rclcpp::Node::SharedPtr node)
@@ -80,7 +84,7 @@ void SlamMapInitializer::initialize(const MapInitializingParameters& params) {
   const std::string cloudTopic = tryGetParam<std::string>("cloud_topic", *node_);
   std::cout << "Initializer subscribing to " << cloudTopic << std::endl;
   cloudSub_ = node_->create_subscription<sensor_msgs::msg::PointCloud2>(
-      cloudTopic, rclcpp::QoS(1), std::bind(&SlamMapInitializer::pointcloudCallback, this, std::placeholders::_1));
+      cloudTopic, makeCloudSubscriptionQos(1), std::bind(&SlamMapInitializer::pointcloudCallback, this, std::placeholders::_1));
   initWorker_ = std::thread([this]() { initializeWorker(); });
   std::cout << "started interactive marker worker \n";
 }

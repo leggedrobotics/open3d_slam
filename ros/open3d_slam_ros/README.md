@@ -99,6 +99,8 @@ The wrapper also fixes the `scan2scan_odometry` parent frame so it is stamped in
   - Non-empty: look up `external_pose_frame -> <incoming cloud frame>` for every cloud and use it as the motion prior.
 - `external_pose_lookup_timeout_sec` (`double`, default: `0.1`)
   - TF lookup timeout for the external pose query.
+- cloud input QoS
+  - Online cloud subscribers use sensor-data QoS so they can consume both best-effort sensor topics and reliable processed clouds without a relay.
 - `publish_tf` (`bool`, default: mode-aware when left empty)
   - Empty: `mapping.launch.py` lets the node keep `true` in standalone mode and `false` when `external_pose_frame` is set.
   - Controls whether Open3D publishes its own TF worker outputs.

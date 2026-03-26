@@ -159,12 +159,14 @@ class _LaunchProcess:
 
 
 class _DelayedTfProbe(Node):
-    def __init__(self, cloud_topic: str, frame_id: str):
+    def __init__(self, cloud_topic: str, frame_id: str, *, cloud_reliability: ReliabilityPolicy = ReliabilityPolicy.RELIABLE):
         super().__init__("open3d_slam_delayed_tf_probe")
         qos = QoSProfile(depth=10)
         qos.reliability = ReliabilityPolicy.RELIABLE
         qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
-        self.cloud_pub = self.create_publisher(PointCloud2, cloud_topic, 10)
+        cloud_qos = QoSProfile(depth=10)
+        cloud_qos.reliability = cloud_reliability
+        self.cloud_pub = self.create_publisher(PointCloud2, cloud_topic, cloud_qos)
         self.create_subscription(Odometry, "/scan2scan_odometry", self._scan2scan_cb, qos)
         self.create_subscription(Odometry, "/scan2map_odometry", self._scan2map_cb, qos)
         self.create_subscription(PointCloud2, "/assembled_map", self._assembled_cb, qos)
@@ -324,6 +326,39 @@ def test_external_pose_mode_keeps_icp_odometry_during_tf_gap_and_resumes_map_out
                 assert node.scan2scan_msg.header.frame_id == "odom_o3d"
                 assert node.scan2map_msg is not None
                 assert node.scan2map_msg.header.frame_id == "map"
+                assert node.assembled_msg is not None
+                assert node.assembled_msg.header.frame_id == "map"
+                assert node.assembled_msg.width * node.assembled_msg.height > 0
+            finally:
+                if node is not None:
+                    node.destroy_node()
+                rclpy.shutdown()
+
+
+def test_external_pose_mode_accepts_best_effort_sensor_clouds():
+    suffix = uuid.uuid4().hex[:8]
+    cloud_topic = f"/test_best_effort_cloud_{suffix}"
+    frame_id = f"test_best_effort_lidar_{suffix}"
+
+    with _RosDomainGuard():
+        with _LaunchProcess(cloud_topic):
+            node = None
+            rclpy.init()
+            try:
+                node = _DelayedTfProbe(cloud_topic, frame_id, cloud_reliability=ReliabilityPolicy.BEST_EFFORT)
+                node.enable_static_tf()
+                deadline = time.time() + 30.0
+                while time.time() < deadline:
+                    node.cloud_pub.publish(node.make_cloud())
+                    node.publish_count += 1
+                    slice_deadline = time.time() + 0.2
+                    while time.time() < slice_deadline:
+                        rclpy.spin_once(node, timeout_sec=0.05)
+                    if node.scan2scan_msg and node.scan2map_msg and node.assembled_msg:
+                        break
+
+                assert node.scan2scan_msg is not None
+                assert node.scan2map_msg is not None
                 assert node.assembled_msg is not None
                 assert node.assembled_msg.header.frame_id == "map"
                 assert node.assembled_msg.width * node.assembled_msg.height > 0
