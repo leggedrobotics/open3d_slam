@@ -62,6 +62,14 @@ install(
 )
 install(DIRECTORY include/ DESTINATION include)
 
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_output test/test_output.cpp)
+  if(TARGET test_output)
+    target_link_libraries(test_output ${PROJECT_NAME})
+  endif()
+endif()
+
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_dependencies(Eigen3 open3d_colcon)
 ament_export_include_directories(include)

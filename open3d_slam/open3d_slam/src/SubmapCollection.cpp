@@ -275,8 +275,8 @@ bool SubmapCollection::dumpToFile(const std::string& folderPath, const std::stri
     } else {
       copy = submaps_.at(i).getMapPointCloudCopy();
     }
-    const std::string fullPath = folderPath + "/" + filename + "_" + std::to_string(i) + ".pcd";
-    result = result && open3d::io::WritePointCloudToPCD(fullPath, copy, open3d::io::WritePointCloudOption());
+    const std::string fullPath = folderPath + "/" + filename + "_" + std::to_string(i);
+    result = result && saveToFile(fullPath, copy);
   }
   return result;
 }

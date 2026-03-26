@@ -275,6 +275,7 @@ std::shared_ptr<open3d::geometry::PointCloud> transform(const Eigen::Matrix4d& T
   const auto isIdentity = (T - Eigen::Matrix4d::Identity()).array().abs().maxCoeff() < 1e-4;
   if (isIdentity) {
     *out = cloud;
+    return out;
   }
 
   out->points_.reserve(cloud.points_.size());

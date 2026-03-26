@@ -79,6 +79,7 @@ This mode lets the ROS wrapper:
 
 - use the external `map -> sensor` TF as the motion prior
 - publish `assembled_map`, `dense_map`, and `submaps` directly in that external frame
+- default uncolored exports to `.pcd` and colored exports to `.ply`
 - avoid creating a competing `map_o3d -> odom_o3d -> sensor` TF tree on robots where another estimator already owns `map -> odom -> base`
 
 This is the recommended runtime mode when the goal is a georeferenced map on the robot.

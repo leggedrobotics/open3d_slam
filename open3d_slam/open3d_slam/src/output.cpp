@@ -10,10 +10,47 @@
 
 #include <open3d/io/PointCloudIO.h>
 #include <Eigen/Dense>
+#include <algorithm>
+#include <cctype>
 #include <filesystem>
 #include <memory>
 
 namespace o3d_slam {
+
+namespace {
+
+std::string toLower(std::string value) {
+  std::transform(value.begin(), value.end(), value.begin(),
+                 [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+  return value;
+}
+
+std::filesystem::path replaceOrAppendExtension(const std::filesystem::path& path, const std::string& extension) {
+  auto updated = path;
+  if (updated.has_extension()) {
+    updated.replace_extension(extension);
+  } else {
+    updated += extension;
+  }
+  return updated;
+}
+
+bool writePointCloud(const std::filesystem::path& path, const PointCloud& cloud) {
+  PointCloud copy = cloud;
+  return open3d::io::WritePointCloud(path.string(), copy, open3d::io::WritePointCloudOption());
+}
+
+bool writeLegacyPcd(const std::filesystem::path& path, const PointCloud& cloud) {
+  PointCloud copy = cloud;
+  return open3d::io::WritePointCloudToPCD(path.string(), copy, open3d::io::WritePointCloudOption());
+}
+
+void removeIfExists(const std::filesystem::path& path) {
+  std::error_code ec;
+  std::filesystem::remove(path, ec);
+}
+
+}  // namespace
 
 std::string asString(const Transform& T) {
   const double kRadToDeg = 180.0 / M_PI;
@@ -37,13 +74,37 @@ std::string asStringXYZRPY(const Transform& T) {
 }
 
 bool saveToFile(const std::string& filename, const PointCloud& cloud) {
-  PointCloud copy = cloud;
-  std::string nameWithCorrectSuffix = filename;
-  size_t found = filename.find(".pcd");
-  if (found == std::string::npos) {
-    nameWithCorrectSuffix = filename + ".pcd";
+  const std::filesystem::path requestedPath(filename);
+  const std::string extension = toLower(requestedPath.extension().string());
+
+  if (cloud.HasColors()) {
+    if (extension.empty() || extension == ".pcd") {
+      const auto targetPath = replaceOrAppendExtension(requestedPath, ".ply");
+      const bool success = writePointCloud(targetPath, cloud);
+      if (success) {
+        removeIfExists(replaceOrAppendExtension(requestedPath, ".pcd"));
+      }
+      return success;
+    }
+    return writePointCloud(requestedPath, cloud);
   }
-  return open3d::io::WritePointCloudToPCD(nameWithCorrectSuffix, copy, open3d::io::WritePointCloudOption());
+
+  if (extension.empty()) {
+    const auto targetPath = replaceOrAppendExtension(requestedPath, ".pcd");
+    const bool success = writeLegacyPcd(targetPath, cloud);
+    if (success) {
+      removeIfExists(replaceOrAppendExtension(requestedPath, ".ply"));
+    }
+    return success;
+  }
+  if (extension == ".pcd") {
+    const bool success = writeLegacyPcd(requestedPath, cloud);
+    if (success) {
+      removeIfExists(replaceOrAppendExtension(requestedPath, ".ply"));
+    }
+    return success;
+  }
+  return writePointCloud(requestedPath, cloud);
 }
 
 bool createDirectoryOrNoActionIfExists(const std::string& directory) {

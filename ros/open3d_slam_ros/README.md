@@ -75,6 +75,7 @@ Effects:
 
 - `assembled_map`, `dense_map`, and `submaps` are published in `map`
 - `save_map` and `save_submaps` export clouds in `map`
+- uncolored exports default to `.pcd` and colored exports to `.ply`
 - Open3D does not create a competing global TF tree
 
 If you want to evaluate Open3D as a standalone SLAM/localization system, run it without `external_pose_frame` and without a competing estimator.
