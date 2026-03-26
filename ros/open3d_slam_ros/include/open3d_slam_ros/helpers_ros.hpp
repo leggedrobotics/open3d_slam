@@ -22,12 +22,14 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include "open3d_slam/time.hpp"
+#include "open3d_slam/Transform.hpp"
 
 namespace o3d_slam {
 
 class SubmapCollection;
 
 void publishSubmapCoordinateAxes(const SubmapCollection& submaps, const std::string& frame_id, const rclcpp::Time& timestamp,
+                                 const Transform& frameToMap,
                                  const rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr& pub);
 geometry_msgs::msg::Point createPoint(double x, double y, double z);
 void drawAxes(const Eigen::Vector3d& p, const Eigen::Quaterniond& q, double scale, double line_width,
@@ -46,7 +48,7 @@ geometry_msgs::msg::TransformStamped toRos(const Eigen::Matrix4d& Mat, const rcl
 void publishTfTransform(const Eigen::Matrix4d& Mat, const rclcpp::Time& time, const std::string& frame, const std::string& childFrame,
                         tf2_ros::TransformBroadcaster* broadcaster);
 bool lookupTransform(const std::string& target_frame, const std::string& source_frame, const rclcpp::Time& time,
-                     const tf2_ros::Buffer& tfBuffer, Eigen::Isometry3d* transform);
+                     const tf2_ros::Buffer& tfBuffer, Eigen::Isometry3d* transform, double timeoutSec = 0.05);
 
 rclcpp::Time toRos(Time time);
 

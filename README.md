@@ -61,6 +61,40 @@ ros2 launch open3d_slam_ros mapping.launch.py \
   parameter_filename:=param_robosense_rs16.yaml
 ```
 
+For robot operation, there are two distinct use cases:
+
+- georeferenced robot mapping: let the external estimator own the global TF tree and run Open3D in external-pose mapping mode
+- standalone SLAM evaluation: run Open3D by itself and let it own its native TF/odometry tree
+
+If the robot already has a trusted estimator that owns `map -> odom -> base`, run Open3D in external-pose mapping mode:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+ros2 launch open3d_slam_ros mapping.launch.py \
+  cloud_topic:=/colored_point_cloud \
+  external_pose_frame:=map
+```
+
+This mode lets the ROS wrapper:
+
+- use the external `map -> sensor` TF as the motion prior
+- publish `assembled_map`, `dense_map`, and `submaps` directly in that external frame
+- avoid creating a competing `map_o3d -> odom_o3d -> sensor` TF tree on robots where another estimator already owns `map -> odom -> base`
+
+This is the recommended runtime mode when the goal is a georeferenced map on the robot.
+
+If instead you want to evaluate Open3D as the localization authority, launch it without `external_pose_frame` and do not run a competing estimator.
+
+The online ROS wrapper now supports the intended robot architecture:
+
+- Open3D publishes `scan2scan_odometry` from the node namespace
+- the external estimator fuses that ICP odometry
+- the external estimator remains the only global TF authority
+- Open3D publishes map outputs in the estimator/global frame
+
+The package-level ROS 2 integration notes are documented in
+[ros/open3d_slam_ros/README.md](ros/open3d_slam_ros/README.md).
+
 Launch offline rosbag processing:
 
 ```bash

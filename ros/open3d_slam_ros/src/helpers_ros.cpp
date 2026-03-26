@@ -32,14 +32,19 @@ builtin_interfaces::msg::Time toBuiltinTime(const rclcpp::Time& time) {
 }  // namespace
 
 void publishSubmapCoordinateAxes(const SubmapCollection& submaps, const std::string& frame_id, const rclcpp::Time& timestamp,
+                                 const Transform& frameToMap,
                                  const rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr& pub) {
   visualization_msgs::msg::MarkerArray msg;
   int id = 0;
   msg.markers.reserve(2 * submaps.getNumSubmaps());
   for (size_t j = 0; j < submaps.getNumSubmaps(); ++j) {
     const Submap& submap = submaps.getSubmap(j);
+    Transform mapToAxes = Transform::Identity();
+    mapToAxes.translation() = submap.getMapToSubmapCenter();
+    mapToAxes.linear() = submap.getMapToSubmapOrigin().rotation();
+    const Transform frameToAxes = frameToMap * mapToAxes;
     visualization_msgs::msg::Marker axes, text;
-    drawAxes(submap.getMapToSubmapCenter(), Eigen::Quaterniond(submap.getMapToSubmapOrigin().rotation()), 0.8, 0.08, &axes);
+    drawAxes(frameToAxes.translation(), Eigen::Quaterniond(frameToAxes.rotation()), 0.8, 0.08, &axes);
     axes.ns = "submap_" + std::to_string(j);
     axes.header.frame_id = frame_id;
     axes.header.stamp = toBuiltinTime(timestamp);
@@ -98,10 +103,10 @@ void publishTfTransform(const Eigen::Matrix4d& Mat, const rclcpp::Time& time, co
 }
 
 bool lookupTransform(const std::string& target_frame, const std::string& source_frame, const rclcpp::Time& time,
-                     const tf2_ros::Buffer& tfBuffer, Eigen::Isometry3d* transform) {
+                     const tf2_ros::Buffer& tfBuffer, Eigen::Isometry3d* transform, double timeoutSec) {
   geometry_msgs::msg::TransformStamped transformStamped;
   try {
-    transformStamped = tfBuffer.lookupTransform(target_frame, source_frame, time, tf2::durationFromSec(0.05));
+    transformStamped = tfBuffer.lookupTransform(target_frame, source_frame, time, tf2::durationFromSec(timeoutSec));
   } catch (const tf2::TransformException& ex) {
     RCLCPP_WARN(rclcpp::get_logger("open3d_slam_ros"), "Caught exception while looking up tf: %s", ex.what());
     *transform = Eigen::Isometry3d::Identity();

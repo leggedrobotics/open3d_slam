@@ -42,6 +42,9 @@ class SlamWrapper {
   struct TimestampedPointCloud {
     Time time_;
     PointCloud cloud_;
+    bool hasExternalOdometry_ = false;
+    bool isMappingEnabled_ = true;
+    Transform odomToRangeSensor_ = Transform::Identity();
   };
 
   struct RegisteredPointCloud {
@@ -58,6 +61,9 @@ class SlamWrapper {
   virtual ~SlamWrapper();
 
   virtual void addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp);
+  virtual void addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp,
+                            const Transform& odomToRangeSensor);
+  virtual void addRangeScanForOdometryOnly(const open3d::geometry::PointCloud cloud, const Time timestamp);
   virtual void loadParametersAndInitialize();
   virtual void startWorkers();
   virtual void stopWorkers();
@@ -76,6 +82,8 @@ class SlamWrapper {
   void setRangeSensorFrame(const std::string& frame);
   void setFixedRangeSensorFrame(const std::string& frame);
   bool usesIncomingRangeSensorFrame() const;
+  void setUseSeparateMappingOdometryBuffer(bool enable);
+  bool usesSeparateMappingOdometryBuffer() const;
 
   void setDirectoryPath(const std::string& path);
   void setMapSavingDirectoryPath(const std::string& path);
@@ -113,7 +121,9 @@ class SlamWrapper {
   mutable std::mutex framesMutex_;
   Frames frames_;
   bool useIncomingRangeSensorFrame_ = true;
+  bool useSeparateMappingOdometryBuffer_ = false;
   std::string folderPath_, mapSavingFolderPath_;
+  TransformInterpolationBuffer mappingOdometryBuffer_;
 
   // modules
   std::shared_ptr<MotionCompensation> motionCompensationOdom_, motionCompensationMap_;

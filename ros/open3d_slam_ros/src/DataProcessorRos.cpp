@@ -27,8 +27,18 @@ void DataProcessorRos::processMeasurement(const PointCloud& cloud, const Time& t
   std::cout << "Warning you have not implemented processMeasurement!!! \n";
 }
 
+void DataProcessorRos::processMeasurement(const PointCloud& cloud, const Time& timestamp, const Transform& odomToRangeSensor) {
+  std::cout << "Warning you have not implemented processMeasurement with externally supplied odometry!!! \n";
+}
+
 std::shared_ptr<SlamWrapper> DataProcessorRos::getSlamPtr() {
   return slam_;
+}
+
+void DataProcessorRos::resetAccumulatedRangeData() {
+  numAccumulatedRangeDataCount_ = 0;
+  hasAccumulatedExternalOdometry_ = false;
+  accumulatedCloud_.Clear();
 }
 
 void DataProcessorRos::accumulateAndProcessRangeData(const PointCloud& cloud, const Time& timestamp) {
@@ -39,6 +49,10 @@ void DataProcessorRos::accumulateAndProcessRangeData(const PointCloud& cloud, co
     // somehow the first cloud can be missing a lot of points when running with ouster os-128 on the robot
     // if we skip that first measurement, it all works okay
     // we skip first five, just to be extra safe
+  }
+
+  if (hasAccumulatedExternalOdometry_) {
+    resetAccumulatedRangeData();
   }
 
   accumulatedCloud_ += cloud;
@@ -54,8 +68,42 @@ void DataProcessorRos::accumulateAndProcessRangeData(const PointCloud& cloud, co
 
   processMeasurement(accumulatedCloud_, timestamp);
 
-  numAccumulatedRangeDataCount_ = 0;
-  accumulatedCloud_.Clear();
+  resetAccumulatedRangeData();
+}
+
+void DataProcessorRos::accumulateAndProcessRangeData(const PointCloud& cloud, const Time& timestamp,
+                                                     const Transform& odomToRangeSensor) {
+  const size_t minNumCloudsReceived = magic::skipFirstNPointClouds;
+  if (numPointCloudsReceived_ < minNumCloudsReceived) {
+    ++numPointCloudsReceived_;
+    return;
+  }
+
+  if (numAccumulatedRangeDataCount_ > 0 && !hasAccumulatedExternalOdometry_) {
+    resetAccumulatedRangeData();
+  }
+
+  accumulatedCloud_ += cloud;
+  accumulatedOdomToRangeSensor_ = odomToRangeSensor;
+  hasAccumulatedExternalOdometry_ = true;
+  ++numAccumulatedRangeDataCount_;
+  if (numAccumulatedRangeDataCount_ < numAccumulatedRangeDataDesired_) {
+    return;
+  }
+
+  if (accumulatedCloud_.IsEmpty()) {
+    std::cout << "Trying to insert and empyt cloud!!! Skipping the measurement \n";
+    return;
+  }
+
+  if (!hasAccumulatedExternalOdometry_) {
+    std::cout << "Trying to insert a cloud without the required external odometry measurement \n";
+    return;
+  }
+
+  processMeasurement(accumulatedCloud_, timestamp, accumulatedOdomToRangeSensor_);
+
+  resetAccumulatedRangeData();
 }
 
 }  // namespace o3d_slam

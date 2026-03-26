@@ -90,6 +90,11 @@ install(
 install(DIRECTORY include/ DESTINATION include)
 install(DIRECTORY launch param rviz data DESTINATION share/${PROJECT_NAME})
 
+if(BUILD_TESTING)
+  find_package(ament_cmake_pytest REQUIRED)
+  ament_add_pytest_test(test_runtime_contracts test/test_runtime_contracts.py)
+endif()
+
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_dependencies(
   ament_index_cpp

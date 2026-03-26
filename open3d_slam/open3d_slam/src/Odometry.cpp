@@ -76,6 +76,7 @@ bool LidarOdometry::addRangeScan(const open3d::geometry::PointCloud& cloud, cons
   lastMeasurementTimestamp_ = timestamp;
   return isOdomOkay;
 }
+
 const Transform LidarOdometry::getOdomToRangeSensor(const Time& t) const {
   return getTransform(t, odomToRangeSensorBuffer_);
 }

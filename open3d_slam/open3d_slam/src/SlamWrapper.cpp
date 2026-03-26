@@ -49,6 +49,14 @@ bool SlamWrapper::usesIncomingRangeSensorFrame() const {
   return useIncomingRangeSensorFrame_;
 }
 
+void SlamWrapper::setUseSeparateMappingOdometryBuffer(bool enable) {
+  useSeparateMappingOdometryBuffer_ = enable;
+}
+
+bool SlamWrapper::usesSeparateMappingOdometryBuffer() const {
+  return useSeparateMappingOdometryBuffer_;
+}
+
 void SlamWrapper::setFrames(const Frames& frames) {
   std::lock_guard<std::mutex> lock(framesMutex_);
   frames_ = frames;
@@ -139,7 +147,46 @@ void SlamWrapper::addRangeScan(const open3d::geometry::PointCloud cloud, const T
   updateFirstMeasurementTime(timestamp);
 
   auto removedNans = removePointsWithNonFiniteValues(cloud);
-  const TimestampedPointCloud timestampedCloud{timestamp, *removedNans};
+  TimestampedPointCloud timestampedCloud;
+  timestampedCloud.time_ = timestamp;
+  timestampedCloud.cloud_ = *removedNans;
+  if (!odometryBuffer_.empty()) {
+    const auto latestTime = odometryBuffer_.peek_back().time_;
+    if (timestamp < latestTime) {
+      std::cerr << "you are trying to add a range scan out of order! Dropping the measurement! \n";
+      return;
+    }
+  }
+  odometryBuffer_.push(timestampedCloud);
+}
+
+void SlamWrapper::addRangeScan(const open3d::geometry::PointCloud cloud, const Time timestamp, const Transform& odomToRangeSensor) {
+  updateFirstMeasurementTime(timestamp);
+
+  auto removedNans = removePointsWithNonFiniteValues(cloud);
+  TimestampedPointCloud timestampedCloud;
+  timestampedCloud.time_ = timestamp;
+  timestampedCloud.cloud_ = *removedNans;
+  timestampedCloud.hasExternalOdometry_ = true;
+  timestampedCloud.odomToRangeSensor_ = odomToRangeSensor;
+  if (!odometryBuffer_.empty()) {
+    const auto latestTime = odometryBuffer_.peek_back().time_;
+    if (timestamp < latestTime) {
+      std::cerr << "you are trying to add a range scan out of order! Dropping the measurement! \n";
+      return;
+    }
+  }
+  odometryBuffer_.push(timestampedCloud);
+}
+
+void SlamWrapper::addRangeScanForOdometryOnly(const open3d::geometry::PointCloud cloud, const Time timestamp) {
+  updateFirstMeasurementTime(timestamp);
+
+  auto removedNans = removePointsWithNonFiniteValues(cloud);
+  TimestampedPointCloud timestampedCloud;
+  timestampedCloud.time_ = timestamp;
+  timestampedCloud.cloud_ = *removedNans;
+  timestampedCloud.isMappingEnabled_ = false;
   if (!odometryBuffer_.empty()) {
     const auto latestTime = odometryBuffer_.peek_back().time_;
     if (timestamp < latestTime) {
@@ -218,7 +265,11 @@ void SlamWrapper::loadParametersAndInitialize() {
   submaps_ = std::make_shared<o3d_slam::SubmapCollection>();
   submaps_->setFolderPath(folderPath_);
 
-  mapper_ = std::make_shared<o3d_slam::Mapper>(odometry_->getBuffer(), submaps_);
+  if (useSeparateMappingOdometryBuffer_) {
+    mapper_ = std::make_shared<o3d_slam::Mapper>(mappingOdometryBuffer_, submaps_);
+  } else {
+    mapper_ = std::make_shared<o3d_slam::Mapper>(odometry_->getBuffer(), submaps_);
+  }
   mapper_->setParameters(params_.mapper_);
 
   optimizationProblem_ = std::make_shared<o3d_slam::OptimizationProblem>();
@@ -243,6 +294,9 @@ void SlamWrapper::loadParametersAndInitialize() {
   odometryBuffer_.set_size_limit(params_.odometry_.odometryBufferSize_);
   mappingBuffer_.set_size_limit(params_.mapper_.mappingBufferSize_);
   registeredCloudBuffer_.set_size_limit(params_.odometry_.scanProcessing_.pointCloudBufferSize_);
+  if (useSeparateMappingOdometryBuffer_) {
+    mappingOdometryBuffer_.setSizeLimit(params_.odometry_.odometryBufferSize_);
+  }
 }
 
 void SlamWrapper::setInitialMap(const PointCloud& initialMap) {
@@ -305,23 +359,43 @@ void SlamWrapper::odometryWorker() {
     auto undistortedCloud = motionCompensationOdom_->undistortInputPointCloud(measurement.cloud_, measurement.time_);
 
     const auto isOdomOkay = odometry_->addRangeScan(*undistortedCloud, measurement.time_);
+    if (isOdomOkay) {
+      latestScanToScanRegistrationTimestamp_ = measurement.time_;
+
+      const double timeMeasurement = odometryStatisticsTimer_.elapsedMsecSinceStopwatchStart();
+      odometryStatisticsTimer_.addMeasurementMsec(timeMeasurement);
+      if (params_.mapper_.isPrintTimingStatistics_ && odometryStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {
+        std::cout << "Odometry timing stats: Avg execution time: " << odometryStatisticsTimer_.getAvgMeasurementMsec()
+                  << " msec , frequency: " << 1e3 / odometryStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
+        odometryStatisticsTimer_.reset();
+      }
+    }
+
+    if (!measurement.isMappingEnabled_) {
+      if (!isOdomOkay) {
+        std::cerr << "WARNING: odometry has failed!!!! \n";
+      }
+      continue;
+    }
+
+    if (useSeparateMappingOdometryBuffer_) {
+      if (measurement.hasExternalOdometry_) {
+        mappingOdometryBuffer_.push(measurement.time_, measurement.odomToRangeSensor_);
+      } else if (odometry_->getBuffer().has(measurement.time_)) {
+        mappingOdometryBuffer_.push(measurement.time_, odometry_->getOdomToRangeSensor(measurement.time_));
+      }
+    }
 
     // this ensures that the odom is always ahead of the mapping
     // so then we can look stuff up in the interpolation buffer
     mappingBuffer_.push(measurement);
     if (!isOdomOkay) {
-      std::cerr << "WARNING: odometry has failed!!!! \n";
+      if (useSeparateMappingOdometryBuffer_ && measurement.hasExternalOdometry_) {
+        std::cerr << "WARNING: ICP odometry has failed, continuing mapping with the external pose prior only!!!! \n";
+      } else {
+        std::cerr << "WARNING: odometry has failed!!!! \n";
+      }
       continue;
-    }
-
-    latestScanToScanRegistrationTimestamp_ = measurement.time_;
-
-    const double timeMeasurement = odometryStatisticsTimer_.elapsedMsecSinceStopwatchStart();
-    odometryStatisticsTimer_.addMeasurementMsec(timeMeasurement);
-    if (params_.mapper_.isPrintTimingStatistics_ && odometryStatisticsTimer_.elapsedSec() > timingStatsEveryNsec) {
-      std::cout << "Odometry timing stats: Avg execution time: " << odometryStatisticsTimer_.getAvgMeasurementMsec()
-                << " msec , frequency: " << 1e3 / odometryStatisticsTimer_.getAvgMeasurementMsec() << " Hz \n";
-      odometryStatisticsTimer_.reset();
     }
 
   }  // end while

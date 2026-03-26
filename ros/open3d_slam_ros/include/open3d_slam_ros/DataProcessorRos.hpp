@@ -24,15 +24,20 @@ class DataProcessorRos {
   virtual void initialize() = 0;
   virtual void startProcessing() = 0;
   virtual void processMeasurement(const PointCloud& cloud, const Time& timestamp);
+  virtual void processMeasurement(const PointCloud& cloud, const Time& timestamp, const Transform& odomToRangeSensor);
   void accumulateAndProcessRangeData(const PointCloud& cloud, const Time& timestamp);
+  void accumulateAndProcessRangeData(const PointCloud& cloud, const Time& timestamp, const Transform& odomToRangeSensor);
   void initCommonRosStuff();
   std::shared_ptr<SlamWrapper> getSlamPtr();
+  void resetAccumulatedRangeData();
 
  protected:
   size_t numAccumulatedRangeDataCount_ = 0;
   size_t numPointCloudsReceived_ = 0;
   size_t numAccumulatedRangeDataDesired_ = 1;
+  bool hasAccumulatedExternalOdometry_ = false;
   PointCloud accumulatedCloud_;
+  Transform accumulatedOdomToRangeSensor_ = Transform::Identity();
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr rawCloudPub_;
   std::string cloudTopic_;
   std::shared_ptr<SlamWrapper> slam_;

@@ -27,7 +27,7 @@ class SlamWrapperRos : public SlamWrapper {
   using BASE = SlamWrapper;
 
  public:
- explicit SlamWrapperRos(rclcpp::Node::SharedPtr node);
+  explicit SlamWrapperRos(rclcpp::Node::SharedPtr node);
   ~SlamWrapperRos() override;
 
   void loadParametersAndInitialize() override;
@@ -45,6 +45,12 @@ class SlamWrapperRos : public SlamWrapper {
   void publishMaps(const Time& time);
   void publishDenseMap(const Time& time);
   void publishMapToOdomTf(const Time& time);
+  std::string getMapOutputFrame() const;
+  Transform getMapOutputFrameToMap(const Time& time) const;
+  PointCloud transformMapCloudToOutputFrame(const PointCloud& cloud, const Time& time) const;
+  Transform transformMapPoseToOutputFrame(const Transform& mapToPose, const Time& time) const;
+  bool saveMapInOutputFrame(const std::string& directory) const;
+  bool saveSubmapsInOutputFrame(const std::string& directory) const;
 
   rclcpp::Node::SharedPtr node_;
   std::shared_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster_;
@@ -56,6 +62,8 @@ class SlamWrapperRos : public SlamWrapper {
   rclcpp::Service<open3d_slam_msgs::srv::SaveMap>::SharedPtr saveMapSrv_;
   rclcpp::Service<open3d_slam_msgs::srv::SaveSubmaps>::SharedPtr saveSubmapsSrv_;
   bool isVisualizationFirstTime_ = true;
+  bool publishTf_ = true;
+  std::string externalPoseFrame_;
   std::thread tfWorker_, visualizationWorker_, odomPublisherWorker_;
   Time prevPublishedTimeScanToScan_, prevPublishedTimeScanToMap_;
   Time prevPublishedTimeScanToScanOdom_, prevPublishedTimeScanToMapOdom_;
