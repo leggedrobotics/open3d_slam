@@ -99,6 +99,13 @@ The wrapper also fixes the `scan2scan_odometry` parent frame so it is stamped in
   - Non-empty: look up `external_pose_frame -> <incoming cloud frame>` for every cloud and use it as the motion prior.
 - `external_pose_lookup_timeout_sec` (`double`, default: `0.1`)
   - TF lookup timeout for the external pose query.
+- `transform_accumulated_range_data_to_endpoint_frame` (`bool`, default: `false`)
+  - Only active when `external_pose_frame` is non-empty and `num_accumulated_range_data > 1`.
+  - Transforms each accumulated cloud into the last cloud's sensor frame before concatenation.
+  - This is the recommended first motion-compensation layer for Livox-style non-repeating scans; keep the stock
+    spinning-lidar scan undistortion disabled for Livox.
+  - Use it with self-filtered/static-environment clouds. Raw robot self-points can get warped because this transform
+    assumes accumulated points are fixed in the world.
 - cloud input QoS
   - Online cloud subscribers use sensor-data QoS so they can consume both best-effort sensor topics and reliable processed clouds without a relay.
 - `publish_tf` (`bool`, default: mode-aware when left empty)

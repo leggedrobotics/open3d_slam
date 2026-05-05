@@ -13,6 +13,13 @@ def _resolve_optional_bool(value: str, arg_name: str):
     return value == "true"
 
 
+def _resolve_bool(value: str, arg_name: str):
+    parsed = _resolve_optional_bool(value, arg_name)
+    if parsed is None:
+        raise RuntimeError(f"{arg_name} must be one of: true, false")
+    return parsed
+
+
 def _launch_setup(context, *args, **kwargs):
     params = {
         "cloud_topic": LaunchConfiguration("cloud_topic").perform(context),
@@ -20,6 +27,10 @@ def _launch_setup(context, *args, **kwargs):
         "parameter_folder_path": LaunchConfiguration("parameter_folder_path").perform(context),
         "map_saving_folder": LaunchConfiguration("map_saving_folder").perform(context),
         "num_accumulated_range_data": int(LaunchConfiguration("num_accumulated_range_data").perform(context)),
+        "transform_accumulated_range_data_to_endpoint_frame": _resolve_bool(
+            LaunchConfiguration("transform_accumulated_range_data_to_endpoint_frame").perform(context),
+            "transform_accumulated_range_data_to_endpoint_frame",
+        ),
         "external_pose_frame": LaunchConfiguration("external_pose_frame").perform(context),
         "external_pose_lookup_timeout_sec": float(LaunchConfiguration("external_pose_lookup_timeout_sec").perform(context)),
         "is_read_from_rosbag": False,
@@ -50,6 +61,7 @@ def generate_launch_description():
         DeclareLaunchArgument("parameter_folder_path", default_value=default_param_dir),
         DeclareLaunchArgument("map_saving_folder", default_value=default_map_dir),
         DeclareLaunchArgument("num_accumulated_range_data", default_value="1"),
+        DeclareLaunchArgument("transform_accumulated_range_data_to_endpoint_frame", default_value="false"),
         DeclareLaunchArgument("external_pose_frame", default_value=""),
         DeclareLaunchArgument("external_pose_lookup_timeout_sec", default_value="0.1"),
         DeclareLaunchArgument("publish_tf", default_value=""),

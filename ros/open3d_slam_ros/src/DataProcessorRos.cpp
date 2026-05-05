@@ -21,6 +21,10 @@ void DataProcessorRos::initCommonRosStuff() {
   rawCloudPub_ = node_->create_publisher<sensor_msgs::msg::PointCloud2>("raw_cloud", rclcpp::QoS(1).transient_local());
   numAccumulatedRangeDataDesired_ = getParamOr<int>("num_accumulated_range_data", *node_, 1);
   std::cout << "Num accumulated range data: " << numAccumulatedRangeDataDesired_ << std::endl;
+  transformAccumulatedRangeDataToEndpointFrame_ =
+      getParamOr<bool>("transform_accumulated_range_data_to_endpoint_frame", *node_, false);
+  std::cout << "Transform accumulated range data to endpoint frame: "
+            << (transformAccumulatedRangeDataToEndpointFrame_ ? "true" : "false") << std::endl;
 }
 
 void DataProcessorRos::processMeasurement(const PointCloud& cloud, const Time& timestamp) {
@@ -39,6 +43,7 @@ void DataProcessorRos::resetAccumulatedRangeData() {
   numAccumulatedRangeDataCount_ = 0;
   hasAccumulatedExternalOdometry_ = false;
   accumulatedCloud_.Clear();
+  accumulatedRangeData_.clear();
 }
 
 void DataProcessorRos::accumulateAndProcessRangeData(const PointCloud& cloud, const Time& timestamp) {
@@ -84,6 +89,7 @@ void DataProcessorRos::accumulateAndProcessRangeData(const PointCloud& cloud, co
   }
 
   accumulatedCloud_ += cloud;
+  accumulatedRangeData_.push_back(AccumulatedRangeData{cloud, odomToRangeSensor});
   accumulatedOdomToRangeSensor_ = odomToRangeSensor;
   hasAccumulatedExternalOdometry_ = true;
   ++numAccumulatedRangeDataCount_;
@@ -91,7 +97,18 @@ void DataProcessorRos::accumulateAndProcessRangeData(const PointCloud& cloud, co
     return;
   }
 
-  if (accumulatedCloud_.IsEmpty()) {
+  PointCloud cloudToProcess = accumulatedCloud_;
+  if (transformAccumulatedRangeDataToEndpointFrame_) {
+    cloudToProcess.Clear();
+    const Transform rangeSensorLastToOdom = accumulatedOdomToRangeSensor_.inverse();
+    for (const auto& rangeData : accumulatedRangeData_) {
+      PointCloud endpointCloud = rangeData.cloud;
+      endpointCloud.Transform((rangeSensorLastToOdom * rangeData.odomToRangeSensor).matrix());
+      cloudToProcess += endpointCloud;
+    }
+  }
+
+  if (cloudToProcess.IsEmpty()) {
     std::cout << "Trying to insert and empyt cloud!!! Skipping the measurement \n";
     return;
   }
@@ -101,7 +118,7 @@ void DataProcessorRos::accumulateAndProcessRangeData(const PointCloud& cloud, co
     return;
   }
 
-  processMeasurement(accumulatedCloud_, timestamp, accumulatedOdomToRangeSensor_);
+  processMeasurement(cloudToProcess, timestamp, accumulatedOdomToRangeSensor_);
 
   resetAccumulatedRangeData();
 }

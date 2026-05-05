@@ -9,8 +9,10 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <vector>
 
 #include "open3d_slam/SlamWrapper.hpp"
+#include "open3d_slam/Transform.hpp"
 #include "open3d_slam/time.hpp"
 #include "open3d_slam/typedefs.hpp"
 
@@ -35,9 +37,15 @@ class DataProcessorRos {
   size_t numAccumulatedRangeDataCount_ = 0;
   size_t numPointCloudsReceived_ = 0;
   size_t numAccumulatedRangeDataDesired_ = 1;
+  bool transformAccumulatedRangeDataToEndpointFrame_ = false;
   bool hasAccumulatedExternalOdometry_ = false;
   PointCloud accumulatedCloud_;
   Transform accumulatedOdomToRangeSensor_ = Transform::Identity();
+  struct AccumulatedRangeData {
+    PointCloud cloud;
+    Transform odomToRangeSensor = Transform::Identity();
+  };
+  std::vector<AccumulatedRangeData> accumulatedRangeData_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr rawCloudPub_;
   std::string cloudTopic_;
   std::shared_ptr<SlamWrapper> slam_;

@@ -70,6 +70,7 @@ def _evaluate_mapping_launch_parameters(**overrides):
         parameter_folder_path="/tmp",
         map_saving_folder="/tmp/maps",
         num_accumulated_range_data="1",
+        transform_accumulated_range_data_to_endpoint_frame="false",
         external_pose_frame="",
         external_pose_lookup_timeout_sec="0.1",
         publish_tf="",
@@ -91,6 +92,11 @@ def test_mapping_launch_omits_publish_tf_override_for_external_pose_mode():
 def test_mapping_launch_keeps_explicit_publish_tf_override():
     evaluated = _evaluate_mapping_launch_parameters(external_pose_frame="map", publish_tf="true")
     assert evaluated["publish_tf"] is True
+
+
+def test_mapping_launch_passes_endpoint_frame_accumulation_flag():
+    evaluated = _evaluate_mapping_launch_parameters(transform_accumulated_range_data_to_endpoint_frame="true")
+    assert evaluated["transform_accumulated_range_data_to_endpoint_frame"] is True
 
 
 class _LaunchProcess:

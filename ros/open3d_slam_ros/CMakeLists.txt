@@ -91,7 +91,13 @@ install(DIRECTORY include/ DESTINATION include)
 install(DIRECTORY launch param rviz data DESTINATION share/${PROJECT_NAME})
 
 if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_cmake_pytest REQUIRED)
+  ament_add_gtest(test_endpoint_frame_accumulation test/test_endpoint_frame_accumulation.cpp)
+  if(TARGET test_endpoint_frame_accumulation)
+    target_link_libraries(test_endpoint_frame_accumulation ${PROJECT_NAME})
+    ament_target_dependencies(test_endpoint_frame_accumulation rclcpp)
+  endif()
   ament_add_pytest_test(test_runtime_contracts test/test_runtime_contracts.py)
 endif()
 
