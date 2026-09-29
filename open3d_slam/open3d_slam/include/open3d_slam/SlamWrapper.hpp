@@ -8,6 +8,7 @@
 #pragma once
 
 #include <Eigen/Dense>
+#include <atomic>
 #include <future>
 #include <mutex>
 #include <thread>
@@ -144,9 +145,9 @@ class SlamWrapper {
   Time latestScanToScanRegistrationTimestamp_;
 
   // bookkeeping
-  bool isOptimizedGraphAvailable_ = false;
-  bool isRunWorkers_ = true;
-  int numLatesLoopClosureConstraints_ = -1;
+  std::atomic_bool isOptimizedGraphAvailable_{false};
+  std::atomic_bool isRunWorkers_{true};
+  std::atomic_int numLatesLoopClosureConstraints_{-1};
   PointCloud rawCloudPrev_;
   Constraints lastLoopClosureConstraints_;
 };

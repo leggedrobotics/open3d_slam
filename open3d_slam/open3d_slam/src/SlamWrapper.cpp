@@ -85,6 +85,7 @@ void SlamWrapper::setFixedRangeSensorFrame(const std::string& frame) {
 }
 
 SlamWrapper::~SlamWrapper() {
+  stopWorkers();
   if (odometryWorker_.joinable()) {
     odometryWorker_.join();
     std::cout << "Joined odometry worker \n";

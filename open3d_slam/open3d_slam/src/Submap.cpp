@@ -109,7 +109,8 @@ void Submap::transform(const Transform& T) {
 
 void Submap::carve(const PointCloud& rawScan, const Transform& mapToRangeSensor, const CroppingVolume& cropper,
                    const SpaceCarvingParameters& params, PointCloud* map) {
-  if (map->points_.empty() || !(nScansInsertedMap_ % params.carveSpaceEveryNscans_ == 1)) {
+  if (map->points_.empty() || params.carveSpaceEveryNscans_ <= 0 ||
+      (nScansInsertedMap_ + 1) % params.carveSpaceEveryNscans_ != 0) {
     return;
   }
   //	Timer timer("carving");
@@ -125,7 +126,8 @@ void Submap::carve(const PointCloud& rawScan, const Transform& mapToRangeSensor,
 
 void Submap::carve(const PointCloud& scan, const Eigen::Vector3d& sensorPosition, const SpaceCarvingParameters& param,
                    VoxelizedPointCloud* cloud) {
-  if (cloud->empty() || !(nScansInsertedDenseMap_ % param.carveSpaceEveryNscans_ == 1)) {
+  if (cloud->empty() || param.carveSpaceEveryNscans_ <= 0 ||
+      (nScansInsertedDenseMap_ + 1) % param.carveSpaceEveryNscans_ != 0) {
     return;
   }
   const PointCloudPtr croppedScanPtr =

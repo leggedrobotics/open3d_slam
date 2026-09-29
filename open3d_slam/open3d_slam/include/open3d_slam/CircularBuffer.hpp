@@ -7,6 +7,9 @@
 
 #pragma once
 #include <deque>
+#include <mutex>
+#include <stdexcept>
+#include <utility>
 
 namespace o3d_slam {
 
@@ -15,54 +18,83 @@ class CircularBuffer {
  public:
   CircularBuffer() = default;
   void set_size_limit(size_t size) {
+    std::lock_guard<std::mutex> lck(mutex_);
     bufferSizeLimit_ = size;
     removeOldMeasurementsIfNeeded();
   }
 
   void push(const T& data) {
-    {
-      std::lock_guard<std::mutex> lck(pushMutex_);
-      data_.push_back(data);
-    }
+    std::lock_guard<std::mutex> lck(mutex_);
+    data_.push_back(data);
     removeOldMeasurementsIfNeeded();
   }
 
-  const T& peek_front() const { return data_.front(); }
+  void push(T&& data) {
+    std::lock_guard<std::mutex> lck(mutex_);
+    data_.push_back(std::move(data));
+    removeOldMeasurementsIfNeeded();
+  }
 
-  const T& peek_back() const { return data_.back(); }
+  T peek_front() const {
+    std::lock_guard<std::mutex> lck(mutex_);
+    if (data_.empty()) {
+      throw std::runtime_error("CircularBuffer::peek_front: empty buffer");
+    }
+    return data_.front();
+  }
+
+  T peek_back() const {
+    std::lock_guard<std::mutex> lck(mutex_);
+    if (data_.empty()) {
+      throw std::runtime_error("CircularBuffer::peek_back: empty buffer");
+    }
+    return data_.back();
+  }
 
   T pop() {
-    std::lock_guard<std::mutex> lck(removeMutex_);
-    T copy = data_.front();
+    std::lock_guard<std::mutex> lck(mutex_);
+    if (data_.empty()) {
+      throw std::runtime_error("CircularBuffer::pop: empty buffer");
+    }
+    T copy = std::move(data_.front());
     data_.pop_front();
     return copy;
   }
 
-  bool empty() const { return data_.empty(); }
+  bool empty() const {
+    std::lock_guard<std::mutex> lck(mutex_);
+    return data_.empty();
+  }
 
-  size_t size_limit() const { return bufferSizeLimit_; }
+  size_t size_limit() const {
+    std::lock_guard<std::mutex> lck(mutex_);
+    return bufferSizeLimit_;
+  }
 
-  size_t size() const { return data_.size(); }
+  size_t size() const {
+    std::lock_guard<std::mutex> lck(mutex_);
+    return data_.size();
+  }
 
   void clear() {
-    std::lock_guard<std::mutex> lck(removeMutex_);
+    std::lock_guard<std::mutex> lck(mutex_);
     data_.clear();
   }
 
-  const std::deque<T>& getImplementation() const { return data_; }
-
-  std::deque<T>* getImplementationPtr() { return &data_; }
+  std::deque<T> getImplementation() const {
+    std::lock_guard<std::mutex> lck(mutex_);
+    return data_;
+  }
 
  private:
   void removeOldMeasurementsIfNeeded() {
-    std::lock_guard<std::mutex> lck(removeMutex_);
     while (data_.size() > bufferSizeLimit_) {
       data_.pop_front();
     }
   }
 
   std::deque<T> data_;
-  std::mutex removeMutex_, pushMutex_;
+  mutable std::mutex mutex_;
   size_t bufferSizeLimit_ = 10;
 };
 

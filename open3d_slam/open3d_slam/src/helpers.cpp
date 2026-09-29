@@ -18,6 +18,9 @@
 #include <open3d/utility/Eigen.h>
 #include "open3d/geometry/KDTreeFlann.h"
 
+#include <cmath>
+#include <limits>
+
 #ifdef open3d_slam_OPENMP_FOUND
 #include <omp.h>
 #endif
@@ -245,6 +248,9 @@ std::vector<size_t> getIdxsOfCarvedPoints(const open3d::geometry::PointCloud& sc
   for (size_t i = 0; i < scan.points_.size(); ++i) {
     const Eigen::Vector3d& p = scan.points_[i];
     const double length = (p - sensorPosition).norm();
+    if (!p.allFinite() || !std::isfinite(length) || length <= std::numeric_limits<double>::epsilon()) {
+      continue;
+    }
     const Eigen::Vector3d direction = (p - sensorPosition) / length;
     double distance = 0.0;
     const double maximalPathTraveled = std::max(param.voxelSize_, std::min(length - param.truncationDistance_, param.maxRaytracingLength_));
@@ -354,6 +360,9 @@ std::vector<Eigen::Vector3i> getKeysOfCarvedPoints(const open3d::geometry::Point
   for (size_t i = 0; i < scan.points_.size(); ++i) {
     const Eigen::Vector3d& p = scan.points_[i];
     const double length = (p - sensorPosition).norm();
+    if (!p.allFinite() || !std::isfinite(length) || length <= std::numeric_limits<double>::epsilon()) {
+      continue;
+    }
     const Eigen::Vector3d direction = (p - sensorPosition) / length;
     double distance = 0.0;
     const double maximalPathTraveled = std::max(stepSize, std::min(length - param.truncationDistance_, param.maxRaytracingLength_));

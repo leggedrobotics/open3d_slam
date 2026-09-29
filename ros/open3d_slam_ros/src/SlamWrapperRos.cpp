@@ -48,6 +48,7 @@ SlamWrapperRos::SlamWrapperRos(rclcpp::Node::SharedPtr node) : BASE(), node_(std
 }
 
 SlamWrapperRos::~SlamWrapperRos() {
+  stopWorkers();
   if (tfWorker_.joinable()) {
     tfWorker_.join();
     std::cout << "Joined tf worker \n";
@@ -156,7 +157,9 @@ void SlamWrapperRos::visualizationWorker() {
 
     const Time scanToMapTimestamp = latestScanToMapRefinementTimestamp_;
     if (isTimeValid(scanToMapTimestamp)) {
-      publishDenseMap(scanToMapTimestamp);
+      if (params_.mapper_.isBuildDenseMap_) {
+        publishDenseMap(scanToMapTimestamp);
+      }
       publishMaps(scanToMapTimestamp);
     }
 
@@ -253,6 +256,7 @@ void SlamWrapperRos::publishDenseMap(const Time& time) {
     denseMap = transformMapCloudToOutputFrame(denseMap, time);
   }
   o3d_slam::publishCloud(denseMap, getMapOutputFrame(), toRos(time), denseMapPub_);
+  denseMapVisualizationUpdateTimer_.reset();
 }
 
 void SlamWrapperRos::publishMaps(const Time& time) {

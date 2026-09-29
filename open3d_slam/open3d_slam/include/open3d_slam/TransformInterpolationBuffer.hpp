@@ -41,6 +41,10 @@ class TransformInterpolationBuffer {
   // 'time' is available.
   Transform lookup(const Time& time) const;
 
+  // Returns an interpolated transform at 'time', clamping to the first or
+  // last transform if the requested time is outside the buffered interval.
+  Transform lookupOrClamp(const Time& time) const;
+
   // Returns the timestamp of the earliest transform in the buffer or 0 if the
   // buffer is empty. Earliest time is the one that is the closest to Jan 1,1,00
   Time earliest_time() const;
@@ -58,8 +62,7 @@ class TransformInterpolationBuffer {
   // Returns the current size of the transform buffer.
   size_t size() const;
 
-  const TimestampedTransform& latest_measurement(int offsetFromLastElement = 0) const;
-  TimestampedTransform& latest_measurement(int offsetFromLastElement = 0);
+  TimestampedTransform latest_measurement(int offsetFromLastElement = 0) const;
 
   void printTimesCurrentlyInBuffer() const;
 

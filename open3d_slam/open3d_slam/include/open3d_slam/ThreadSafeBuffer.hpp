@@ -26,27 +26,36 @@ class ThreadSafeBuffer {
     data_.insert(data_.end(), first, last);
   }
 
-  const std::vector<T>& peek() const { return data_; }
+  std::vector<T> peek() const {
+    std::lock_guard<std::mutex> lck(modifierMutex_);
+    return data_;
+  }
 
   void clear() {
     std::lock_guard<std::mutex> lck(modifierMutex_);
     data_.clear();
   }
 
-  const std::vector<T> popAllElements() {
+  std::vector<T> popAllElements() {
     std::lock_guard<std::mutex> lck(modifierMutex_);
-    auto copy = data_;
-    data_.clear();
-    return copy;
+    std::vector<T> elements;
+    elements.swap(data_);
+    return elements;
   }
 
-  bool empty() const { return data_.empty(); }
+  bool empty() const {
+    std::lock_guard<std::mutex> lck(modifierMutex_);
+    return data_.empty();
+  }
 
-  size_t size() const { return data_.size(); }
+  size_t size() const {
+    std::lock_guard<std::mutex> lck(modifierMutex_);
+    return data_.size();
+  }
 
  private:
   std::vector<T> data_;
-  std::mutex modifierMutex_;
+  mutable std::mutex modifierMutex_;
 };
 
 }  // namespace o3d_slam

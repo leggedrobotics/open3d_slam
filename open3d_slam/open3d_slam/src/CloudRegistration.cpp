@@ -8,14 +8,24 @@
 #include "open3d_slam/assert.hpp"
 #include "open3d_slam/helpers.hpp"
 
+#include <mutex>
+
 namespace o3d_slam {
 using namespace open3d::pipelines::registration;
+
+namespace {
+// Open3D's legacy Generalized ICP implementation is not safe when invoked by
+// the odometry and mapping workers at the same time.
+std::mutex generalizedIcpMutex;
+}  // namespace
+
 ////////////////////////////////
 /////// generalized
 ////////////////////////////////
 RegistrationIcpGeneralized::RegistrationResult RegistrationIcpGeneralized::registerClouds(const PointCloud& source,
                                                                                           const PointCloud& target,
                                                                                           const Transform& init) const {
+  std::lock_guard<std::mutex> lock(generalizedIcpMutex);
   return RegistrationGeneralizedICP(source, target, maxCorrespondenceDistance_, init.matrix(), tranformationEstimationGICP_,
                                     icpConvergenceCriteria_);
 }

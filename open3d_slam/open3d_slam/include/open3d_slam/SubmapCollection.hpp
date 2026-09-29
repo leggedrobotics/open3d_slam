@@ -9,6 +9,7 @@
 
 #include <open3d/geometry/PointCloud.h>
 #include <Eigen/Dense>
+#include <atomic>
 #include <mutex>
 #include "open3d_slam/AdjacencyMatrix.hpp"
 #include "open3d_slam/CircularBuffer.hpp"
@@ -82,7 +83,7 @@ class SubmapCollection {
   size_t numScansMergedInActiveSubmap_ = 0;
   size_t lastFinishedSubmapIdx_ = 0;
   std::mutex featureComputationMutex_;
-  bool isComputingFeatures_ = false;
+  std::atomic_bool isComputingFeatures_{false};
   std::mutex constraintBuildMutex_;
   AdjacencyMatrix adjacencyMatrix_;
   size_t submapId_ = 0;
