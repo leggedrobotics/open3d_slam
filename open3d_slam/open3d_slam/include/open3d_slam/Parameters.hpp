@@ -180,6 +180,7 @@ struct VisualizationParameters {
   double assembledMapVoxelSize_ = 0.1;
   double submapVoxelSize_ = 0.1;
   double visualizeEveryNmsec_ = 250.0;
+  double assembledMapEveryNmsec_ = 250.0;
 };
 
 struct SavingParameters {

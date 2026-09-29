@@ -135,6 +135,8 @@ visualization:
   assembled_map_voxel_size: 0.1
   submaps_voxel_size: 0.1
   visualize_every_n_msec: 1000.0
+  # Feed terrain consumers at up to 5 Hz without speeding up debug submap visualization.
+  assembled_map_every_n_msec: 200.0
 
 saving:
   # Persist maps explicitly through save_map/save_submaps. This avoids an

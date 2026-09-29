@@ -260,7 +260,14 @@ void SlamWrapperRos::publishDenseMap(const Time& time) {
 }
 
 void SlamWrapperRos::publishMaps(const Time& time) {
-  if (visualizationUpdateTimer_.elapsedMsec() < params_.visualization_.visualizeEveryNmsec_ && !isVisualizationFirstTime_) {
+  // Terrain consumers need fresh maps independently of the debug visualization rate.
+  // Do not rebuild and transmit the same snapshot when mapping has not advanced.
+  const bool publishAssembled = (isAssembledMapFirstTime_ || time != prevPublishedAssembledMapTime_) &&
+                               (isAssembledMapFirstTime_ ||
+                                assembledMapUpdateTimer_.elapsedMsec() >= params_.visualization_.assembledMapEveryNmsec_);
+  const bool publishVisualization = isVisualizationFirstTime_ ||
+                                    visualizationUpdateTimer_.elapsedMsec() >= params_.visualization_.visualizeEveryNmsec_;
+  if (!publishAssembled && !publishVisualization) {
     return;
   }
 
@@ -268,16 +275,28 @@ void SlamWrapperRos::publishMaps(const Time& time) {
   const rclcpp::Time timestamp = toRos(time);
   const std::string mapOutputFrame = getMapOutputFrame();
   const Transform mapOutputFrameToMap = getMapOutputFrameToMap(time);
-  {
+  if (publishAssembled) {
+    // Measure start-to-start: expensive assembly must not add to the configured period.
+    assembledMapUpdateTimer_.reset();
     PointCloud map = mapper_->getAssembledMapPointCloud();
     if (!externalPoseFrame_.empty()) {
       map = *o3d_slam::transform(mapOutputFrameToMap.matrix(), map);
     }
     voxelize(params_.visualization_.assembledMapVoxelSize_, &map);
     o3d_slam::publishCloud(map, mapOutputFrame, timestamp, assembledMapPub_);
+    prevPublishedAssembledMapTime_ = time;
+    isAssembledMapFirstTime_ = false;
   }
-  o3d_slam::publishCloud(mapper_->getPreprocessedScan(), frameNames.rangeSensorFrame, timestamp, mappingInputPub_);
-  o3d_slam::publishSubmapCoordinateAxes(mapper_->getSubmaps(), mapOutputFrame, timestamp, mapOutputFrameToMap, submapOriginsPub_);
+  if (!publishVisualization) {
+    return;
+  }
+  visualizationUpdateTimer_.reset();
+  if (mappingInputPub_->get_subscription_count() > 0) {
+    o3d_slam::publishCloud(mapper_->getPreprocessedScan(), frameNames.rangeSensorFrame, timestamp, mappingInputPub_);
+  }
+  if (submapOriginsPub_->get_subscription_count() > 0) {
+    o3d_slam::publishSubmapCoordinateAxes(mapper_->getSubmaps(), mapOutputFrame, timestamp, mapOutputFrameToMap, submapOriginsPub_);
+  }
   if (submapsPub_->get_subscription_count() > 0) {
     open3d::geometry::PointCloud cloud;
     o3d_slam::assembleColoredPointCloud(mapper_->getSubmaps(), &cloud);
@@ -288,7 +307,6 @@ void SlamWrapperRos::publishMaps(const Time& time) {
     o3d_slam::publishCloud(cloud, mapOutputFrame, timestamp, submapsPub_);
   }
 
-  visualizationUpdateTimer_.reset();
   isVisualizationFirstTime_ = false;
 }
 

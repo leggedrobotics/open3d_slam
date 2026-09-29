@@ -62,6 +62,9 @@ class SlamWrapperRos : public SlamWrapper {
   rclcpp::Service<open3d_slam_msgs::srv::SaveMap>::SharedPtr saveMapSrv_;
   rclcpp::Service<open3d_slam_msgs::srv::SaveSubmaps>::SharedPtr saveSubmapsSrv_;
   bool isVisualizationFirstTime_ = true;
+  bool isAssembledMapFirstTime_ = true;
+  Timer assembledMapUpdateTimer_;
+  Time prevPublishedAssembledMapTime_;
   bool publishTf_ = true;
   std::string externalPoseFrame_;
   std::thread tfWorker_, visualizationWorker_, odomPublisherWorker_;

@@ -259,6 +259,12 @@ visualization
     ``visualize_every_n_msec`` - After this number of milliseconds has passed the visualization will be performed.
     This tries to keep the computation at a reasonable level.
 
+    ``assembled_map_every_n_msec`` - Optional positive interval for assembled-map publication,
+    independent of debug visualization. Defaults to ``visualize_every_n_msec`` when omitted.
+    The Mid-360 profile uses 200 ms (up to 5 Hz), while debug visualization remains at 1000 ms.
+    Only new mapping timestamps are published. Intervals are measured start-to-start; actual
+    throughput is limited by scan processing, map assembly, transport, and the 50 ms worker poll.
+
 
 saving
 ------
@@ -269,5 +275,4 @@ saving
     ``save_map`` - If true, saves the assembled full map.
 
     ``save_submaps`` - If true saves all the submaps as well.
-
 

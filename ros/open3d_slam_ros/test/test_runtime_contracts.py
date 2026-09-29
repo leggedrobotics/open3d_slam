@@ -24,7 +24,7 @@ from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-WORKSPACE_ROOT = Path(__file__).resolve().parents[5]
+WORKSPACE_ROOT = next(parent for parent in REPO_ROOT.parents if (parent / "install" / "setup.bash").is_file())
 INSTALL_SETUP_PATH = WORKSPACE_ROOT / "install" / "setup.bash"
 MAPPING_LAUNCH_PATH = REPO_ROOT / "ros" / "open3d_slam_ros" / "launch" / "mapping.launch.py"
 

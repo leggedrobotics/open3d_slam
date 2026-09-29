@@ -7,6 +7,7 @@
 
 #include "open3d_slam_yaml_io/parameter_loaders.hpp"
 
+#include <cmath>
 #include <stdexcept>
 
 #include "open3d_slam/math.hpp"
@@ -92,6 +93,10 @@ void loadParameters(const YAML::Node& node, VisualizationParameters* p) {
   p->assembledMapVoxelSize_ = requireScalar<double>(node, "assembled_map_voxel_size");
   p->submapVoxelSize_ = requireScalar<double>(node, "submaps_voxel_size");
   p->visualizeEveryNmsec_ = requireScalar<double>(node, "visualize_every_n_msec");
+  p->assembledMapEveryNmsec_ = node["assembled_map_every_n_msec"].as<double>(p->visualizeEveryNmsec_);
+  if (!std::isfinite(p->assembledMapEveryNmsec_) || p->assembledMapEveryNmsec_ <= 0.0) {
+    throw std::runtime_error("assembled_map_every_n_msec must be finite and positive");
+  }
 }
 
 void loadParameters(const YAML::Node& node, IcpParameters* p) {
